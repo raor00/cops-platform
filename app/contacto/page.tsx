@@ -1,4 +1,52 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mvzzrkjd";
+
 export default function Contacto() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+
+      // Subject (opcional)
+      formData.append("_subject", "Nuevo contacto - COP’S Electronics");
+
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        body: formData,
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        const msg =
+          data?.errors?.[0]?.message ||
+          "No se pudo enviar la solicitud. Intenta de nuevo.";
+        throw new Error(msg);
+      }
+
+      form.reset();
+      router.push("/gracias");
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Ocurrió un error al enviar el formulario.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <section className="mx-auto max-w-2xl px-4 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Contacto</h1>
@@ -7,8 +55,7 @@ export default function Contacto() {
       </p>
 
       <form
-        action="https://formspree.io/f/mvzzrkjd"
-        method="POST"
+        onSubmit={handleSubmit}
         className="mt-10 space-y-4 rounded-2xl border p-6"
       >
         <div>
@@ -52,11 +99,18 @@ export default function Contacto() {
           />
         </div>
 
+        {errorMsg && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMsg}
+          </div>
+        )}
+
         <button
           type="submit"
-          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90"
+          disabled={loading}
+          className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
         >
-          Enviar solicitud
+          {loading ? "Enviando..." : "Enviar solicitud"}
         </button>
 
         <p className="text-xs text-slate-500">

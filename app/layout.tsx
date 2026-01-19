@@ -1,11 +1,32 @@
+import SiteHeader from "@/components/SiteHeader";
 import "./globals.css";
 import Link from "next/link";
 
-export const metadata = {
-  title: "COP’S Electronics | Soluciones Tecnológicas",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: {
+    default: "COP’S Electronics | Soluciones Tecnológicas",
+    template: "%s | COP’S Electronics",
+  },
   description:
-    "Automatización de procesos y seguridad electrónica para proyectos de alta exigencia. Partners: Hikvision, Milestone, Invenzi, Ablerex, Automated Logic.",
+    "Soluciones tecnológicas enfocadas en automatización de procesos y seguridad electrónica para proyectos de alta exigencia. Partners: Hikvision, Milestone, Invenzi, Ablerex, Automated Logic.",
+  openGraph: {
+    title: "COP’S Electronics | Soluciones Tecnológicas",
+    description:
+      "Automatización de procesos y seguridad electrónica para proyectos enterprise y operación crítica.",
+    siteName: "COP’S Electronics",
+    locale: "es_VE",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "COP’S Electronics | Soluciones Tecnológicas",
+    description:
+      "Automatización de procesos y seguridad electrónica para proyectos enterprise.",
+  },
 };
+
 
 export default function RootLayout({
   children,
