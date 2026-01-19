@@ -5,20 +5,26 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://cops-electronics-site-kwcdrlotb-raor00s-projects.vercel.app/"),
+
   title: {
     default: "COP’S Electronics | Soluciones Tecnológicas",
     template: "%s | COP’S Electronics",
   },
+
   description:
     "Soluciones tecnológicas enfocadas en automatización de procesos y seguridad electrónica para proyectos de alta exigencia. Partners: Hikvision, Milestone, Invenzi, Ablerex, Automated Logic.",
+
   openGraph: {
     title: "COP’S Electronics | Soluciones Tecnológicas",
     description:
       "Automatización de procesos y seguridad electrónica para proyectos enterprise y operación crítica.",
+    url: "/",
     siteName: "COP’S Electronics",
     locale: "es_VE",
     type: "website",
   },
+
   twitter: {
     card: "summary_large_image",
     title: "COP’S Electronics | Soluciones Tecnológicas",
@@ -26,6 +32,7 @@ export const metadata: Metadata = {
       "Automatización de procesos y seguridad electrónica para proyectos enterprise.",
   },
 };
+
 
 
 export default function RootLayout({
