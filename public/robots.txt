@@ -1,13 +1,4 @@
-import type { MetadataRoute } from "next";
+User-agent: *
+Allow: /
 
-export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: "/",
-      },
-    ],
-    sitemap: "https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/sitemap.xml",
-  };
-}
+Sitemap: https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/sitemap.xml

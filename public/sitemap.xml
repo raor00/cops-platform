@@ -1,11 +1,6 @@
-import type { MetadataRoute } from "next";
-
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
- <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app//</loc></url>
+  <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/</loc></url>
   <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/soluciones</loc></url>
   <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/proyectos</loc></url>
   <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/partners</loc></url>
@@ -13,5 +8,3 @@ export default function sitemap(): MetadataRoute.Sitemap {
   <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/contacto</loc></url>
   <url><loc>https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/gracias</loc></url>
 </urlset>
-
-}
