@@ -123,142 +123,147 @@ export default function Home() {
 </div>
 
 
-            <p className="mt-6 text-xs text-white/60">
-              Enfoque enterprise: levantamiento • arquitectura • implementación • puesta en marcha • soporte
-            </p>
-          </div>
-
-              {/* SERVICIOS */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold tracking-tight">Soluciones</h2>
-            <p className="mt-2 text-slate-700">
-              Proyectos de alta exigencia en automatización, seguridad y energía, con enfoque enterprise.
-            </p>
-          </div>
-          <div className="text-sm text-slate-600">
-            Partner: Hikvision • Milestone • Invenzi • Ablerex • Automated Logic
-          </div>
-        </div>
-
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {[
-            {
-              t: "Seguridad Electrónica Integral",
-              d: "Diseño e implementación de soluciones robustas para operación crítica.",
-              b: ["CCTV & analítica", "Almacenamiento", "Monitoreo y operación"],
-            },
-            {
-              t: "VMS / Gestión de video",
-              d: "Estandarización y operación multi-sede con control por roles.",
-              b: ["Arquitectura", "Permisos", "Auditoría"],
-            },
-            {
-              t: "Control de Acceso",
-              d: "Identidades, visitantes, reglas y trazabilidad para cumplimiento.",
-              b: ["Credenciales", "Reportes", "Integraciones"],
-            },
-            {
-              t: "Edificios Inteligentes (BMS)",
-              d: "Monitoreo, control y optimización para infraestructura crítica.",
-              b: ["Alarmas", "Eficiencia", "Puesta en marcha"],
-            },
-            {
-              t: "Energía y Respaldo",
-              d: "Continuidad operativa con soluciones de energía para ambientes exigentes.",
-              b: ["Respaldo", "Protección", "Disponibilidad"],
-            },
-            {
-              t: "Integración e Interoperabilidad",
-              d: "Unificamos plataformas para operación centralizada y escalable.",
-              b: ["Dashboards", "Protocolos", "Automatización"],
-            },
-          ].map((x) => (
-            <div key={x.t} className="rounded-2xl border bg-white p-6 hover:bg-slate-50">
-              <h3 className="font-semibold">{x.t}</h3>
-              <p className="mt-2 text-sm text-slate-700">{x.d}</p>
-              <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
-                {x.b.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* SECTORES */}
-      <section className="border-y bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-3xl font-semibold tracking-tight">Sectores</h2>
-          <p className="mt-2 text-slate-700">
-            Experiencia en entornos donde la disponibilidad, auditoría y continuidad operativa son prioridad.
-          </p>
-
-          <div className="mt-10 grid gap-4 md:grid-cols-4">
-            {[
-              { t: "Bancario", d: "Operación crítica, control por roles, trazabilidad y estándares." },
-              { t: "Industrial", d: "Seguridad, monitoreo, automatización y continuidad en planta." },
-              { t: "Comercial", d: "Protección integral, control de accesos, operación multi-sede." },
-              { t: "Gubernamental", d: "Implementaciones con enfoque en cumplimiento y operación robusta." },
-            ].map((x) => (
-              <div key={x.t} className="rounded-2xl border bg-white p-6">
-                <h3 className="font-semibold">{x.t}</h3>
-                <p className="mt-2 text-sm text-slate-700">{x.d}</p>
+                  <p className="mt-6 text-xs text-white/60">
+                    Enfoque enterprise: levantamiento • arquitectura • implementación • puesta en marcha • soporte
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CÓMO TRABAJAMOS */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <h2 className="text-3xl font-semibold tracking-tight">Cómo trabajamos</h2>
-        <p className="mt-2 text-slate-700">
-          Metodología clara, documentación y control de calidad para proyectos enterprise.
-        </p>
-
-        <div className="mt-10 grid gap-4 md:grid-cols-5">
-          {[
-            { n: "01", t: "Levantamiento", d: "Diagnóstico, requerimientos, riesgos y alcance." },
-            { n: "02", t: "Arquitectura", d: "Diseño técnico, capacidades y escalabilidad." },
-            { n: "03", t: "Implementación", d: "Instalación, integración y configuración." },
-            { n: "04", t: "Puesta en marcha", d: "Pruebas, QA, actas y capacitación." },
-            { n: "05", t: "Soporte", d: "Mantenimiento, mejoras y continuidad operativa." },
-          ].map((x) => (
-            <div key={x.n} className="rounded-2xl border p-6">
-              <p className="text-xs font-semibold text-slate-500">{x.n}</p>
-              <h3 className="mt-2 font-semibold">{x.t}</h3>
-              <p className="mt-2 text-sm text-slate-700">{x.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section className="bg-slate-950">
-        <div className="mx-auto max-w-6xl px-4 py-16 text-white">
-          <div className="grid gap-8 md:grid-cols-12 md:items-center">
-            <div className="md:col-span-8">
-              <h2 className="text-3xl font-semibold tracking-tight">
-                ¿Listo para evaluar tu operación y diseñar una solución robusta?
-              </h2>
-              <p className="mt-3 text-white/75">
-                Coordinamos una reunión técnica para levantar requerimientos y proponer la arquitectura adecuada.
+            </section>
+      
+                    {/* SERVICIOS */}
+            <section className="mx-auto max-w-6xl px-4 py-16">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="text-3xl font-semibold tracking-tight">Soluciones</h2>
+                  <p className="mt-2 text-slate-700">
+                    Proyectos de alta exigencia en automatización, seguridad y energía, con enfoque enterprise.
+                  </p>
+                </div>
+                <div className="text-sm text-slate-600">
+                  Partner: Hikvision • Milestone • Invenzi • Ablerex • Automated Logic
+                </div>
+              </div>
+      
+              <div className="mt-10 grid gap-4 md:grid-cols-3">
+                {[
+                  {
+                    t: "Seguridad Electrónica Integral",
+                    d: "Diseño e implementación de soluciones robustas para operación crítica.",
+                    b: ["CCTV & analítica", "Almacenamiento", "Monitoreo y operación"],
+                  },
+                  {
+                    t: "VMS / Gestión de video",
+                    d: "Estandarización y operación multi-sede con control por roles.",
+                    b: ["Arquitectura", "Permisos", "Auditoría"],
+                  },
+                  {
+                    t: "Control de Acceso",
+                    d: "Identidades, visitantes, reglas y trazabilidad para cumplimiento.",
+                    b: ["Credenciales", "Reportes", "Integraciones"],
+                  },
+                  {
+                    t: "Edificios Inteligentes (BMS)",
+                    d: "Monitoreo, control y optimización para infraestructura crítica.",
+                    b: ["Alarmas", "Eficiencia", "Puesta en marcha"],
+                  },
+                  {
+                    t: "Energía y Respaldo",
+                    d: "Continuidad operativa con soluciones de energía para ambientes exigentes.",
+                    b: ["Respaldo", "Protección", "Disponibilidad"],
+                  },
+                  {
+                    t: "Integración e Interoperabilidad",
+                    d: "Unificamos plataformas para operación centralizada y escalable.",
+                    b: ["Dashboards", "Protocolos", "Automatización"],
+                  },
+                ].map((x) => (
+                  <div key={x.t} className="rounded-2xl border bg-white p-6 hover:bg-slate-50">
+                    <h3 className="font-semibold">{x.t}</h3>
+                    <p className="mt-2 text-sm text-slate-700">{x.d}</p>
+                    <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
+                      {x.b.map((b) => (
+                        <li key={b}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+      
+            {/* SECTORES */}
+            <section className="border-y bg-slate-50">
+              <div className="mx-auto max-w-6xl px-4 py-16">
+                <h2 className="text-3xl font-semibold tracking-tight">Sectores</h2>
+                <p className="mt-2 text-slate-700">
+                  Experiencia en entornos donde la disponibilidad, auditoría y continuidad operativa son prioridad.
+                </p>
+      
+                <div className="mt-10 grid gap-4 md:grid-cols-4">
+                  {[
+                    { t: "Bancario", d: "Operación crítica, control por roles, trazabilidad y estándares." },
+                    { t: "Industrial", d: "Seguridad, monitoreo, automatización y continuidad en planta." },
+                    { t: "Comercial", d: "Protección integral, control de accesos, operación multi-sede." },
+                    { t: "Gubernamental", d: "Implementaciones con enfoque en cumplimiento y operación robusta." },
+                  ].map((x) => (
+                    <div key={x.t} className="rounded-2xl border bg-white p-6">
+                      <h3 className="font-semibold">{x.t}</h3>
+                      <p className="mt-2 text-sm text-slate-700">{x.d}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+      
+            {/* CÓMO TRABAJAMOS */}
+            <section className="mx-auto max-w-6xl px-4 py-16">
+              <h2 className="text-3xl font-semibold tracking-tight">Cómo trabajamos</h2>
+              <p className="mt-2 text-slate-700">
+                Metodología clara, documentación y control de calidad para proyectos enterprise.
               </p>
-            </div>
-            <div className="md:col-span-4 md:text-right">
-              <Link
-                href="/contacto"
-                className="inline-flex w-full justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90 md:w-auto"
-              >
-                Solicitar diagnóstico
-              </Link>
-              <p className="mt-3 text-xs text-white/60">
-                Respuesta por correo • Enfoque enterprise • Documentación
-              </p>
-            </div>
+      
+              <div className="mt-10 grid gap-4 md:grid-cols-5">
+                {[
+                  { n: "01", t: "Levantamiento", d: "Diagnóstico, requerimientos, riesgos y alcance." },
+                  { n: "02", t: "Arquitectura", d: "Diseño técnico, capacidades y escalabilidad." },
+                  { n: "03", t: "Implementación", d: "Instalación, integración y configuración." },
+                  { n: "04", t: "Puesta en marcha", d: "Pruebas, QA, actas y capacitación." },
+                  { n: "05", t: "Soporte", d: "Mantenimiento, mejoras y continuidad operativa." },
+                ].map((x) => (
+                  <div key={x.n} className="rounded-2xl border p-6">
+                    <p className="text-xs font-semibold text-slate-500">{x.n}</p>
+                    <h3 className="mt-2 font-semibold">{x.t}</h3>
+                    <p className="mt-2 text-sm text-slate-700">{x.d}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+      
+            {/* CTA FINAL */}
+            <section className="bg-slate-950">
+              <div className="mx-auto max-w-6xl px-4 py-16 text-white">
+                <div className="grid gap-8 md:grid-cols-12 md:items-center">
+                  <div className="md:col-span-8">
+                    <h2 className="text-3xl font-semibold tracking-tight">
+                      ¿Listo para evaluar tu operación y diseñar una solución robusta?
+                    </h2>
+                    <p className="mt-3 text-white/75">
+                      Coordinamos una reunión técnica para levantar requerimientos y proponer la arquitectura adecuada.
+                    </p>
+                  </div>
+                  <div className="md:col-span-4 md:text-right">
+                    <Link
+                      href="/contacto"
+                      className="inline-flex w-full justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90 md:w-auto"
+                    >
+                      Solicitar diagnóstico
+                    </Link>
+                    <p className="mt-3 text-xs text-white/60">
+                      Respuesta por correo • Enfoque enterprise • Documentación
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
-      </section>
+        );
+      }
