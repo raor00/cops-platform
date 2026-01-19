@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
     ],
-    sitemap: "/sitemap.xml",
+    sitemap: "https://cops-electronics-site-a48j90626-raor00s-projects.vercel.app/sitemap.xml",
   };
 }
