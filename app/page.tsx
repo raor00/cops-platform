@@ -90,6 +90,37 @@ export default function Home() {
               </Link>
             </div>
 
+            {/* Partners */}
+<div className="mt-10">
+  <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/60">
+    Partners tecnológicos
+  </p>
+
+  <div className="flex flex-wrap items-center gap-6">
+    <img
+      src="/partners/hikvision.png"
+      alt="Hikvision"
+      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+    />
+    <img
+      src="/partners/invenzi.png"
+      alt="Invenzi"
+      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+    />
+    <img
+      src="/partners/milestone.png"
+      alt="Milestone Systems"
+      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+    />
+    <img
+      src="/partners/ablerex.png"
+      alt="Ablerex"
+      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+    />
+  </div>
+</div>
+
+
             <p className="mt-6 text-xs text-white/60">
               Enfoque enterprise: levantamiento • arquitectura • implementación • puesta en marcha • soporte
             </p>
