@@ -90,6 +90,8 @@ export default function Home() {
               </Link>
             </div>
 
+            
+
             {/* Partners */}
 <div className="mt-10">
   <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/60">
