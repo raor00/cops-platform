@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+
 
 const STATS = [
   { k: "Banca nacional", v: "Operación crítica" },

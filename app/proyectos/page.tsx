@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -22,7 +23,8 @@ type Project = {
   scope: string[];
   solution: string[];
   result: string[];
-  icon: React.ReactNode;
+  icon: ReactNode;
+
 };
 
 const PROJECTS: Project[] = [
