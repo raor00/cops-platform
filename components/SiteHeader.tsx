@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/soluciones", label: "Soluciones" },
@@ -8,102 +12,130 @@ const NAV = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export default function SiteFooter() {
+export default function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Cierra el menú si cambias de ruta
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  const headerBase =
+    "sticky top-0 z-50 border-b transition-colors duration-200 backdrop-blur";
+  const headerHomeTop = "border-white/10 bg-transparent";
+  const headerHomeScrolled = "border-white/10 bg-slate-950/70";
+  const headerInner = "mx-auto max-w-6xl px-4";
+
+  const headerNotHome = "border-slate-200 bg-white/85";
+
+  const headerClass = isHome
+    ? `${headerBase} ${scrolled ? headerHomeScrolled : headerHomeTop}`
+    : `${headerBase} ${headerNotHome}`;
+
+  const textPrimary = isHome ? "text-white" : "text-slate-900";
+  const textSecondary = isHome ? "text-white/70" : "text-slate-600";
+  const linkColor = isHome ? "text-white/90" : "text-slate-700";
+
   return (
-    <footer className="border-t bg-slate-950 text-white">
-      <div className="mx-auto max-w-6xl px-4 py-14">
-        <div className="grid gap-10 md:grid-cols-12">
-          {/* Marca */}
-          <div className="md:col-span-5">
-            <div className="flex items-center gap-3">
-              <img
-                src="/branding/logo.png"
-                alt="COP’S Electronics"
-                className="h-10 w-auto"
-              />
-              <div className="leading-tight">
-                <p className="text-lg font-semibold">COP’S ELECTRONICS, S.A.</p>
-                <p className="text-sm text-white/70">28 años de trayectoria ininterrumpida</p>
-              </div>
+    <header className={headerClass}>
+      <div className={`${headerInner} flex items-center justify-between py-3`}>
+        {/* Marca */}
+        <Link href="/" className="flex items-center gap-3">
+          <img
+            src="/branding/logo.png"
+            alt="COP’S Electronics"
+            className="h-8 w-auto"
+          />
+          <div className="leading-tight">
+            <div className={`font-semibold tracking-tight ${textPrimary}`}>
+              COP’S Electronics
             </div>
-
-            <p className="mt-4 text-sm text-white/75">
-              Asesoría e implementación de proyectos tecnológicos de alta gama en automatización,
-              seguridad electrónica y energía, dirigidos a sectores industriales, bancarios,
-              comerciales e instituciones gubernamentales.
-            </p>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/contacto"
-                className="inline-flex justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90"
-              >
-                Agendar reunión técnica
-              </Link>
-              <Link
-                href="/proyectos"
-                className="inline-flex justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Ver proyectos
-              </Link>
-            </div>
+            <div className={`text-xs ${textSecondary}`}>28 años de trayectoria</div>
           </div>
+        </Link>
 
-          {/* Navegación */}
-          <div className="md:col-span-3 md:col-start-8">
-            <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
-              Navegación
-            </p>
-            <nav className="mt-4 grid gap-3">
-              {NAV.map((i) => (
-                <Link
-                  key={i.href}
-                  href={i.href}
-                  className="text-sm font-semibold text-white/85 hover:text-white"
-                >
-                  {i.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-6 md:flex">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-sm font-semibold hover:underline ${linkColor}`}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <Link
+            href="/contacto"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            Solicitar consultoría
+          </Link>
+        </nav>
 
-          {/* Partners mini */}
-          <div className="md:col-span-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
-              Partners
-            </p>
+        {/* Mobile actions */}
+        <div className="flex items-center gap-2 md:hidden">
+          {/* CTA móvil (si lo quieres aquí arriba). Si lo prefieres SOLO dentro del menú, lo movemos. */}
+          <Link
+            href="/contacto"
+            className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:opacity-90"
+          >
+            Solicitar
+          </Link>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              {[
-                { src: "/partners/milestone.png", alt: "Milestone" },
-                { src: "/partners/winsted.png", alt: "Winsted" },
-                { src: "/partners/invenzi.png", alt: "Invenzi" },
-                { src: "/partners/altronix.png", alt: "Altronix" },
-                { src: "/partners/automated-logic.png", alt: "Automated Logic" },
-                { src: "/partners/velasea.png", alt: "Velasea" },
-              ].map((l) => (
-                <div
-                  key={l.alt}
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2"
-                >
-                  <img src={l.src} alt={l.alt} className="h-6 w-auto opacity-90" />
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-4 text-xs text-white/60">
-              *Marcas y logos pertenecen a sus respectivos propietarios.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/60 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} COP’S ELECTRONICS, S.A. Todos los derechos reservados.</p>
-          <p className="text-white/60">
-            Banca nacional • Proyectos enterprise • Partners internacionales
-          </p>
+          {/* Botón menú */}
+          <button
+            type="button"
+            aria-label="Abrir menú"
+            className={`rounded-xl border px-3 py-2 text-xs font-semibold ${
+              isHome ? "border-white/20 text-white" : "border-slate-200 text-slate-900"
+            }`}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? "Cerrar" : "Menú"}
+          </button>
         </div>
       </div>
-    </footer>
+
+      {/* Mobile dropdown */}
+      {open && (
+        <div className={isHome ? "bg-slate-950/95" : "bg-white"}>
+          <div className={`${headerInner} pb-4`}>
+            <div className={`mt-2 rounded-2xl border p-2 ${isHome ? "border-white/10" : "border-slate-200"}`}>
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block rounded-xl px-4 py-3 text-sm font-semibold ${
+                    isHome ? "text-white hover:bg-white/10" : "text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              <div className="mt-2 px-2 pb-2">
+                <Link
+                  href="/contacto"
+                  className="block w-full rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white hover:opacity-90"
+                >
+                  Solicitar consultoría gratuita
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }
