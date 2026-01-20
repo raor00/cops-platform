@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+const pathname = usePathname();
+const isHome = pathname === "/";
+
+
 
 const NAV = [
   { href: "/soluciones", label: "Soluciones" },
@@ -17,18 +22,23 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link href="/" className="font-semibold tracking-tight">
-          COP’S Electronics
-        </Link>
+        <Link href="/" className="flex items-center gap-3">
+  <img
+    src="/branding/logo.png"
+    alt="COP'S Electronics"
+    className="h-8 w-auto"
+  />
+ <span
+  className={`font-semibold tracking-tight ${
+    isHome ? "text-white" : "text-slate-900"
+  }`}
+>
+  COP’S Electronics
+</span>
 
-        {/* Desktop */}
+</Link>
+
         <nav className="hidden gap-6 text-sm md:flex">
-          {NAV.map((i) => (
-            <Link key={i.href} href={i.href} className="hover:underline">
-              {i.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className="flex items-center gap-3">
           <Link
@@ -48,6 +58,7 @@ export default function SiteHeader() {
             {open ? "Cerrar" : "Menú"}
           </button>
         </div>
+        </nav>
       </div>
 
       {/* Mobile menu */}
