@@ -5,33 +5,41 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://cops-electronics-site-kwcdrlotb-raor00s-projects.vercel.app/"),
-
   title: {
     default: "COP’S Electronics | Soluciones Tecnológicas",
     template: "%s | COP’S Electronics",
   },
-
   description:
-    "Soluciones tecnológicas enfocadas en automatización de procesos y seguridad electrónica para proyectos de alta exigencia. Partners: Hikvision, Milestone, Invenzi, Ablerex, Automated Logic.",
-
+    "Automatización de procesos, seguridad electrónica y energía para proyectos enterprise, banca nacional e infraestructura crítica.",
   openGraph: {
     title: "COP’S Electronics | Soluciones Tecnológicas",
     description:
-      "Automatización de procesos y seguridad electrónica para proyectos enterprise y operación crítica.",
+      "Automatización, seguridad electrónica y energía para banca nacional, proyectos enterprise y aliados internacionales.",
     url: "/",
     siteName: "COP’S Electronics",
     locale: "es_VE",
     type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "COP’S Electronics | Automatización • Seguridad • Energía",
+      },
+    ],
   },
-
   twitter: {
     card: "summary_large_image",
     title: "COP’S Electronics | Soluciones Tecnológicas",
     description:
-      "Automatización de procesos y seguridad electrónica para proyectos enterprise.",
+      "Automatización, seguridad electrónica y energía para proyectos enterprise y banca nacional.",
+    images: ["/og.png"],
+  },
+  icons: {
+    icon: "/favicon.png", // o favicon.ico si usas ico
   },
 };
+
 
 
 
@@ -61,7 +69,7 @@ export default function RootLayout({
               href="/contacto"
               className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
             >
-              Solicitar diagnóstico
+              Solicitar consultoría  gratuita
             </Link>
           </div>
         </header>
@@ -88,7 +96,7 @@ export default function RootLayout({
         </p>
 
         <p className="mt-3 text-xs text-slate-500">
-          Partners: Hikvision • Milestone • Invenzi • Ablerex • Automated Logic
+          Partners: Milestone • Winsted • Invenzi • Altronix • Automated Logic • Velazea
         </p>
       </div>
 
@@ -121,7 +129,7 @@ export default function RootLayout({
         <ul className="mt-3 space-y-2 text-sm text-slate-600">
           <li>
             <a className="hover:underline" href="/contacto">
-              Solicitar diagnóstico
+              Solicitar consultoría gratuita
             </a>
           </li>
           <li>Atención por correo</li>

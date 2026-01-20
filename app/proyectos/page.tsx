@@ -1,6 +1,31 @@
-import Link from "next/link";
+"use client";
 
-const PROJECTS = [
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Building2,
+  Factory,
+  Landmark,
+  Shield,
+  Camera,
+  KeyRound,
+  Zap,
+  Network,
+} from "lucide-react";
+
+type Sector = "Banca" | "Industrial" | "Comercial" | "Gubernamental" | "Mixto";
+
+type Project = {
+  title: string;
+  sector: Sector;
+  scope: string[];
+  solution: string[];
+  result: string[];
+  icon: React.ReactNode;
+};
+
+const PROJECTS: Project[] = [
   {
     title: "Estandarización de video y operación multi-sede",
     sector: "Banca",
@@ -15,21 +40,19 @@ const PROJECTS = [
       "Mejora de trazabilidad y auditoría",
       "Escalabilidad para nuevas sedes",
     ],
+    icon: <Camera className="h-5 w-5" />,
   },
   {
     title: "Control de acceso y trazabilidad de visitantes",
-    sector: "Banca / Corporativo",
+    sector: "Banca",
     scope: ["Accesos", "Visitantes", "Reportes", "Cumplimiento"],
     solution: [
-      "Diseño de flujos de acceso por áreas",
+      "Flujos de acceso por áreas y niveles",
       "Gestión de credenciales y visitantes",
-      "Reportes para auditoría interna",
+      "Reportes operativos y auditoría",
     ],
-    result: [
-      "Mayor control y seguridad por zonas",
-      "Registro confiable de eventos",
-      "Mejor experiencia operativa",
-    ],
+    result: ["Mayor control por zonas", "Registro confiable", "Mejor operación"],
+    icon: <KeyRound className="h-5 w-5" />,
   },
   {
     title: "Automatización y monitoreo de infraestructura",
@@ -38,59 +61,60 @@ const PROJECTS = [
     solution: [
       "Levantamiento y definición de puntos críticos",
       "Integración de señales y alertas",
-      "Paneles de monitoreo y procedimientos",
+      "Tableros de monitoreo y procedimientos",
     ],
     result: [
       "Respuesta más rápida ante incidentes",
       "Reducción de fallas operativas",
-      "Mejor visibilidad del estado de planta",
+      "Mejor visibilidad de planta",
     ],
+    icon: <Network className="h-5 w-5" />,
   },
   {
     title: "Seguridad electrónica integral para instalación crítica",
-    sector: "Gubernamental / Institucional",
+    sector: "Gubernamental",
     scope: ["CCTV", "Analítica", "Perímetro", "Operación"],
     solution: [
       "Diseño de cobertura y zonificación",
-      "Implementación de analítica según riesgos",
+      "Analítica alineada a riesgos",
       "Documentación y puesta en marcha",
     ],
-    result: [
-      "Cobertura alineada a riesgos",
-      "Mejora de detección y disuasión",
-      "Operación más eficiente",
-    ],
+    result: ["Cobertura alineada a riesgos", "Mejor detección", "Operación eficiente"],
+    icon: <Shield className="h-5 w-5" />,
   },
   {
     title: "Edificios inteligentes y gestión de servicios",
     sector: "Comercial",
     scope: ["BMS", "Eficiencia", "Alarmas", "Mantenimiento"],
     solution: [
-      "Integración de subsistemas del edificio",
+      "Integración de subsistemas",
       "Tableros de operación y control",
       "Procedimientos y mantenimiento preventivo",
     ],
-    result: [
-      "Mayor control de infraestructura",
-      "Optimización operativa",
-      "Planificación de mantenimiento",
-    ],
+    result: ["Mayor control", "Optimización operativa", "Planificación de mantenimiento"],
+    icon: <Building2 className="h-5 w-5" />,
   },
   {
     title: "Respaldo de energía para continuidad operativa",
-    sector: "Banca / Industrial",
+    sector: "Mixto",
     scope: ["Energía", "Respaldo", "Protección", "Disponibilidad"],
     solution: [
       "Evaluación de cargas y criticidad",
       "Diseño de respaldo y protección",
       "Implementación y pruebas",
     ],
-    result: [
-      "Mayor disponibilidad de servicios",
-      "Protección ante variaciones eléctricas",
-      "Continuidad en operación crítica",
-    ],
+    result: ["Mayor disponibilidad", "Protección eléctrica", "Continuidad operativa"],
+    icon: <Zap className="h-5 w-5" />,
   },
+];
+
+const FILTERS: { key: "Todos" | Sector; label: string; icon: React.ReactNode }[] = [
+  { key: "Todos", label: "Todos", icon: <Factory className="h-4 w-4" /> },
+  { key: "Banca", label: "Banca", icon: <Landmark className="h-4 w-4" /> },
+  { key: "Industrial", label: "Industrial", icon: <Factory className="h-4 w-4" /> },
+  { key: "Comercial", label: "Comercial", icon: <Building2 className="h-4 w-4" /> },
+  { key: "Gubernamental", label: "Gubernamental", icon: <Shield className="h-4 w-4" /> },
+  { key: "Mixto", label: "Mixto", icon: <Network className="h-4 w-4" /> },
 ];
 
 function Tag({ text }: { text: string }) {
@@ -102,11 +126,18 @@ function Tag({ text }: { text: string }) {
 }
 
 export default function Proyectos() {
+  const [filter, setFilter] = useState<"Todos" | Sector>("Todos");
+
+  const filtered = useMemo(() => {
+    if (filter === "Todos") return PROJECTS;
+    return PROJECTS.filter((p) => p.sector === filter);
+  }, [filter]);
+
   return (
     <div>
       {/* HERO */}
       <section className="border-b bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+        <div className="mx-auto max-w-6xl px-4 py-14">
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">
             Proyectos y experiencia
           </p>
@@ -114,9 +145,8 @@ export default function Proyectos() {
             Implementaciones para entornos enterprise
           </h1>
           <p className="mt-4 max-w-3xl text-slate-700">
-            Presentamos casos tipo y alcances representativos (sin datos sensibles) de proyectos
-            en automatización, seguridad electrónica y energía, orientados a operación crítica y
-            continuidad de servicio.
+            Casos tipo y alcances representativos (sin datos sensibles) en automatización,
+            seguridad electrónica y energía para operación crítica.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -141,19 +171,65 @@ export default function Proyectos() {
             <Tag text="+1500 obras ejecutadas" />
             <Tag text="20 años de trayectoria" />
           </div>
+
+          {/* Filtros */}
+          <div className="mt-10 flex flex-wrap gap-2">
+            {FILTERS.map((f) => {
+              const active = filter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    active ? "bg-slate-900 text-white" : "bg-white hover:bg-slate-100"
+                  }`}
+                >
+                  {f.icon}
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* GRID */}
       <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="grid gap-4 md:grid-cols-2">
-          {PROJECTS.map((p) => (
-            <article key={p.title} className="rounded-2xl border bg-white p-6 hover:bg-slate-50">
+        <motion.div
+          layout
+          className="grid gap-4 md:grid-cols-2"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+        >
+          {filtered.map((p) => (
+            <motion.article
+              key={p.title}
+              layout
+              className="rounded-2xl border bg-white p-6 hover:bg-slate-50"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
               <div className="flex items-start justify-between gap-4">
-                <h2 className="text-lg font-semibold">{p.title}</h2>
-                <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                  {p.sector}
-                </span>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl border bg-white p-2 text-slate-900">
+                    {p.icon}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold">{p.title}</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Sector: <span className="font-medium">{p.sector}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/contacto"
+                  className="hidden rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-white md:inline-flex"
+                >
+                  Solicitar propuesta
+                </Link>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -191,17 +267,17 @@ export default function Proyectos() {
                 </div>
               </div>
 
-              <div className="mt-6">
+              <div className="mt-6 md:hidden">
                 <Link
                   href="/contacto"
-                  className="inline-flex rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-white"
+                  className="inline-flex w-full justify-center rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-white"
                 >
                   Solicitar propuesta
                 </Link>
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* CTA FINAL */}

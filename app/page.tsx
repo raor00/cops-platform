@@ -80,7 +80,7 @@ export default function Home() {
                 href="/contacto"
                 className="rounded-xl bg-white px-5 py-3 text-center text-sm font-semibold text-slate-900 hover:opacity-90"
               >
-                Solicitar diagnóstico
+                Solicitar consultoría  gratuita
               </Link>
               <Link
                 href="/proyectos"
@@ -100,8 +100,13 @@ export default function Home() {
 
   <div className="flex flex-wrap items-center gap-6">
     <img
-      src="/partners/hikvision.png"
-      alt="Hikvision"
+      src="/partners/milestone.png"
+      alt="Milestone Systems"
+      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+    />
+     <img
+      src="/partners/winsted.png"
+      alt="Winsted"
       className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
     />
     <img
@@ -109,16 +114,21 @@ export default function Home() {
       alt="Invenzi"
       className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
     />
-    <img
-      src="/partners/milestone.png"
-      alt="Milestone Systems"
-      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
-    />
-    <img
-      src="/partners/ablerex.png"
-      alt="Ablerex"
-      className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
-    />
+   <img
+  src="/partners/altronix.png"
+  alt="Altronix"
+  className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+/>
+<img
+  src="/partners/automated-logic.png"
+  alt="Automated Logic"
+  className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+/>
+<img
+  src="/partners/velasea.png"
+  alt="Velasea"
+  className="h-7 opacity-80 grayscale transition hover:opacity-100 hover:grayscale-0"
+/>
   </div>
 </div>
 
@@ -140,7 +150,7 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="text-sm text-slate-600">
-                  Partner: Hikvision • Milestone • Invenzi • Ablerex • Automated Logic
+                  Partner: Milestone • Winsted • Invenzi • Altronix • Automated Logic • Velasea
                 </div>
               </div>
       
@@ -255,7 +265,7 @@ export default function Home() {
                       href="/contacto"
                       className="inline-flex w-full justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90 md:w-auto"
                     >
-                      Solicitar diagnóstico
+                      Solicitar consultoría  gratuita
                     </Link>
                     <p className="mt-3 text-xs text-white/60">
                       Respuesta por correo • Enfoque enterprise • Documentación
