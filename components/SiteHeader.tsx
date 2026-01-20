@@ -20,7 +20,11 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
+    <header
+  className={`hover:underline ${isHome ? "text-white/90" : "text-slate-700"}`}
+
+>
+
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center gap-3">
   <img
