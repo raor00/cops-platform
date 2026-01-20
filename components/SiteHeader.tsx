@@ -3,10 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-const pathname = usePathname();
-const isHome = pathname === "/";
-
-
 
 const NAV = [
   { href: "/soluciones", label: "Soluciones" },
@@ -18,77 +14,79 @@ const NAV = [
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   return (
     <header
-  className={`hover:underline ${isHome ? "text-white/90" : "text-slate-700"}`}
-
->
-
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+      className={`sticky top-0 z-50 border-b backdrop-blur ${
+        isHome ? "border-white/10 bg-transparent" : "border-slate-200 bg-white/80"
+      }`}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        {/* Marca */}
         <Link href="/" className="flex items-center gap-3">
-  <img
-    src="/branding/logo.png"
-    alt="COP'S Electronics"
-    className="h-8 w-auto"
-  />
- <span
-  className={`font-semibold tracking-tight ${
-    isHome ? "text-white" : "text-slate-900"
-  }`}
->
-  COP’S Electronics
-</span>
+          <img
+            src="/branding/logo.png"
+            alt="COP’S Electronics"
+            className="h-8 w-auto"
+          />
+          <div className="flex flex-col leading-tight">
+            <span className={`font-semibold tracking-tight ${isHome ? "text-white" : "text-slate-900"}`}>
+              COP’S Electronics
+            </span>
+            <span className={`text-xs ${isHome ? "text-white/70" : "text-slate-600"}`}>
+              28 años de trayectoria
+            </span>
+          </div>
+        </Link>
 
-</Link>
-
-        <nav className="hidden gap-6 text-sm md:flex">
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/contacto"
-            className="hidden rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:opacity-90 md:inline-flex"
-          >
-            Solicitar diagnóstico
-          </Link>
-
-          {/* Mobile button */}
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="inline-flex rounded-xl border px-3 py-2 text-sm md:hidden"
-            aria-label="Abrir menú"
-          >
-            {open ? "Cerrar" : "Menú"}
-          </button>
-        </div>
+        {/* Menú desktop */}
+        <nav className="hidden items-center gap-6 md:flex">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-sm font-semibold hover:underline ${
+                isHome ? "text-white/90" : "text-slate-700"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
+
+        {/* Botón móvil */}
+        <button
+          type="button"
+          aria-label="Abrir menú"
+          className={`inline-flex items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold md:hidden ${
+            isHome ? "border-white/20 text-white" : "border-slate-200 text-slate-800"
+          }`}
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? "Cerrar" : "Menú"}
+        </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Menú desplegable móvil */}
       {open && (
-        <div className="border-t bg-white md:hidden">
-          <div className="mx-auto max-w-6xl px-4 py-3">
-            <nav className="flex flex-col gap-3 text-sm">
-              {NAV.map((i) => (
+        <div className={`${isHome ? "bg-slate-950/95" : "bg-white"} md:hidden`}>
+          <div className="mx-auto max-w-6xl px-4 pb-4">
+            <div className={`mt-2 rounded-2xl border p-2 ${isHome ? "border-white/10" : "border-slate-200"}`}>
+              {NAV.map((item) => (
                 <Link
-                  key={i.href}
-                  href={i.href}
-                  className="rounded-xl px-3 py-2 hover:bg-slate-50"
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setOpen(false)}
+                  className={`block rounded-xl px-4 py-3 text-sm font-semibold ${
+                    isHome ? "text-white hover:bg-white/10" : "text-slate-800 hover:bg-slate-50"
+                  }`}
                 >
-                  {i.label}
+                  {item.label}
                 </Link>
               ))}
-
-              <Link
-                href="/contacto"
-                className="mt-2 rounded-xl bg-slate-900 px-3 py-2 text-center text-sm font-medium text-white"
-                onClick={() => setOpen(false)}
-              >
-                Solicitar diagnóstico
-              </Link>
-            </nav>
+            </div>
           </div>
         </div>
       )}
