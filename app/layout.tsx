@@ -96,7 +96,7 @@ export default function RootLayout({
         </p>
 
         <p className="mt-3 text-xs text-slate-500">
-          Partners: Milestone • Winsted • Invenzi • Altronix • Automated Logic • Velazea
+          Partners: Milestone • Winsted • Invenzi • Altronix • Automated Logic • Velasea
         </p>
       </div>
 
