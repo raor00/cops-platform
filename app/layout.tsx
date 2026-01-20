@@ -1,7 +1,6 @@
 import SiteHeader from "@/components/SiteHeader";
 import "./globals.css";
 import Link from "next/link";
-
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -75,6 +74,7 @@ export default function RootLayout({
         </header>
 
                 <main>{children}</main>
+
 
         <footer className="border-t bg-white">
   <div className="mx-auto max-w-6xl px-4 py-12">

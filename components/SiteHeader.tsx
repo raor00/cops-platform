@@ -1,8 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/soluciones", label: "Soluciones" },
@@ -12,84 +8,102 @@ const NAV = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export default function SiteHeader() {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const isHome = pathname === "/";
-
+export default function SiteFooter() {
   return (
-    <header
-      className={`sticky top-0 z-50 border-b backdrop-blur ${
-        isHome ? "border-white/10 bg-transparent" : "border-slate-200 bg-white/80"
-      }`}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        {/* Marca */}
-        <Link href="/" className="flex items-center gap-3">
-          <img
-            src="/branding/logo.png"
-            alt="COP’S Electronics"
-            className="h-8 w-auto"
-          />
-          <div className="flex flex-col leading-tight">
-            <span className={`font-semibold tracking-tight ${isHome ? "text-white" : "text-slate-900"}`}>
-              COP’S Electronics
-            </span>
-            <span className={`text-xs ${isHome ? "text-white/70" : "text-slate-600"}`}>
-              28 años de trayectoria
-            </span>
-          </div>
-        </Link>
+    <footer className="border-t bg-slate-950 text-white">
+      <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="grid gap-10 md:grid-cols-12">
+          {/* Marca */}
+          <div className="md:col-span-5">
+            <div className="flex items-center gap-3">
+              <img
+                src="/branding/logo.png"
+                alt="COP’S Electronics"
+                className="h-10 w-auto"
+              />
+              <div className="leading-tight">
+                <p className="text-lg font-semibold">COP’S ELECTRONICS, S.A.</p>
+                <p className="text-sm text-white/70">28 años de trayectoria ininterrumpida</p>
+              </div>
+            </div>
 
-        {/* Menú desktop */}
-        <nav className="hidden items-center gap-6 md:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`text-sm font-semibold hover:underline ${
-                isHome ? "text-white/90" : "text-slate-700"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+            <p className="mt-4 text-sm text-white/75">
+              Asesoría e implementación de proyectos tecnológicos de alta gama en automatización,
+              seguridad electrónica y energía, dirigidos a sectores industriales, bancarios,
+              comerciales e instituciones gubernamentales.
+            </p>
 
-        {/* Botón móvil */}
-        <button
-          type="button"
-          aria-label="Abrir menú"
-          className={`inline-flex items-center justify-center rounded-xl border px-3 py-2 text-sm font-semibold md:hidden ${
-            isHome ? "border-white/20 text-white" : "border-slate-200 text-slate-800"
-          }`}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? "Cerrar" : "Menú"}
-        </button>
-      </div>
-
-      {/* Menú desplegable móvil */}
-      {open && (
-        <div className={`${isHome ? "bg-slate-950/95" : "bg-white"} md:hidden`}>
-          <div className="mx-auto max-w-6xl px-4 pb-4">
-            <div className={`mt-2 rounded-2xl border p-2 ${isHome ? "border-white/10" : "border-slate-200"}`}>
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={`block rounded-xl px-4 py-3 text-sm font-semibold ${
-                    isHome ? "text-white hover:bg-white/10" : "text-slate-800 hover:bg-slate-50"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/contacto"
+                className="inline-flex justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90"
+              >
+                Agendar reunión técnica
+              </Link>
+              <Link
+                href="/proyectos"
+                className="inline-flex justify-center rounded-xl border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                Ver proyectos
+              </Link>
             </div>
           </div>
+
+          {/* Navegación */}
+          <div className="md:col-span-3 md:col-start-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
+              Navegación
+            </p>
+            <nav className="mt-4 grid gap-3">
+              {NAV.map((i) => (
+                <Link
+                  key={i.href}
+                  href={i.href}
+                  className="text-sm font-semibold text-white/85 hover:text-white"
+                >
+                  {i.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Partners mini */}
+          <div className="md:col-span-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
+              Partners
+            </p>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {[
+                { src: "/partners/milestone.png", alt: "Milestone" },
+                { src: "/partners/winsted.png", alt: "Winsted" },
+                { src: "/partners/invenzi.png", alt: "Invenzi" },
+                { src: "/partners/altronix.png", alt: "Altronix" },
+                { src: "/partners/automated-logic.png", alt: "Automated Logic" },
+                { src: "/partners/velasea.png", alt: "Velasea" },
+              ].map((l) => (
+                <div
+                  key={l.alt}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2"
+                >
+                  <img src={l.src} alt={l.alt} className="h-6 w-auto opacity-90" />
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 text-xs text-white/60">
+              *Marcas y logos pertenecen a sus respectivos propietarios.
+            </p>
+          </div>
         </div>
-      )}
-    </header>
+
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/60 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} COP’S ELECTRONICS, S.A. Todos los derechos reservados.</p>
+          <p className="text-white/60">
+            Banca nacional • Proyectos enterprise • Partners internacionales
+          </p>
+        </div>
+      </div>
+    </footer>
   );
 }
