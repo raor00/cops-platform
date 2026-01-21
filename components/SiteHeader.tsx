@@ -26,7 +26,7 @@ export default function SiteHeader() {
   const headerClass = isHome
     ? scrolled
       ? "bg-slate-950/80 backdrop-blur border-b border-white/10"
-      : "bg-transparent"
+      : "bg-slate-950/30 backdrop-blur border-b border-white/10"
     : "bg-white/90 backdrop-blur border-b border-slate-200";
 
   const linkClass = isHome
@@ -91,7 +91,7 @@ export default function SiteHeader() {
     aria-label="Abrir menú"
     onClick={() => setOpen((v) => !v)}
     className={`rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight ${
-      isHome ? "border-white/30 text-white bg-white/10" : "border-slate-300 text-slate-900 bg-white"
+      isHome ? "border-white/30 text-white bg-slate-950/40" : "border-slate-300 text-slate-900 bg-white"
     }`}
   >
     {open ? "Cerrar" : "Menú"}
