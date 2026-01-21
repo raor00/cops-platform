@@ -90,9 +90,12 @@ export default function SiteHeader() {
     type="button"
     aria-label="Abrir menú"
     onClick={() => setOpen((v) => !v)}
-    className={`rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight ${
-      isHome ? "border-white/30 text-white bg-slate-950/40" : "border-slate-300 text-slate-900 bg-white"
-    }`}
+    className={`rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition ${
+  isHome
+    ? "border-white/30 text-white bg-slate-900/70 hover:bg-slate-900"
+    : "border-slate-300 text-slate-900 bg-white hover:bg-slate-50"
+}`}
+
   >
     {open ? "Cerrar" : "Menú"}
   </button>
