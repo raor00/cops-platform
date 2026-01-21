@@ -26,7 +26,9 @@ const linkClass = isHome
   ? "text-white hover:text-white"
   : "text-slate-800 hover:text-slate-900";
 
-  const [open, setOpen] = useState(false);
+  function setOpen(arg0: (v: any) => boolean): void {
+    throw new Error("Function not implemented.");
+  }
 
   return (
     <header className={`sticky top-0 z-50 transition-colors ${headerClass}`}>
@@ -57,7 +59,7 @@ const linkClass = isHome
         : "text-slate-900 border border-slate-300"
     }`}
   >
-    {open ? "Cerrar" : "Menú"}
+    {open() ? "Cerrar" : "Menú"}
   </button>
 </div>
 
@@ -68,18 +70,7 @@ const linkClass = isHome
             Solicitar consultoría gratuita
             
           </Link>
-    {open && (
-  <div className={isHome ? "bg-slate-950" : "bg-white"}>
-    <nav className="mx-auto max-w-6xl px-4 py-4 flex flex-col gap-4">
-      <Link href="/soluciones" onClick={() => setOpen(false)} className={isHome ? "text-white" : "text-slate-900"}>Soluciones</Link>
-      <Link href="/proyectos" onClick={() => setOpen(false)} className={isHome ? "text-white" : "text-slate-900"}>Proyectos</Link>
-      <Link href="/partners" onClick={() => setOpen(false)} className={isHome ? "text-white" : "text-slate-900"}>Partners</Link>
-      <Link href="/nosotros" onClick={() => setOpen(false)} className={isHome ? "text-white" : "text-slate-900"}>Nosotros</Link>
-      <Link href="/contacto" onClick={() => setOpen(false)} className={isHome ? "text-white" : "text-slate-900"}>Contacto</Link>
-    </nav>
-  </div>
-)}
-
+    
         </nav>
       </div>
     </header>
