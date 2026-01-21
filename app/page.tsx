@@ -110,6 +110,9 @@ export default function Home() {
             { src: "/partners/altronix.png", alt: "Altronix" },
             { src: "/partners/automated-logic.png", alt: "Automated Logic" },
             { src: "/partners/velasea.png", alt: "Velasea" },
+            { src: "/partners/magos.png", alt: "Magos" },
+            { src: "/partners/digital.png", alt: "Digital" },
+
 
             // Repetimos de nuevo (para que la tanda sea más larga que la pantalla)
             { src: "/partners/milestone.png", alt: "Milestone 2" },
@@ -118,6 +121,8 @@ export default function Home() {
             { src: "/partners/altronix.png", alt: "Altronix 2" },
             { src: "/partners/automated-logic.png", alt: "Automated Logic 2" },
             { src: "/partners/velasea.png", alt: "Velasea 2" },
+            { src: "/partners/magos.png", alt: "Magos 2" },
+            { src: "/partners/digital.png", alt: "Digital 2" },
           ].map((l, idx) => (
             <div key={idx} className="logo-pill">
               <img src={l.src} alt={l.alt} className="logo-img" />

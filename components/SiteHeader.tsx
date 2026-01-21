@@ -16,7 +16,7 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const isHome = !pathname || pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -52,7 +52,7 @@ export default function SiteHeader() {
         {/* Marca */}
         <Link href="/" className="flex items-center gap-3">
           <img
-            src="/branding/logo.png"
+            src="/branding/cops.png"
             alt="COP’S Electronics"
             className="h-8 w-auto"
           />
