@@ -32,18 +32,17 @@ export default function SiteHeader() {
 
   const headerBase =
     "sticky top-0 z-50 border-b transition-colors duration-200 backdrop-blur";
+     const headerNotHome = "border-slate-200 bg-white/85";
   const headerHomeTop = "border-white/10 bg-transparent";
   const headerHomeScrolled = "border-white/10 bg-slate-950/70";
   const headerInner = "mx-auto max-w-6xl px-4";
-
-  const headerNotHome = "border-slate-200 bg-white/85";
 
   const headerClass = isHome
     ? `${headerBase} ${scrolled ? headerHomeScrolled : headerHomeTop}`
     : `${headerBase} ${headerNotHome}`;
 
   const textPrimary = isHome ? "text-white" : "text-slate-900";
-  const textSecondary = isHome ? "text-white/70" : "text-slate-600";
+  const textSecondary = isHome ? "text-white/70" : "text-slate-900";
   const linkColor = isHome ? "text-white/90" : "text-slate-700";
 
   return (
