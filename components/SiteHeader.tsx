@@ -8,6 +8,8 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -25,10 +27,6 @@ export default function SiteHeader() {
 const linkClass = isHome
   ? "text-white hover:text-white"
   : "text-slate-800 hover:text-slate-900";
-
-  function setOpen(arg0: (v: any) => boolean): void {
-    throw new Error("Function not implemented.");
-  }
 
   return (
     <header className={`sticky top-0 z-50 transition-colors ${headerClass}`}>
@@ -59,7 +57,7 @@ const linkClass = isHome
         : "text-slate-900 border border-slate-300"
     }`}
   >
-    {open() ? "Cerrar" : "Menú"}
+    {open ? "Cerrar" : "Menú"}
   </button>
 </div>
 
