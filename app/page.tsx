@@ -21,6 +21,16 @@ const SOLUTIONS = [
   },
 ];
 
+const CLIENTES = [
+  { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
+  { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
+  { src: "/clientes/fvf.png", alt: "FVF" },
+  { src: "/clientes/bigott.png", alt: "Cigarrera Bigott" },
+  { src: "/clientes/plaza.png", alt: "Plaza" },
+  { src: "/clientes/bfc.png", alt: "BFC" },
+];
+
+
 export default function Home() {
   return (
     <div>
@@ -138,6 +148,39 @@ export default function Home() {
             <p className="mt-1 text-sm text-white/60">Arquitectura + implementación + soporte</p>
           </div>
         </div>
+        {/* Confianza / Clientes */}
+<div className="mt-10">
+  <p className="text-xs font-semibold tracking-[0.2em] text-white/60">
+    HAN CONFIADO EN COP’S
+  </p>
+
+  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    {[
+      { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
+      { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
+      { src: "/clientes/bfc.png", alt: "BFC" },
+      { src: "/clientes/fvf.png", alt: "FVF" },
+      { src: "/clientes/bigott.png", alt: "Bigott" },
+      { src: "/clientes/plaza.png", alt: "Banco Plaza" },
+    ].map((c) => (
+      <div
+        key={c.src}
+        className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+      >
+        <img
+          src={c.src}
+          alt={c.alt}
+          className="h-8 w-auto object-contain opacity-80 grayscale"
+        />
+      </div>
+    ))}
+  </div>
+
+  <p className="mt-3 text-xs text-white/50">
+    *Algunas marcas pueden corresponder a empresas históricas o reestructuradas con el tiempo.
+  </p>
+</div>
+
       </div>
     </div>
   </div>
@@ -152,7 +195,7 @@ export default function Home() {
   </p>
 
   <div className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]">
-    <div className="group flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-4 backdrop-blur transition hover:bg-white/10">
+    <div className="group flex items-center justify-center rounded-2xl border border-white/10 bg-white/8 px-6 py-4 backdrop-blur transition hover:bg-white/12">
       <div className="logo-marquee__track gap-10">
         {/* Grupo 1 (largo) */}
         <div className="logo-marquee__group gap-10">
@@ -201,7 +244,7 @@ export default function Home() {
             { src: "/partners/velasea.png", alt: "Velasea 2" },
           ].map((l, idx) => (
             <div key={idx} className="logo-pill">
-              <img src={l.src} alt={l.alt} className="logo-img" />
+              <img src={l.src} alt={l.alt} className="h-10 w-auto object-contain opacity-80 grayscale transition group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-105"/>
             </div>
           ))}
         </div>
