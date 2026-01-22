@@ -48,15 +48,14 @@ const PARTNERS = [
     name: "Magos",
     logo: "/partners/magos.png",
     desc:
-      "Soluciones especializadas para operación e integración tecnológica orientada a proyectos de alta exigencia.",
-    bullets: ["Soporte a proyectos", "Integración", "Operación y continuidad"],
+      "Soluciones complementarias para fortalecimiento de operación y seguridad, orientadas a entornos enterprise y despliegues multi-sede.",
+    bullets: ["Enterprise", "Integración", "Operación"],
   },
    {
     name: "Digital Watchdog",
     logo: "/partners/digital.png",
-    desc:
-      "Soluciones especializadas para operación e integración tecnológica orientada a proyectos de alta exigencia.",
-    bullets: ["Soporte a proyectos", "Integración", "Operación y continuidad"],
+    desc: "Tecnología enfocada en gestión de video y monitoreo (VMS), ideal para arquitecturas escalables y entornos de operación crítica.",
+    bullets: ["VMS", "Monitoreo", "Escalabilidad"],
   },
 ];
 
