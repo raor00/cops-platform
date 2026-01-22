@@ -176,7 +176,7 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="text-sm text-slate-600">
-                  Partner: Milestone • Winsted • Invenzi • Altronix • Automated Logic • Velasea
+                  Partner: Milestone • Winsted • Invenzi • Altronix • Automated Logic • Velasea • Magos • Digital Watchdog
                 </div>
               </div>
       

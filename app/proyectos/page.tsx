@@ -171,7 +171,7 @@ export default function Proyectos() {
             <Tag text="Partners internacionales" />
             <Tag text="Proyectos enterprise" />
             <Tag text="+1500 obras ejecutadas" />
-            <Tag text="20 años de trayectoria" />
+            <Tag text="28 años de trayectoria" />
           </div>
 
           {/* Filtros */}

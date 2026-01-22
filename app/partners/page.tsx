@@ -42,6 +42,21 @@ const PARTNERS = [
     desc:
       "Soluciones especializadas para operación e integración tecnológica orientada a proyectos de alta exigencia.",
     bullets: ["Soporte a proyectos", "Integración", "Operación y continuidad"],
+    
+  },
+   {
+    name: "Magos",
+    logo: "/partners/magos.png",
+    desc:
+      "Soluciones especializadas para operación e integración tecnológica orientada a proyectos de alta exigencia.",
+    bullets: ["Soporte a proyectos", "Integración", "Operación y continuidad"],
+  },
+   {
+    name: "Digital Watchdog",
+    logo: "/partners/digital.png",
+    desc:
+      "Soluciones especializadas para operación e integración tecnológica orientada a proyectos de alta exigencia.",
+    bullets: ["Soporte a proyectos", "Integración", "Operación y continuidad"],
   },
 ];
 
