@@ -90,6 +90,58 @@ export default function Home() {
               </Link>
             </div>
 
+{/* Bloque: 28 años */}
+<section className="relative border-t border-white/10 bg-slate-950/40">
+  <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
+      {/* Texto */}
+      <div className="lg:col-span-7">
+        <p className="text-xs font-semibold tracking-[0.2em] text-white/60">
+          TRAYECTORIA
+        </p>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          28 años respaldando operación crítica en Venezuela
+        </h2>
+        <p className="mt-4 text-white/70 leading-relaxed">
+          Somos una organización privada con trayectoria ininterrumpida dedicada a la
+          asesoría e implementación de proyectos tecnológicos de alta gama en
+          automatización, seguridad y energía, con enfoque enterprise para banca, industria,
+          comercio e instituciones gubernamentales.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
+            Banca nacional
+          </span>
+          <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
+            Proyectos enterprise
+          </span>
+          <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
+            Partners internacionales
+          </span>
+        </div>
+      </div>
+
+      {/* Métricas */}
+      <div className="lg:col-span-5">
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-3xl font-semibold tracking-tight text-white">28+</p>
+            <p className="mt-1 text-sm text-white/60">Años de trayectoria</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-3xl font-semibold tracking-tight text-white">1500+</p>
+            <p className="mt-1 text-sm text-white/60">Obras ejecutadas</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-3xl font-semibold tracking-tight text-white">Enterprise</p>
+            <p className="mt-1 text-sm text-white/60">Arquitectura + implementación + soporte</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 
   {/* Partners tecnológicos (cinta full ancho) */}
