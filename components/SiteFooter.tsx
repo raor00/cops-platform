@@ -10,7 +10,7 @@ export default function SiteFooter() {
           <div>
             <div className="mb-3 flex items-center gap-2">
               <img
-                src="/branding/cops.png"
+                src="/public/branding/cops.png"
                 alt="COP’S Electronics"
                 className="h-8 w-auto"
               />
