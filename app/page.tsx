@@ -62,7 +62,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-5 text-lg text-white/80">
-              Somos una organización privada con dos décadas de trayectoria ininterrumpida dedicada
+              Somos una empresa privada con dos décadas de trayectoria ininterrumpida dedicada
               a la asesoría de proyectos tecnológicos de alta gama en sistemas de automatización,
               energía renovable, seguridad y protección.
             </p>
@@ -103,7 +103,7 @@ export default function Home() {
           28 años respaldando operación crítica en Venezuela
         </h2>
         <p className="mt-4 text-white/70 leading-relaxed">
-          Somos una organización privada con trayectoria ininterrumpida dedicada a la
+          Somos una empresa privada con trayectoria ininterrumpida dedicada a la
           asesoría e implementación de proyectos tecnológicos de alta gama en
           automatización, seguridad y energía, con enfoque enterprise para banca, industria,
           comercio e instituciones gubernamentales.
@@ -152,7 +152,7 @@ export default function Home() {
   </p>
 
   <div className="relative left-1/2 right-1/2 w-screen -ml-[50vw] -mr-[50vw]">
-    <div className="logo-marquee logo-marquee__fade bg-white/5 py-4 backdrop-blur-sm border-y border-white/10">
+    <div className="group flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-4 backdrop-blur transition hover:bg-white/10">
       <div className="logo-marquee__track gap-10">
         {/* Grupo 1 (largo) */}
         <div className="logo-marquee__group gap-10">
