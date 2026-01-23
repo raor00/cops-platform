@@ -1,4 +1,6 @@
 import Link from "next/link";
+import ClientShowcase from "../components/ClientShowcase";
+
 
 const STATS = [
   { k: "Banca nacional", v: "Operación crítica" },
@@ -104,6 +106,7 @@ export default function Home() {
 <section className="relative border-t border-white/10 bg-slate-950/40">
   <div className="mx-auto max-w-6xl px-4 py-12">
     <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
+      
       {/* Texto */}
       <div className="lg:col-span-7">
         <p className="text-xs font-semibold tracking-[0.2em] text-white/60">
@@ -129,9 +132,25 @@ export default function Home() {
           <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
             Partners internacionales
           </span>
+          
+    <ClientShowcase
+  title="HAN CONFIADO EN COP’S"
+  subtitle="Organizaciones que han trabajado con COP’S Electronics a lo largo de 28 años de trayectoria."
+  logos={[
+    { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
+    { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
+    { src: "/clientes/fvf.png", alt: "FVF" },
+    { src: "/clientes/bigott.png", alt: "Cigarrera Bigott" },
+    { src: "/clientes/plaza.png", alt: "Plaza" },
+    { src: "/clientes/bfc.png", alt: "BFC" },
+  ]}
+  featuredCount={6}
+/>
+
+
         </div>
       </div>
-
+            
       {/* Métricas */}
       <div className="lg:col-span-5">
         <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
@@ -148,38 +167,6 @@ export default function Home() {
             <p className="mt-1 text-sm text-white/60">Arquitectura + implementación + soporte</p>
           </div>
         </div>
-        {/* Confianza / Clientes */}
-<div className="mt-10">
-  <p className="text-xs font-semibold tracking-[0.2em] text-white/60">
-    HAN CONFIADO EN COP’S
-  </p>
-
-  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-    {[
-      { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
-      { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
-      { src: "/clientes/bfc.png", alt: "BFC" },
-      { src: "/clientes/fvf.png", alt: "FVF" },
-      { src: "/clientes/bigott.png", alt: "Bigott" },
-      { src: "/clientes/plaza.png", alt: "Banco Plaza" },
-    ].map((c) => (
-      <div
-        key={c.src}
-        className="flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-      >
-        <img
-          src={c.src}
-          alt={c.alt}
-          className="h-8 w-auto object-contain opacity-80 grayscale"
-        />
-      </div>
-    ))}
-  </div>
-
-  <p className="mt-3 text-xs text-white/50">
-    *Algunas marcas pueden corresponder a empresas históricas o reestructuradas con el tiempo.
-  </p>
-</div>
 
       </div>
     </div>
