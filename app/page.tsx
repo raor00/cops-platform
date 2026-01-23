@@ -132,21 +132,6 @@ export default function Home() {
           <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80">
             Partners internacionales
           </span>
-          
-    <ClientShowcase
-  title="HAN CONFIADO EN COP’S"
-  subtitle="Organizaciones que han trabajado con COP’S Electronics a lo largo de 28 años de trayectoria."
-  logos={[
-    { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
-    { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
-    { src: "/clientes/fvf.png", alt: "FVF" },
-    { src: "/clientes/bigott.png", alt: "Cigarrera Bigott" },
-    { src: "/clientes/plaza.png", alt: "Plaza" },
-    { src: "/clientes/bfc.png", alt: "BFC" },
-  ]}
-  featuredCount={6}
-/>
-
 
         </div>
       </div>
@@ -172,6 +157,21 @@ export default function Home() {
     </div>
   </div>
 </section>
+<div className="lg:col-span-12">
+  <ClientShowcase
+    title="HAN CONFIADO EN COP’S"
+    subtitle="Organizaciones que han trabajado con COP’S Electronics a lo largo de 28 años de trayectoria."
+    logos={[
+      { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
+      { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
+      { src: "/clientes/fvf.png", alt: "FVF" },
+      { src: "/clientes/bigott.png", alt: "Cigarrera Bigott" },
+      { src: "/clientes/plaza.png", alt: "Plaza" },
+      { src: "/clientes/bfc.png", alt: "BFC" },
+    ]}
+    featuredCount={12}
+  />
+</div>
 
 
 
