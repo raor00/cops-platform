@@ -110,6 +110,43 @@ const PROJECTS: Project[] = [
   },
 ];
 
+type RecentProject = {
+  title: string;
+  sector: Sector;
+  client?: string;
+  tech: string[];
+  highlights: string[];
+  icon: ReactNode;
+};
+
+const RECENT_PROJECTS: RecentProject[] = [
+  {
+    title: "Modernización de agencias (modelos piloto)",
+    sector: "Banca",
+    client: "Bancaribe",
+    tech: ["Hikvision", "CCTV", "Control de acceso", "Alarma", "Analíticas", "IA"],
+    highlights: [
+      "Implementación de CCTV, alarma y control de acceso con analíticas e IA",
+      "Arquitectura preparada para replicar el modelo en nuevas sedes",
+      "Estandarización operativa orientada a operación crítica",
+    ],
+    icon: <Landmark className="h-5 w-5" />,
+  },
+  {
+    title: "Sustitución de plataforma VMS + Control de acceso (planta y sucursales)",
+    sector: "Industrial",
+    client: "Cigarrera Bigott",
+    tech: ["Milestone", "Invenzi", "Migración", "VMS", "Control de acceso", "Multi-sede"],
+    highlights: [
+      "Implementación de Invenzi + Milestone en planta y sucursales",
+      "Reemplazo del sistema previo (Lenel) con enfoque enterprise",
+      "Integración y estandarización para gestión multi-sede",
+    ],
+    icon: <Factory className="h-5 w-5" />,
+  },
+];
+
+
 const FILTERS: { key: "Todos" | Sector; label: string; icon: React.ReactNode }[] = [
   { key: "Todos", label: "Todos", icon: <Factory className="h-4 w-4" /> },
   { key: "Banca", label: "Banca", icon: <Landmark className="h-4 w-4" /> },
@@ -281,6 +318,115 @@ export default function Proyectos() {
           ))}
         </motion.div>
       </section>
+
+                {/* ÚLTIMAS IMPLEMENTACIONES (FEATURED) */}
+      <section className="relative overflow-hidden border-t bg-slate-950">
+        {/* Glow */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 left-1/2 h-72 w-[700px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-white/5 blur-2xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-6xl px-4 py-16 text-white">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
+                Últimas implementaciones
+              </p>
+
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+                Despliegues recientes en entornos enterprise
+              </h2>
+
+              <p className="mt-4 max-w-3xl text-white/70">
+                Resumen operativo (sin datos sensibles) de implementaciones recientes: modernización,
+                migración e integración multi-sede.
+              </p>
+            </div>
+
+            <Link
+              href="/contacto"
+              className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90"
+            >
+              Solicitar consultoría
+            </Link>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            {RECENT_PROJECTS.map((p) => (
+              <article
+                key={p.title + p.sector}
+                className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-7 shadow-[0_30px_90px_rgba(0,0,0,0.35)] transition hover:bg-white/7"
+              >
+                {/* Accent line */}
+                <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-white/0 via-white/30 to-white/0 opacity-60" />
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/10 p-3 text-white">
+                      {p.icon}
+                    </div>
+
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80">
+                          Reciente
+                        </span>
+                        <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold text-white/70">
+                          {p.sector}
+                        </span>
+                        {p.client ? (
+                          <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold text-white/70">
+                            {p.client}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <h3 className="mt-3 text-xl font-semibold leading-snug">
+                        {p.title}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tech chips */}
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {p.tech.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Highlights */}
+                <div className="mt-6">
+                  <p className="text-xs font-semibold tracking-wide text-white/55">
+                    Resumen
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-white/70">
+                    {p.highlights.map((x) => (
+                      <li key={x} className="flex gap-2">
+                        <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-white/40" />
+                        <span>{x}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Footnote */}
+          <p className="mt-8 text-xs text-white/45">
+            *Algunos detalles se omiten para proteger información sensible y lineamientos del cliente.
+          </p>
+        </div>
+      </section>
+
+
 
       {/* CTA FINAL */}
       <section className="bg-slate-950">

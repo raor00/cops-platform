@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 
-type Logo = { src: string; alt: string };
+type Logo = { src: string; alt: string; tone?: "dark" | "light" };
+
 
 export default function ClientShowcase({
   title = "HAN CONFIADO EN COP’S",
@@ -109,7 +110,8 @@ export default function ClientShowcase({
                   <img
                     src={c.src}
                     alt={c.alt}
-                    className="h-8 w-auto object-contain opacity-90 grayscale transition hover:opacity-100 hover:grayscale-0"
+                    className="h-12 w-auto object-contain opacity-100 grayscale-0 transition duration-300 group-hover:scale-105"
+
                     loading="lazy"
                   />
                 </div>
