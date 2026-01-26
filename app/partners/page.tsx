@@ -78,17 +78,20 @@ const PARTNERS: Partner[] = [
     ],
     tags: ["Infraestructura", "Continuidad", "Enterprise", "Soporte"],
   },
+
+  // ✅ ACTUALIZADO: MAGOS (Radar + MASS+AI + integración VMS/PTZ + reducción falsas alarmas)
   {
     name: "Magos",
     logo: "/partners/magos.png",
-    tagline: "Analítica e inteligencia para operación y monitoreo.",
+    tagline: "Radars de vigilancia terrestre para protección perimetral con fusión radar+cámara (MASS+AI).",
     bullets: [
-      "Capas de analítica para eventos operativos",
-      "Optimización de procesos de monitoreo",
-      "Integración según casos de uso",
+      "Detección y seguimiento de intrusos en grandes perímetros, incluso en condiciones complejas",
+      "Integración con VMS/PSIM y cámaras PTZ para verificación y tracking automático",
+      "Clasificación por IA en conjunto con MASS+AI para reducir alarmas molestas y mejorar la respuesta",
     ],
-    tags: ["Analítica", "IA", "Monitoreo", "Integración"],
+    tags: ["Radar perimetral", "MASS+AI", "PTZ tracking", "Integración VMS"],
   },
+
   {
     name: "Digital Watchdog",
     logo: "/partners/digital.png",
@@ -158,11 +161,12 @@ export default function PartnersPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-white">
+                  {/* ✅ Logo más grande y más legible */}
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border bg-white shadow-sm">
                     <img
                       src={p.logo}
                       alt={p.name}
-                      className="h-8 w-auto object-contain"
+                      className="h-10 w-auto object-contain md:h-12"
                       loading="lazy"
                     />
                   </div>
