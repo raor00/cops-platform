@@ -1,52 +1,89 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 
-const HIGHLIGHTS = [
-  { k: "28 años", v: "Trayectoria ininterrumpida" },
-  { k: "+1500", v: "Obras ejecutadas" },
-  { k: "Enterprise", v: "Banca • Industria • Gobierno" },
-  { k: "Integración", v: "Automatización • Seguridad • Energía" },
+const STATS = [
+  { k: "28+", v: "Años de trayectoria" },
+  { k: "1500+", v: "Obras ejecutadas" },
+  { k: "Enterprise", v: "Enfoque en operación crítica" },
+  { k: "Multi-sede", v: "Arquitecturas escalables" },
 ];
 
-const VALUES = [
+const PILLARS = [
   {
-    t: "Enfoque enterprise",
-    d: "Diseñamos soluciones robustas para operación crítica, continuidad y entornos regulados.",
+    title: "Enfoque enterprise",
+    desc: "Diseñamos soluciones para operación crítica: banca, industria y entornos con alta exigencia operativa.",
   },
   {
-    t: "Arquitectura y documentación",
-    d: "Levantamiento, diseño, planos, configuración y entrega con criterios de calidad.",
+    title: "Arquitectura e integración",
+    desc: "Integramos plataformas y fabricantes, estandarizando criterios para crecer sin rehacer la infraestructura.",
   },
   {
-    t: "Integración real",
-    d: "Unificamos plataformas y subsistemas para operación centralizada y escalable.",
-  },
-  {
-    t: "Soporte y continuidad",
-    d: "Acompañamiento post-implementación con mantenimiento, mejoras y respuesta operativa.",
+    title: "Puesta en marcha + soporte",
+    desc: "Documentación, protocolos y acompañamiento técnico para operar con continuidad y control.",
   },
 ];
 
-export default function Nosotros() {
+const AREAS = [
+  {
+    title: "Seguridad electrónica",
+    bullets: ["CCTV", "Control de acceso", "Alarmas", "Analíticas e IA", "Perímetro"],
+  },
+  {
+    title: "Automatización de procesos",
+    bullets: ["BMS / Edificios inteligentes", "Monitoreo", "Integraciones", "Tableros y operación"],
+  },
+  {
+    title: "Energía y continuidad",
+    bullets: ["Respaldo eléctrico", "Protección", "Disponibilidad", "Operación crítica"],
+  },
+];
+
+const METHOD = [
+  {
+    step: "01",
+    title: "Levantamiento",
+    desc: "Diagnóstico, criticidad, requerimientos, flujos operativos y riesgos.",
+  },
+  {
+    step: "02",
+    title: "Arquitectura",
+    desc: "Diseño escalable, integración, estándares y planificación de crecimiento.",
+  },
+  {
+    step: "03",
+    title: "Implementación",
+    desc: "Puesta en marcha, pruebas, validación, capacitación y documentación.",
+  },
+  {
+    step: "04",
+    title: "Soporte y mejora",
+    desc: "Acompañamiento técnico, mantenimiento y optimización continua.",
+  },
+];
+
+export default function NosotrosPage() {
   return (
-    <div>
+    <main className="min-h-screen">
+      <div className="h-20" />
+
       {/* HERO */}
       <section className="border-b bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+        <div className="mx-auto max-w-6xl px-4 py-14">
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">
-            COP’S ELECTRONICS, S.A.
+            Nosotros
           </p>
 
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
-            28 años impulsando proyectos tecnológicos de alta exigencia
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            28 años impulsando soluciones tecnológicas
           </h1>
 
           <p className="mt-4 max-w-3xl text-slate-700">
-            Somos una organización privada con <span className="font-semibold">28 años</span> de
-            trayectoria ininterrumpida dedicada a la asesoría e implementación de proyectos de alta
-            gama en <span className="font-semibold">automatización</span>,{" "}
-            <span className="font-semibold">seguridad</span> y{" "}
-            <span className="font-semibold">energía</span>, dirigidos a sectores industriales,
-            bancarios, comerciales e instituciones gubernamentales.
+            COP’S ELECTRONICS, S.A. es una organización privada con trayectoria ininterrumpida,
+            dedicada a la asesoría, diseño, implementación y mantenimiento de soluciones de alta gama
+            en automatización, seguridad electrónica y continuidad operativa, orientadas a sectores
+            bancarios, industriales, comerciales e instituciones.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -64,114 +101,119 @@ export default function Nosotros() {
             </Link>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-4">
-            {HIGHLIGHTS.map((h) => (
-              <div key={h.k} className="rounded-2xl border bg-white p-6">
-                <p className="text-2xl font-semibold">{h.k}</p>
-                <p className="mt-1 text-sm text-slate-600">{h.v}</p>
+          {/* STATS */}
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {STATS.map((s) => (
+              <div
+                key={s.v}
+                className="rounded-2xl border bg-white p-5 shadow-[0_20px_80px_rgba(0,0,0,0.06)]"
+              >
+                <p className="text-3xl font-semibold tracking-tight">{s.k}</p>
+                <p className="mt-1 text-sm text-slate-600">{s.v}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* HISTORIA */}
+      {/* PILLARS */}
       <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="grid gap-10 md:grid-cols-12 md:items-start">
-          <div className="md:col-span-7">
-            <h2 className="text-3xl font-semibold tracking-tight">Nuestra historia</h2>
-            <p className="mt-4 text-slate-700">
-              COP’S ELECTRONICS, S.A. ha ejecutado más de{" "}
-              <span className="font-semibold">1500 obras</span> que afianzan nuestra gestión técnica
-              y comercial en relación a la promoción, instalación y mantenimiento de sistemas de
-              seguridad integrales, automatización de procesos, edificios inteligentes y energía.
-            </p>
-
-            <p className="mt-4 text-slate-700">
-              Nuestro compromiso es brindar atención personalizada, documentar correctamente cada
-              implementación y entregar soluciones que mejoren la seguridad, la operación y la
-              continuidad ante cualquier situación.
-            </p>
-
-            <p className="mt-4 text-slate-700">
-              En entornos como la <span className="font-semibold">banca nacional</span> y proyectos
-              enterprise, la diferencia está en los detalles: arquitectura, control por roles,
-              trazabilidad, procedimientos y soporte.
-            </p>
-          </div>
-
-          <aside className="md:col-span-5">
-            <div className="rounded-3xl border bg-slate-50 p-8">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">
-                Lo que nos distingue
-              </p>
-
-              <ul className="mt-4 space-y-3 text-sm text-slate-700">
-                <li>• Trayectoria comprobada en proyectos de alta exigencia</li>
-                <li>• Enfoque en arquitectura, documentación y QA</li>
-                <li>• Integración entre plataformas y subsistemas</li>
-                <li>• Operación multi-sede y continuidad operativa</li>
-              </ul>
-
-              <div className="mt-6">
-                <Link
-                  href="/contacto"
-                  className="inline-flex w-full justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
-                >
-                  Solicitar diagnóstico
-                </Link>
-              </div>
+        <motion.div
+          className="grid gap-5 md:grid-cols-3"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.35 }}
+        >
+          {PILLARS.map((p) => (
+            <div
+              key={p.title}
+              className="rounded-2xl border bg-white p-6 shadow-[0_20px_80px_rgba(0,0,0,0.06)] hover:bg-slate-50"
+            >
+              <h2 className="text-lg font-semibold">{p.title}</h2>
+              <p className="mt-2 text-sm text-slate-700">{p.desc}</p>
             </div>
-          </aside>
-        </div>
+          ))}
+        </motion.div>
       </section>
 
-      {/* VALORES / DIFERENCIADORES */}
-      <section className="border-y bg-white">
+      {/* AREAS */}
+      <section className="border-t bg-white">
         <div className="mx-auto max-w-6xl px-4 py-16">
-          <h2 className="text-3xl font-semibold tracking-tight">En qué creemos</h2>
-          <p className="mt-2 text-slate-700">
-            La experiencia se traduce en método, control y resultados sostenibles.
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">
+            Qué hacemos
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            Soluciones para operación crítica
+          </h2>
+          <p className="mt-4 max-w-3xl text-slate-700">
+            Diseñamos e integramos soluciones con estándares enterprise, preparadas para escalar y
+            operar de forma continua.
           </p>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-4">
-            {VALUES.map((v) => (
-              <div key={v.t} className="rounded-2xl border bg-white p-6 hover:bg-slate-50">
-                <h3 className="font-semibold">{v.t}</h3>
-                <p className="mt-2 text-sm text-slate-700">{v.d}</p>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {AREAS.map((a) => (
+              <div
+                key={a.title}
+                className="rounded-2xl border bg-slate-50 p-6 hover:bg-white"
+              >
+                <h3 className="text-lg font-semibold">{a.title}</h3>
+                <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                  {a.bullets.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA FINAL */}
-      <section className="bg-slate-950">
+      {/* METHOD */}
+      <section className="border-t bg-slate-950">
         <div className="mx-auto max-w-6xl px-4 py-16 text-white">
-          <div className="grid gap-8 md:grid-cols-12 md:items-center">
-            <div className="md:col-span-8">
-              <h2 className="text-3xl font-semibold tracking-tight">
-                28 años se sostienen con resultados, método y soporte
-              </h2>
-              <p className="mt-3 text-white/75">
-                Si estás evaluando un proyecto enterprise, conversemos: levantamiento, arquitectura,
-                implementación y puesta en marcha.
-              </p>
-            </div>
-            <div className="md:col-span-4 md:text-right">
-              <Link
-                href="/contacto"
-                className="inline-flex w-full justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:opacity-90 md:w-auto"
+          <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
+            Cómo trabajamos
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            Método claro, documentación y control
+          </h2>
+          <p className="mt-4 max-w-3xl text-white/70">
+            Nuestro enfoque prioriza arquitectura, integración y operación continua, con
+            documentación y estándares que permiten crecer de forma ordenada.
+          </p>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {METHOD.map((m) => (
+              <div
+                key={m.step}
+                className="rounded-2xl border border-white/10 bg-white/5 p-6 hover:bg-white/7"
               >
-                Agendar reunión 
-              </Link>
-              <p className="mt-3 text-xs text-white/60">
-                Banca nacional • Proyectos enterprise • Partners internacionales
-              </p>
-            </div>
+                <p className="text-xs font-semibold tracking-[0.2em] text-white/60">
+                  {m.step}
+                </p>
+                <h3 className="mt-3 text-lg font-semibold">{m.title}</h3>
+                <p className="mt-2 text-sm text-white/70">{m.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/contacto"
+              className="rounded-xl bg-white px-5 py-3 text-center text-sm font-semibold text-slate-900 hover:opacity-90"
+            >
+              Solicitar consultoría
+            </Link>
+            <Link
+              href="/partners"
+              className="rounded-xl border border-white/15 bg-transparent px-5 py-3 text-center text-sm font-semibold text-white/85 hover:bg-white/10"
+            >
+              Ver partners
+            </Link>
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
