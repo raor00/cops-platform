@@ -154,7 +154,7 @@ export const PARTNERS: Partner[] = [
       "Integración con plataformas de monitoreo",
       "Alineación a procedimientos de respuesta",
     ],
-    website: "https://www.magossystem.com/",
+    website: "https://magossystems.com/es/",
     logo: "/partners/magos.png",
   },
 ];
