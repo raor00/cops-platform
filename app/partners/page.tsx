@@ -75,22 +75,22 @@ export default function PartnersPage() {
             <motion.article
               key={p.id}
               layout
-              className="rounded-2xl border bg-white p-6 hover:bg-slate-50"
+             className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
             >
               {/* Header */}
               <div className="flex items-start gap-3">
-                <div className="h-12 w-12 overflow-hidden rounded-2xl bg-slate-50 p-2">
-                  <Image
-                    src={p.logo}
-                    alt={p.name}
-                    width={96}
-                    height={96}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
+              <div className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm md:h-20 md:w-20">
+                <Image
+                  src={p.logo}
+    alt={p.name}
+    width={180}
+    height={180}
+    className="h-full w-full object-contain contrast-125 saturate-125"
+  />
+</div>
 
                 <div className="min-w-0">
                   <h2 className="truncate text-lg font-semibold">{p.name}</h2>
@@ -114,7 +114,8 @@ export default function PartnersPage() {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setSelected(p)}
-                  className="rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-white"
+                  className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg"
+
                 >
                   Ver más
                 </button>
