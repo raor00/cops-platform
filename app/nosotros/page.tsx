@@ -6,6 +6,6 @@ export const metadata = {
     "Trayectoria, enfoque y capacidades de COP’S Electronics, S.A. en automatización, seguridad electrónica y energía para operación crítica.",
 };
 
-export default function NosotrosPage() {
+export default function NosotrosClientPage() {
   return <NosotrosClient />;
 }

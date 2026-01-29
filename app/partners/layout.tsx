@@ -5,11 +5,11 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = {
   title: "Partners",
   description:
-    "Ecosistema tecnológico con partners internacionales: Milestone, Winsted, Invenzi, Altronix, Automated Logic y Velasea.",
+    "Ecosistema tecnológico con partners internacionales: Milestone, Winsted, Invenzi, Altronix, Automated Logic, Velasea, Magos y Digital Watchdog.",
   openGraph: {
     title: "COP’S Electronics | Partners",
     description:
-      "Partners internacionales para proyectos enterprise: Milestone, Winsted, Invenzi, Altronix, Automated Logic y Velasea.",
+      "Partners internacionales para proyectos enterprise: Milestone, Winsted, Invenzi, Altronix, Automated Logic, Velasea, Magos y Digital Watchdog .",
     url: "/partners",
     type: "website",
     images: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "COP’S Electronics | Partners",
     description:
-      "Partners internacionales para soluciones enterprise: Milestone, Winsted, Invenzi, Altronix, Automated Logic y Velasea.",
+      "Partners internacionales para soluciones enterprise: Milestone, Winsted, Invenzi, Altronix, Automated Logic, Velasea, Magos y Digital Watchdog .",
     images: ["/og.png"],
   },
 };
