@@ -1,16 +1,21 @@
 // data/partners.ts
 
 export type Partner = {
-  id: string;              // identificador interno (puede servir como slug si luego quieres)
+  id: string;
   name: string;
-  subtitle: string;        // línea debajo del nombre (card)
-  summary: string;         // resumen corto (card)
-  description: string;     // texto largo (modal)
+  subtitle: string;
+  summary: string;
+  description: string;
   tags: string[];
   capabilities: string[];
   website?: string;
-  logo: string;            // ruta pública: /partners/xxx.png
+  logo: string;
+
+  // Opcionales (para la ficha /partners/[slug])
+  focus?: string;
+  usecases?: string[];
 };
+
 
 export const PARTNERS: Partner[] = [
   {

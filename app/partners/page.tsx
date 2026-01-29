@@ -113,12 +113,11 @@ export default function PartnersPage() {
               {/* CTA (UNO SOLO) */}
               <div className="mt-6 flex justify-end">
                 <button
-                  onClick={() => setSelected(p)}
-                  className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg"
-
-                >
-                  Ver más
-                </button>
+  onClick={() => setSelected(p)}
+  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+>
+  Ver más
+</button>
               </div>
             </motion.article>
           ))}
