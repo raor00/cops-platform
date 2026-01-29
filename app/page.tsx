@@ -74,17 +74,11 @@ export default function Home() {
             </h1>
 
             <p className="mt-5 text-lg text-white/80">
-              Somos una empresa privada con dos décadas de trayectoria ininterrumpida dedicada
-              a la asesoría de proyectos tecnológicos de alta gama en sistemas de automatización,
-              energía renovable, seguridad y protección.
+              Diseñamos y ejecutamos arquitectura tecnológica para entornos críticos: VMS/CCTV, control de acceso, alarmas, analíticas con IA, BMS y continuidad energética. Enfocados en banca e industria, donde la trazabilidad, la disponibilidad y la operación multi-sede son prioridad.
             </p>
 
             <p className="mt-4 text-sm leading-relaxed text-white/70">
-              Dirigidos hacia los sectores industriales, bancarios, comerciales e instituciones
-              gubernamentales. Hemos ejecutado más de <span className="font-semibold text-white">1500</span>{" "}
-              obras que afianzan nuestra gestión técnica y comercial en relación a la promoción,
-              instalación y mantenimiento de sistemas de seguridad integrales, automatización de
-              procesos, edificios inteligentes y energía renovable.
+              Nuestro diferencial no es “instalar”: es entregar operación lista. Levantamiento, arquitectura, integración, documentación, QA y acompañamiento post-puesta en marcha para que el sistema quede estable, auditable y escalable.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">

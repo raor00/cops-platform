@@ -163,10 +163,7 @@ export default function SolucionesClient() {
               Arquitectura, integración y operación para entornos críticos
             </h1>
             <p className="mt-4 max-w-3xl text-slate-700">
-              Con <span className="font-semibold">28 años</span> de trayectoria y{" "}
-              <span className="font-semibold">más de 1500 obras</span> ejecutadas, diseñamos e
-              implementamos soluciones enterprise en automatización, seguridad y energía para banca,
-              industria, comercio e instituciones gubernamentales.
+              Soluciones enterprise en VMS/CCTV, control de acceso, alarmas, analíticas con IA, BMS y energía. Integramos plataformas multi-marca y dejamos entregables claros: arquitectura, documentación, QA y puesta en marcha para operación crítica.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
