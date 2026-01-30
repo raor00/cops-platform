@@ -1,11 +1,11 @@
-import "./globals.css";
+// app/layout.tsx
 import type { Metadata } from "next";
-
+import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 
-export const metadata = {
-  metadataBase: new URL("https://cops-electronics-site-hxk7mat37-raor00s-projects.vercel.app/"), // o tu .vercel.app mientras pruebas
+export const metadata: Metadata = {
+  metadataBase: new URL("https://cops-electronics-web.vercel.app"), // cambia al dominio cuando lo conectes
   title: {
     default: "COP’S Electronics | Soluciones tecnológicas enterprise",
     template: "%s | COP’S Electronics",
@@ -16,7 +16,7 @@ export const metadata = {
     title: "COP’S Electronics",
     description:
       "Automatización, seguridad electrónica y energía para operación crítica.",
-    url: "https://TU-DOMINIO.com",
+    url: "https://cops-electronics-web.vercel.app",
     siteName: "COP’S Electronics",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
     locale: "es_VE",
@@ -27,3 +27,19 @@ export const metadata = {
     images: ["/og.png"],
   },
 };
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="es">
+      <body className="min-h-screen bg-white text-slate-900 antialiased">
+        <SiteHeader />
+        {children}
+        <SiteFooter />
+      </body>
+    </html>
+  );
+}
