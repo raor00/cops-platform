@@ -15,6 +15,7 @@ export default async function PartnerDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
   const p = PARTNERS.find((x) => x.id === slug);
   if (!p) return notFound();
 
