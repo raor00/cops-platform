@@ -8,9 +8,9 @@ export default function SiteFooter() {
           
           {/* Columna 1: Empresa */}
           <div>
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-4 flex items-center gap-2">
               <img
-                src="public/branding/cops.png"
+                src="/public/branding/cops.png"
                 alt="COP’S Electronics"
                 className="h-8 w-auto"
               />

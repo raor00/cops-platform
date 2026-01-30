@@ -21,79 +21,89 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-@keyframes logo-marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
 
-.logo-marquee {
-  overflow: hidden;
-}
-
-.logo-marquee__track {
-  display: flex;
-  width: max-content;
-  animation: logo-marquee 30s linear infinite;
-  will-change: transform;
-}
-
-.logo-marquee__group {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
+/* =========================
+   Partners marquee (UNIFICADO)
+   ========================= */
 
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
-.animate-marquee {
-  animation: marquee 28s linear infinite;
+/* Track + groups (lo usa tu componente HomePartnersMarquee) */
+.logo-marquee__track{
+  display:flex;
+  gap: 24px;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+  will-change: transform;
 }
 
+.logo-marquee__group{
+  display:flex;
+  gap: 24px;
+  align-items:center;
+  flex-shrink: 0;
+}
 
-/* Fade en los bordes */
+/* Opcional: fade en bordes (si quieres aplicarlo, pon className="logo-marquee__fade" al contenedor) */
 .logo-marquee__fade {
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
-/* Placa para que se vean todos los logos */
-.logo-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
+/* Pill (blanco, elegante y legible en fondo claro) */
+.logo-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.08);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+  border: 1px solid rgb(226 232 240); /* slate-200 */
+  background: #ffffff;
+  padding: 10px 14px;
+  transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
 }
 
-.logo-pill:hover {
-  transform: scale(1.10);
-  background: rgba(255,255,255,0.14);
-  border-color: rgba(255,255,255,0.22);
+.logo-pill:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(2,6,23,.10);
 }
 
-.logo-img {
-  height: 36px;   /* tamaño correcto como lo tenías */
+/* Wrapper interno (altura consistente) */
+.logo-pill__inner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height: 44px;
+  min-width: 120px;
+}
+
+/* Imagen */
+.logo-img{
+  height: 44px;
   width: auto;
-  opacity: 0.82;
+  object-fit: contain;
   filter: grayscale(1);
-  transition: filter 180ms ease, opacity 180ms ease;
+  opacity: .85;
+  transition: filter 200ms ease, opacity 200ms ease, transform 200ms ease;
 }
 
-.logo-pill:hover .logo-img {
-  opacity: 1;
+.logo-pill:hover .logo-img{
   filter: grayscale(0);
+  opacity: 1;
+  transform: scale(1.02);
 }
 
-@media (min-width: 768px) {
-  .logo-img {
-    height: 42px;
+/* Pausar animación al hover (solo en dispositivos con hover real) */
+@media (hover:hover){
+  .logo-marquee__track:hover{
+    animation-play-state: paused;
   }
 }
 
+/* Ajuste de tamaños en pantallas grandes */
+@media (min-width: 768px) {
+  .logo-pill__inner { height: 48px; }
+  .logo-img { height: 48px; }
+}
