@@ -1,4 +1,3 @@
-// app/page.tsx
 import HomeHero from "../components/home/HomeHero";
 import HomeTrajectory from "../components/home/HomeTrajectory";
 import HomeClients from "../components/home/HomeClients";
@@ -34,28 +33,14 @@ export default function Home() {
   return (
     <div>
       <HomeHero />
-
       <HomeTrajectory />
-
-      <HomeClients
-        title="HAN CONFIADO EN COP’S"
-        subtitle="Organizaciones que han trabajado con COP’S Electronics a lo largo de 28 años de trayectoria."
-        logos={CLIENTES}
-        featuredCount={12}
-      />
-
+      <HomeClients title="HAN CONFIADO EN COP'S" subtitle="Organizaciones que han trabajado con COP'S Electronics a lo largo de 28 años de trayectoria." logos={CLIENTES} featuredCount={12} />
       <HomePartnersMarquee logos={PARTNER_LOGOS} />
-
       <HomeSolutions />
-
       <HomeSectors />
-
       <HomeProcess />
-
       <HomeDifferentiators />
-
       <HomeCases />
-
       <HomeCTA />
     </div>
   );

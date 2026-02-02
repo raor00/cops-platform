@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
-
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://cops-electronics-site-hxk7mat37-raor00s-projects.vercel.app/";
-
+  const base = "https://cops-electronics-web.vercel.app";
   return [
     { url: `${base}/`, changeFrequency: "monthly", priority: 1 },
     { url: `${base}/nosotros`, changeFrequency: "monthly", priority: 0.8 },
