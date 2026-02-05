@@ -1,38 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import React from "react"
+
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import type { QuotationItem, PresetItem } from "@/lib/quotation-types"
-import { PRESET_ITEMS, CATEGORIES, formatCurrency } from "@/lib/quotation-types"
-import { Plus, Trash2, Package, Wrench, Search } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type { QuotationItem, CatalogItem } from "@/lib/quotation-types"
+import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
+import { getCatalog } from "@/lib/quotation-storage"
+import { Plus, Trash2, Search, ChevronDown, ChevronUp } from "lucide-react"
 
-interface ItemsTableProps {
+interface ItemsSectionProps {
+  title: string
+  icon: React.ReactNode
   items: QuotationItem[]
-  laborCost: number
-  laborDescription: string
   onItemsChange: (items: QuotationItem[]) => void
-  onLaborCostChange: (cost: number) => void
-  onLaborDescriptionChange: (desc: string) => void
+  catalogFilter?: string
+  showMaterialsFilter?: boolean
 }
 
-export function ItemsTable({
-  items,
-  laborCost,
-  laborDescription,
-  onItemsChange,
-  onLaborCostChange,
-  onLaborDescriptionChange,
-}: ItemsTableProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [presetDialogOpen, setPresetDialogOpen] = useState(false)
+export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter, showMaterialsFilter }: ItemsSectionProps) {
+  const [catalogOpen, setCatalogOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [catFilter, setCatFilter] = useState<string>("all")
+  const [catalog, setCatalog] = useState<CatalogItem[]>([])
+  const [collapsed, setCollapsed] = useState(false)
 
-  const addEmptyItem = () => {
+  useEffect(() => {
+    setCatalog(getCatalog())
+  }, [catalogOpen])
+
+  const addEmpty = () => {
     const newItem: QuotationItem = {
       id: crypto.randomUUID(),
       quantity: 1,
@@ -44,7 +45,7 @@ export function ItemsTable({
     onItemsChange([...items, newItem])
   }
 
-  const addPresetItem = (preset: PresetItem) => {
+  const addFromCatalog = (preset: CatalogItem) => {
     const newItem: QuotationItem = {
       id: crypto.randomUUID(),
       quantity: 1,
@@ -52,9 +53,10 @@ export function ItemsTable({
       description: preset.description,
       unitPrice: preset.unitPrice,
       totalPrice: preset.unitPrice,
+      category: preset.category,
     }
     onItemsChange([...items, newItem])
-    setPresetDialogOpen(false)
+    setCatalogOpen(false)
   }
 
   const updateItem = (id: string, field: keyof QuotationItem, value: string | number) => {
@@ -76,223 +78,211 @@ export function ItemsTable({
     onItemsChange(items.filter((item) => item.id !== id))
   }
 
-  const filteredPresets = PRESET_ITEMS.filter((item) => {
-    const matchSearch =
-      searchTerm === "" ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchCategory = selectedCategory === "all" || item.category === selectedCategory
-    return matchSearch && matchCategory
+  const filteredCatalog = catalog.filter((item) => {
+    const matchSearch = !search || item.code.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase())
+    let matchCat = true
+    if (catalogFilter) {
+      matchCat = catalogFilter === "Materiales" ? item.category === "Materiales" : item.category !== "Materiales"
+    }
+    if (catFilter !== "all") {
+      matchCat = item.category === catFilter
+    }
+    return matchSearch && matchCat
   })
 
+  const applicableCategories = catalogFilter === "Materiales"
+    ? ["Materiales"]
+    : CATALOG_CATEGORIES.filter((c) => c !== "Materiales")
+
+  const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0)
+
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
-          <Package className="h-5 w-5 text-[#1a5276]" />
-          Items / Equipos
-        </h2>
-        <div className="flex gap-2">
-          <Dialog open={presetDialogOpen} onOpenChange={setPresetDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-[#1a5276] text-[#1a5276] hover:bg-[#1a5276] hover:text-white bg-transparent"
-              >
-                <Search className="mr-1.5 h-4 w-4" />
-                Catalogo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-card text-foreground">
-              <DialogHeader>
-                <DialogTitle className="font-heading text-foreground">Catalogo de Productos</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Buscar por codigo o descripcion..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="border-border bg-card text-foreground"
-                    />
-                  </div>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-44 border-border bg-card text-foreground">
-                      <SelectValue placeholder="Categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  {filteredPresets.map((preset) => (
-                    <button
-                      key={preset.code}
-                      type="button"
-                      onClick={() => addPresetItem(preset)}
-                      className="w-full rounded-lg border border-border p-3 text-left transition-colors hover:border-[#1a5276] hover:bg-muted"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-mono text-xs text-[#1a5276]">{preset.code}</p>
-                          <p className="mt-0.5 text-sm text-foreground">{preset.description}</p>
-                          <span className="mt-1 inline-block rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            {preset.category}
-                          </span>
-                        </div>
-                        <p className="whitespace-nowrap font-semibold text-foreground">
-                          ${formatCurrency(preset.unitPrice)}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                  {filteredPresets.length === 0 && (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
-                      No se encontraron productos
-                    </p>
-                  )}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+    <div className="rounded-lg border border-border bg-card">
+      {/* Section Header */}
+      <div className="flex items-center justify-between border-b border-border px-5 py-3">
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center gap-2 text-foreground"
+        >
+          {icon}
+          <span className="font-heading text-sm font-semibold">{title}</span>
+          <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+            {items.length}
+          </span>
+          {collapsed ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
+        </button>
+        <div className="flex items-center gap-2">
+          {items.length > 0 && (
+            <span className="text-xs font-medium text-muted-foreground">
+              Subtotal: <span className="font-mono text-foreground">${formatCurrency(subtotal)}</span>
+            </span>
+          )}
           <Button
-            onClick={addEmptyItem}
+            variant="outline"
             size="sm"
-            className="bg-[#1a5276] text-white hover:bg-[#0e3a57]"
+            onClick={() => setCatalogOpen(true)}
+            className="h-7 border-border bg-transparent text-xs text-muted-foreground hover:bg-muted"
           >
-            <Plus className="mr-1.5 h-4 w-4" />
-            Agregar Item
+            <Search className="mr-1 h-3 w-3" />
+            Catalogo
+          </Button>
+          <Button
+            size="sm"
+            onClick={addEmpty}
+            className="h-7 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]"
+          >
+            <Plus className="mr-1 h-3 w-3" />
+            Agregar
           </Button>
         </div>
       </div>
 
-      {/* Items Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Cant.
-              </th>
-              <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Codigo / Modelo
-              </th>
-              <th className="min-w-[250px] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Descripcion
-              </th>
-              <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                P. Unitario
-              </th>
-              <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                P. Total
-              </th>
-              <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="sr-only">Acciones</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {items.map((item, index) => (
-              <tr key={item.id} className="group transition-colors hover:bg-muted/50">
-                <td className="px-2 py-2">
-                  <Input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
-                    className="w-16 border-border bg-card text-center text-sm text-foreground"
-                  />
-                </td>
-                <td className="px-2 py-2">
-                  <Input
-                    value={item.code}
-                    onChange={(e) => updateItem(item.id, "code", e.target.value)}
-                    placeholder="COD-001"
-                    className="w-40 border-border bg-card font-mono text-xs text-foreground"
-                  />
-                </td>
-                <td className="px-2 py-2">
-                  <Textarea
-                    value={item.description}
-                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                    placeholder="Descripcion del producto o servicio"
-                    rows={2}
-                    className="min-w-[250px] resize-none border-border bg-card text-sm text-foreground"
-                  />
-                </td>
-                <td className="px-2 py-2">
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={item.unitPrice}
-                    onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
-                    className="w-28 border-border bg-card text-right text-sm text-foreground"
-                  />
-                </td>
-                <td className="px-2 py-2 text-right font-semibold text-foreground">
-                  <span className="text-sm">${formatCurrency(item.totalPrice)}</span>
-                </td>
-                <td className="px-2 py-2 text-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeItem(item.id)}
-                    className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Eliminar item {index + 1}</span>
-                  </Button>
-                </td>
+      {/* Table */}
+      {!collapsed && (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 64 }}>Cant.</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>Codigo</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Descripcion</th>
+                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>P. Unit.</th>
+                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>Total</th>
+                <th className="px-3 py-2.5" style={{ width: 40 }}><span className="sr-only">Acciones</span></th>
               </tr>
-            ))}
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
-                  No hay items agregados. Use el boton &quot;Agregar Item&quot; o seleccione del &quot;Catalogo&quot;.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {items.map((item) => (
+                <tr key={item.id} className="group transition-colors hover:bg-muted/30">
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                      className="h-8 w-14 border-border bg-card text-center text-xs text-foreground"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      value={item.code}
+                      onChange={(e) => updateItem(item.id, "code", e.target.value)}
+                      placeholder="COD-001"
+                      className="h-8 w-36 border-border bg-card font-mono text-xs text-foreground"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Textarea
+                      value={item.description}
+                      onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                      placeholder="Descripcion del producto"
+                      rows={1}
+                      className="min-h-8 resize-none border-border bg-card text-xs text-foreground"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={item.unitPrice}
+                      onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
+                      className="h-8 w-24 border-border bg-card text-right text-xs text-foreground"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <span className="font-mono text-xs font-semibold text-foreground">${formatCurrency(item.totalPrice)}</span>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeItem(item.id)}
+                      className="h-7 w-7 p-0 text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-xs text-muted-foreground">
+                    Sin items. Use "Agregar" o seleccione del "Catalogo".
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* Labor / Mano de Obra */}
-      <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Wrench className="h-4 w-4 text-[#1a5276]" />
-          Mano de Obra / Instalacion
-        </h3>
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-1.5 md:col-span-2">
-            <Label className="text-xs text-muted-foreground">Descripcion</Label>
-            <Textarea
-              value={laborDescription}
-              onChange={(e) => onLaborDescriptionChange(e.target.value)}
-              placeholder="Ej: Instalacion, configuracion y puesta en marcha del sistema CCTV..."
-              rows={2}
-              className="resize-none border-border bg-card text-sm text-foreground"
-            />
+      {/* Catalog Dialog */}
+      <Dialog open={catalogOpen} onOpenChange={setCatalogOpen}>
+        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-card text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-foreground">Seleccionar del Catalogo</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por codigo o descripcion..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border-border bg-card pl-10 text-foreground"
+              />
+            </div>
+            {!catalogFilter && (
+              <Select value={catFilter} onValueChange={setCatFilter}>
+                <SelectTrigger className="w-44 border-border bg-card text-foreground">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {CATALOG_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {showMaterialsFilter && (
+              <Select value={catFilter} onValueChange={setCatFilter}>
+                <SelectTrigger className="w-44 border-border bg-card text-foreground">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {applicableCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Costo Mano de Obra (USD)</Label>
-            <Input
-              type="number"
-              min={0}
-              step={0.01}
-              value={laborCost}
-              onChange={(e) => onLaborCostChange(Number(e.target.value))}
-              className="border-border bg-card text-right text-foreground"
-            />
+            {filteredCatalog.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => addFromCatalog(preset)}
+                className="flex w-full items-start justify-between gap-4 rounded-lg border border-border p-3 text-left transition-colors hover:border-[#1a5276] hover:bg-muted/50"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-xs font-semibold text-[#1a5276]">{preset.code}</p>
+                  <p className="mt-0.5 text-sm text-foreground">{preset.description}</p>
+                  <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.category}</span>
+                </div>
+                <p className="shrink-0 font-mono text-sm font-semibold text-foreground">${formatCurrency(preset.unitPrice)}</p>
+              </button>
+            ))}
+            {filteredCatalog.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">No se encontraron productos</p>
+            )}
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

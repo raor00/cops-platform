@@ -4,105 +4,111 @@ import { useState, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ClientInfoForm } from "./client-info-form"
-import { ItemsTable } from "./items-table"
+import { ItemsSection } from "./items-table"
+import { LaborSection } from "./labor-section"
 import { SummaryPanel } from "./summary-panel"
 import { PDFPreview } from "./pdf-preview"
 import { downloadPDF } from "@/lib/generate-pdf"
-import type { ClientInfo, QuotationItem, QuotationType, QuotationData } from "@/lib/quotation-types"
+import { saveQuotation } from "@/lib/quotation-storage"
+import type { ClientInfo, QuotationItem, QuotationType, QuotationData, LaborItem } from "@/lib/quotation-types"
 import { generateQuotationCode, PAYMENT_CONDITIONS, DEFAULT_TERMS } from "@/lib/quotation-types"
-import { FileDown, Eye, PenLine, RotateCcw } from "lucide-react"
+import { FileDown, Eye, PenLine, RotateCcw, Save, Package, Cable } from "lucide-react"
 import { toast } from "sonner"
 
-export function QuotationBuilder() {
+interface QuotationBuilderProps {
+  initialData?: QuotationData | null
+  onSaved?: () => void
+}
+
+export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps) {
   const today = new Date().toISOString().split("T")[0]
   const validDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
 
-  const [quotationType, setQuotationType] = useState<QuotationType>("proyecto")
-  const [quotationCode, setQuotationCode] = useState(() => generateQuotationCode("proyecto"))
-  const [subject, setSubject] = useState("")
-  const [issueDate, setIssueDate] = useState(today)
-  const [validUntil, setValidUntil] = useState(validDate)
-  const [paymentCondition, setPaymentCondition] = useState(PAYMENT_CONDITIONS[0])
+  const [quotationId] = useState(() => initialData?.id || crypto.randomUUID())
+  const [quotationType, setQuotationType] = useState<QuotationType>(initialData?.type || "proyecto")
+  const [quotationCode, setQuotationCode] = useState(() => initialData?.code || generateQuotationCode("proyecto"))
+  const [subject, setSubject] = useState(initialData?.subject || "")
+  const [issueDate, setIssueDate] = useState(initialData?.issueDate || today)
+  const [validUntil, setValidUntil] = useState(initialData?.validUntil || validDate)
+  const [paymentCondition, setPaymentCondition] = useState(initialData?.paymentCondition || PAYMENT_CONDITIONS[0])
 
-  const [clientInfo, setClientInfo] = useState<ClientInfo>({
-    name: "",
-    attention: "",
-    email: "",
-    rif: "",
-    phone: "",
-    address: "",
-  })
+  const [clientInfo, setClientInfo] = useState<ClientInfo>(
+    initialData?.clientInfo || { name: "", attention: "", email: "", rif: "", phone: "", address: "" }
+  )
 
-  const [items, setItems] = useState<QuotationItem[]>([])
-  const [laborCost, setLaborCost] = useState(0)
-  const [laborDescription, setLaborDescription] = useState("")
-  const [notes, setNotes] = useState("")
-  const [termsAndConditions, setTermsAndConditions] = useState(DEFAULT_TERMS)
+  const [equipmentItems, setEquipmentItems] = useState<QuotationItem[]>(initialData?.items || [])
+  const [materialItems, setMaterialItems] = useState<QuotationItem[]>(initialData?.materials || [])
+  const [laborItems, setLaborItems] = useState<LaborItem[]>(initialData?.laborItems || [])
+  const [notes, setNotes] = useState(initialData?.notes || "")
+  const [termsAndConditions, setTermsAndConditions] = useState(initialData?.termsAndConditions || DEFAULT_TERMS)
   const [activeTab, setActiveTab] = useState("editor")
 
   const ivaRate = 16
 
   const calculations = useMemo(() => {
-    const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0)
-    const baseImponible = subtotal + laborCost
+    const subtotalEquipment = equipmentItems.reduce((sum, item) => sum + item.totalPrice, 0)
+    const subtotalMaterials = materialItems.reduce((sum, item) => sum + item.totalPrice, 0)
+    const subtotalLabor = laborItems.reduce((sum, item) => sum + item.cost, 0)
+    const baseImponible = subtotalEquipment + subtotalMaterials + subtotalLabor
     const ivaAmount = baseImponible * (ivaRate / 100)
     const total = baseImponible + ivaAmount
-    return { subtotal, ivaAmount, total }
-  }, [items, laborCost, ivaRate])
+    return { subtotalEquipment, subtotalMaterials, subtotalLabor, ivaAmount, total }
+  }, [equipmentItems, materialItems, laborItems, ivaRate])
 
   const handleTypeChange = useCallback((type: QuotationType) => {
     setQuotationType(type)
     setQuotationCode(generateQuotationCode(type))
   }, [])
 
-  const quotationData: QuotationData = useMemo(
-    () => ({
-      code: quotationCode,
-      type: quotationType,
-      subject,
-      clientInfo,
-      items,
-      laborCost,
-      laborDescription,
-      issueDate,
-      validUntil,
-      notes,
-      termsAndConditions,
-      paymentCondition,
-      subtotal: calculations.subtotal,
-      ivaRate,
-      ivaAmount: calculations.ivaAmount,
-      total: calculations.total,
-    }),
-    [
-      quotationCode,
-      quotationType,
-      subject,
-      clientInfo,
-      items,
-      laborCost,
-      laborDescription,
-      issueDate,
-      validUntil,
-      notes,
-      termsAndConditions,
-      paymentCondition,
-      calculations,
-      ivaRate,
-    ]
-  )
+  const buildData = useCallback((): QuotationData => ({
+    id: quotationId,
+    code: quotationCode,
+    type: quotationType,
+    subject,
+    clientInfo,
+    items: equipmentItems,
+    materials: materialItems,
+    laborItems,
+    issueDate,
+    validUntil,
+    notes,
+    termsAndConditions,
+    paymentCondition,
+    subtotalEquipment: calculations.subtotalEquipment,
+    subtotalMaterials: calculations.subtotalMaterials,
+    subtotalLabor: calculations.subtotalLabor,
+    ivaRate,
+    ivaAmount: calculations.ivaAmount,
+    total: calculations.total,
+    createdAt: initialData?.createdAt || new Date().toISOString(),
+    status: initialData?.status || "borrador",
+  }), [quotationId, quotationCode, quotationType, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, ivaRate, initialData])
+
+  const handleSave = () => {
+    if (!clientInfo.name) {
+      toast.error("Debe ingresar el nombre del cliente")
+      return
+    }
+    const data = buildData()
+    saveQuotation(data)
+    toast.success("Cotizacion guardada en el historial")
+    onSaved?.()
+  }
 
   const handleExportPDF = () => {
     if (!clientInfo.name) {
       toast.error("Debe ingresar el nombre del cliente")
       return
     }
-    if (items.length === 0) {
+    if (equipmentItems.length === 0 && materialItems.length === 0) {
       toast.error("Debe agregar al menos un item")
       return
     }
-    downloadPDF(quotationData)
-    toast.success("Documento generado. Use Ctrl+P o Cmd+P para guardar como PDF.")
+    const data = buildData()
+    saveQuotation(data)
+    downloadPDF(data)
+    toast.success("Documento generado para impresion/PDF")
+    onSaved?.()
   }
 
   const handleReset = () => {
@@ -113,9 +119,9 @@ export function QuotationBuilder() {
     setValidUntil(validDate)
     setPaymentCondition(PAYMENT_CONDITIONS[0])
     setClientInfo({ name: "", attention: "", email: "", rif: "", phone: "", address: "" })
-    setItems([])
-    setLaborCost(0)
-    setLaborDescription("")
+    setEquipmentItems([])
+    setMaterialItems([])
+    setLaborItems([])
     setNotes("")
     setTermsAndConditions(DEFAULT_TERMS)
     setActiveTab("editor")
@@ -123,15 +129,15 @@ export function QuotationBuilder() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="space-y-6">
       {/* Action Bar */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-heading text-2xl font-bold text-foreground">
-            Nueva Cotizacion
+            {initialData ? "Editar Cotizacion" : "Nueva Cotizacion"}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Complete los datos para generar su cotizacion profesional
+            {quotationCode} &middot; {quotationType === "proyecto" ? "Proyecto" : quotationType === "servicio" ? "Servicio" : "Mantenimiento Preventivo"}
           </p>
         </div>
         <div className="flex gap-2">
@@ -139,17 +145,26 @@ export function QuotationBuilder() {
             variant="outline"
             size="sm"
             onClick={handleReset}
-            className="border-border text-muted-foreground hover:bg-muted bg-transparent"
+            className="border-border bg-transparent text-muted-foreground hover:bg-muted"
           >
-            <RotateCcw className="mr-1.5 h-4 w-4" />
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             Limpiar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSave}
+            className="border-[#1a5276] bg-transparent text-[#1a5276] hover:bg-[#1a5276] hover:text-white"
+          >
+            <Save className="mr-1.5 h-3.5 w-3.5" />
+            Guardar
           </Button>
           <Button
             size="sm"
             onClick={handleExportPDF}
             className="bg-[#1a5276] text-white hover:bg-[#0e3a57]"
           >
-            <FileDown className="mr-1.5 h-4 w-4" />
+            <FileDown className="mr-1.5 h-3.5 w-3.5" />
             Exportar PDF
           </Button>
         </div>
@@ -157,24 +172,24 @@ export function QuotationBuilder() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 grid w-full max-w-md grid-cols-2 bg-muted">
+        <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted">
           <TabsTrigger
             value="editor"
-            className="flex items-center gap-1.5 data-[state=active]:bg-[#1a5276] data-[state=active]:text-white"
+            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#1a5276] data-[state=active]:text-white"
           >
-            <PenLine className="h-4 w-4" />
+            <PenLine className="h-3.5 w-3.5" />
             Editor
           </TabsTrigger>
           <TabsTrigger
             value="preview"
-            className="flex items-center gap-1.5 data-[state=active]:bg-[#1a5276] data-[state=active]:text-white"
+            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#1a5276] data-[state=active]:text-white"
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="h-3.5 w-3.5" />
             Vista Previa
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="editor" className="space-y-6">
+        <TabsContent value="editor" className="mt-6 space-y-4">
           <ClientInfoForm
             clientInfo={clientInfo}
             quotationCode={quotationCode}
@@ -192,18 +207,31 @@ export function QuotationBuilder() {
             onCodeChange={setQuotationCode}
           />
 
-          <ItemsTable
-            items={items}
-            laborCost={laborCost}
-            laborDescription={laborDescription}
-            onItemsChange={setItems}
-            onLaborCostChange={setLaborCost}
-            onLaborDescriptionChange={setLaborDescription}
+          <ItemsSection
+            title="Equipos y Servicios"
+            icon={<Package className="h-4 w-4 text-[#1a5276]" />}
+            items={equipmentItems}
+            onItemsChange={setEquipmentItems}
+            catalogFilter="Equipos"
+          />
+
+          <ItemsSection
+            title="Materiales e Insumos"
+            icon={<Cable className="h-4 w-4 text-[#1a5276]" />}
+            items={materialItems}
+            onItemsChange={setMaterialItems}
+            catalogFilter="Materiales"
+          />
+
+          <LaborSection
+            laborItems={laborItems}
+            onLaborItemsChange={setLaborItems}
           />
 
           <SummaryPanel
-            subtotal={calculations.subtotal}
-            laborCost={laborCost}
+            subtotalEquipment={calculations.subtotalEquipment}
+            subtotalMaterials={calculations.subtotalMaterials}
+            subtotalLabor={calculations.subtotalLabor}
             ivaRate={ivaRate}
             ivaAmount={calculations.ivaAmount}
             total={calculations.total}
@@ -214,8 +242,8 @@ export function QuotationBuilder() {
           />
         </TabsContent>
 
-        <TabsContent value="preview">
-          <PDFPreview data={quotationData} />
+        <TabsContent value="preview" className="mt-6">
+          <PDFPreview data={buildData()} />
         </TabsContent>
       </Tabs>
     </div>
