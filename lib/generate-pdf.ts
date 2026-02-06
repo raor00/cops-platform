@@ -64,8 +64,6 @@ function generateSAPDFContent(data: QuotationData): string {
     .map((line) => `<li style="margin-bottom:3px;color:#475569;font-size:9px;line-height:1.5;">${line.replace(/^\d+\.\s*/, "")}</li>`)
     .join("")
 
-  const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
-
   const hasEquipment = data.items.length > 0
   const hasMaterials = data.materials.length > 0
   const hasLabor = data.laborItems.length > 0
