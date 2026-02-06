@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import type { ClientInfo, QuotationType } from "@/lib/quotation-types"
-import { PAYMENT_CONDITIONS } from "@/lib/quotation-types"
+import { PAYMENT_CONDITIONS, PAYMENT_CONDITIONS_LLC } from "@/lib/quotation-types"
 import { Building2, Calendar, FileText, Hash, Mail, MapPin, Phone, User } from "lucide-react"
 
 interface ClientInfoFormProps {
@@ -61,7 +61,7 @@ export function ClientInfoForm({
     <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
       <h2 className="mb-5 flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
         <Building2 className="h-5 w-5 text-[#1a5276]" />
-        Datos de la Cotizacion
+        {companyFormat === "llc" ? "Quote Details" : "Datos de la Cotizacion"}
       </h2>
 
       <div className="grid gap-5 md:grid-cols-3">
@@ -76,9 +76,9 @@ export function ClientInfoForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="proyecto">Proyecto</SelectItem>
-              <SelectItem value="servicio">Servicio</SelectItem>
-              <SelectItem value="mantenimiento">Mantenimiento Preventivo</SelectItem>
+              <SelectItem value="proyecto">{companyFormat === "llc" ? "Project" : "Proyecto"}</SelectItem>
+              <SelectItem value="servicio">{companyFormat === "llc" ? "Service" : "Servicio"}</SelectItem>
+              <SelectItem value="mantenimiento">{companyFormat === "llc" ? "Preventive Maintenance" : "Mantenimiento Preventivo"}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -111,7 +111,7 @@ export function ClientInfoForm({
         <div className="space-y-1.5">
           <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <Building2 className="h-3.5 w-3.5" />
-            Formato / Empresa
+            {companyFormat === "llc" ? "Format / Company" : "Formato / Empresa"}
           </Label>
           <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
             <div className="space-y-0.5">
@@ -166,7 +166,7 @@ export function ClientInfoForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PAYMENT_CONDITIONS.map((cond) => (
+              {(companyFormat === "llc" ? PAYMENT_CONDITIONS_LLC : PAYMENT_CONDITIONS).map((cond) => (
                 <SelectItem key={cond} value={cond}>
                   {cond}
                 </SelectItem>

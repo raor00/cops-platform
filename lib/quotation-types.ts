@@ -60,6 +60,7 @@ export interface QuotationData {
   code: string
   type: QuotationType
   companyFormat: "sa" | "llc"
+  discountAmount: number
   subject: string
   clientInfo: ClientInfo
   items: QuotationItem[]
@@ -184,6 +185,20 @@ export const PAYMENT_CONDITIONS = [
   "100% ANTICIPO",
   "CREDITO 30 DIAS",
   "CONTADO CONTRA ENTREGA",
+]
+
+export const DEFAULT_TERMS_LLC = `1. Prices are in US Dollars (USD).
+2. Prices do not include taxes or shipping unless specified.
+3. Delivery time: 5 to 15 business days after PO confirmation and payment.
+4. Equipment warranty: 12 months for manufacturing defects.
+5. Installation/labor warranty: 6 months.
+6. Quote excludes civil/electrical works unless specified.
+7. Any additional work not included will be quoted separately.`
+
+export const PAYMENT_CONDITIONS_LLC = [
+  "PP",
+  "NET 30",
+  "50% ADVANCE - 50% ON DELIVERY",
 ]
 
 export function generateQuotationCode(type: QuotationType): string {

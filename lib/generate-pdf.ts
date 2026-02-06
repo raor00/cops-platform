@@ -190,6 +190,7 @@ function generateSAPDFContent(data: QuotationData): string {
         ${hasMaterials ? `<tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">Materiales</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">$${formatCurrency(data.subtotalMaterials)}</td></tr>` : ""}
         ${hasLabor ? `<tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">Mano de Obra</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">$${formatCurrency(data.subtotalLabor)}</td></tr>` : ""}
         <tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">SUB TOTAL</td><td style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;color:#1e293b;">$${formatCurrency(baseImponible)}</td></tr>
+        <tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">DESCUENTO</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">-$${formatCurrency(safeDiscount)}</td></tr>
         <tr><td style="padding:6px 10px;font-size:10px;color:#64748b;border-bottom:1px solid #e2e8f0;">IVA ${data.ivaRate}%</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;border-bottom:1px solid #e2e8f0;">$${formatCurrency(data.ivaAmount)}</td></tr>
         <tr style="background:#0a1628;"><td style="padding:10px;font-size:11px;font-weight:700;color:#fff;border-radius:0 0 0 4px;">TOTAL USD</td><td style="padding:10px;text-align:right;font-size:14px;font-weight:800;color:#fff;border-radius:0 0 4px 0;">$${formatCurrency(data.total)}</td></tr>
       </table>
@@ -280,6 +281,8 @@ function generateLLCPDFContent(data: QuotationData): string {
   `).join("")
 
   const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
+  const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
+  const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
 
   return `<!DOCTYPE html>
 <html>
@@ -287,13 +290,16 @@ function generateLLCPDFContent(data: QuotationData): string {
   <meta charset="UTF-8">
   <title>Quote ${data.code} - COPS Electronics LLC</title>
   <style>
-    @page { size: letter; margin: 0; }
+    @page { size: letter; margin: 12mm; }
+    * { box-sizing: border-box; }
     body { margin: 0; padding: 0; font-family: "Segoe UI", Arial, sans-serif; color: #111827; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: 100%; min-height: 100vh; position: relative; }
+    .page { width: 100%; position: relative; }
+    table { width: 100%; border-collapse: collapse; }
   </style>
 </head>
 <body>
-  <div class="page" style="padding:32px 40px 36px 40px;">
+  <div class="page">
+    <div style="padding:18px 24px 20px 24px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
       <div style="display:flex;gap:12px;align-items:center;">
         <div style="width:56px;height:56px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
@@ -344,16 +350,24 @@ function generateLLCPDFContent(data: QuotationData): string {
       </div>
     </div>
 
-    <div style="margin-top:18px;border-top:1px solid #e5e7eb;padding-top:10px;">
-      <table style="width:100%;border-collapse:collapse;">
+    <div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:10px;">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        <colgroup>
+          <col style="width:14%;">
+          <col style="width:14%;">
+          <col style="width:34%;">
+          <col style="width:8%;">
+          <col style="width:15%;">
+          <col style="width:15%;">
+        </colgroup>
         <thead>
           <tr style="background:#0f172a;">
-            <th style="padding:8px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.6px;">MODELO</th>
-            <th style="padding:8px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.6px;">SKU</th>
-            <th style="padding:8px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.6px;">DESCRIPTION</th>
-            <th style="padding:8px 8px;text-align:center;font-size:9px;color:#fff;letter-spacing:0.6px;">QTY</th>
-            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#fff;letter-spacing:0.6px;">UNIT PRICE</th>
-            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#fff;letter-spacing:0.6px;">AMOUNT</th>
+            <th style="padding:6px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.5px;">MODELO</th>
+            <th style="padding:6px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.5px;">SKU</th>
+            <th style="padding:6px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.5px;">DESCRIPTION</th>
+            <th style="padding:6px 8px;text-align:center;font-size:9px;color:#fff;letter-spacing:0.5px;">QTY</th>
+            <th style="padding:6px 8px;text-align:right;font-size:9px;color:#fff;letter-spacing:0.5px;">UNIT PRICE</th>
+            <th style="padding:6px 8px;text-align:right;font-size:9px;color:#fff;letter-spacing:0.5px;">AMOUNT</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -367,11 +381,11 @@ function generateLLCPDFContent(data: QuotationData): string {
           <td style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;color:#111827;">$${formatCurrency(baseImponible)}</td>
         </tr>
         <tr>
-          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">DESCUENTO</td>
-          <td style="padding:6px 10px;text-align:right;font-size:11px;color:#111827;">$${formatCurrency(0)}</td>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">DISCOUNT</td>
+          <td style="padding:6px 10px;text-align:right;font-size:11px;color:#111827;">-$${formatCurrency(safeDiscount)}</td>
         </tr>
         <tr>
-          <td style="padding:6px 10px;font-size:10px;color:#6b7280;border-bottom:1px solid #e5e7eb;">TAX</td>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;border-bottom:1px solid #e5e7eb;">TAX (${data.ivaRate}%)</td>
           <td style="padding:6px 10px;text-align:right;font-size:11px;color:#111827;border-bottom:1px solid #e5e7eb;">$${formatCurrency(data.ivaAmount)}</td>
         </tr>
         <tr style="background:#0f172a;">
@@ -381,9 +395,9 @@ function generateLLCPDFContent(data: QuotationData): string {
       </table>
     </div>
 
-    <div style="margin-top:18px;display:flex;gap:32px;">
+    <div style="margin-top:16px;display:flex;gap:24px;">
       <div style="flex:1;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Especial Instruccion</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">SPECIAL INSTRUCTION</div>
         <div style="font-size:10px;color:#6b7280;line-height:1.5;border:1px solid #e5e7eb;border-radius:6px;padding:8px;">${data.notes || "-"}</div>
       </div>
       <div style="flex:1;">
@@ -394,6 +408,7 @@ function generateLLCPDFContent(data: QuotationData): string {
           Zelle: ventas@copselectronics.com
         </div>
       </div>
+    </div>
     </div>
   </div>
 </body>

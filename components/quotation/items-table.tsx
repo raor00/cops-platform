@@ -20,9 +20,10 @@ interface ItemsSectionProps {
   onItemsChange: (items: QuotationItem[]) => void
   catalogFilter?: string
   showMaterialsFilter?: boolean
+  companyFormat?: "sa" | "llc"
 }
 
-export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter, showMaterialsFilter }: ItemsSectionProps) {
+export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter, showMaterialsFilter, companyFormat = "sa" }: ItemsSectionProps) {
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [catFilter, setCatFilter] = useState<string>("all")
@@ -115,7 +116,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
         <div className="flex flex-wrap items-center gap-2">
           {items.length > 0 && (
             <span className="text-xs font-medium text-muted-foreground">
-              Subtotal: <span className="font-mono text-foreground">${formatCurrency(subtotal)}</span>
+              {companyFormat === "llc" ? "Subtotal" : "Subtotal"}: <span className="font-mono text-foreground">${formatCurrency(subtotal)}</span>
             </span>
           )}
           <Button
@@ -125,7 +126,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             className="h-7 border-border bg-transparent text-xs text-muted-foreground hover:bg-muted"
           >
             <Search className="mr-1 h-3 w-3" />
-            Catalogo
+            {companyFormat === "llc" ? "Catalog" : "Catalogo"}
           </Button>
           <Button
             size="sm"
@@ -133,7 +134,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             className="h-7 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]"
           >
             <Plus className="mr-1 h-3 w-3" />
-            Agregar
+            {companyFormat === "llc" ? "Add" : "Agregar"}
           </Button>
         </div>
       </div>
@@ -156,7 +157,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               </div>
               <div className="mt-3 grid gap-3">
                 <div className="grid gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Cantidad</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Quantity" : "Cantidad"}</span>
                   <Input
                     type="number"
                     min={1}
@@ -166,27 +167,27 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Codigo</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Code" : "Codigo"}</span>
                   <Input
                     value={item.code}
                     onChange={(e) => updateItem(item.id, "code", e.target.value)}
-                    placeholder="COD-001"
+                    placeholder={companyFormat === "llc" ? "CODE-001" : "COD-001"}
                     className="h-9 border-border bg-card font-mono text-sm text-foreground"
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Descripcion</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripcion"}</span>
                   <Textarea
                     value={item.description}
                     onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                    placeholder="Descripcion del producto"
+                    placeholder={companyFormat === "llc" ? "Product description" : "Descripcion del producto"}
                     rows={2}
                     className="min-h-16 resize-none border-border bg-card text-sm text-foreground"
                   />
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="grid gap-1.5">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Precio Unitario</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Unit Price" : "Precio Unitario"}</span>
                     <Input
                       type="number"
                       min={0}
@@ -197,7 +198,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</span>
                     <div className="flex h-9 items-center justify-end rounded-md border border-border bg-muted/40 px-3 font-mono text-sm font-semibold text-foreground">
                       ${formatCurrency(item.totalPrice)}
                     </div>
@@ -208,7 +209,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           ))}
           {items.length === 0 && (
             <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              Sin items. Use "Agregar" o seleccione del "Catalogo".
+              {companyFormat === "llc" ? 'No items. Use "Add" or pick from "Catalog".' : 'Sin items. Use "Agregar" o seleccione del "Catalogo".'}
             </div>
           )}
         </div>
@@ -220,10 +221,10 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 64 }}>Cant.</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>Codigo</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Descripcion</th>
-                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>P. Unit.</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 64 }}>{companyFormat === "llc" ? "Qty" : "Cant."}</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>{companyFormat === "llc" ? "Code" : "Codigo"}</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripcion"}</th>
+                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>{companyFormat === "llc" ? "Unit Price" : "P. Unit."}</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>Total</th>
                 <th className="px-3 py-2.5" style={{ width: 40 }}><span className="sr-only">Acciones</span></th>
               </tr>
@@ -244,7 +245,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     <Input
                       value={item.code}
                       onChange={(e) => updateItem(item.id, "code", e.target.value)}
-                      placeholder="COD-001"
+                      placeholder={companyFormat === "llc" ? "CODE-001" : "COD-001"}
                       className="h-8 w-36 border-border bg-card font-mono text-xs text-foreground"
                     />
                   </td>
@@ -252,7 +253,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     <Textarea
                       value={item.description}
                       onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                      placeholder="Descripcion del producto"
+                      placeholder={companyFormat === "llc" ? "Product description" : "Descripcion del producto"}
                       rows={1}
                       className="min-h-8 resize-none border-border bg-card text-xs text-foreground"
                     />
@@ -298,13 +299,15 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
       <Dialog open={catalogOpen} onOpenChange={setCatalogOpen}>
         <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-card text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-heading text-foreground">Seleccionar del Catalogo</DialogTitle>
+            <DialogTitle className="font-heading text-foreground">
+              {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del Catalogo"}
+            </DialogTitle>
           </DialogHeader>
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por codigo o descripcion..."
+                placeholder={companyFormat === "llc" ? "Search by code or description..." : "Buscar por codigo o descripcion..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="border-border bg-card pl-10 text-foreground"
@@ -313,10 +316,10 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             {!catalogFilter && (
               <Select value={catFilter} onValueChange={setCatFilter}>
                 <SelectTrigger className="w-44 border-border bg-card text-foreground">
-                  <SelectValue placeholder="Categoria" />
+                  <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="all">{companyFormat === "llc" ? "All" : "Todas"}</SelectItem>
                   {CATALOG_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
@@ -326,10 +329,10 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             {showMaterialsFilter && (
               <Select value={catFilter} onValueChange={setCatFilter}>
                 <SelectTrigger className="w-44 border-border bg-card text-foreground">
-                  <SelectValue placeholder="Categoria" />
+                  <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="all">{companyFormat === "llc" ? "All" : "Todas"}</SelectItem>
                   {applicableCategories.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
@@ -354,7 +357,9 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               </button>
             ))}
             {filteredCatalog.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">No se encontraron productos</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {companyFormat === "llc" ? "No products found" : "No se encontraron productos"}
+              </p>
             )}
           </div>
         </DialogContent>

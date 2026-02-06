@@ -10,9 +10,10 @@ import { useState } from "react"
 interface LaborSectionProps {
   laborItems: LaborItem[]
   onLaborItemsChange: (items: LaborItem[]) => void
+  companyFormat?: "sa" | "llc"
 }
 
-export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionProps) {
+export function LaborSection({ laborItems, onLaborItemsChange, companyFormat = "sa" }: LaborSectionProps) {
   const [collapsed, setCollapsed] = useState(false)
 
   const addLabor = () => {
@@ -45,7 +46,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
           className="flex items-center gap-2 text-foreground"
         >
           <Wrench className="h-4 w-4 text-[#1a5276]" />
-          <span className="font-heading text-sm font-semibold">Mano de Obra</span>
+          <span className="font-heading text-sm font-semibold">{companyFormat === "llc" ? "Labor" : "Mano de Obra"}</span>
           <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
             {laborItems.length}
           </span>
@@ -54,7 +55,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
         <div className="flex flex-wrap items-center gap-2">
           {laborItems.length > 0 && (
             <span className="text-xs font-medium text-muted-foreground">
-              Subtotal: <span className="font-mono text-foreground">${formatCurrency(totalLabor)}</span>
+              {companyFormat === "llc" ? "Subtotal" : "Subtotal"}: <span className="font-mono text-foreground">${formatCurrency(totalLabor)}</span>
             </span>
           )}
           <Button
@@ -63,7 +64,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
             className="h-7 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]"
           >
             <Plus className="mr-1 h-3 w-3" />
-            Agregar
+            {companyFormat === "llc" ? "Add" : "Agregar"}
           </Button>
         </div>
       </div>
@@ -73,7 +74,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
           {laborItems.map((item) => (
             <div key={item.id} className="rounded-md border border-border bg-card p-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Mano de Obra</span>
+                <span className="text-xs font-medium text-muted-foreground">{companyFormat === "llc" ? "Labor" : "Mano de Obra"}</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -85,7 +86,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
               </div>
               <div className="mt-3 grid gap-3">
                 <div className="grid gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Descripcion</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripcion"}</span>
                   <Input
                     value={item.description}
                     onChange={(e) => updateLabor(item.id, "description", e.target.value)}
@@ -94,7 +95,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Monto USD</span>
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Amount USD" : "Monto USD"}</span>
                   <Input
                     type="number"
                     min={0}
@@ -109,7 +110,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
           ))}
           {laborItems.length === 0 && (
             <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              Sin conceptos de mano de obra. Use "Agregar" para incluir items.
+              {companyFormat === "llc" ? 'No labor items. Use "Add" to include items.' : 'Sin conceptos de mano de obra. Use "Agregar" para incluir items.'}
             </div>
           )}
         </div>
@@ -120,8 +121,8 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Concepto / Descripcion</th>
-                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 140 }}>Monto USD</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{companyFormat === "llc" ? "Description" : "Concepto / Descripcion"}</th>
+                <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 140 }}>{companyFormat === "llc" ? "Amount USD" : "Monto USD"}</th>
                 <th className="px-3 py-2.5" style={{ width: 40 }}><span className="sr-only">Acciones</span></th>
               </tr>
             </thead>
@@ -132,10 +133,10 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
                     <Input
                       value={item.description}
                       onChange={(e) => updateLabor(item.id, "description", e.target.value)}
-                      placeholder="Ej: Instalacion y configuracion de sistema CCTV"
-                      className="h-8 border-border bg-card text-xs text-foreground"
-                    />
-                  </td>
+                    placeholder={companyFormat === "llc" ? "Example: Installation and configuration of CCTV system" : "Ej: Instalacion y configuracion de sistema CCTV"}
+                    className="h-8 border-border bg-card text-xs text-foreground"
+                  />
+                </td>
                   <td className="px-3 py-2">
                     <Input
                       type="number"
@@ -161,7 +162,7 @@ export function LaborSection({ laborItems, onLaborItemsChange }: LaborSectionPro
               {laborItems.length === 0 && (
                 <tr>
                   <td colSpan={3} className="py-8 text-center text-xs text-muted-foreground">
-                    Sin conceptos de mano de obra. Use "Agregar" para incluir items.
+                    {companyFormat === "llc" ? 'No labor items. Use "Add" to include items.' : 'Sin conceptos de mano de obra. Use "Agregar" para incluir items.'}
                   </td>
                 </tr>
               )}

@@ -2,7 +2,7 @@
 
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { formatCurrency, DEFAULT_TERMS } from "@/lib/quotation-types"
+import { formatCurrency, DEFAULT_TERMS, DEFAULT_TERMS_LLC } from "@/lib/quotation-types"
 import { Calculator, FileCheck, StickyNote } from "lucide-react"
 
 interface SummaryPanelProps {
@@ -16,6 +16,11 @@ interface SummaryPanelProps {
   termsAndConditions: string
   onNotesChange: (notes: string) => void
   onTermsChange: (terms: string) => void
+  companyFormat: "sa" | "llc"
+  taxRate: number
+  discountAmount: number
+  onDiscountChange: (value: number) => void
+  onTaxRateChange: (value: number) => void
 }
 
 export function SummaryPanel({
@@ -29,6 +34,11 @@ export function SummaryPanel({
   termsAndConditions,
   onNotesChange,
   onTermsChange,
+  companyFormat,
+  taxRate,
+  discountAmount,
+  onDiscountChange,
+  onTaxRateChange,
 }: SummaryPanelProps) {
   const baseImponible = subtotalEquipment + subtotalMaterials + subtotalLabor
 
@@ -39,12 +49,12 @@ export function SummaryPanel({
         <div className="rounded-lg border border-border bg-card p-5">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
             <StickyNote className="h-4 w-4 text-[#1a5276]" />
-            Notas Adicionales
+            {companyFormat === "llc" ? "Special Instructions" : "Notas Adicionales"}
           </h3>
           <Textarea
             value={notes}
             onChange={(e) => onNotesChange(e.target.value)}
-            placeholder="Notas o comentarios adicionales para el cliente..."
+            placeholder={companyFormat === "llc" ? "Special instructions..." : "Notas o comentarios adicionales para el cliente..."}
             rows={3}
             className="resize-none border-border bg-card text-sm text-foreground"
           />
@@ -53,20 +63,20 @@ export function SummaryPanel({
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <FileCheck className="h-4 w-4 text-[#1a5276]" />
-              Terminos y Condiciones
+              {companyFormat === "llc" ? "Terms & Conditions" : "Terminos y Condiciones"}
             </h3>
             <button
               type="button"
-              onClick={() => onTermsChange(DEFAULT_TERMS)}
+              onClick={() => onTermsChange(companyFormat === "llc" ? DEFAULT_TERMS_LLC : DEFAULT_TERMS)}
               className="text-xs text-[#1a5276] underline-offset-2 hover:underline"
             >
-              Cargar predeterminados
+              {companyFormat === "llc" ? "Load defaults" : "Cargar predeterminados"}
             </button>
           </div>
           <Textarea
             value={termsAndConditions}
             onChange={(e) => onTermsChange(e.target.value)}
-            placeholder="Escriba los terminos y condiciones..."
+            placeholder={companyFormat === "llc" ? "Write terms and conditions..." : "Escriba los terminos y condiciones..."}
             rows={8}
             className="resize-none border-border bg-card text-sm leading-relaxed text-foreground"
           />
@@ -78,34 +88,86 @@ export function SummaryPanel({
         <div className="rounded-lg border border-border bg-card p-6">
           <h3 className="mb-5 flex items-center gap-2 font-heading text-base font-semibold text-foreground">
             <Calculator className="h-5 w-5 text-[#1a5276]" />
-            Resumen de Cotizacion
+            {companyFormat === "llc" ? "Quote Summary" : "Resumen de Cotizacion"}
           </h3>
+
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                {companyFormat === "llc" ? "Discount (USD)" : "Descuento (USD)"}
+              </Label>
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={discountAmount}
+                onChange={(e) => onDiscountChange(Number(e.target.value))}
+                className="h-9 w-full rounded-lg border border-input bg-muted/70 px-3 text-right text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+              />
+            </div>
+            {companyFormat === "llc" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Tax Rate (%)</Label>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={taxRate}
+                  onChange={(e) => onTaxRateChange(Number(e.target.value))}
+                  className="h-9 w-full rounded-lg border border-input bg-muted/70 px-3 text-right text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+                />
+              </div>
+            )}
+          </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
-              <span className="text-sm text-muted-foreground">Equipos y Servicios</span>
+              <span className="text-sm text-muted-foreground">{companyFormat === "llc" ? "Equipment & Services" : "Equipos y Servicios"}</span>
               <span className="font-mono text-sm font-medium text-foreground">${formatCurrency(subtotalEquipment)}</span>
             </div>
             <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
-              <span className="text-sm text-muted-foreground">Materiales e Insumos</span>
+              <span className="text-sm text-muted-foreground">{companyFormat === "llc" ? "Materials & Supplies" : "Materiales e Insumos"}</span>
               <span className="font-mono text-sm font-medium text-foreground">${formatCurrency(subtotalMaterials)}</span>
             </div>
             <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
-              <span className="text-sm text-muted-foreground">Mano de Obra</span>
+              <span className="text-sm text-muted-foreground">{companyFormat === "llc" ? "Labor" : "Mano de Obra"}</span>
               <span className="font-mono text-sm font-medium text-foreground">${formatCurrency(subtotalLabor)}</span>
             </div>
             <div className="my-2 border-t border-border" />
-            <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
-              <span className="text-sm font-medium text-foreground">Base Imponible</span>
-              <span className="font-mono text-sm font-semibold text-foreground">${formatCurrency(baseImponible)}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
-              <span className="text-sm text-muted-foreground">IVA ({ivaRate}%)</span>
-              <span className="font-mono text-sm font-medium text-foreground">${formatCurrency(ivaAmount)}</span>
-            </div>
+            {companyFormat === "llc" ? (
+              <>
+                <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
+                  <span className="text-sm font-medium text-foreground">Sub Total</span>
+                  <span className="font-mono text-sm font-semibold text-foreground">${formatCurrency(baseImponible)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
+                  <span className="text-sm text-muted-foreground">Discount</span>
+                  <span className="font-mono text-sm font-medium text-foreground">-${formatCurrency(discountAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
+                  <span className="text-sm text-muted-foreground">Tax ({taxRate}%)</span>
+                  <span className="font-mono text-sm font-medium text-foreground">${formatCurrency(ivaAmount)}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
+                  <span className="text-sm font-medium text-foreground">Base Imponible</span>
+                  <span className="font-mono text-sm font-semibold text-foreground">${formatCurrency(baseImponible)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
+                  <span className="text-sm text-muted-foreground">Descuento</span>
+                  <span className="font-mono text-sm font-medium text-foreground">-${formatCurrency(discountAmount)}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2.5">
+                  <span className="text-sm text-muted-foreground">IVA ({ivaRate}%)</span>
+                  <span className="font-mono text-sm font-medium text-foreground">${formatCurrency(ivaAmount)}</span>
+                </div>
+              </>
+            )}
             <div className="mt-3 border-t-2 border-[#1a5276] pt-3">
               <div className="flex items-center justify-between rounded-lg bg-[#0a1628] px-5 py-4">
-                <span className="text-sm font-bold text-white">TOTAL USD</span>
+                <span className="text-sm font-bold text-white">{companyFormat === "llc" ? "TOTAL" : "TOTAL USD"}</span>
                 <span className="font-heading text-xl font-bold text-white">${formatCurrency(total)}</span>
               </div>
             </div>
