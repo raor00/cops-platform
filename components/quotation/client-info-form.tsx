@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import type { ClientInfo, QuotationType } from "@/lib/quotation-types"
 import { PAYMENT_CONDITIONS } from "@/lib/quotation-types"
 import { Building2, Calendar, FileText, Hash, Mail, MapPin, Phone, User } from "lucide-react"
@@ -11,12 +12,14 @@ interface ClientInfoFormProps {
   clientInfo: ClientInfo
   quotationCode: string
   quotationType: QuotationType
+  companyFormat: "sa" | "llc"
   subject: string
   issueDate: string
   validUntil: string
   paymentCondition: string
   onClientInfoChange: (info: ClientInfo) => void
   onTypeChange: (type: QuotationType) => void
+  onCompanyFormatChange: (format: "sa" | "llc") => void
   onSubjectChange: (subject: string) => void
   onIssueDateChange: (date: string) => void
   onValidUntilChange: (date: string) => void
@@ -28,12 +31,14 @@ export function ClientInfoForm({
   clientInfo,
   quotationCode,
   quotationType,
+  companyFormat,
   subject,
   issueDate,
   validUntil,
   paymentCondition,
   onClientInfoChange,
   onTypeChange,
+  onCompanyFormatChange,
   onSubjectChange,
   onIssueDateChange,
   onValidUntilChange,
@@ -93,6 +98,27 @@ export function ClientInfoForm({
             placeholder="Ej: SUMINISTRO E INSTALACION DE CCTV"
             className="border-border bg-card text-foreground"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Building2 className="h-3.5 w-3.5" />
+            Formato / Empresa
+          </Label>
+          <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-foreground">
+                {companyFormat === "llc" ? "COPS ELECTRONICS LLC" : "COP'S ELECTRONICS S.A."}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {companyFormat === "llc" ? "Formato USA (Invoice)" : "Formato Venezuela"}
+              </p>
+            </div>
+            <Switch
+              checked={companyFormat === "llc"}
+              onCheckedChange={(checked) => onCompanyFormatChange(checked ? "llc" : "sa")}
+            />
+          </div>
         </div>
 
         {/* Row 2 */}

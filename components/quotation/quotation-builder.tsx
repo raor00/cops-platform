@@ -27,6 +27,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   const [quotationId] = useState(() => initialData?.id || crypto.randomUUID())
   const [quotationType, setQuotationType] = useState<QuotationType>(initialData?.type || "proyecto")
   const [quotationCode, setQuotationCode] = useState(() => initialData?.code || generateQuotationCode("proyecto"))
+  const [companyFormat, setCompanyFormat] = useState<"sa" | "llc">(initialData?.companyFormat || "sa")
   const [subject, setSubject] = useState(initialData?.subject || "")
   const [issueDate, setIssueDate] = useState(initialData?.issueDate || today)
   const [validUntil, setValidUntil] = useState(initialData?.validUntil || validDate)
@@ -64,6 +65,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     id: quotationId,
     code: quotationCode,
     type: quotationType,
+    companyFormat,
     subject,
     clientInfo,
     items: equipmentItems,
@@ -82,7 +84,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     total: calculations.total,
     createdAt: initialData?.createdAt || new Date().toISOString(),
     status: initialData?.status || "borrador",
-  }), [quotationId, quotationCode, quotationType, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, ivaRate, initialData])
+  }), [quotationId, quotationCode, quotationType, companyFormat, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, ivaRate, initialData])
 
   const handleSave = () => {
     if (!clientInfo.name) {
@@ -114,6 +116,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   const handleReset = () => {
     setQuotationType("proyecto")
     setQuotationCode(generateQuotationCode("proyecto"))
+    setCompanyFormat("sa")
     setSubject("")
     setIssueDate(today)
     setValidUntil(validDate)
@@ -194,12 +197,14 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             clientInfo={clientInfo}
             quotationCode={quotationCode}
             quotationType={quotationType}
+            companyFormat={companyFormat}
             subject={subject}
             issueDate={issueDate}
             validUntil={validUntil}
             paymentCondition={paymentCondition}
             onClientInfoChange={setClientInfo}
             onTypeChange={handleTypeChange}
+            onCompanyFormatChange={setCompanyFormat}
             onSubjectChange={setSubject}
             onIssueDateChange={setIssueDate}
             onValidUntilChange={setValidUntil}

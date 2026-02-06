@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -14,31 +10,31 @@ body {
 
 @layer base {
   :root {
-    --background: 216 30% 97%;
-    --foreground: 220 40% 13%;
+    --background: 214 28% 96%;
+    --foreground: 222 33% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 220 40% 13%;
+    --card-foreground: 222 33% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 13%;
-    --primary: 217 71% 30%;
+    --popover-foreground: 222 33% 12%;
+    --primary: 214 74% 28%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 217 71% 30%;
-    --muted: 214 32% 95%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 100% 52%;
+    --secondary: 214 22% 92%;
+    --secondary-foreground: 214 74% 28%;
+    --muted: 214 24% 94%;
+    --muted-foreground: 215 15% 45%;
+    --accent: 214 90% 48%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 214 32% 88%;
-    --input: 214 32% 88%;
-    --ring: 217 71% 30%;
-    --chart-1: 217 71% 30%;
-    --chart-2: 210 100% 52%;
+    --border: 214 18% 84%;
+    --input: 214 22% 90%;
+    --ring: 214 90% 45%;
+    --chart-1: 214 74% 28%;
+    --chart-2: 214 90% 48%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.625rem;
+    --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 217 71% 30%;
@@ -56,5 +52,11 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(1200px circle at 10% 0%, hsl(214 60% 96%) 0%, transparent 40%),
+      radial-gradient(1200px circle at 90% 10%, hsl(210 55% 95%) 0%, transparent 35%);
+  }
+  ::selection {
+    background: hsl(var(--accent) / 0.2);
   }
 }

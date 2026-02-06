@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Image from "next/image"
 
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,6 @@ import {
   FilePlus,
   Package,
   Clock,
-  Shield,
   Menu,
   X,
   ChevronRight,
@@ -62,8 +62,8 @@ export function AppShell() {
           {/* Logo */}
           <div className="border-b border-border bg-[#0a1628] px-5 py-5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#1a3a6b]">
-                <Shield className="h-4.5 w-4.5 text-[#5b9aff]" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
+                <Image src="/cops-logo.png" alt="COPS Electronics" width={28} height={28} />
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-wide text-white">{"COP'S ELECTRONICS"}</h1>
@@ -112,8 +112,8 @@ export function AppShell() {
             <div className="border-b border-border bg-[#0a1628] px-5 py-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#1a3a6b]">
-                    <Shield className="h-4.5 w-4.5 text-[#5b9aff]" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
+                    <Image src="/cops-logo.png" alt="COPS Electronics" width={26} height={26} />
                   </div>
                   <span className="text-sm font-bold text-white">{"COP'S"}</span>
                 </div>
@@ -154,7 +154,7 @@ export function AppShell() {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-[#1a5276]" />
+            <Image src="/cops-logo.png" alt="COPS Electronics" width={20} height={20} />
             <span className="text-sm font-bold text-foreground">{"COP'S ELECTRONICS"}</span>
           </div>
           <div className="w-8" />

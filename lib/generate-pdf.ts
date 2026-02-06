@@ -11,6 +11,16 @@ function formatDate(dateStr: string): string {
   }
 }
 
+function formatDateUS(dateStr: string): string {
+  if (!dateStr) return ""
+  try {
+    const [year, month, day] = dateStr.split("-")
+    return `${month}/${day}/${year}`
+  } catch {
+    return dateStr
+  }
+}
+
 function getTypeLabel(type: string): string {
   switch (type) {
     case "proyecto": return "PROYECTO"
@@ -20,7 +30,7 @@ function getTypeLabel(type: string): string {
   }
 }
 
-export function generatePDFContent(data: QuotationData): string {
+function generateSAPDFContent(data: QuotationData): string {
   const renderItemRows = (items: QuotationData["items"]) =>
     items.map((item) => `
       <tr>
@@ -122,9 +132,14 @@ export function generatePDFContent(data: QuotationData): string {
 <div class="page">
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%);padding:28px 40px;display:flex;justify-content:space-between;align-items:center;">
-    <div>
-      <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:2px;">COP'S ELECTRONICS, S.A.</div>
-      <div style="font-size:10px;color:#7a9cc7;margin-top:3px;letter-spacing:1px;">SOLUCIONES TECNOLOGICAS INTEGRALES</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+        <img src="/cops-logo.png" alt="COPS Electronics" style="width:34px;height:34px;object-fit:contain;" />
+      </div>
+      <div>
+        <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:2px;">COP'S ELECTRONICS, S.A.</div>
+        <div style="font-size:10px;color:#7a9cc7;margin-top:3px;letter-spacing:1px;">SOLUCIONES TECNOLOGICAS INTEGRALES</div>
+      </div>
     </div>
     <div style="text-align:right;">
       <div style="background:rgba(255,255,255,0.08);border-radius:6px;padding:10px 18px;border:1px solid rgba(255,255,255,0.12);">
@@ -211,6 +226,170 @@ export function generatePDFContent(data: QuotationData): string {
 </div>
 </body>
 </html>`
+}
+
+function generateLLCPDFContent(data: QuotationData): string {
+  const allItems = [
+    ...data.items.map((item) => ({
+      model: item.code || "ITEM",
+      sku: item.code || "ITEM",
+      description: item.description || "",
+      qty: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.totalPrice,
+    })),
+    ...data.materials.map((item) => ({
+      model: item.code || "ITEM",
+      sku: item.code || "ITEM",
+      description: item.description || "",
+      qty: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.totalPrice,
+    })),
+    ...data.laborItems.map((item) => ({
+      model: "LABOR",
+      sku: "LABOR",
+      description: item.description || "Labor",
+      qty: 1,
+      unitPrice: item.cost,
+      total: item.cost,
+    })),
+  ]
+
+  const rows = allItems.map((item) => `
+    <tr>
+      <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;color:#111827;">${item.model}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;color:#111827;">${item.sku}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;color:#111827;">${item.description}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;text-align:center;color:#111827;">${item.qty}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;text-align:right;color:#111827;">$${formatCurrency(item.unitPrice)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;text-align:right;font-weight:600;color:#111827;">$${formatCurrency(item.total)}</td>
+    </tr>
+  `).join("")
+
+  const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Quote ${data.code} - COPS Electronics LLC</title>
+  <style>
+    @page { size: letter; margin: 0; }
+    body { margin: 0; padding: 0; font-family: "Segoe UI", Arial, sans-serif; color: #111827; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: 100%; min-height: 100vh; position: relative; }
+  </style>
+</head>
+<body>
+  <div class="page" style="padding:32px 40px 36px 40px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div style="width:56px;height:56px;border-radius:12px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+          <img src="/cops-logo.png" alt="COPS Electronics" style="width:44px;height:44px;object-fit:contain;" />
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:800;letter-spacing:0.5px;">COPS ELECTRONICS LLC.</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:4px;">Doral, FL 33178</div>
+          <div style="font-size:10px;color:#6b7280;">Phone: (305) 200-7352</div>
+          <div style="font-size:10px;color:#2563eb;">www.copselectronics.com</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:22px;font-weight:800;letter-spacing:2px;">QUOTE</div>
+        <table style="margin-top:10px;border-collapse:collapse;">
+          <tr>
+            <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Date</td>
+            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${formatDateUS(data.issueDate)}</td>
+          </tr>
+          <tr>
+            <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Customer ID</td>
+            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${data.clientInfo.rif || data.code}</td>
+          </tr>
+          <tr>
+            <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Terms</td>
+            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${data.paymentCondition || "PP"}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:40px;">
+      <div style="flex:1;">
+        <div style="font-size:10px;font-weight:700;color:#111827;text-transform:uppercase;margin-bottom:6px;">Bill To:</div>
+        <div style="font-size:11px;font-weight:600;">${data.clientInfo.name}</div>
+        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.attention}</div>
+        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.address}</div>
+        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.email}</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:10px;font-weight:700;color:#111827;text-transform:uppercase;margin-bottom:6px;">Ship To:</div>
+        <div style="font-size:11px;font-weight:600;">${data.clientInfo.name}</div>
+        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.address}</div>
+        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.phone}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;border-top:1px solid #e5e7eb;padding-top:10px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0f172a;">
+            <th style="padding:8px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.6px;">MODELO</th>
+            <th style="padding:8px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.6px;">SKU</th>
+            <th style="padding:8px 8px;text-align:left;font-size:9px;color:#fff;letter-spacing:0.6px;">DESCRIPTION</th>
+            <th style="padding:8px 8px;text-align:center;font-size:9px;color:#fff;letter-spacing:0.6px;">QTY</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#fff;letter-spacing:0.6px;">UNIT PRICE</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#fff;letter-spacing:0.6px;">AMOUNT</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+      <table style="border-collapse:collapse;width:260px;">
+        <tr>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">SUB TOTAL</td>
+          <td style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;color:#111827;">$${formatCurrency(baseImponible)}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;">DESCUENTO</td>
+          <td style="padding:6px 10px;text-align:right;font-size:11px;color:#111827;">$${formatCurrency(0)}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 10px;font-size:10px;color:#6b7280;border-bottom:1px solid #e5e7eb;">TAX</td>
+          <td style="padding:6px 10px;text-align:right;font-size:11px;color:#111827;border-bottom:1px solid #e5e7eb;">$${formatCurrency(data.ivaAmount)}</td>
+        </tr>
+        <tr style="background:#0f172a;">
+          <td style="padding:10px;font-size:11px;font-weight:700;color:#fff;">TOTAL</td>
+          <td style="padding:10px;text-align:right;font-size:13px;font-weight:800;color:#fff;">$${formatCurrency(data.total)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:32px;">
+      <div style="flex:1;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">Especial Instruccion</div>
+        <div style="font-size:10px;color:#6b7280;line-height:1.5;border:1px solid #e5e7eb;border-radius:6px;padding:8px;">${data.notes || "-"}</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">COPS ELECTRONICS LLC.</div>
+        <div style="font-size:10px;color:#6b7280;line-height:1.6;">
+          Chase Bank 10795 NW 58 th st. Doral, FL, 33178<br/>
+          Account number: 296838235 &nbsp;&nbsp; ABA: 021000021<br/>
+          Zelle: ventas@copselectronics.com
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+export function generatePDFContent(data: QuotationData): string {
+  if (data.companyFormat === "llc") {
+    return generateLLCPDFContent(data)
+  }
+  return generateSAPDFContent(data)
 }
 
 export function downloadPDF(data: QuotationData) {

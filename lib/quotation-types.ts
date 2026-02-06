@@ -47,6 +47,7 @@ export interface QuotationData {
   id: string
   code: string
   type: QuotationType
+  companyFormat: "sa" | "llc"
   subject: string
   clientInfo: ClientInfo
   items: QuotationItem[]
