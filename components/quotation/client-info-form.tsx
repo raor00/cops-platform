@@ -1,5 +1,6 @@
 "use client"
 
+import type { MouseEvent } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -55,6 +56,14 @@ export function ClientInfoForm({
       updated.name = value
     }
     onClientInfoChange(updated)
+  }
+
+  const toggleCompanyFormat = (e?: MouseEvent) => {
+    if (e) {
+      const target = e.target as HTMLElement
+      if (target.closest('[role="switch"]')) return
+    }
+    onCompanyFormatChange(companyFormat === "llc" ? "sa" : "llc")
   }
 
   return (
@@ -113,7 +122,18 @@ export function ClientInfoForm({
             <Building2 className="h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Format / Company" : "Formato / Empresa"}
           </Label>
-          <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
+          <div
+            className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-3 py-2"
+            onClick={toggleCompanyFormat}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                toggleCompanyFormat()
+              }
+            }}
+          >
             <div className="space-y-0.5">
               <p className="text-xs font-semibold text-foreground">
                 {companyFormat === "llc" ? "COPS ELECTRONICS LLC" : "COP'S ELECTRONICS S.A."}
