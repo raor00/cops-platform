@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { QuotationData } from "@/lib/quotation-types"
 import { generatePDFContent } from "@/lib/generate-pdf"
 import { FileText } from "lucide-react"
@@ -12,14 +12,21 @@ interface PDFPreviewProps {
 
 export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (iframeRef.current) {
-      const doc = iframeRef.current.contentDocument
-      if (doc) {
-        doc.open()
-        doc.write(generatePDFContent(data))
-        doc.close()
+      try {
+        const doc = iframeRef.current.contentDocument
+        if (doc) {
+          doc.open()
+          doc.write(generatePDFContent(data))
+          doc.close()
+        }
+        setError(null)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error"
+        setError(message)
       }
     }
   }, [data])
@@ -38,6 +45,13 @@ export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
         className="h-[700px] w-full bg-white"
         sandbox="allow-same-origin"
       />
+      {error && (
+        <div className="border-t border-border bg-destructive/10 px-4 py-3 text-xs text-destructive">
+          {companyFormat === "llc"
+            ? `Preview error: ${error}`
+            : `Error en vista previa: ${error}`}
+        </div>
+      )}
     </div>
   )
 }

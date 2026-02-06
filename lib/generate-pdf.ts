@@ -33,6 +33,8 @@ function getTypeLabel(type: string): string {
 }
 
 function generateSAPDFContent(data: QuotationData): string {
+  const notesText = data.notes || ""
+  const termsText = data.termsAndConditions || ""
   const renderItemRows = (items: QuotationData["items"]) =>
     items.map((item) => `
       <tr>
@@ -56,7 +58,7 @@ function generateSAPDFContent(data: QuotationData): string {
       </tr>`)
     .join("")
 
-  const termsLines = data.termsAndConditions
+  const termsLines = termsText
     .split("\n")
     .filter((l) => l.trim())
     .map((line) => `<li style="margin-bottom:3px;color:#475569;font-size:9px;line-height:1.5;">${line.replace(/^\d+\.\s*/, "")}</li>`)
@@ -207,14 +209,14 @@ function generateSAPDFContent(data: QuotationData): string {
     </div>
   </div>
 
-  ${data.notes ? `<div style="padding:0 40px;margin-bottom:10px;">
+  ${notesText ? `<div style="padding:0 40px;margin-bottom:10px;">
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;">
       <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-weight:600;">Notas:</div>
-      <div style="font-size:10px;color:#475569;line-height:1.5;">${data.notes}</div>
+      <div style="font-size:10px;color:#475569;line-height:1.5;">${notesText}</div>
     </div>
   </div>` : ""}
 
-  ${data.termsAndConditions ? `<div style="padding:0 40px;margin-bottom:16px;">
+  ${termsText ? `<div style="padding:0 40px;margin-bottom:16px;">
     <div style="font-size:9px;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700;">Terminos y Condiciones</div>
     <ol style="margin:0;padding-left:14px;">${termsLines}</ol>
   </div>` : ""}
@@ -232,6 +234,7 @@ function generateSAPDFContent(data: QuotationData): string {
 }
 
 function generateLLCPDFContent(data: QuotationData): string {
+  const notesText = data.notes || ""
   const allItems = [
     ...data.items.map((item) => ({
       model: item.code || "ITEM",
@@ -259,17 +262,37 @@ function generateLLCPDFContent(data: QuotationData): string {
     })),
   ]
 
-  const billToName = data.clientInfo.billToName || data.clientInfo.name
-  const billToAttention = data.clientInfo.billToAttention || data.clientInfo.attention
-  const billToEmail = data.clientInfo.billToEmail || data.clientInfo.email
-  const billToPhone = data.clientInfo.billToPhone || data.clientInfo.phone
-  const billToAddress = data.clientInfo.billToAddress || data.clientInfo.address
+  const info = data.clientInfo || {
+    name: "",
+    attention: "",
+    email: "",
+    rif: "",
+    phone: "",
+    address: "",
+    customerId: "",
+    billToName: "",
+    billToAttention: "",
+    billToEmail: "",
+    billToPhone: "",
+    billToAddress: "",
+    shipToName: "",
+    shipToAttention: "",
+    shipToEmail: "",
+    shipToPhone: "",
+    shipToAddress: "",
+  }
 
-  const shipToName = data.clientInfo.shipToName || data.clientInfo.name
-  const shipToAttention = data.clientInfo.shipToAttention || data.clientInfo.attention
-  const shipToEmail = data.clientInfo.shipToEmail || data.clientInfo.email
-  const shipToPhone = data.clientInfo.shipToPhone || data.clientInfo.phone
-  const shipToAddress = data.clientInfo.shipToAddress || data.clientInfo.address
+  const billToName = info.billToName || info.name
+  const billToAttention = info.billToAttention || info.attention
+  const billToEmail = info.billToEmail || info.email
+  const billToPhone = info.billToPhone || info.phone
+  const billToAddress = info.billToAddress || info.address
+
+  const shipToName = info.shipToName || info.name
+  const shipToAttention = info.shipToAttention || info.attention
+  const shipToEmail = info.shipToEmail || info.email
+  const shipToPhone = info.shipToPhone || info.phone
+  const shipToAddress = info.shipToAddress || info.address
 
   const rows = allItems.map((item) => `
     <tr>
@@ -322,7 +345,7 @@ function generateLLCPDFContent(data: QuotationData): string {
           </tr>
           <tr>
             <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Customer ID</td>
-            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${data.clientInfo.customerId || data.clientInfo.rif || data.code}</td>
+            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${info.customerId || info.rif || data.code}</td>
           </tr>
           <tr>
             <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Terms</td>
@@ -399,7 +422,7 @@ function generateLLCPDFContent(data: QuotationData): string {
     <div style="margin-top:16px;display:flex;gap:24px;">
       <div style="flex:1;">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">SPECIAL INSTRUCTION</div>
-        <div style="font-size:10px;color:#6b7280;line-height:1.5;border:1px solid #e5e7eb;border-radius:6px;padding:8px;">${data.notes || "-"}</div>
+        <div style="font-size:10px;color:#6b7280;line-height:1.5;border:1px solid #e5e7eb;border-radius:6px;padding:8px;">${notesText || "-"}</div>
       </div>
       <div style="flex:1;">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">COPS ELECTRONICS LLC.</div>
