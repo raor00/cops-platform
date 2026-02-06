@@ -172,8 +172,64 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
         </div>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="space-y-3 sm:hidden">
+        {filtered.map((q) => (
+          <div key={q.id} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-xs font-semibold text-[#1a5276]">{q.code}</p>
+                <p className="mt-1 truncate text-sm text-foreground">{q.clientInfo.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{q.subject || "---"}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => onEdit(q)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Editar">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleExport(q)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Exportar PDF">
+                  <FileDown className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteId(q.id)} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" title="Eliminar">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="rounded bg-muted px-2 py-0.5">{TYPE_MAP[q.type] || q.type}</span>
+              <span className="rounded bg-muted px-2 py-0.5">{formatDate(q.createdAt)}</span>
+              <span className="font-mono text-sm font-semibold text-foreground">${formatCurrency(q.total)}</span>
+            </div>
+            <div className="mt-3">
+              <Select value={q.status} onValueChange={(v) => handleStatusChange(q.id, v as QuotationData["status"])}>
+                <SelectTrigger className="h-8 w-full border-border bg-card text-xs text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="borrador">Borrador</SelectItem>
+                  <SelectItem value="enviada">Enviada</SelectItem>
+                  <SelectItem value="aprobada">Aprobada</SelectItem>
+                  <SelectItem value="rechazada">Rechazada</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="mt-2">
+                <Badge className={STATUS_MAP[q.status]?.className || ""}>
+                  {STATUS_MAP[q.status]?.label || q.status}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            {quotations.length === 0
+              ? "No hay cotizaciones registradas. Cree su primera cotizacion."
+              : "No se encontraron cotizaciones con los filtros aplicados."}
+          </div>
+        )}
+      </div>
+
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card sm:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

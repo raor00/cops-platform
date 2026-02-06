@@ -164,8 +164,47 @@ export function CatalogManager() {
         </div>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="space-y-3 sm:hidden">
+        {filtered.map((item) => (
+          <div key={item.id} className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-mono text-xs font-semibold text-[#1a5276]">{item.code}</p>
+                <p className="mt-1 text-sm text-foreground">{item.description}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" onClick={() => openEdit(item)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
+                  <Pencil className="h-3.5 w-3.5" />
+                  <span className="sr-only">Editar</span>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(item.id)} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="sr-only">Eliminar</span>
+                </Button>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary" className="gap-1 bg-secondary text-secondary-foreground">
+                {getCategoryIcon(item.category)}
+                {item.category}
+              </Badge>
+              <span className="rounded bg-muted px-2 py-0.5">{item.unit}</span>
+              <span className="font-mono text-sm font-semibold text-foreground">
+                ${formatCurrency(item.unitPrice)}
+              </span>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+            No se encontraron items con los filtros aplicados
+          </div>
+        )}
+      </div>
+
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card sm:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

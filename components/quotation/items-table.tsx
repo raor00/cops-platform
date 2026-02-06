@@ -99,7 +99,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
   return (
     <div className="rounded-lg border border-border bg-card">
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b border-border px-5 py-3">
+      <div className="flex flex-col gap-3 border-b border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
@@ -112,7 +112,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           </span>
           {collapsed ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronUp className="h-4 w-4 text-muted-foreground" />}
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {items.length > 0 && (
             <span className="text-xs font-medium text-muted-foreground">
               Subtotal: <span className="font-mono text-foreground">${formatCurrency(subtotal)}</span>
@@ -138,9 +138,85 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
         </div>
       </div>
 
+      {/* Mobile Cards */}
+      {!collapsed && (
+        <div className="space-y-3 p-4 sm:hidden">
+          {items.map((item) => (
+            <div key={item.id} className="rounded-md border border-border bg-card p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Item</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(item.id)}
+                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <div className="mt-3 grid gap-3">
+                <div className="grid gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Cantidad</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                    className="h-9 border-border bg-card text-center text-sm text-foreground"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Codigo</span>
+                  <Input
+                    value={item.code}
+                    onChange={(e) => updateItem(item.id, "code", e.target.value)}
+                    placeholder="COD-001"
+                    className="h-9 border-border bg-card font-mono text-sm text-foreground"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Descripcion</span>
+                  <Textarea
+                    value={item.description}
+                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                    placeholder="Descripcion del producto"
+                    rows={2}
+                    className="min-h-16 resize-none border-border bg-card text-sm text-foreground"
+                  />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Precio Unitario</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={item.unitPrice}
+                      onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
+                      className="h-9 border-border bg-card text-right text-sm text-foreground"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</span>
+                    <div className="flex h-9 items-center justify-end rounded-md border border-border bg-muted/40 px-3 font-mono text-sm font-semibold text-foreground">
+                      ${formatCurrency(item.totalPrice)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {items.length === 0 && (
+            <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+              Sin items. Use "Agregar" o seleccione del "Catalogo".
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       {!collapsed && (
-        <div className="overflow-x-auto">
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">

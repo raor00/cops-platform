@@ -140,12 +140,12 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             {quotationCode} &middot; {quotationType === "proyecto" ? "Proyecto" : quotationType === "servicio" ? "Servicio" : "Mantenimiento Preventivo"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             variant="outline"
             size="sm"
             onClick={handleReset}
-            className="border-border bg-transparent text-muted-foreground hover:bg-muted"
+            className="w-full border-border bg-transparent text-muted-foreground hover:bg-muted sm:w-auto"
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             Limpiar
@@ -154,7 +154,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             variant="outline"
             size="sm"
             onClick={handleSave}
-            className="border-[#1a5276] bg-transparent text-[#1a5276] hover:bg-[#1a5276] hover:text-white"
+            className="w-full border-[#1a5276] bg-transparent text-[#1a5276] hover:bg-[#1a5276] hover:text-white sm:w-auto"
           >
             <Save className="mr-1.5 h-3.5 w-3.5" />
             Guardar
@@ -162,7 +162,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
           <Button
             size="sm"
             onClick={handleExportPDF}
-            className="bg-[#1a5276] text-white hover:bg-[#0e3a57]"
+            className="w-full bg-[#1a5276] text-white hover:bg-[#0e3a57] sm:w-auto"
           >
             <FileDown className="mr-1.5 h-3.5 w-3.5" />
             Exportar PDF
