@@ -70,6 +70,9 @@ function generateSAPDFContent(data: QuotationData): string {
   const hasMaterials = data.materials.length > 0
   const hasLabor = data.laborItems.length > 0
 
+  const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
+  const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
+
   const equipmentSection = hasEquipment ? `
     <div style="padding:0 40px;margin-bottom:4px;">
       <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Equipos y Servicios</div>
