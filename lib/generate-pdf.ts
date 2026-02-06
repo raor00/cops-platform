@@ -284,7 +284,6 @@ function generateLLCPDFContent(data: QuotationData): string {
 
   const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
   const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
-  const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
 
   return `<!DOCTYPE html>
 <html>
