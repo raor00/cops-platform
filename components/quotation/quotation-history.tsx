@@ -54,9 +54,10 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
 
   const filtered = useMemo(() => {
     return quotations.filter((q) => {
+      const clientName = q.clientInfo.billToName || q.clientInfo.name
       const matchSearch = !search ||
         q.code.toLowerCase().includes(search.toLowerCase()) ||
-        q.clientInfo.name.toLowerCase().includes(search.toLowerCase()) ||
+        clientName.toLowerCase().includes(search.toLowerCase()) ||
         q.subject.toLowerCase().includes(search.toLowerCase())
       const matchStatus = filterStatus === "all" || q.status === filterStatus
       const matchType = filterType === "all" || q.type === filterType
@@ -179,7 +180,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-mono text-xs font-semibold text-[#1a5276]">{q.code}</p>
-                <p className="mt-1 truncate text-sm text-foreground">{q.clientInfo.name}</p>
+                <p className="mt-1 truncate text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{q.subject || "---"}</p>
               </div>
               <div className="flex items-center gap-1">
@@ -250,7 +251,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
               {filtered.map((q) => (
                 <tr key={q.id} className="group transition-colors hover:bg-muted/50">
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{q.code}</td>
-                  <td className="max-w-[180px] truncate px-4 py-3 text-sm text-foreground">{q.clientInfo.name}</td>
+                  <td className="max-w-[180px] truncate px-4 py-3 text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</td>
                   <td className="max-w-[200px] truncate px-4 py-3 text-sm text-muted-foreground">{q.subject || "---"}</td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-xs text-muted-foreground">{TYPE_MAP[q.type] || q.type}</span>

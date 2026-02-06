@@ -256,6 +256,18 @@ function generateLLCPDFContent(data: QuotationData): string {
     })),
   ]
 
+  const billToName = data.clientInfo.billToName || data.clientInfo.name
+  const billToAttention = data.clientInfo.billToAttention || data.clientInfo.attention
+  const billToEmail = data.clientInfo.billToEmail || data.clientInfo.email
+  const billToPhone = data.clientInfo.billToPhone || data.clientInfo.phone
+  const billToAddress = data.clientInfo.billToAddress || data.clientInfo.address
+
+  const shipToName = data.clientInfo.shipToName || data.clientInfo.name
+  const shipToAttention = data.clientInfo.shipToAttention || data.clientInfo.attention
+  const shipToEmail = data.clientInfo.shipToEmail || data.clientInfo.email
+  const shipToPhone = data.clientInfo.shipToPhone || data.clientInfo.phone
+  const shipToAddress = data.clientInfo.shipToAddress || data.clientInfo.address
+
   const rows = allItems.map((item) => `
     <tr>
       <td style="padding:6px 8px;border-bottom:1px solid #e5e7eb;font-size:10px;color:#111827;">${item.model}</td>
@@ -303,7 +315,7 @@ function generateLLCPDFContent(data: QuotationData): string {
           </tr>
           <tr>
             <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Customer ID</td>
-            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${data.clientInfo.rif || data.code}</td>
+            <td style="font-size:10px;font-weight:600;color:#111827;padding:3px 0 3px 8px;">${data.clientInfo.customerId || data.clientInfo.rif || data.code}</td>
           </tr>
           <tr>
             <td style="font-size:9px;color:#6b7280;padding:3px 6px 3px 0;text-transform:uppercase;">Terms</td>
@@ -316,16 +328,19 @@ function generateLLCPDFContent(data: QuotationData): string {
     <div style="margin-top:18px;display:flex;gap:40px;">
       <div style="flex:1;">
         <div style="font-size:10px;font-weight:700;color:#111827;text-transform:uppercase;margin-bottom:6px;">Bill To:</div>
-        <div style="font-size:11px;font-weight:600;">${data.clientInfo.name}</div>
-        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.attention}</div>
-        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.address}</div>
-        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.email}</div>
+        <div style="font-size:11px;font-weight:600;">${billToName}</div>
+        <div style="font-size:10px;color:#6b7280;">${billToAttention}</div>
+        <div style="font-size:10px;color:#6b7280;">${billToAddress}</div>
+        <div style="font-size:10px;color:#6b7280;">${billToEmail}</div>
+        <div style="font-size:10px;color:#6b7280;">${billToPhone}</div>
       </div>
       <div style="flex:1;">
         <div style="font-size:10px;font-weight:700;color:#111827;text-transform:uppercase;margin-bottom:6px;">Ship To:</div>
-        <div style="font-size:11px;font-weight:600;">${data.clientInfo.name}</div>
-        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.address}</div>
-        <div style="font-size:10px;color:#6b7280;">${data.clientInfo.phone}</div>
+        <div style="font-size:11px;font-weight:600;">${shipToName}</div>
+        <div style="font-size:10px;color:#6b7280;">${shipToAttention}</div>
+        <div style="font-size:10px;color:#6b7280;">${shipToAddress}</div>
+        <div style="font-size:10px;color:#6b7280;">${shipToEmail}</div>
+        <div style="font-size:10px;color:#6b7280;">${shipToPhone}</div>
       </div>
     </div>
 

@@ -33,9 +33,28 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   const [validUntil, setValidUntil] = useState(initialData?.validUntil || validDate)
   const [paymentCondition, setPaymentCondition] = useState(initialData?.paymentCondition || PAYMENT_CONDITIONS[0])
 
-  const [clientInfo, setClientInfo] = useState<ClientInfo>(
-    initialData?.clientInfo || { name: "", attention: "", email: "", rif: "", phone: "", address: "" }
-  )
+  const [clientInfo, setClientInfo] = useState<ClientInfo>(() => {
+    const base: ClientInfo = {
+      name: "",
+      attention: "",
+      email: "",
+      rif: "",
+      phone: "",
+      address: "",
+      customerId: "",
+      billToName: "",
+      billToAttention: "",
+      billToEmail: "",
+      billToPhone: "",
+      billToAddress: "",
+      shipToName: "",
+      shipToAttention: "",
+      shipToEmail: "",
+      shipToPhone: "",
+      shipToAddress: "",
+    }
+    return initialData?.clientInfo ? { ...base, ...initialData.clientInfo } : base
+  })
 
   const [equipmentItems, setEquipmentItems] = useState<QuotationItem[]>(initialData?.items || [])
   const [materialItems, setMaterialItems] = useState<QuotationItem[]>(initialData?.materials || [])
@@ -87,7 +106,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   }), [quotationId, quotationCode, quotationType, companyFormat, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, ivaRate, initialData])
 
   const handleSave = () => {
-    if (!clientInfo.name) {
+    const clientName = companyFormat === "llc" ? (clientInfo.billToName || clientInfo.name) : clientInfo.name
+    if (!clientName) {
       toast.error("Debe ingresar el nombre del cliente")
       return
     }
@@ -98,7 +118,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   }
 
   const handleExportPDF = () => {
-    if (!clientInfo.name) {
+    const clientName = companyFormat === "llc" ? (clientInfo.billToName || clientInfo.name) : clientInfo.name
+    if (!clientName) {
       toast.error("Debe ingresar el nombre del cliente")
       return
     }
@@ -121,7 +142,25 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     setIssueDate(today)
     setValidUntil(validDate)
     setPaymentCondition(PAYMENT_CONDITIONS[0])
-    setClientInfo({ name: "", attention: "", email: "", rif: "", phone: "", address: "" })
+    setClientInfo({
+      name: "",
+      attention: "",
+      email: "",
+      rif: "",
+      phone: "",
+      address: "",
+      customerId: "",
+      billToName: "",
+      billToAttention: "",
+      billToEmail: "",
+      billToPhone: "",
+      billToAddress: "",
+      shipToName: "",
+      shipToAttention: "",
+      shipToEmail: "",
+      shipToPhone: "",
+      shipToAddress: "",
+    })
     setEquipmentItems([])
     setMaterialItems([])
     setLaborItems([])

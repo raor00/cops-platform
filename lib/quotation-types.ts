@@ -8,6 +8,7 @@ export type CatalogCategory =
   | "VMS"
   | "Energia"
   | "Materiales"
+  | "Automatizacion"
 
 export interface CatalogItem {
   id: string
@@ -41,6 +42,17 @@ export interface ClientInfo {
   rif: string
   phone: string
   address: string
+  customerId: string
+  billToName: string
+  billToAttention: string
+  billToEmail: string
+  billToPhone: string
+  billToAddress: string
+  shipToName: string
+  shipToAttention: string
+  shipToEmail: string
+  shipToPhone: string
+  shipToAddress: string
 }
 
 export interface QuotationData {
@@ -76,6 +88,7 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
   "VMS",
   "Energia",
   "Materiales",
+  "Automatizacion",
 ]
 
 export const DEFAULT_CATALOG: CatalogItem[] = [
@@ -147,6 +160,13 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   { id: "53", code: "MAT-REGLETA-RACK", description: "Regleta Electrica para Rack 6 Tomas con Breaker", unitPrice: 22, category: "Materiales", unit: "UND" },
   { id: "54", code: "MAT-SOPORTE-PARED", description: "Soporte de Pared para Camara Domo/Bullet", unitPrice: 8, category: "Materiales", unit: "UND" },
   { id: "55", code: "MAT-SOPORTE-TECHO", description: "Soporte de Techo Colgante para Camara Domo", unitPrice: 15, category: "Materiales", unit: "UND" },
+  // Automated Logic Control (ALC)
+  { id: "56", code: "OF1628", description: "Controlador OptiFlex BACnet & Router. Automated Logic", unitPrice: 17028.9, category: "Automatizacion", unit: "UND" },
+  { id: "57", code: "NSB-10K-2-H200-O-BB2-A", description: "Detector Ambiente, (Temp. + Humedad). Automated Logic", unitPrice: 372.65, category: "Automatizacion", unit: "UND" },
+  { id: "58", code: "EQT3-7", description: "Display EQT touchscreen with a 7 in. color. Automated Logic", unitPrice: 2548, category: "Automatizacion", unit: "UND" },
+  { id: "59", code: "USB-K", description: "USB-K. USB to Rnet & USB, Automated Logic", unitPrice: 352.8, category: "Automatizacion", unit: "UND" },
+  { id: "60", code: "FIO812U", description: "Modulo de Expasion 12 Entradas - 8 Salidas. Automated Logic", unitPrice: 3997.15, category: "Automatizacion", unit: "UND" },
+  { id: "61", code: "FIO88U", description: "Modulo de Expasion 8 Entradas - 8 Salidas. Automated Logic", unitPrice: 3065.2, category: "Automatizacion", unit: "UND" },
 ]
 
 export const DEFAULT_TERMS = `1. Los precios estan expresados en Dolares Americanos (USD).
