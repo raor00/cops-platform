@@ -8,20 +8,23 @@ import { Button } from "@/components/ui/button"
 import { QuotationBuilder } from "./quotation-builder"
 import { CatalogManager } from "./catalog-manager"
 import { QuotationHistory } from "./quotation-history"
+import { DeliveryNoteBuilder } from "./delivery-note-builder"
 import type { QuotationData } from "@/lib/quotation-types"
 import {
   FilePlus,
   Package,
   Clock,
+  ClipboardList,
   Menu,
   X,
   ChevronRight,
 } from "lucide-react"
 
-type View = "new" | "catalog" | "history"
+type View = "new" | "delivery" | "catalog" | "history"
 
 const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "new", label: "Nueva Cotizacion", icon: <FilePlus className="h-4 w-4" /> },
+  { id: "delivery", label: "Nota de Entrega", icon: <ClipboardList className="h-4 w-4" /> },
   { id: "catalog", label: "Catalogo", icon: <Package className="h-4 w-4" /> },
   { id: "history", label: "Historial", icon: <Clock className="h-4 w-4" /> },
 ]
@@ -170,6 +173,7 @@ export function AppShell() {
                 onSaved={handleSaved}
               />
             )}
+            {activeView === "delivery" && <DeliveryNoteBuilder />}
             {activeView === "catalog" && <CatalogManager />}
             {activeView === "history" && (
               <QuotationHistory
