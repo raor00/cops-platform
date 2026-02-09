@@ -30,6 +30,7 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const loggedIn = hasSession();
+  const onDark = isHome && !scrolled;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -47,7 +48,7 @@ export default function SiteHeader() {
   const glass = scrolled
     ? "bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,.04)]"
     : isHome
-      ? "bg-transparent border-b border-white/10"
+      ? "bg-slate-500/90 backdrop-blur-md border-b border-white/10"
       : "bg-white border-b border-slate-200";
 
   const linkCls = isHome && !scrolled
@@ -102,7 +103,11 @@ export default function SiteHeader() {
                 setOpen(false);
                 setPanelOpen(false);
               }}
-              className="ml-2 rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              className={`ml-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                onDark
+                  ? "text-white/80 hover:bg-white/10 hover:text-white"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              }`}
             >
               Iniciar sesión
             </Link>
