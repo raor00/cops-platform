@@ -1,14 +1,8 @@
-﻿export type QuotationType = "proyecto" | "servicio" | "mantenimiento"
+﻿import { ABLEREX_CATALOG } from "./ablerex-catalog"
 
-export type CatalogCategory =
-  | "CCTV"
-  | "Control de Acceso"
-  | "Alarmas"
-  | "Redes"
-  | "VMS"
-  | "Energia"
-  | "Materiales"
-  | "Automatizacion"
+export type QuotationType = "proyecto" | "servicio" | "mantenimiento"
+
+export type CatalogCategory = string
 
 export interface CatalogItem {
   id: string
@@ -16,7 +10,9 @@ export interface CatalogItem {
   description: string
   unitPrice: number
   category: CatalogCategory
+  brand?: string
   subcategory?: string
+  variant?: string
   unit: string
 }
 
@@ -28,7 +24,9 @@ export interface QuotationItem {
   unitPrice: number
   totalPrice: number
   category?: CatalogCategory
+  brand?: string
   subcategory?: string
+  variant?: string
 }
 
 export type DiscountMode = "amount" | "percentage"
@@ -183,6 +181,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   { id: "59", code: "USB-K", description: "USB-K. USB to Rnet & USB, Automated Logic", unitPrice: 352.8, category: "Automatizacion", unit: "UND" },
   { id: "60", code: "FIO812U", description: "Modulo de Expasion 12 Entradas - 8 Salidas. Automated Logic", unitPrice: 3997.15, category: "Automatizacion", unit: "UND" },
   { id: "61", code: "FIO88U", description: "Modulo de Expasion 8 Entradas - 8 Salidas. Automated Logic", unitPrice: 3065.2, category: "Automatizacion", unit: "UND" },
+  ...ABLEREX_CATALOG,
 ]
 
 export const DEFAULT_TERMS = `1. Los precios estan expresados en Dolares Americanos (USD).
@@ -229,4 +228,5 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })
 }
+
 

@@ -123,6 +123,7 @@ export function SummaryPanel({
                 min={0}
                 step={0.01}
                 value={discountValue}
+                onFocus={(e) => e.currentTarget.select()}
                 onChange={(e) => onDiscountChange(Number(e.target.value))}
                 className="h-9 w-full rounded-lg border border-input bg-muted/70 px-3 text-right text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
               />
@@ -135,6 +136,7 @@ export function SummaryPanel({
                   min={0}
                   step={0.01}
                   value={taxRate}
+                  onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) => onTaxRateChange(Number(e.target.value))}
                   className="h-9 w-full rounded-lg border border-input bg-muted/70 px-3 text-right text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
                 />

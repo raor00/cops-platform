@@ -60,15 +60,37 @@ export function getCatalog(): CatalogItem[] {
   if (typeof window === "undefined") return DEFAULT_CATALOG
   try {
     const raw = localStorage.getItem(CATALOG_KEY)
-    const parsed: CatalogItem[] = raw ? JSON.parse(raw) : DEFAULT_CATALOG
-    return parsed.map((item) => ({
+    const parsed: CatalogItem[] = raw ? JSON.parse(raw) : []
+    const normalizedSaved = parsed.map((item) => ({
       ...item,
+      brand: item.brand || "General",
       subcategory: item.subcategory || "General",
+      variant: item.variant || "",
     }))
+    const mergedByCode = new Map<string, CatalogItem>()
+    for (const item of DEFAULT_CATALOG) {
+      mergedByCode.set(item.code.trim().toLowerCase(), {
+        ...item,
+        brand: item.brand || "General",
+        subcategory: item.subcategory || "General",
+        variant: item.variant || "",
+      })
+    }
+    for (const item of normalizedSaved) {
+      mergedByCode.set(item.code.trim().toLowerCase(), item)
+    }
+    const merged = Array.from(mergedByCode.values())
+    const mergedString = JSON.stringify(merged)
+    if (raw !== mergedString) {
+      localStorage.setItem(CATALOG_KEY, mergedString)
+    }
+    return merged
   } catch {
     return DEFAULT_CATALOG.map((item) => ({
       ...item,
+      brand: item.brand || "General",
       subcategory: item.subcategory || "General",
+      variant: item.variant || "",
     }))
   }
 }
@@ -82,7 +104,12 @@ export function saveCatalog(items: CatalogItem[]): void {
 
 export function addCatalogItem(item: CatalogItem): void {
   const catalog = getCatalog()
-  catalog.push({ ...item, subcategory: item.subcategory || "General" })
+  catalog.push({
+    ...item,
+    brand: item.brand || "General",
+    subcategory: item.subcategory || "General",
+    variant: item.variant || "",
+  })
   saveCatalog(catalog)
 }
 
@@ -90,7 +117,12 @@ export function updateCatalogItem(item: CatalogItem): void {
   const catalog = getCatalog()
   const idx = catalog.findIndex((c) => c.id === item.id)
   if (idx >= 0) {
-    catalog[idx] = { ...item, subcategory: item.subcategory || "General" }
+    catalog[idx] = {
+      ...item,
+      brand: item.brand || "General",
+      subcategory: item.subcategory || "General",
+      variant: item.variant || "",
+    }
     saveCatalog(catalog)
   }
 }

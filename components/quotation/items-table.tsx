@@ -26,8 +26,10 @@ interface ItemsSectionProps {
 export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter, showMaterialsFilter, companyFormat = "sa" }: ItemsSectionProps) {
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [search, setSearch] = useState("")
+  const [brandFilter, setBrandFilter] = useState<string>("all")
   const [catFilter, setCatFilter] = useState<string>("all")
   const [subcatFilter, setSubcatFilter] = useState<string>("all")
+  const [variantFilter, setVariantFilter] = useState<string>("all")
   const [catalog, setCatalog] = useState<CatalogItem[]>([])
   const [collapsed, setCollapsed] = useState(false)
 
@@ -69,8 +71,10 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
       description: preset.description,
       unitPrice: finalPrice,
       totalPrice: finalPrice,
+      brand: preset.brand || "General",
       category: preset.category,
       subcategory: preset.subcategory || "General",
+      variant: preset.variant || "",
     }
     onItemsChange([...items, newItem])
     setCatalogOpen(false)
@@ -97,6 +101,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
 
   const filteredCatalog = catalog.filter((item) => {
     const matchSearch = !search || item.code.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase())
+    const matchBrand = brandFilter === "all" || (item.brand || "General") === brandFilter
     let matchCat = true
     if (catalogFilter) {
       matchCat = catalogFilter === "Materiales" ? item.category === "Materiales" : item.category !== "Materiales"
@@ -105,20 +110,41 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
       matchCat = item.category === catFilter
     }
     const matchSub = subcatFilter === "all" || (item.subcategory || "General") === subcatFilter
-    return matchSearch && matchCat && matchSub
+    const matchVariant = variantFilter === "all" || (item.variant || "") === variantFilter
+    return matchSearch && matchBrand && matchCat && matchSub && matchVariant
   })
+
+  const brands = Array.from(new Set(catalog.map((item) => item.brand || "General"))).sort()
 
   const subcategories = Array.from(
     new Set(
       catalog
-        .filter((item) => (catFilter === "all" ? true : item.category === catFilter))
+        .filter((item) => {
+          const matchBrand = brandFilter === "all" || (item.brand || "General") === brandFilter
+          const matchCat = catFilter === "all" ? true : item.category === catFilter
+          return matchBrand && matchCat
+        })
         .map((item) => item.subcategory || "General"),
+    ),
+  ).sort()
+
+  const variants = Array.from(
+    new Set(
+      catalog
+        .filter((item) => {
+          const matchBrand = brandFilter === "all" || (item.brand || "General") === brandFilter
+          const matchCat = catFilter === "all" ? true : item.category === catFilter
+          const matchSub = subcatFilter === "all" ? true : (item.subcategory || "General") === subcatFilter
+          return matchBrand && matchCat && matchSub
+        })
+        .map((item) => item.variant || "")
+        .filter(Boolean),
     ),
   ).sort()
 
   const applicableCategories = catalogFilter === "Materiales"
     ? ["Materiales"]
-    : CATALOG_CATEGORIES.filter((c) => c !== "Materiales")
+    : Array.from(new Set([...CATALOG_CATEGORIES, ...catalog.map((item) => item.category)])).filter((c) => c !== "Materiales")
 
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0)
 
@@ -187,7 +213,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     type="number"
                     min={1}
                     value={item.quantity}
-                    onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                    onFocus={(e) => e.currentTarget.select()}
+                    onChange={(e) => updateItem(item.id, "quantity", e.target.value === "" ? 0 : Number(e.target.value))}
                     className="h-9 border-border bg-card text-center text-sm text-foreground"
                   />
                 </div>
@@ -218,7 +245,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                       min={0}
                       step={0.01}
                       value={item.unitPrice}
-                      onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onChange={(e) => updateItem(item.id, "unitPrice", e.target.value === "" ? 0 : Number(e.target.value))}
                       className="h-9 border-border bg-card text-right text-sm text-foreground"
                     />
                   </div>
@@ -262,7 +290,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                       type="number"
                       min={1}
                       value={item.quantity}
-                      onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onChange={(e) => updateItem(item.id, "quantity", e.target.value === "" ? 0 : Number(e.target.value))}
                       className="h-8 w-14 border-border bg-card text-center text-xs text-foreground"
                     />
                   </td>
@@ -289,7 +318,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                       min={0}
                       step={0.01}
                       value={item.unitPrice}
-                      onChange={(e) => updateItem(item.id, "unitPrice", Number(e.target.value))}
+                      onFocus={(e) => e.currentTarget.select()}
+                      onChange={(e) => updateItem(item.id, "unitPrice", e.target.value === "" ? 0 : Number(e.target.value))}
                       className="h-8 w-24 border-border bg-card text-right text-xs text-foreground"
                     />
                   </td>
@@ -339,6 +369,19 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               />
             </div>
             {!catalogFilter && (
+              <Select value={brandFilter} onValueChange={(value) => { setBrandFilter(value); setCatFilter("all"); setSubcatFilter("all"); setVariantFilter("all") }}>
+                <SelectTrigger className="w-40 border-border bg-card text-foreground">
+                  <SelectValue placeholder={companyFormat === "llc" ? "Brand" : "Marca"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{companyFormat === "llc" ? "All brands" : "Todas las marcas"}</SelectItem>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {!catalogFilter && (
               <Select value={catFilter} onValueChange={(value) => { setCatFilter(value); setSubcatFilter("all") }}>
                 <SelectTrigger className="w-44 border-border bg-card text-foreground">
                   <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
@@ -375,6 +418,17 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                 ))}
               </SelectContent>
             </Select>
+            <Select value={variantFilter} onValueChange={setVariantFilter}>
+              <SelectTrigger className="w-40 border-border bg-card text-foreground">
+                <SelectValue placeholder={companyFormat === "llc" ? "Variant" : "Variante"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{companyFormat === "llc" ? "All variants" : "Todas las variantes"}</SelectItem>
+                {variants.map((variant) => (
+                  <SelectItem key={variant} value={variant}>{variant}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             {filteredCatalog.map((preset) => (
@@ -388,8 +442,12 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   <p className="font-mono text-xs font-semibold text-[#1a5276]">{preset.code}</p>
                   <p className="mt-0.5 text-sm text-foreground">{preset.description}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
+                    <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.brand || "General"}</span>
                     <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.category}</span>
                     <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.subcategory || "General"}</span>
+                    {(preset.variant || "").trim() !== "" && (
+                      <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.variant}</span>
+                    )}
                   </div>
                 </div>
                 <p className="shrink-0 font-mono text-sm font-semibold text-foreground">${formatCurrency(preset.unitPrice)}</p>

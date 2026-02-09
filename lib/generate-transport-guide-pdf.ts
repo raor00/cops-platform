@@ -36,11 +36,35 @@ function applyBodyTokens(data: TransportGuideData): string {
     .replaceAll("[DESTINO]", data.destination || "[DESTINO]")
 }
 
-function formatBody(body: string): string {
-  return escapeHtml(body)
-    .split("\n")
-    .map((line) => `<p style=\"margin:0 0 10px 0;\">${line || "&nbsp;"}</p>`)
-    .join("")
+function formatBodyAsSingleParagraph(body: string): string {
+  const merged = body.replace(/\s*\n+\s*/g, " ").replace(/\s{2,}/g, " ").trim()
+  const safe = escapeHtml(merged)
+  return `<p style="margin:0;">${safe}</p>`
+}
+
+function withBoldRelevantData(body: string, data: TransportGuideData): string {
+  let result = body
+
+  const replacements: Array<[string, string]> = [
+    [data.authorizedName, `<strong>${escapeHtml(data.authorizedName)}</strong>`],
+    [data.authorizedIdentification, `<strong>${escapeHtml(data.authorizedIdentification)}</strong>`],
+    [data.vehicleDescription, `<strong>${escapeHtml(data.vehicleDescription)}</strong>`],
+    [data.companyName, `<strong>${escapeHtml(data.companyName)}</strong>`],
+    [data.companyRif, `<strong>${escapeHtml(data.companyRif)}</strong>`],
+    [data.origin, `<strong>${escapeHtml(data.origin)}</strong>`],
+    [data.destination, `<strong>${escapeHtml(data.destination)}</strong>`],
+    [data.contacts, `<strong>${escapeHtml(data.contacts)}</strong>`],
+  ]
+
+  result = escapeHtml(result.replace(/\s*\n+\s*/g, " ").replace(/\s{2,}/g, " ").trim())
+
+  for (const [needle, highlighted] of replacements) {
+    if (!needle || !needle.trim()) continue
+    const safeNeedle = escapeHtml(needle.trim())
+    result = result.replaceAll(safeNeedle, highlighted)
+  }
+
+  return `<p style="margin:0;">${result}</p>`
 }
 
 export function generateTransportGuidePDFContent(data: TransportGuideData): string {
@@ -84,6 +108,7 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
     .label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.4px; }
     .value { font-size: 12px; color: #0f172a; font-weight: 600; margin-left: 6px; }
     .letter { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; background: #fff; font-size: 12px; color: #1f2937; line-height: 1.65; text-align: justify; }
+    .letter strong { color: #0f172a; font-weight: 800; }
     .items-wrap { margin-top: 12px; border: 1px solid #d4deee; border-radius: 10px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
     thead th { background: #0a1628; color: #fff; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 9px 10px; text-align: left; }
@@ -130,7 +155,7 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
       </div>
     </div>
 
-    <div class="letter">${formatBody(mergedBody)}</div>
+    <div class="letter">${withBoldRelevantData(mergedBody, data) || formatBodyAsSingleParagraph(mergedBody)}</div>
 
     <div class="items-wrap">
       <table>

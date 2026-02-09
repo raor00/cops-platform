@@ -103,11 +103,28 @@ export function generateDeliveryNotePDFContent(data: DeliveryNoteData): string {
       padding: 10px 12px;
       margin-bottom: 10px;
     }
-    .meta-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; margin-bottom: 8px; font-size: 12px; }
-    .meta-left, .meta-right { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-    .label { font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; font-size: 10px; }
-    .value { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #0f172a; }
-    .value.normal { font-weight: 500; }
+    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+    .meta-cell { min-height: 34px; }
+    .meta-cell.full { grid-column: 1 / -1; }
+    .label {
+      display: block;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-size: 10px;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .value {
+      display: block;
+      font-weight: 700;
+      font-size: 12px;
+      color: #0f172a;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .value.normal { font-weight: 600; }
     table { width: 100%; border-collapse: collapse; }
     .items-wrap { border: 1px solid #d4deee; border-radius: 10px; overflow: hidden; }
     thead th {
@@ -157,7 +174,7 @@ export function generateDeliveryNotePDFContent(data: DeliveryNoteData): string {
       background: #f8fafc;
     }
     .notes-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-    .notes-text { font-size: 11px; color: #334155; min-height: 22px; }
+    .notes-text { font-size: 11px; color: #334155; min-height: 22px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -179,15 +196,23 @@ export function generateDeliveryNotePDFContent(data: DeliveryNoteData): string {
     </div>
 
     <div class="meta">
-      <div class="meta-row">
-        <div class="meta-left"><span class="label">ATENCION:</span><span class="value">${normalizeText(data.attention)}</span></div>
-        <div class="meta-right"><span class="label">FECHA:</span><span class="value normal">${formatDate(data.issueDate)}</span></div>
-      </div>
-      <div class="meta-row" style="grid-template-columns: 1fr;">
-        <div class="meta-left"><span class="label">CLIENTE:</span><span class="value">${normalizeText(data.clientName)}</span></div>
-      </div>
-      <div class="meta-row" style="grid-template-columns: 1fr; margin-bottom: 2px;">
-        <div class="meta-left"><span class="label">C.I:</span><span class="value normal">${normalizeText(data.clientIdentification)}</span></div>
+      <div class="meta-grid">
+        <div class="meta-cell">
+          <span class="label">ATENCION:</span>
+          <span class="value">${normalizeText(data.attention)}</span>
+        </div>
+        <div class="meta-cell">
+          <span class="label">FECHA:</span>
+          <span class="value normal">${formatDate(data.issueDate)}</span>
+        </div>
+        <div class="meta-cell full">
+          <span class="label">CLIENTE:</span>
+          <span class="value">${normalizeText(data.clientName)}</span>
+        </div>
+        <div class="meta-cell full">
+          <span class="label">C.I:</span>
+          <span class="value normal">${normalizeText(data.clientIdentification)}</span>
+        </div>
       </div>
     </div>
 

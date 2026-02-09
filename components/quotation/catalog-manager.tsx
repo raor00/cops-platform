@@ -17,16 +17,20 @@ const EMPTY_ITEM: Omit<CatalogItem, "id"> = {
   code: "",
   description: "",
   unitPrice: 0,
+  brand: "General",
   category: "CCTV",
   subcategory: "General",
+  variant: "",
   unit: "UND",
 }
 
 export function CatalogManager() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([])
   const [search, setSearch] = useState("")
+  const [filterBrand, setFilterBrand] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<string>("all")
   const [filterSubcategory, setFilterSubcategory] = useState<string>("all")
+  const [filterVariant, setFilterVariant] = useState<string>("all")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null)
   const [form, setForm] = useState(EMPTY_ITEM)
@@ -51,19 +55,39 @@ export function CatalogManager() {
         !search ||
         item.code.toLowerCase().includes(search.toLowerCase()) ||
         item.description.toLowerCase().includes(search.toLowerCase())
+      const matchBrand = filterBrand === "all" || (item.brand || "General") === filterBrand
       const matchCat = filterCategory === "all" || item.category === filterCategory
       const sub = item.subcategory || "General"
       const matchSub = filterSubcategory === "all" || sub === filterSubcategory
-      return matchSearch && matchCat && matchSub
+      const variant = item.variant || ""
+      const matchVar = filterVariant === "all" || variant === filterVariant
+      return matchSearch && matchBrand && matchCat && matchSub && matchVar
     })
-  }, [catalog, search, filterCategory, filterSubcategory])
+  }, [catalog, search, filterBrand, filterCategory, filterSubcategory, filterVariant])
+
+  const brands = useMemo(
+    () => Array.from(new Set(catalog.map((item) => item.brand || "General"))).sort(),
+    [catalog],
+  )
 
   const subcategories = useMemo(() => {
-    const allowed = filterCategory === "all"
-      ? catalog
-      : catalog.filter((item) => item.category === filterCategory)
+    const allowed = catalog.filter((item) => {
+      const matchBrand = filterBrand === "all" || (item.brand || "General") === filterBrand
+      const matchCat = filterCategory === "all" || item.category === filterCategory
+      return matchBrand && matchCat
+    })
     return Array.from(new Set(allowed.map((item) => item.subcategory || "General"))).sort()
-  }, [catalog, filterCategory])
+  }, [catalog, filterBrand, filterCategory])
+
+  const variants = useMemo(() => {
+    const allowed = catalog.filter((item) => {
+      const matchBrand = filterBrand === "all" || (item.brand || "General") === filterBrand
+      const matchCat = filterCategory === "all" || item.category === filterCategory
+      const matchSub = filterSubcategory === "all" || (item.subcategory || "General") === filterSubcategory
+      return matchBrand && matchCat && matchSub
+    })
+    return Array.from(new Set(allowed.map((item) => item.variant || "").filter(Boolean))).sort()
+  }, [catalog, filterBrand, filterCategory, filterSubcategory])
 
   const categoryCount = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -72,6 +96,11 @@ export function CatalogManager() {
     }
     return counts
   }, [catalog])
+
+  const allCategories = useMemo(
+    () => Array.from(new Set([...CATALOG_CATEGORIES, ...catalog.map((item) => item.category)])).sort(),
+    [catalog],
+  )
 
   const openCreate = () => {
     setEditingItem(null)
@@ -85,8 +114,10 @@ export function CatalogManager() {
       code: item.code,
       description: item.description,
       unitPrice: item.unitPrice,
+      brand: item.brand || "General",
       category: item.category,
       subcategory: item.subcategory || "General",
+      variant: item.variant || "",
       unit: item.unit,
     })
     setDialogOpen(true)
@@ -189,13 +220,24 @@ export function CatalogManager() {
         </div>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={filterBrand} onValueChange={(value) => { setFilterBrand(value); setFilterCategory("all"); setFilterSubcategory("all"); setFilterVariant("all") }}>
+            <SelectTrigger className="w-44 border-border bg-card text-foreground">
+              <SelectValue placeholder="Marca" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las marcas</SelectItem>
+              {brands.map((brand) => (
+                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="w-48 border-border bg-card text-foreground">
               <SelectValue placeholder="Categoria" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas las categorias</SelectItem>
-              {CATALOG_CATEGORIES.map((cat) => (
+              {allCategories.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat} ({categoryCount[cat] || 0})
                 </SelectItem>
@@ -212,6 +254,17 @@ export function CatalogManager() {
                 <SelectItem key={sub} value={sub}>
                   {sub}
                 </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterVariant} onValueChange={setFilterVariant}>
+            <SelectTrigger className="w-44 border-border bg-card text-foreground">
+              <SelectValue placeholder="Variante" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las variantes</SelectItem>
+              {variants.map((variant) => (
+                <SelectItem key={variant} value={variant}>{variant}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -303,7 +356,7 @@ export function CatalogManager() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Seleccione categoria</SelectItem>
-                  {CATALOG_CATEGORIES.map((cat) => (
+                  {allCategories.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
@@ -354,8 +407,10 @@ export function CatalogManager() {
                 {getCategoryIcon(item.category)}
                 {item.category}
               </Badge>
+              <span className="rounded bg-muted px-2 py-0.5">{item.brand || "General"}</span>
               <span className="rounded bg-muted px-2 py-0.5">{item.unit}</span>
               <span className="rounded bg-muted px-2 py-0.5">{item.subcategory || "General"}</span>
+              {(item.variant || "").trim() !== "" && <span className="rounded bg-muted px-2 py-0.5">{item.variant}</span>}
               <span className="font-mono text-sm font-semibold text-foreground">
                 ${formatCurrency(getEffectivePrice(item))}
               </span>
@@ -377,8 +432,10 @@ export function CatalogManager() {
               <tr className="border-b border-border bg-[#0a1628]">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Codigo</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Descripcion</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Marca</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Categoria</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Subcategoria</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Variante</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">Unidad</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Precio Base</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Precio Final</th>
@@ -392,6 +449,7 @@ export function CatalogManager() {
                 <tr key={item.id} className="group transition-colors hover:bg-muted/50">
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{item.code}</td>
                   <td className="max-w-sm px-4 py-3 text-sm text-foreground">{item.description}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{item.brand || "General"}</td>
                   <td className="px-4 py-3">
                     <Badge variant="secondary" className="gap-1 bg-secondary text-secondary-foreground">
                       {getCategoryIcon(item.category)}
@@ -399,6 +457,7 @@ export function CatalogManager() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{item.subcategory || "General"}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{item.variant || "-"}</td>
                   <td className="px-4 py-3 text-center text-xs text-muted-foreground">{item.unit}</td>
                   <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-foreground">
                     ${formatCurrency(item.unitPrice)}
@@ -422,7 +481,7 @@ export function CatalogManager() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center text-sm text-muted-foreground">
+                  <td colSpan={10} className="py-16 text-center text-sm text-muted-foreground">
                     No se encontraron items con los filtros aplicados
                   </td>
                 </tr>
@@ -452,17 +511,28 @@ export function CatalogManager() {
                 />
               </div>
               <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Marca</Label>
+                <Input
+                  value={form.brand}
+                  onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                  placeholder="Ej: Ablerex"
+                  className="border-border bg-card text-foreground"
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Categoria</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CatalogCategory })}>
-                  <SelectTrigger className="border-border bg-card text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATALOG_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  list="catalog-categories-list"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value as CatalogCategory })}
+                  placeholder="Ej: UPS Online"
+                  className="border-border bg-card text-foreground"
+                />
+                <datalist id="catalog-categories-list">
+                  {allCategories.map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Subcategoria</Label>
@@ -470,6 +540,15 @@ export function CatalogManager() {
                   value={form.subcategory}
                   onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
                   placeholder="Ej: Videoporteros"
+                  className="border-border bg-card text-foreground"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Variante</Label>
+                <Input
+                  value={form.variant}
+                  onChange={(e) => setForm({ ...form, variant: e.target.value })}
+                  placeholder="Ej: Monofasico / Trifasico / Torre"
                   className="border-border bg-card text-foreground"
                 />
               </div>

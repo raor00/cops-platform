@@ -142,8 +142,10 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             ...item,
             unitPrice: nextPrice,
             totalPrice: Number((item.quantity * nextPrice).toFixed(2)),
+            brand: catalogItem.brand || "General",
             category: catalogItem.category,
             subcategory: catalogItem.subcategory || "General",
+            variant: catalogItem.variant || "",
           }
         })
 
