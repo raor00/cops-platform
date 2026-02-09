@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import type { CatalogItem, CatalogCategory } from "@/lib/quotation-types"
 import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
 import { getCatalog, saveCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem } from "@/lib/quotation-storage"
-import { Plus, Search, Pencil, Trash2, Package, Cable, Filter, RotateCcw } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Package, Cable, Filter } from "lucide-react"
 import { toast } from "sonner"
 
 const EMPTY_ITEM: Omit<CatalogItem, "id"> = {
@@ -91,12 +91,6 @@ export function CatalogManager() {
     toast.success("Item eliminado")
   }
 
-  const handleResetCatalog = () => {
-    saveCatalog([])
-    setCatalog(getCatalog())
-    toast.info("Catalogo restaurado a valores predeterminados")
-  }
-
   const getCategoryIcon = (cat: CatalogCategory) => {
     if (cat === "Materiales") return <Cable className="h-3 w-3" />
     return <Package className="h-3 w-3" />
@@ -115,15 +109,6 @@ export function CatalogManager() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleResetCatalog}
-            className="border-border text-muted-foreground hover:bg-muted bg-transparent"
-          >
-            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            Restaurar
-          </Button>
           <Button
             size="sm"
             onClick={openCreate}

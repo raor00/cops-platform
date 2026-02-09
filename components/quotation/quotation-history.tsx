@@ -33,6 +33,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   enviada: { label: "Enviada", className: "bg-[#dbeafe] text-[#1a5276]" },
   aprobada: { label: "Aprobada", className: "bg-[#dcfce7] text-[#166534]" },
   rechazada: { label: "Rechazada", className: "bg-[#fce4ec] text-[#b71c1c]" },
+  anulado: { label: "Anulado", className: "bg-[#f3f4f6] text-[#6b7280]" },
 }
 
 const TYPE_MAP: Record<string, string> = {
@@ -157,6 +158,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
               <SelectItem value="enviada">Enviada</SelectItem>
               <SelectItem value="aprobada">Aprobada</SelectItem>
               <SelectItem value="rechazada">Rechazada</SelectItem>
+              <SelectItem value="anulado">Anulado</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterType} onValueChange={setFilterType}>
@@ -207,11 +209,12 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="borrador">Borrador</SelectItem>
-                  <SelectItem value="enviada">Enviada</SelectItem>
-                  <SelectItem value="aprobada">Aprobada</SelectItem>
-                  <SelectItem value="rechazada">Rechazada</SelectItem>
-                </SelectContent>
-              </Select>
+                <SelectItem value="enviada">Enviada</SelectItem>
+                <SelectItem value="aprobada">Aprobada</SelectItem>
+                <SelectItem value="rechazada">Rechazada</SelectItem>
+                <SelectItem value="anulado">Anulado</SelectItem>
+              </SelectContent>
+            </Select>
               <div className="mt-2">
                 <Badge className={STATUS_MAP[q.status]?.className || ""}>
                   {STATUS_MAP[q.status]?.label || q.status}
@@ -270,6 +273,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
                         <SelectItem value="enviada">Enviada</SelectItem>
                         <SelectItem value="aprobada">Aprobada</SelectItem>
                         <SelectItem value="rechazada">Rechazada</SelectItem>
+                        <SelectItem value="anulado">Anulado</SelectItem>
                       </SelectContent>
                     </Select>
                   </td>

@@ -78,7 +78,7 @@ export interface QuotationData {
   ivaAmount: number
   total: number
   createdAt: string
-  status: "borrador" | "enviada" | "aprobada" | "rechazada"
+  status: "borrador" | "enviada" | "aprobada" | "rechazada" | "anulado"
 }
 
 export const CATALOG_CATEGORIES: CatalogCategory[] = [

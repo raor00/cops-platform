@@ -72,10 +72,10 @@ function generateSAPDFContent(data: QuotationData): string {
   const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
 
   const equipmentSection = hasEquipment ? `
-    <div style="padding:0 40px;margin-bottom:4px;">
+    <div style="padding:0 32px;margin-bottom:4px;">
       <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Equipos y Servicios</div>
     </div>
-    <div style="padding:0 40px;margin-bottom:12px;">
+    <div style="padding:0 32px;margin-bottom:10px;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#0a1628;">
           <th style="padding:8px 6px;text-align:center;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:50px;border-radius:4px 0 0 0;">Cant.</th>
@@ -89,10 +89,10 @@ function generateSAPDFContent(data: QuotationData): string {
     </div>` : ""
 
   const materialsSection = hasMaterials ? `
-    <div style="padding:0 40px;margin-bottom:4px;">
+    <div style="padding:0 32px;margin-bottom:4px;">
       <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Materiales e Insumos</div>
     </div>
-    <div style="padding:0 40px;margin-bottom:12px;">
+    <div style="padding:0 32px;margin-bottom:10px;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#0a1628;">
           <th style="padding:8px 6px;text-align:center;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:50px;border-radius:4px 0 0 0;">Cant.</th>
@@ -106,10 +106,10 @@ function generateSAPDFContent(data: QuotationData): string {
     </div>` : ""
 
   const laborSection = hasLabor ? `
-    <div style="padding:0 40px;margin-bottom:4px;">
+    <div style="padding:0 32px;margin-bottom:4px;">
       <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Mano de Obra</div>
     </div>
-    <div style="padding:0 40px;margin-bottom:12px;">
+    <div style="padding:0 32px;margin-bottom:10px;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#0a1628;">
           <th style="padding:8px 6px;text-align:center;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:50px;border-radius:4px 0 0 0;">Cant.</th>
@@ -128,7 +128,7 @@ function generateSAPDFContent(data: QuotationData): string {
   <meta charset="UTF-8">
   <title>Cotizacion ${data.code} - Cop's Electronics</title>
   <style>
-    @page { size: letter; margin: 0; }
+    @page { size: A4; margin: 12mm; }
     body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { width: 100%; min-height: 100vh; position: relative; }
   </style>
@@ -136,7 +136,7 @@ function generateSAPDFContent(data: QuotationData): string {
 <body>
 <div class="page">
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%);padding:28px 40px;display:flex;justify-content:space-between;align-items:center;">
+  <div style="background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%);padding:24px 32px;display:flex;justify-content:space-between;align-items:center;">
     <div style="display:flex;align-items:center;gap:12px;">
       <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
         <img src="/cops-logo.png" alt="COPS Electronics" style="width:34px;height:34px;object-fit:contain;" />
@@ -156,7 +156,7 @@ function generateSAPDFContent(data: QuotationData): string {
   </div>
 
   <!-- Client Info -->
-  <div style="padding:16px 40px;display:flex;gap:0;">
+  <div style="padding:12px 32px;display:flex;gap:0;">
     <div style="flex:1;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">
       <table style="border-collapse:collapse;">
         <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 8px 3px 0;width:70px;">Cliente:</td><td style="font-size:11px;font-weight:600;color:#1e293b;padding:3px 0;">${data.clientInfo.name}</td></tr>
@@ -176,7 +176,7 @@ function generateSAPDFContent(data: QuotationData): string {
   </div>
 
   <!-- Subject -->
-  ${data.subject ? `<div style="padding:0 40px;margin-bottom:14px;">
+  ${data.subject ? `<div style="padding:0 32px;margin-bottom:12px;">
     <div style="background:#f0f6ff;border-left:3px solid #1a5276;padding:8px 12px;border-radius:0 6px 6px 0;">
       <span style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Partida: </span>
       <span style="font-size:12px;font-weight:700;color:#1a5276;">${data.subject}</span>
@@ -188,7 +188,7 @@ function generateSAPDFContent(data: QuotationData): string {
   ${laborSection}
 
   <!-- Totals -->
-  <div style="padding:16px 40px;">
+  <div style="padding:12px 32px;">
     <div style="display:flex;justify-content:flex-end;">
       <table style="border-collapse:collapse;width:260px;">
         ${hasEquipment ? `<tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">Equipos y Servicios</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">$${formatCurrency(data.subtotalEquipment)}</td></tr>` : ""}
@@ -203,27 +203,27 @@ function generateSAPDFContent(data: QuotationData): string {
   </div>
 
   <!-- Payment -->
-  <div style="padding:0 40px;margin-bottom:12px;">
+  <div style="padding:0 32px;margin-bottom:10px;">
     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;">
       <span style="font-size:9px;color:#92400e;text-transform:uppercase;font-weight:600;">Condiciones de Venta: </span>
       <span style="font-size:10px;color:#92400e;font-weight:700;">${data.paymentCondition}</span>
     </div>
   </div>
 
-  ${notesText ? `<div style="padding:0 40px;margin-bottom:10px;">
+  ${notesText ? `<div style="padding:0 32px;margin-bottom:10px;">
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;">
       <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-weight:600;">Notas:</div>
       <div style="font-size:10px;color:#475569;line-height:1.5;">${notesText}</div>
     </div>
   </div>` : ""}
 
-  ${termsText ? `<div style="padding:0 40px;margin-bottom:16px;">
+  ${termsText ? `<div style="padding:0 32px;margin-bottom:12px;">
     <div style="font-size:9px;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700;">Terminos y Condiciones</div>
     <ol style="margin:0;padding-left:14px;">${termsLines}</ol>
   </div>` : ""}
 
   <!-- Footer -->
-  <div style="background:#f0f6ff;border-top:2px solid #1a5276;padding:12px 40px;text-align:center;">
+  <div style="background:#f0f6ff;border-top:2px solid #1a5276;padding:10px 32px;text-align:center;">
     <div style="font-size:9px;color:#475569;line-height:1.5;">
       Si usted tiene alguna pregunta sobre esta cotizacion, por favor pongase en contacto con nosotros<br>
       <span style="font-weight:600;color:#1a5276;">Cop's Electronics S.A.</span> - Telefonos: 0212-7934136 / 7940316 - Email: proyectos@copselectronics.com
@@ -315,7 +315,7 @@ function generateLLCPDFContent(data: QuotationData): string {
   <meta charset="UTF-8">
   <title>Quote ${data.code} - COPS Electronics LLC</title>
   <style>
-    @page { size: letter; margin: 12mm; }
+    @page { size: A4; margin: 12mm; }
     * { box-sizing: border-box; }
     body { margin: 0; padding: 0; font-family: "Segoe UI", Arial, sans-serif; color: #111827; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { width: 100%; position: relative; }
