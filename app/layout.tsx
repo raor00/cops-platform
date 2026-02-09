@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import type { Metadata } from "next";
+=======
+﻿import type { Metadata } from "next";
+>>>>>>> 79ae6ec (Update version)
 import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
@@ -14,7 +18,12 @@ export const metadata: Metadata = {
     "Automatización, seguridad electrónica y energía para operación crítica. Proyectos enterprise para banca, industria y comercio.",
   openGraph: {
     title: "COP'S Electronics",
+<<<<<<< HEAD
     description: "Automatización, seguridad electrónica y energía para operación crítica.",
+=======
+    description:
+      "Automatización, seguridad electrónica y energía para operación crítica.",
+>>>>>>> 79ae6ec (Update version)
     url: "https://cops-electronics-web.vercel.app",
     siteName: "COP'S Electronics",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
