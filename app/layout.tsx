@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
@@ -14,17 +14,25 @@ export const metadata: Metadata = {
     "Automatización, seguridad electrónica y energía para operación crítica. Proyectos enterprise para banca, industria y comercio.",
   openGraph: {
     title: "COP'S Electronics",
-    description: "Automatización, seguridad electrónica y energía para operación crítica.",
+    description:
+      "Automatización, seguridad electrónica y energía para operación crítica.",
     url: "https://cops-electronics-web.vercel.app",
     siteName: "COP'S Electronics",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
     locale: "es_VE",
     type: "website",
   },
-  twitter: { card: "summary_large_image", images: ["/og.png"] },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og.png"],
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="es" className="antialiased">
       <body className="min-h-screen bg-white text-slate-900">
