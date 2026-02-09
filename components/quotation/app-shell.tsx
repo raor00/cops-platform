@@ -9,22 +9,25 @@ import { QuotationBuilder } from "./quotation-builder"
 import { CatalogManager } from "./catalog-manager"
 import { QuotationHistory } from "./quotation-history"
 import { DeliveryNoteBuilder } from "./delivery-note-builder"
+import { TransportGuideBuilder } from "./transport-guide-builder"
 import type { QuotationData } from "@/lib/quotation-types"
 import {
   FilePlus,
   Package,
   Clock,
   ClipboardList,
+  Truck,
   Menu,
   X,
   ChevronRight,
 } from "lucide-react"
 
-type View = "new" | "delivery" | "catalog" | "history"
+type View = "new" | "delivery" | "transport" | "catalog" | "history"
 
 const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "new", label: "Nueva Cotizacion", icon: <FilePlus className="h-4 w-4" /> },
   { id: "delivery", label: "Nota de Entrega", icon: <ClipboardList className="h-4 w-4" /> },
+  { id: "transport", label: "Guia de Transporte", icon: <Truck className="h-4 w-4" /> },
   { id: "catalog", label: "Catalogo", icon: <Package className="h-4 w-4" /> },
   { id: "history", label: "Historial", icon: <Clock className="h-4 w-4" /> },
 ]
@@ -174,6 +177,7 @@ export function AppShell() {
               />
             )}
             {activeView === "delivery" && <DeliveryNoteBuilder />}
+            {activeView === "transport" && <TransportGuideBuilder />}
             {activeView === "catalog" && <CatalogManager />}
             {activeView === "history" && (
               <QuotationHistory

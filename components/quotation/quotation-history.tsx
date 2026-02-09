@@ -1,16 +1,23 @@
-"use client"
+﻿"use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { QuotationData } from "@/lib/quotation-types"
 import { formatCurrency } from "@/lib/quotation-types"
-import { getQuotations, deleteQuotation, updateQuotationStatus } from "@/lib/quotation-storage"
+import { deleteQuotation, getQuotations, updateQuotationStatus } from "@/lib/quotation-storage"
 import { downloadPDF } from "@/lib/generate-pdf"
-import { Search, FileDown, Pencil, Trash2, Eye, Filter, FileText, Clock } from "lucide-react"
+import { deleteDeliveryNote, getDeliveryNotes } from "@/lib/delivery-note-storage"
+import { downloadDeliveryNotePDF } from "@/lib/generate-delivery-note-pdf"
+import { deleteTransportGuide, getTransportGuides } from "@/lib/transport-guide-storage"
+import { downloadTransportGuidePDF } from "@/lib/generate-transport-guide-pdf"
+import type { DeliveryNoteData } from "@/lib/delivery-note-types"
+import type { TransportGuideData } from "@/lib/transport-guide-types"
+import { FileDown, FileText, Pencil, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 interface QuotationHistoryProps {
@@ -36,291 +43,269 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   anulado: { label: "Anulado", className: "bg-[#f3f4f6] text-[#6b7280]" },
 }
 
-const TYPE_MAP: Record<string, string> = {
-  proyecto: "Proyecto",
-  servicio: "Servicio",
-  mantenimiento: "Mantenimiento",
-}
-
 export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) {
   const [quotations, setQuotations] = useState<QuotationData[]>([])
+  const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNoteData[]>([])
+  const [transportGuides, setTransportGuides] = useState<TransportGuideData[]>([])
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [filterType, setFilterType] = useState<string>("all")
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteItem, setDeleteItem] = useState<{ type: "quote" | "delivery" | "transport"; id: string } | null>(null)
+
+  const refreshAll = () => {
+    setQuotations(getQuotations())
+    setDeliveryNotes(getDeliveryNotes())
+    setTransportGuides(getTransportGuides())
+  }
 
   useEffect(() => {
-    setQuotations(getQuotations())
+    refreshAll()
   }, [refreshKey])
 
-  const filtered = useMemo(() => {
-    return quotations.filter((q) => {
-      const clientName = q.clientInfo.billToName || q.clientInfo.name
-      const matchSearch = !search ||
-        q.code.toLowerCase().includes(search.toLowerCase()) ||
-        clientName.toLowerCase().includes(search.toLowerCase()) ||
-        q.subject.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = filterStatus === "all" || q.status === filterStatus
-      const matchType = filterType === "all" || q.type === filterType
-      return matchSearch && matchStatus && matchType
-    })
-  }, [quotations, search, filterStatus, filterType])
+  const filteredQuotes = useMemo(
+    () =>
+      quotations.filter((q) => {
+        const clientName = q.clientInfo.billToName || q.clientInfo.name
+        const text = `${q.code} ${clientName} ${q.subject}`.toLowerCase()
+        const matchSearch = !search || text.includes(search.toLowerCase())
+        const matchStatus = filterStatus === "all" || q.status === filterStatus
+        return matchSearch && matchStatus
+      }),
+    [quotations, search, filterStatus],
+  )
 
-  const handleDelete = (id: string) => {
-    deleteQuotation(id)
-    setQuotations(getQuotations())
-    setDeleteId(null)
-    toast.success("Cotizacion eliminada")
+  const filteredDelivery = useMemo(
+    () =>
+      deliveryNotes.filter((note) => {
+        const text = `${note.code} ${note.clientName} ${note.attention}`.toLowerCase()
+        return !search || text.includes(search.toLowerCase())
+      }),
+    [deliveryNotes, search],
+  )
+
+  const filteredTransport = useMemo(
+    () =>
+      transportGuides.filter((guide) => {
+        const text = `${guide.code} ${guide.authorizedName} ${guide.recipient}`.toLowerCase()
+        return !search || text.includes(search.toLowerCase())
+      }),
+    [transportGuides, search],
+  )
+
+  const handleDelete = () => {
+    if (!deleteItem) return
+    if (deleteItem.type === "quote") deleteQuotation(deleteItem.id)
+    if (deleteItem.type === "delivery") deleteDeliveryNote(deleteItem.id)
+    if (deleteItem.type === "transport") deleteTransportGuide(deleteItem.id)
+    setDeleteItem(null)
+    refreshAll()
+    toast.success("Documento eliminado")
+  }
+
+  const handleExportQuote = async (data: QuotationData) => {
+    try {
+      await downloadPDF(data)
+      toast.success("PDF generado")
+    } catch {
+      toast.error("No se pudo generar el PDF")
+    }
+  }
+
+  const handleExportDelivery = async (data: DeliveryNoteData) => {
+    try {
+      await downloadDeliveryNotePDF(data)
+      toast.success("PDF generado")
+    } catch {
+      toast.error("No se pudo generar el PDF")
+    }
+  }
+
+  const handleExportTransport = async (data: TransportGuideData) => {
+    try {
+      await downloadTransportGuidePDF(data)
+      toast.success("PDF generado")
+    } catch {
+      toast.error("No se pudo generar el PDF")
+    }
   }
 
   const handleStatusChange = (id: string, status: QuotationData["status"]) => {
     updateQuotationStatus(id, status)
-    setQuotations(getQuotations())
+    refreshAll()
     toast.success("Estado actualizado")
   }
 
-  const handleExport = (data: QuotationData) => {
-    downloadPDF(data)
-    toast.success("PDF generado")
-  }
-
-  const stats = useMemo(() => {
-    const total = quotations.length
-    const totalAmount = quotations.reduce((sum, q) => sum + q.total, 0)
-    const approved = quotations.filter((q) => q.status === "aprobada").length
-    return { total, totalAmount, approved }
-  }, [quotations])
-
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h2 className="font-heading text-2xl font-bold text-foreground">Historial de Cotizaciones</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{stats.total} cotizaciones registradas</p>
+        <h2 className="font-heading text-2xl font-bold text-foreground">Historial</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Seccionado por tipo de documento</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#1a5276]/10">
-              <FileText className="h-4 w-4 text-[#1a5276]" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Total Cotizaciones</p>
-              <p className="font-heading text-lg font-bold text-foreground">{stats.total}</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#166534]/10">
-              <Eye className="h-4 w-4 text-[#166534]" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Aprobadas</p>
-              <p className="font-heading text-lg font-bold text-foreground">{stats.approved}</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#1a5276]/10">
-              <Clock className="h-4 w-4 text-[#1a5276]" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Monto Total</p>
-              <p className="font-heading text-lg font-bold text-foreground">${formatCurrency(stats.totalAmount)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por codigo, cliente o asunto..."
+            placeholder="Buscar por codigo, cliente, autorizado..."
             className="border-border bg-card pl-10 text-foreground"
           />
         </div>
-        <div className="flex gap-2">
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-36 border-border bg-card text-foreground">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="borrador">Borrador</SelectItem>
-              <SelectItem value="enviada">Enviada</SelectItem>
-              <SelectItem value="aprobada">Aprobada</SelectItem>
-              <SelectItem value="rechazada">Rechazada</SelectItem>
-              <SelectItem value="anulado">Anulado</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-40 border-border bg-card text-foreground">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="proyecto">Proyecto</SelectItem>
-              <SelectItem value="servicio">Servicio</SelectItem>
-              <SelectItem value="mantenimiento">Mantenimiento</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-36 border-border bg-card text-foreground">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="borrador">Borrador</SelectItem>
+            <SelectItem value="enviada">Enviada</SelectItem>
+            <SelectItem value="aprobada">Aprobada</SelectItem>
+            <SelectItem value="rechazada">Rechazada</SelectItem>
+            <SelectItem value="anulado">Anulado</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Mobile Cards */}
-      <div className="space-y-3 sm:hidden">
-        {filtered.map((q) => (
-          <div key={q.id} className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-mono text-xs font-semibold text-[#1a5276]">{q.code}</p>
-                <p className="mt-1 truncate text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{q.subject || "---"}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={() => onEdit(q)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Editar">
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleExport(q)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Exportar PDF">
-                  <FileDown className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteId(q.id)} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" title="Eliminar">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span className="rounded bg-muted px-2 py-0.5">{TYPE_MAP[q.type] || q.type}</span>
-              <span className="rounded bg-muted px-2 py-0.5">{formatDate(q.createdAt)}</span>
-              <span className="font-mono text-sm font-semibold text-foreground">${formatCurrency(q.total)}</span>
-            </div>
-            <div className="mt-3">
-              <Select value={q.status} onValueChange={(v) => handleStatusChange(q.id, v as QuotationData["status"])}>
-                <SelectTrigger className="h-8 w-full border-border bg-card text-xs text-foreground">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="borrador">Borrador</SelectItem>
-                <SelectItem value="enviada">Enviada</SelectItem>
-                <SelectItem value="aprobada">Aprobada</SelectItem>
-                <SelectItem value="rechazada">Rechazada</SelectItem>
-                <SelectItem value="anulado">Anulado</SelectItem>
-              </SelectContent>
-            </Select>
-              <div className="mt-2">
-                <Badge className={STATUS_MAP[q.status]?.className || ""}>
-                  {STATUS_MAP[q.status]?.label || q.status}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            {quotations.length === 0
-              ? "No hay cotizaciones registradas. Cree su primera cotizacion."
-              : "No se encontraron cotizaciones con los filtros aplicados."}
-          </div>
-        )}
-      </div>
+      <Tabs defaultValue="quotes">
+        <TabsList className="grid w-full max-w-md grid-cols-3 bg-muted">
+          <TabsTrigger value="quotes">Cotizaciones</TabsTrigger>
+          <TabsTrigger value="delivery">Notas de Entrega</TabsTrigger>
+          <TabsTrigger value="transport">Guias de Transporte</TabsTrigger>
+        </TabsList>
 
-      {/* Table */}
-      <div className="hidden overflow-hidden rounded-lg border border-border bg-card sm:block">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-[#0a1628]">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Codigo</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Cliente</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Asunto</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">Tipo</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">Fecha</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Total USD</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">Estado</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">
-                  <span className="sr-only">Acciones</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((q) => (
-                <tr key={q.id} className="group transition-colors hover:bg-muted/50">
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{q.code}</td>
-                  <td className="max-w-[180px] truncate px-4 py-3 text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</td>
-                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-muted-foreground">{q.subject || "---"}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-xs text-muted-foreground">{TYPE_MAP[q.type] || q.type}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center text-xs text-muted-foreground">{formatDate(q.createdAt)}</td>
-                  <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-foreground">${formatCurrency(q.total)}</td>
-                  <td className="px-4 py-3 text-center">
-                    <Select value={q.status} onValueChange={(v) => handleStatusChange(q.id, v as QuotationData["status"])}>
-                      <SelectTrigger className="h-7 w-28 border-none bg-transparent p-0 text-xs">
-                        <Badge className={STATUS_MAP[q.status]?.className || ""}>
-                          {STATUS_MAP[q.status]?.label || q.status}
-                        </Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="borrador">Borrador</SelectItem>
-                        <SelectItem value="enviada">Enviada</SelectItem>
-                        <SelectItem value="aprobada">Aprobada</SelectItem>
-                        <SelectItem value="rechazada">Rechazada</SelectItem>
-                        <SelectItem value="anulado">Anulado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button variant="ghost" size="sm" onClick={() => onEdit(q)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Editar">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleExport(q)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground" title="Exportar PDF">
-                        <FileDown className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteId(q.id)} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" title="Eliminar">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
+        <TabsContent value="quotes" className="mt-4">
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-[#0a1628]">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Cliente</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-white">Total</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Estado</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Acciones</th>
                 </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="py-16 text-center text-sm text-muted-foreground">
-                    {quotations.length === 0
-                      ? "No hay cotizaciones registradas. Cree su primera cotizacion."
-                      : "No se encontraron cotizaciones con los filtros aplicados."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredQuotes.map((q) => (
+                  <tr key={q.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{q.code}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</td>
+                    <td className="px-4 py-3 text-right font-mono text-sm text-foreground">${formatCurrency(q.total)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <Select value={q.status} onValueChange={(v) => handleStatusChange(q.id, v as QuotationData["status"])}>
+                        <SelectTrigger className="h-8 w-28 border-none bg-transparent p-0 text-xs">
+                          <Badge className={STATUS_MAP[q.status]?.className || ""}>{STATUS_MAP[q.status]?.label || q.status}</Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="borrador">Borrador</SelectItem>
+                          <SelectItem value="enviada">Enviada</SelectItem>
+                          <SelectItem value="aprobada">Aprobada</SelectItem>
+                          <SelectItem value="rechazada">Rechazada</SelectItem>
+                          <SelectItem value="anulado">Anulado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(q)} className="h-7 w-7 p-0"><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleExportQuote(q)} className="h-7 w-7 p-0"><FileDown className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteItem({ type: "quote", id: q.id })} className="h-7 w-7 p-0 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredQuotes.length === 0 && (
+                  <tr><td colSpan={5} className="py-10 text-center text-sm text-muted-foreground">No hay cotizaciones.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
 
-      {/* Delete confirm */}
-      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <TabsContent value="delivery" className="mt-4">
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-[#0a1628]">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Cliente</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Atencion</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Fecha</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredDelivery.map((note) => (
+                  <tr key={note.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{note.code}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{note.clientName}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{note.attention || "-"}</td>
+                    <td className="px-4 py-3 text-center text-xs text-muted-foreground">{formatDate(note.issueDate)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleExportDelivery(note)} className="h-7 w-7 p-0"><FileDown className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteItem({ type: "delivery", id: note.id })} className="h-7 w-7 p-0 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredDelivery.length === 0 && (
+                  <tr><td colSpan={5} className="py-10 text-center text-sm text-muted-foreground">No hay notas de entrega.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="transport" className="mt-4">
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-[#0a1628]">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Autorizado</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Dirigido a</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Fecha</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredTransport.map((guide) => (
+                  <tr key={guide.id} className="hover:bg-muted/40">
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{guide.code}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{guide.authorizedName}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{guide.recipient}</td>
+                    <td className="px-4 py-3 text-center text-xs text-muted-foreground">{formatDate(guide.issueDate)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => handleExportTransport(guide)} className="h-7 w-7 p-0"><FileDown className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteItem({ type: "transport", id: guide.id })} className="h-7 w-7 p-0 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredTransport.length === 0 && (
+                  <tr><td colSpan={5} className="py-10 text-center text-sm text-muted-foreground">No hay guias de transporte.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
         <DialogContent className="bg-card text-foreground sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Confirmar eliminacion</DialogTitle>
+            <DialogTitle>Confirmar eliminacion</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Esta cotizacion sera eliminada permanentemente. Esta accion no se puede deshacer.
-          </p>
+          <p className="text-sm text-muted-foreground">Este documento sera eliminado permanentemente.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)} className="border-border bg-transparent text-foreground">Cancelar</Button>
-            <Button variant="destructive" onClick={() => deleteId && handleDelete(deleteId)}>Eliminar</Button>
+            <Button variant="outline" onClick={() => setDeleteItem(null)} className="border-border bg-transparent text-foreground">Cancelar</Button>
+            <Button variant="destructive" onClick={handleDelete}>Eliminar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+

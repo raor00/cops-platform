@@ -1,7 +1,8 @@
-"use client"
+﻿"use client"
 
 import type { QuotationData } from "./quotation-types"
 import { formatCurrency } from "./quotation-types"
+import { downloadHtmlAsPdf } from "./download-html-pdf"
 
 function formatDate(dateStr: string): string {
   if (!dateStr) return ""
@@ -236,6 +237,7 @@ function generateSAPDFContent(data: QuotationData): string {
 
 function generateLLCPDFContent(data: QuotationData): string {
   const notesText = data.notes || ""
+  const termsText = data.termsAndConditions || ""
   const allItems = [
     ...data.items.map((item) => ({
       model: item.code || "ITEM",
@@ -308,6 +310,11 @@ function generateLLCPDFContent(data: QuotationData): string {
 
   const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
   const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
+  const termsLines = termsText
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => `<li style="margin-bottom:3px;">${line.replace(/^\d+\.\s*/, "")}</li>`)
+    .join("")
 
   return `<!DOCTYPE html>
 <html>
@@ -434,6 +441,14 @@ function generateLLCPDFContent(data: QuotationData): string {
         </div>
       </div>
     </div>
+    ${termsText ? `
+      <div style="margin-top:14px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:6px;">TERMS & CONDITIONS</div>
+        <div style="border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;font-size:9px;color:#6b7280;line-height:1.5;">
+          <ol style="margin:0;padding-left:14px;">${termsLines}</ol>
+        </div>
+      </div>
+    ` : ""}
     </div>
   </div>
 </body>
@@ -447,13 +462,12 @@ export function generatePDFContent(data: QuotationData): string {
   return generateSAPDFContent(data)
 }
 
-export function downloadPDF(data: QuotationData) {
+export async function downloadPDF(data: QuotationData) {
   const htmlContent = generatePDFContent(data)
-  const printWindow = window.open("", "_blank")
-  if (!printWindow) return
-  printWindow.document.write(htmlContent)
-  printWindow.document.close()
-  printWindow.onload = () => {
-    setTimeout(() => { printWindow.print() }, 500)
-  }
+  const safeCode = (data.code || "documento").replace(/[\\/:*?"<>|]/g, "-")
+  await downloadHtmlAsPdf({
+    htmlContent,
+    fileName: `${safeCode}.pdf`,
+  })
 }
+

@@ -136,14 +136,18 @@ export function DeliveryNoteBuilder() {
     toast.success("Nota de entrega guardada")
   }, [validate, buildData, refreshSavedNotes])
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (!validate()) return
 
     const data = buildData()
     saveDeliveryNote(data)
-    downloadDeliveryNotePDF(data)
-    refreshSavedNotes()
-    toast.success("Nota de entrega generada para PDF")
+    try {
+      await downloadDeliveryNotePDF(data)
+      refreshSavedNotes()
+      toast.success("Nota de entrega PDF generada")
+    } catch {
+      toast.error("No se pudo generar el PDF de la nota de entrega")
+    }
   }, [validate, buildData, refreshSavedNotes])
 
   const addItem = useCallback(() => {

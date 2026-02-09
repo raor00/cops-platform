@@ -1,6 +1,6 @@
-"use client"
+﻿"use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ClientInfoForm } from "./client-info-form"
@@ -9,8 +9,8 @@ import { LaborSection } from "./labor-section"
 import { SummaryPanel } from "./summary-panel"
 import { PDFPreview } from "./pdf-preview"
 import { downloadPDF } from "@/lib/generate-pdf"
-import { saveQuotation } from "@/lib/quotation-storage"
-import type { ClientInfo, QuotationItem, QuotationType, QuotationData, LaborItem } from "@/lib/quotation-types"
+import { saveQuotation, getCatalog, getCatalogDiscountConfig } from "@/lib/quotation-storage"
+import type { ClientInfo, QuotationItem, QuotationType, QuotationData, LaborItem, DiscountMode } from "@/lib/quotation-types"
 import { generateQuotationCode, PAYMENT_CONDITIONS, DEFAULT_TERMS, PAYMENT_CONDITIONS_LLC, DEFAULT_TERMS_LLC } from "@/lib/quotation-types"
 import { FileDown, Eye, PenLine, RotateCcw, Save, Package, Cable } from "lucide-react"
 import { toast } from "sonner"
@@ -62,7 +62,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   const [materialItems, setMaterialItems] = useState<QuotationItem[]>(initialData?.materials || [])
   const [laborItems, setLaborItems] = useState<LaborItem[]>(initialData?.laborItems || [])
   const [notes, setNotes] = useState(initialData?.notes || "")
-  const [discountAmount, setDiscountAmount] = useState(initialData?.discountAmount || 0)
+  const [discountMode, setDiscountMode] = useState<DiscountMode>(initialData?.discountMode || "amount")
+  const [discountValue, setDiscountValue] = useState(initialData?.discountValue ?? initialData?.discountAmount ?? 0)
   const [llcTaxRate, setLlcTaxRate] = useState(() =>
     initialData?.companyFormat === "llc" ? (initialData?.ivaRate || 0) : 0
   )
@@ -98,12 +99,59 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     const subtotalMaterials = materialItems.reduce((sum, item) => sum + item.totalPrice, 0)
     const subtotalLabor = laborItems.reduce((sum, item) => sum + item.cost, 0)
     const baseImponible = subtotalEquipment + subtotalMaterials + subtotalLabor
-    const safeDiscount = Math.min(Math.max(discountAmount, 0), baseImponible)
+    const requestedDiscount = discountMode === "percentage"
+      ? baseImponible * (Math.max(discountValue, 0) / 100)
+      : Math.max(discountValue, 0)
+    const safeDiscount = Math.min(requestedDiscount, baseImponible)
     const taxableBase = baseImponible - safeDiscount
     const ivaAmount = taxableBase * (taxRate / 100)
     const total = taxableBase + ivaAmount
     return { subtotalEquipment, subtotalMaterials, subtotalLabor, ivaAmount, total, baseImponible, safeDiscount, taxableBase }
-  }, [equipmentItems, materialItems, laborItems, taxRate, discountAmount])
+  }, [equipmentItems, materialItems, laborItems, taxRate, discountMode, discountValue])
+
+  useEffect(() => {
+    const applyCatalogDiscounts = () => {
+      const catalog = getCatalog()
+      const config = getCatalogDiscountConfig()
+      if (!config.enabled || config.value <= 0) return
+
+      const catalogMap = new Map(
+        catalog.map((item) => [item.code.trim().toLowerCase(), item]),
+      )
+
+      const applyList = (list: QuotationItem[]) =>
+        list.map((item) => {
+          const catalogItem = catalogMap.get(item.code.trim().toLowerCase())
+          if (!catalogItem) return item
+
+          if (config.scope === "category" && catalogItem.category !== config.category) return item
+          if (config.scope === "subcategory" && (catalogItem.subcategory || "General") !== config.subcategory) return item
+
+          const basePrice = catalogItem.unitPrice
+          const discounted = config.mode === "percentage"
+            ? basePrice * (1 - config.value / 100)
+            : basePrice - config.value
+          const nextPrice = Math.max(0, Number(discounted.toFixed(2)))
+
+          if (Math.abs(nextPrice - item.unitPrice) < 0.0001) return item
+
+          return {
+            ...item,
+            unitPrice: nextPrice,
+            totalPrice: Number((item.quantity * nextPrice).toFixed(2)),
+            category: catalogItem.category,
+            subcategory: catalogItem.subcategory || "General",
+          }
+        })
+
+      setEquipmentItems((prev) => applyList(prev))
+      setMaterialItems((prev) => applyList(prev))
+    }
+
+    applyCatalogDiscounts()
+    window.addEventListener("catalog-updated", applyCatalogDiscounts)
+    return () => window.removeEventListener("catalog-updated", applyCatalogDiscounts)
+  }, [])
 
   const handleTypeChange = useCallback((type: QuotationType) => {
     setQuotationType(type)
@@ -115,6 +163,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     code: quotationCode,
     type: quotationType,
     companyFormat,
+    discountMode,
+    discountValue: Math.max(discountValue, 0),
     subject,
     clientInfo,
     items: equipmentItems,
@@ -134,7 +184,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     total: calculations.total,
     createdAt: initialData?.createdAt || new Date().toISOString(),
     status: initialData?.status || "borrador",
-  }), [quotationId, quotationCode, quotationType, companyFormat, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, taxRate, initialData])
+  }), [quotationId, quotationCode, quotationType, companyFormat, discountMode, discountValue, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, taxRate, initialData])
 
   const handleSave = () => {
     const clientName = companyFormat === "llc" ? (clientInfo.billToName || clientInfo.name) : clientInfo.name
@@ -148,7 +198,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     onSaved?.()
   }
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const clientName = companyFormat === "llc" ? (clientInfo.billToName || clientInfo.name) : clientInfo.name
     if (!clientName) {
       toast.error(companyFormat === "llc" ? "Please enter the client name" : "Debe ingresar el nombre del cliente")
@@ -160,9 +210,13 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     }
     const data = buildData()
     saveQuotation(data)
-    downloadPDF(data)
-    toast.success(companyFormat === "llc" ? "Document generated for printing/PDF" : "Documento generado para impresion/PDF")
-    onSaved?.()
+    try {
+      await downloadPDF(data)
+      toast.success(companyFormat === "llc" ? "Document generated for PDF download" : "Documento PDF generado")
+      onSaved?.()
+    } catch {
+      toast.error(companyFormat === "llc" ? "Could not generate PDF" : "No se pudo generar el PDF")
+    }
   }
 
   const handleReset = () => {
@@ -196,7 +250,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     setMaterialItems([])
     setLaborItems([])
     setNotes("")
-    setDiscountAmount(0)
+    setDiscountMode("amount")
+    setDiscountValue(0)
     setLlcTaxRate(0)
     setTermsAndConditions(DEFAULT_TERMS)
     setSaTerms(DEFAULT_TERMS)
@@ -360,8 +415,11 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             onTermsChange={handleTermsChange}
             companyFormat={companyFormat}
             taxRate={taxRate}
+            discountMode={discountMode}
+            discountValue={discountValue}
             discountAmount={calculations.safeDiscount}
-            onDiscountChange={setDiscountAmount}
+            onDiscountModeChange={setDiscountMode}
+            onDiscountChange={setDiscountValue}
             onTaxRateChange={setLlcTaxRate}
           />
         </TabsContent>
@@ -373,3 +431,4 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     </div>
   )
 }
+

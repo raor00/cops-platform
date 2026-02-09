@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React from "react"
 
@@ -27,6 +27,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [catFilter, setCatFilter] = useState<string>("all")
+  const [subcatFilter, setSubcatFilter] = useState<string>("all")
   const [catalog, setCatalog] = useState<CatalogItem[]>([])
   const [collapsed, setCollapsed] = useState(false)
 
@@ -55,6 +56,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
       unitPrice: preset.unitPrice,
       totalPrice: preset.unitPrice,
       category: preset.category,
+      subcategory: preset.subcategory || "General",
     }
     onItemsChange([...items, newItem])
     setCatalogOpen(false)
@@ -88,8 +90,17 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
     if (catFilter !== "all") {
       matchCat = item.category === catFilter
     }
-    return matchSearch && matchCat
+    const matchSub = subcatFilter === "all" || (item.subcategory || "General") === subcatFilter
+    return matchSearch && matchCat && matchSub
   })
+
+  const subcategories = Array.from(
+    new Set(
+      catalog
+        .filter((item) => (catFilter === "all" ? true : item.category === catFilter))
+        .map((item) => item.subcategory || "General"),
+    ),
+  ).sort()
 
   const applicableCategories = catalogFilter === "Materiales"
     ? ["Materiales"]
@@ -314,7 +325,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               />
             </div>
             {!catalogFilter && (
-              <Select value={catFilter} onValueChange={setCatFilter}>
+              <Select value={catFilter} onValueChange={(value) => { setCatFilter(value); setSubcatFilter("all") }}>
                 <SelectTrigger className="w-44 border-border bg-card text-foreground">
                   <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
                 </SelectTrigger>
@@ -327,7 +338,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               </Select>
             )}
             {showMaterialsFilter && (
-              <Select value={catFilter} onValueChange={setCatFilter}>
+              <Select value={catFilter} onValueChange={(value) => { setCatFilter(value); setSubcatFilter("all") }}>
                 <SelectTrigger className="w-44 border-border bg-card text-foreground">
                   <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
                 </SelectTrigger>
@@ -339,6 +350,17 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                 </SelectContent>
               </Select>
             )}
+            <Select value={subcatFilter} onValueChange={setSubcatFilter}>
+              <SelectTrigger className="w-44 border-border bg-card text-foreground">
+                <SelectValue placeholder={companyFormat === "llc" ? "Subcategory" : "Subcategoria"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{companyFormat === "llc" ? "All subcategories" : "Todas las subcategorias"}</SelectItem>
+                {subcategories.map((subcat) => (
+                  <SelectItem key={subcat} value={subcat}>{subcat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             {filteredCatalog.map((preset) => (
@@ -351,7 +373,10 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                 <div className="min-w-0 flex-1">
                   <p className="font-mono text-xs font-semibold text-[#1a5276]">{preset.code}</p>
                   <p className="mt-0.5 text-sm text-foreground">{preset.description}</p>
-                  <span className="mt-1 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.category}</span>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.category}</span>
+                    <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.subcategory || "General"}</span>
+                  </div>
                 </div>
                 <p className="shrink-0 font-mono text-sm font-semibold text-foreground">${formatCurrency(preset.unitPrice)}</p>
               </button>
@@ -367,3 +392,4 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
     </div>
   )
 }
+

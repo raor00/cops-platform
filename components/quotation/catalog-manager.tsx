@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import type { CatalogItem, CatalogCategory } from "@/lib/quotation-types"
+import type { CatalogItem, CatalogCategory, CatalogDiscountConfig } from "@/lib/quotation-types"
 import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
-import { getCatalog, saveCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem } from "@/lib/quotation-storage"
-import { Plus, Search, Pencil, Trash2, Package, Cable, Filter } from "lucide-react"
+import { getCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem, getCatalogDiscountConfig, saveCatalogDiscountConfig } from "@/lib/quotation-storage"
+import { Plus, Search, Pencil, Trash2, Package, Cable, Filter, Tags, Percent, DollarSign } from "lucide-react"
 import { toast } from "sonner"
 
 const EMPTY_ITEM: Omit<CatalogItem, "id"> = {
@@ -18,6 +18,7 @@ const EMPTY_ITEM: Omit<CatalogItem, "id"> = {
   description: "",
   unitPrice: 0,
   category: "CCTV",
+  subcategory: "General",
   unit: "UND",
 }
 
@@ -25,13 +26,23 @@ export function CatalogManager() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([])
   const [search, setSearch] = useState("")
   const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [filterSubcategory, setFilterSubcategory] = useState<string>("all")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null)
   const [form, setForm] = useState(EMPTY_ITEM)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [discountConfig, setDiscountConfig] = useState<CatalogDiscountConfig>({
+    enabled: false,
+    mode: "percentage",
+    value: 0,
+    scope: "all",
+    category: "",
+    subcategory: "",
+  })
 
   useEffect(() => {
     setCatalog(getCatalog())
+    setDiscountConfig(getCatalogDiscountConfig())
   }, [])
 
   const filtered = useMemo(() => {
@@ -41,9 +52,18 @@ export function CatalogManager() {
         item.code.toLowerCase().includes(search.toLowerCase()) ||
         item.description.toLowerCase().includes(search.toLowerCase())
       const matchCat = filterCategory === "all" || item.category === filterCategory
-      return matchSearch && matchCat
+      const sub = item.subcategory || "General"
+      const matchSub = filterSubcategory === "all" || sub === filterSubcategory
+      return matchSearch && matchCat && matchSub
     })
-  }, [catalog, search, filterCategory])
+  }, [catalog, search, filterCategory, filterSubcategory])
+
+  const subcategories = useMemo(() => {
+    const allowed = filterCategory === "all"
+      ? catalog
+      : catalog.filter((item) => item.category === filterCategory)
+    return Array.from(new Set(allowed.map((item) => item.subcategory || "General"))).sort()
+  }, [catalog, filterCategory])
 
   const categoryCount = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -61,7 +81,14 @@ export function CatalogManager() {
 
   const openEdit = (item: CatalogItem) => {
     setEditingItem(item)
-    setForm({ code: item.code, description: item.description, unitPrice: item.unitPrice, category: item.category, unit: item.unit })
+    setForm({
+      code: item.code,
+      description: item.description,
+      unitPrice: item.unitPrice,
+      category: item.category,
+      subcategory: item.subcategory || "General",
+      unit: item.unit,
+    })
     setDialogOpen(true)
   }
 
@@ -82,6 +109,18 @@ export function CatalogManager() {
       toast.success("Item agregado al catalogo")
     }
     setDialogOpen(false)
+  }
+
+  const handleSaveDiscountConfig = () => {
+    const normalized = {
+      ...discountConfig,
+      value: Math.max(discountConfig.value, 0),
+      category: discountConfig.scope === "category" || discountConfig.scope === "subcategory" ? discountConfig.category : "",
+      subcategory: discountConfig.scope === "subcategory" ? discountConfig.subcategory : "",
+    }
+    saveCatalogDiscountConfig(normalized)
+    setDiscountConfig(normalized)
+    toast.success("Descuento global guardado y sincronizado")
   }
 
   const handleDelete = (id: string) => {
@@ -146,6 +185,129 @@ export function CatalogManager() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={filterSubcategory} onValueChange={setFilterSubcategory}>
+            <SelectTrigger className="w-48 border-border bg-card text-foreground">
+              <SelectValue placeholder="Subcategoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las subcategorias</SelectItem>
+              {subcategories.map((sub) => (
+                <SelectItem key={sub} value={sub}>
+                  {sub}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Tags className="h-4 w-4 text-[#1a5276]" />
+          <h3 className="text-sm font-semibold text-foreground">Descuento Global de Catalogo</h3>
+        </div>
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Aplicar descuento</Label>
+            <Select
+              value={discountConfig.enabled ? "si" : "no"}
+              onValueChange={(value) => setDiscountConfig((prev) => ({ ...prev, enabled: value === "si" }))}
+            >
+              <SelectTrigger className="border-border bg-card text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="si">Si</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Tipo</Label>
+            <Select
+              value={discountConfig.mode}
+              onValueChange={(value) => setDiscountConfig((prev) => ({ ...prev, mode: value as CatalogDiscountConfig["mode"] }))}
+            >
+              <SelectTrigger className="border-border bg-card text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percentage">Porcentaje (%)</SelectItem>
+                <SelectItem value="amount">Monto (USD)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Valor</Label>
+            <div className="relative">
+              {discountConfig.mode === "percentage" ? (
+                <Percent className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              ) : (
+                <DollarSign className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              )}
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={discountConfig.value}
+                onChange={(e) => setDiscountConfig((prev) => ({ ...prev, value: Number(e.target.value) }))}
+                className="border-border bg-card pl-9 text-foreground"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Alcance</Label>
+            <Select
+              value={discountConfig.scope}
+              onValueChange={(value) => setDiscountConfig((prev) => ({ ...prev, scope: value as CatalogDiscountConfig["scope"] }))}
+            >
+              <SelectTrigger className="border-border bg-card text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todo el catalogo</SelectItem>
+                <SelectItem value="category">Solo categoria</SelectItem>
+                <SelectItem value="subcategory">Solo subcategoria</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {(discountConfig.scope === "category" || discountConfig.scope === "subcategory") && (
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Categoria objetivo</Label>
+              <Select
+                value={discountConfig.category || "none"}
+                onValueChange={(value) => setDiscountConfig((prev) => ({ ...prev, category: value === "none" ? "" : value }))}
+              >
+                <SelectTrigger className="border-border bg-card text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Seleccione categoria</SelectItem>
+                  {CATALOG_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {discountConfig.scope === "subcategory" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Subcategoria objetivo</Label>
+                <Input
+                  value={discountConfig.subcategory}
+                  onChange={(e) => setDiscountConfig((prev) => ({ ...prev, subcategory: e.target.value }))}
+                  placeholder="Ej: Videoporteros"
+                  className="border-border bg-card text-foreground"
+                />
+              </div>
+            )}
+          </div>
+        )}
+        <div className="mt-3">
+          <Button onClick={handleSaveDiscountConfig} className="bg-[#1a5276] text-white hover:bg-[#0e3a57]">
+            Guardar Descuento Global
+          </Button>
         </div>
       </div>
 
@@ -175,6 +337,7 @@ export function CatalogManager() {
                 {item.category}
               </Badge>
               <span className="rounded bg-muted px-2 py-0.5">{item.unit}</span>
+              <span className="rounded bg-muted px-2 py-0.5">{item.subcategory || "General"}</span>
               <span className="font-mono text-sm font-semibold text-foreground">
                 ${formatCurrency(item.unitPrice)}
               </span>
@@ -197,6 +360,7 @@ export function CatalogManager() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Codigo</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Descripcion</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Categoria</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Subcategoria</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">Unidad</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Precio USD</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">
@@ -215,6 +379,7 @@ export function CatalogManager() {
                       {item.category}
                     </Badge>
                   </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{item.subcategory || "General"}</td>
                   <td className="px-4 py-3 text-center text-xs text-muted-foreground">{item.unit}</td>
                   <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-foreground">
                     ${formatCurrency(item.unitPrice)}
@@ -235,7 +400,7 @@ export function CatalogManager() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-sm text-muted-foreground">
+                  <td colSpan={7} className="py-16 text-center text-sm text-muted-foreground">
                     No se encontraron items con los filtros aplicados
                   </td>
                 </tr>
@@ -276,6 +441,15 @@ export function CatalogManager() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Subcategoria</Label>
+                <Input
+                  value={form.subcategory}
+                  onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                  placeholder="Ej: Videoporteros"
+                  className="border-border bg-card text-foreground"
+                />
               </div>
             </div>
             <div className="space-y-1.5">
@@ -351,3 +525,4 @@ export function CatalogManager() {
     </div>
   )
 }
+

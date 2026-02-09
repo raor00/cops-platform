@@ -1,9 +1,11 @@
-"use client"
+﻿"use client"
 
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCurrency, DEFAULT_TERMS, DEFAULT_TERMS_LLC } from "@/lib/quotation-types"
+import type { DiscountMode } from "@/lib/quotation-types"
 import { Calculator, FileCheck, StickyNote } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface SummaryPanelProps {
   subtotalEquipment: number
@@ -18,7 +20,10 @@ interface SummaryPanelProps {
   onTermsChange: (terms: string) => void
   companyFormat: "sa" | "llc"
   taxRate: number
+  discountMode: DiscountMode
+  discountValue: number
   discountAmount: number
+  onDiscountModeChange: (mode: DiscountMode) => void
   onDiscountChange: (value: number) => void
   onTaxRateChange: (value: number) => void
 }
@@ -36,7 +41,10 @@ export function SummaryPanel({
   onTermsChange,
   companyFormat,
   taxRate,
+  discountMode,
+  discountValue,
   discountAmount,
+  onDiscountModeChange,
   onDiscountChange,
   onTaxRateChange,
 }: SummaryPanelProps) {
@@ -93,14 +101,28 @@ export function SummaryPanel({
 
           <div className="mb-4 grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{companyFormat === "llc" ? "Discount Type" : "Tipo de Descuento"}</Label>
+              <Select value={discountMode} onValueChange={(value) => onDiscountModeChange(value as DiscountMode)}>
+                <SelectTrigger className="h-9 border-input bg-muted/70 text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="amount">{companyFormat === "llc" ? "Exact amount (USD)" : "Monto exacto (USD)"}</SelectItem>
+                  <SelectItem value="percentage">{companyFormat === "llc" ? "Percentage (%)" : "Porcentaje (%)"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
-                {companyFormat === "llc" ? "Discount (USD)" : "Descuento (USD)"}
+                {discountMode === "percentage"
+                  ? (companyFormat === "llc" ? "Discount Value (%)" : "Valor del Descuento (%)")
+                  : (companyFormat === "llc" ? "Discount Value (USD)" : "Valor del Descuento (USD)")}
               </Label>
               <input
                 type="number"
                 min={0}
                 step={0.01}
-                value={discountAmount}
+                value={discountValue}
                 onChange={(e) => onDiscountChange(Number(e.target.value))}
                 className="h-9 w-full rounded-lg border border-input bg-muted/70 px-3 text-right text-sm text-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
               />
@@ -177,3 +199,4 @@ export function SummaryPanel({
     </div>
   )
 }
+
