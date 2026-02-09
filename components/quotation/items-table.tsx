@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { QuotationItem, CatalogItem } from "@/lib/quotation-types"
 import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
-import { getCatalog } from "@/lib/quotation-storage"
+import { getCatalog, getCatalogDiscountConfig } from "@/lib/quotation-storage"
 import { Plus, Trash2, Search, ChevronDown, ChevronUp } from "lucide-react"
 
 interface ItemsSectionProps {
@@ -48,13 +48,27 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
   }
 
   const addFromCatalog = (preset: CatalogItem) => {
+    const config = getCatalogDiscountConfig()
+    const matchesScope =
+      config.scope === "all" ||
+      (config.scope === "category" && preset.category === config.category) ||
+      (config.scope === "subcategory" && (preset.subcategory || "General") === config.subcategory)
+
+    const discountedPrice = config.enabled && config.value > 0 && matchesScope
+      ? (config.mode === "percentage"
+        ? preset.unitPrice * (1 - config.value / 100)
+        : preset.unitPrice - config.value)
+      : preset.unitPrice
+
+    const finalPrice = Math.max(0, Number(discountedPrice.toFixed(2)))
+
     const newItem: QuotationItem = {
       id: crypto.randomUUID(),
       quantity: 1,
       code: preset.code,
       description: preset.description,
-      unitPrice: preset.unitPrice,
-      totalPrice: preset.unitPrice,
+      unitPrice: finalPrice,
+      totalPrice: finalPrice,
       category: preset.category,
       subcategory: preset.subcategory || "General",
     }

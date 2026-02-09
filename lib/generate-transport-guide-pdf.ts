@@ -27,6 +27,15 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;")
 }
 
+function applyBodyTokens(data: TransportGuideData): string {
+  return (data.bodyText || "")
+    .replaceAll("[NOMBRE AUTORIZADO]", data.authorizedName || "[NOMBRE AUTORIZADO]")
+    .replaceAll("[CI]", data.authorizedIdentification || "[CI]")
+    .replaceAll("[VEHICULO]", data.vehicleDescription || "[VEHICULO]")
+    .replaceAll("[ORIGEN]", data.origin || "[ORIGEN]")
+    .replaceAll("[DESTINO]", data.destination || "[DESTINO]")
+}
+
 function formatBody(body: string): string {
   return escapeHtml(body)
     .split("\n")
@@ -46,6 +55,8 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
     )
     .join("")
 
+  const mergedBody = applyBodyTokens(data)
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -56,20 +67,23 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
     * { box-sizing: border-box; }
     body { margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; color: #0f172a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .sheet { width: 100%; }
-    .header { background: linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%); border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
-    .brand { display: flex; align-items: center; gap: 10px; }
+    .header { background: linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 10px; justify-self: start; }
     .logo { width: 44px; height: 44px; border-radius: 9px; background: rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; }
     .logo img { width: 30px; height: 30px; object-fit: contain; }
     .brand-name { color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 1px; }
     .brand-sub { color: #9db7da; font-size: 9px; margin-top: 2px; }
-    .doc-box { text-align: right; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 10px; background: rgba(255,255,255,0.08); }
+    .doc-center { text-align: center; justify-self: center; }
+    .doc-main { color: #fff; font-size: 22px; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase; }
+    .doc-main-sub { color: #bfd0e6; font-size: 10px; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.6px; }
+    .doc-box { justify-self: end; text-align: right; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 10px; background: rgba(255,255,255,0.08); min-width: 160px; }
     .doc-title { color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; }
     .doc-code { color: #fff; font-size: 15px; font-weight: 800; margin-top: 2px; }
     .meta { margin-top: 10px; border: 1px solid #d4deee; border-radius: 10px; background: #f8fbff; padding: 10px 12px; }
-    .meta-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; margin-bottom: 6px; }
+    .meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 6px; }
     .label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.4px; }
-    .value { font-size: 11px; color: #0f172a; font-weight: 600; margin-left: 6px; }
-    .letter { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; background: #fff; font-size: 11px; color: #334155; line-height: 1.55; text-align: justify; }
+    .value { font-size: 12px; color: #0f172a; font-weight: 600; margin-left: 6px; }
+    .letter { margin-top: 12px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; background: #fff; font-size: 12px; color: #1f2937; line-height: 1.65; text-align: justify; }
     .items-wrap { margin-top: 12px; border: 1px solid #d4deee; border-radius: 10px; overflow: hidden; }
     table { width: 100%; border-collapse: collapse; }
     thead th { background: #0a1628; color: #fff; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; padding: 9px 10px; text-align: left; }
@@ -80,6 +94,9 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
     .signature-line { width: 280px; border-top: 1px solid #64748b; margin-top: 35px; }
     .signature-name { font-weight: 700; font-size: 11px; margin-top: 4px; }
     .signature-info { font-size: 11px; color: #334155; }
+    .contact-card { margin-top: 10px; border: 1px solid #dbe3f0; border-radius: 8px; background: #f8fbff; padding: 8px 10px; max-width: 520px; }
+    .contact-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #1a5276; }
+    .contact-text { margin-top: 2px; font-size: 11px; color: #334155; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -89,11 +106,15 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
         <div class="logo"><img src="/cops-logo.png" alt="COPS" /></div>
         <div>
           <div class="brand-name">COP'S ELECTRONICS, S.A.</div>
-          <div class="brand-sub">GUIA DE TRANSPORTE</div>
+          <div class="brand-sub">SOLUCIONES TECNOLOGICAS INTEGRALES</div>
         </div>
       </div>
+      <div class="doc-center">
+        <div class="doc-main">GUIA DE TRANSPORTE</div>
+        <div class="doc-main-sub">DOCUMENTO OFICIAL DE MOVILIZACION</div>
+      </div>
       <div class="doc-box">
-        <div class="doc-title">Guia de Transporte</div>
+        <div class="doc-title">Codigo</div>
         <div class="doc-code">${escapeHtml(data.code)}</div>
       </div>
     </div>
@@ -101,15 +122,15 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
     <div class="meta">
       <div class="meta-row">
         <div><span class="label">Fecha:</span><span class="value">${escapeHtml(formatLongDate(data.issueDate))}</span></div>
-        <div><span class="label">Asunto:</span><span class="value">${escapeHtml(data.subject)}</span></div>
+        <div><span class="label">Autorizado:</span><span class="value">${escapeHtml(data.authorizedName)}</span></div>
       </div>
       <div class="meta-row">
         <div><span class="label">Dirigido a:</span><span class="value">${escapeHtml(data.recipient)}</span></div>
-        <div><span class="label">Autorizado:</span><span class="value">${escapeHtml(data.authorizedName)}</span></div>
+        <div><span class="label">C.I:</span><span class="value">${escapeHtml(data.authorizedIdentification)}</span></div>
       </div>
     </div>
 
-    <div class="letter">${formatBody(data.bodyText)}</div>
+    <div class="letter">${formatBody(mergedBody)}</div>
 
     <div class="items-wrap">
       <table>
@@ -135,7 +156,10 @@ export function generateTransportGuidePDFContent(data: TransportGuideData): stri
       <div class="signature-name">${escapeHtml(data.signName)}</div>
       <div class="signature-info">C.I. ${escapeHtml(data.signIdentification)}</div>
       <div class="signature-info">${escapeHtml(data.signTitle)}</div>
-      <div class="signature-info">Contacto: ${escapeHtml(data.contacts)}</div>
+      <div class="contact-card">
+        <div class="contact-title">Contacto para Verificacion</div>
+        <div class="contact-text">${escapeHtml(data.contacts)}</div>
+      </div>
     </div>
   </div>
 </body>

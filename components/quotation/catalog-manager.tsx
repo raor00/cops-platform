@@ -135,6 +135,23 @@ export function CatalogManager() {
     return <Package className="h-3 w-3" />
   }
 
+  const getEffectivePrice = (item: CatalogItem): number => {
+    if (!discountConfig.enabled || discountConfig.value <= 0) return item.unitPrice
+
+    const matchScope =
+      discountConfig.scope === "all" ||
+      (discountConfig.scope === "category" && item.category === discountConfig.category) ||
+      (discountConfig.scope === "subcategory" && (item.subcategory || "General") === discountConfig.subcategory)
+
+    if (!matchScope) return item.unitPrice
+
+    const next = discountConfig.mode === "percentage"
+      ? item.unitPrice * (1 - discountConfig.value / 100)
+      : item.unitPrice - discountConfig.value
+
+    return Math.max(0, Number(next.toFixed(2)))
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -250,7 +267,8 @@ export function CatalogManager() {
                 min={0}
                 step={0.01}
                 value={discountConfig.value}
-                onChange={(e) => setDiscountConfig((prev) => ({ ...prev, value: Number(e.target.value) }))}
+                onFocus={(e) => e.currentTarget.select()}
+                onChange={(e) => setDiscountConfig((prev) => ({ ...prev, value: e.target.value === "" ? 0 : Number(e.target.value) }))}
                 className="border-border bg-card pl-9 text-foreground"
               />
             </div>
@@ -339,7 +357,7 @@ export function CatalogManager() {
               <span className="rounded bg-muted px-2 py-0.5">{item.unit}</span>
               <span className="rounded bg-muted px-2 py-0.5">{item.subcategory || "General"}</span>
               <span className="font-mono text-sm font-semibold text-foreground">
-                ${formatCurrency(item.unitPrice)}
+                ${formatCurrency(getEffectivePrice(item))}
               </span>
             </div>
           </div>
@@ -362,7 +380,8 @@ export function CatalogManager() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Categoria</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white">Subcategoria</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">Unidad</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Precio USD</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Precio Base</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-white">Precio Final</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white">
                   <span className="sr-only">Acciones</span>
                 </th>
@@ -384,6 +403,9 @@ export function CatalogManager() {
                   <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-foreground">
                     ${formatCurrency(item.unitPrice)}
                   </td>
+                  <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-[#1a5276]">
+                    ${formatCurrency(getEffectivePrice(item))}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                       <Button variant="ghost" size="sm" onClick={() => openEdit(item)} className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground">
@@ -400,7 +422,7 @@ export function CatalogManager() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-sm text-muted-foreground">
+                  <td colSpan={8} className="py-16 text-center text-sm text-muted-foreground">
                     No se encontraron items con los filtros aplicados
                   </td>
                 </tr>
@@ -469,7 +491,8 @@ export function CatalogManager() {
                   min={0}
                   step={0.01}
                   value={form.unitPrice}
-                  onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => setForm({ ...form, unitPrice: e.target.value === "" ? 0 : Number(e.target.value) })}
                   className="border-border bg-card text-foreground"
                 />
               </div>

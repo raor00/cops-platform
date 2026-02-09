@@ -20,7 +20,6 @@ export interface TransportGuideData {
   signName: string
   signIdentification: string
   signTitle: string
-  subject: string
   items: TransportGuideItem[]
   bodyText: string
   extraNotes: string

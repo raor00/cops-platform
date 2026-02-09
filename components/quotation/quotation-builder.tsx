@@ -113,7 +113,6 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     const applyCatalogDiscounts = () => {
       const catalog = getCatalog()
       const config = getCatalogDiscountConfig()
-      if (!config.enabled || config.value <= 0) return
 
       const catalogMap = new Map(
         catalog.map((item) => [item.code.trim().toLowerCase(), item]),
@@ -124,13 +123,17 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
           const catalogItem = catalogMap.get(item.code.trim().toLowerCase())
           if (!catalogItem) return item
 
-          if (config.scope === "category" && catalogItem.category !== config.category) return item
-          if (config.scope === "subcategory" && (catalogItem.subcategory || "General") !== config.subcategory) return item
+          const matchesScope =
+            config.scope === "all" ||
+            (config.scope === "category" && catalogItem.category === config.category) ||
+            (config.scope === "subcategory" && (catalogItem.subcategory || "General") === config.subcategory)
 
           const basePrice = catalogItem.unitPrice
-          const discounted = config.mode === "percentage"
-            ? basePrice * (1 - config.value / 100)
-            : basePrice - config.value
+          const discounted = config.enabled && config.value > 0 && matchesScope
+            ? (config.mode === "percentage"
+              ? basePrice * (1 - config.value / 100)
+              : basePrice - config.value)
+            : basePrice
           const nextPrice = Math.max(0, Number(discounted.toFixed(2)))
 
           if (Math.abs(nextPrice - item.unitPrice) < 0.0001) return item

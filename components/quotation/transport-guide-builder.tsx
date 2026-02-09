@@ -74,7 +74,6 @@ export function TransportGuideBuilder() {
   const [code, setCode] = useState<string>(() => generateTransportGuideCode())
   const [issueDate, setIssueDate] = useState<string>(today)
   const [recipient, setRecipient] = useState<string>("A QUIEN PUEDA INTERESAR")
-  const [subject, setSubject] = useState<string>("GUIA DE TRANSPORTE")
   const [authorizedName, setAuthorizedName] = useState<string>("")
   const [authorizedIdentification, setAuthorizedIdentification] = useState<string>("")
   const [vehicleDescription, setVehicleDescription] = useState<string>("")
@@ -149,14 +148,13 @@ export function TransportGuideBuilder() {
       signName,
       signIdentification,
       signTitle,
-      subject,
       items,
       bodyText,
       extraNotes,
       createdAt: new Date().toISOString(),
       status: "borrador",
     }),
-    [guideId, code, issueDate, recipient, authorizedName, authorizedIdentification, vehicleDescription, origin, destination, companyName, companyRif, contacts, signName, signIdentification, signTitle, subject, items, bodyText, extraNotes],
+    [guideId, code, issueDate, recipient, authorizedName, authorizedIdentification, vehicleDescription, origin, destination, companyName, companyRif, contacts, signName, signIdentification, signTitle, items, bodyText, extraNotes],
   )
 
   const clearForm = useCallback(() => {
@@ -164,7 +162,6 @@ export function TransportGuideBuilder() {
     setCode(generateTransportGuideCode())
     setIssueDate(today)
     setRecipient("A QUIEN PUEDA INTERESAR")
-    setSubject("GUIA DE TRANSPORTE")
     setAuthorizedName("")
     setAuthorizedIdentification("")
     setVehicleDescription("")
@@ -229,7 +226,6 @@ export function TransportGuideBuilder() {
     setCode(data.code)
     setIssueDate(data.issueDate)
     setRecipient(data.recipient)
-    setSubject(data.subject)
     setAuthorizedName(data.authorizedName)
     setAuthorizedIdentification(data.authorizedIdentification)
     setVehicleDescription(data.vehicleDescription)
@@ -293,8 +289,7 @@ export function TransportGuideBuilder() {
             <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2"><Label>Codigo GT</Label><Input value={code} onChange={(e) => setCode(e.target.value)} /></div>
               <div className="space-y-2"><Label>Fecha</Label><Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Asunto</Label><Input value={subject} onChange={(e) => setSubject(e.target.value)} /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>Dirigido a</Label><Input value={recipient} onChange={(e) => setRecipient(e.target.value)} /></div>
+              <div className="space-y-2 lg:col-span-1"><Label>Dirigido a</Label><Input value={recipient} onChange={(e) => setRecipient(e.target.value)} /></div>
               <div className="space-y-2"><Label>Persona autorizada</Label><Input value={authorizedName} onChange={(e) => setAuthorizedName(e.target.value)} /></div>
               <div className="space-y-2"><Label>C.I autorizada</Label><Input value={authorizedIdentification} onChange={(e) => setAuthorizedIdentification(e.target.value)} /></div>
               <div className="space-y-2"><Label>Vehiculo</Label><Input value={vehicleDescription} onChange={(e) => setVehicleDescription(e.target.value)} /></div>
@@ -314,7 +309,7 @@ export function TransportGuideBuilder() {
             <CardContent className="space-y-3">
               {items.map((item) => (
                 <div key={item.id} className="grid gap-3 rounded-md border border-border p-3 sm:grid-cols-[0.8fr_2fr_auto] sm:items-end">
-                  <div className="space-y-2"><Label>Cantidad</Label><Input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value) || 0)} /></div>
+                  <div className="space-y-2"><Label>Cantidad</Label><Input type="number" min={1} value={item.quantity} onFocus={(e) => e.currentTarget.select()} onChange={(e) => updateItem(item.id, "quantity", e.target.value === "" ? 0 : Number(e.target.value))} /></div>
                   <div className="space-y-2"><Label>Descripcion</Label><Input value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} /></div>
                   <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(item.id)} className="h-9 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                 </div>
