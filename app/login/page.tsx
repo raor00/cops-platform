@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 ﻿"use client";
 
 import { FormEvent, useEffect, useState } from "react";
@@ -20,7 +18,6 @@ function hasSession() {
   return entry?.split("=")[1] === MASTER_SESSION_VALUE;
 }
 
->>>>>>> 79ae6ec (Update version)
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -49,14 +46,6 @@ export default function LoginPage() {
   };
 
   return (
-<<<<<<< HEAD
-    <main className="mx-auto max-w-6xl px-4 py-20">
-      <div className="reveal">
-        <p className="text-[10px] font-bold tracking-[0.25em] text-brand-600">ACCESO</p>
-        <h1 className="mt-3 text-3xl font-bold text-brand-950">Iniciar sesión</h1>
-        <p className="mt-2 text-slate-600">Acceso al sistema interno (próximamente).</p>
-      </div>
-=======
     <main className="mx-auto max-w-xl px-4 py-20">
       <h1 className="text-3xl font-semibold">Iniciar sesión</h1>
       <p className="mt-2 text-slate-700">Acceso al perfil maestro del sistema interno.</p>
@@ -100,7 +89,6 @@ export default function LoginPage() {
           Entrar al panel
         </button>
       </form>
->>>>>>> 79ae6ec (Update version)
     </main>
   );
 }
