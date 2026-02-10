@@ -27,7 +27,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="mt-10 grid gap-6 md:grid-cols-12">
           <div className="md:col-span-8">
-            <div className="glass-card p-6">
+            <div className="dark-glass-card p-6">
               <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">CAPACIDADES</p>
               <div className="mt-4 grid gap-6 md:grid-cols-2">
                 <div><p className="text-sm font-semibold text-white">Enfoque</p><p className="mt-2 text-white/65">{p.focus ?? "Integración y operación enterprise"}</p></div>
@@ -38,7 +38,7 @@ export default async function PartnerDetailPage({ params }: { params: Promise<{ 
             <div className="mt-4 sm:hidden"><Link href="/partners" className="inline-flex w-full justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">Volver</Link></div>
           </div>
           <aside className="md:col-span-4">
-            <div className="glass-card p-6">
+            <div className="dark-glass-card p-6">
               <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">ENLACES</p>
               {p.website ? <a href={p.website} target="_blank" rel="noreferrer" className="mt-4 inline-flex w-full justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-brand-950 transition hover:opacity-90">Sitio oficial</a> : <p className="mt-4 text-sm text-white/50">Sitio oficial no disponible.</p>}
               <p className="mt-4 text-xs text-white/40">Información resumida para uso corporativo.</p>

@@ -59,7 +59,7 @@ export default function NosotrosClient() {
             </div>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STATS.map((s) => (
-                <div key={s.v} className="card-lift-dark glass-card p-5">
+                <div key={s.v} className="card-lift-dark dark-glass-card p-5">
                   <p className="text-2xl font-bold text-brand-300">{s.k}</p>
                   <p className="mt-1 text-sm text-white/55">{s.v}</p>
                 </div>
@@ -96,7 +96,7 @@ export default function NosotrosClient() {
           <motion.div {...fadeUp}><p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">METODOLOGÍA</p><h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Proceso claro, avance medible</h2></motion.div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             {HOW_WE_WORK.map((s, i) => (
-              <motion.div key={s.step} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift-dark glass-card p-6">
+              <motion.div key={s.step} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift-dark dark-glass-card p-6">
                 <p className="text-xs font-bold text-brand-400">{s.step}</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">{s.title}</h3>
                 <p className="mt-2 text-sm text-white/60">{s.desc}</p>
@@ -125,7 +125,7 @@ export default function NosotrosClient() {
           <motion.div {...fadeUp}><p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">TRAYECTORIA</p><h2 className="mt-3 text-3xl font-bold tracking-tight text-white">28 años: evolución + consistencia</h2></motion.div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             {TIMELINE.map((t, i) => (
-              <motion.div key={t.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift-dark glass-card p-6">
+              <motion.div key={t.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift-dark dark-glass-card p-6">
                 <p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">{t.tag.toUpperCase()}</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">{t.title}</h3>
                 <p className="mt-2 text-sm text-white/60">{t.desc}</p>
@@ -134,7 +134,7 @@ export default function NosotrosClient() {
           </div>
 
           {/* CTA */}
-          <motion.div {...fadeUp} className="mt-12 glass-card p-8">
+          <motion.div {...fadeUp} className="mt-12 dark-glass-card p-8">
             <div className="grid gap-6 md:grid-cols-12 md:items-center">
               <div className="md:col-span-8">
                 <h3 className="text-2xl font-bold text-white">¿Listo para avanzar con tu proyecto?</h3>

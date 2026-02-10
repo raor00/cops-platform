@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Glass, GlassPill } from "glass-refraction";
 import { MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE } from "../lib/masterAuth";
 
 const NAV = [
@@ -32,6 +33,20 @@ export default function SiteHeader() {
   const loggedIn = hasSession();
   const onDark = isHome && !scrolled;
 
+  /* ── Mouse tracking for liquid glass highlight ── */
+  const headerRef = useRef<HTMLElement>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if (!headerRef.current) return;
+    const rect = headerRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, []);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
     onScroll();
@@ -45,12 +60,6 @@ export default function SiteHeader() {
     router.push("/");
   };
 
-  const glass = scrolled
-    ? "bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,.04)]"
-    : isHome
-      ? "bg-slate-500/90 backdrop-blur-md border-b border-white/10"
-      : "bg-white border-b border-slate-200";
-
   const linkCls = isHome && !scrolled
     ? "text-white/90 hover:text-white"
     : "text-slate-700 hover:text-brand-700";
@@ -58,8 +67,43 @@ export default function SiteHeader() {
   const logoCls = isHome && !scrolled ? "text-white" : "text-brand-900";
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${glass}`}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
+    <Glass
+      as="header"
+      variant="glass"
+      ref={headerRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      className={`site-header sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "site-header--scrolled"
+          : isHome
+            ? "site-header--home"
+            : "site-header--default"
+      }`}
+    >
+      {/* Interactive liquid glass spotlight that follows the mouse */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit] transition-opacity duration-500"
+        style={{ opacity: isHovering ? 1 : 0 }}
+      >
+        <div
+          className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            left: mousePos.x,
+            top: mousePos.y,
+            width: 320,
+            height: 320,
+            background: onDark
+              ? "radial-gradient(circle, rgba(144,177,255,0.15) 0%, rgba(47,84,224,0.06) 40%, transparent 70%)"
+              : "radial-gradient(circle, rgba(47,84,224,0.08) 0%, rgba(107,147,247,0.04) 40%, transparent 70%)",
+            filter: "blur(2px)",
+            transition: "left 0.15s ease-out, top 0.15s ease-out",
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
         <Link href="/" className={`text-base font-bold tracking-tight sm:text-lg transition-colors ${logoCls}`}>
           COP&apos;S Electronics
         </Link>
@@ -85,16 +129,21 @@ export default function SiteHeader() {
             </Link>
           ))}
 
-          <Link
-            href="/contacto"
-            onClick={() => {
-              setOpen(false);
-              setPanelOpen(false);
-            }}
-            className="ml-3 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-700/25"
+          <GlassPill
+            as="span"
+            className="ml-3"
           >
-            Solicitar asesoría
-          </Link>
+            <Link
+              href="/contacto"
+              onClick={() => {
+                setOpen(false);
+                setPanelOpen(false);
+              }}
+              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-700/25"
+            >
+              Solicitar asesoría
+            </Link>
+          </GlassPill>
 
           {!loggedIn && (
             <Link
@@ -124,7 +173,7 @@ export default function SiteHeader() {
               </button>
 
               {panelOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                <Glass variant="glass-card" className="absolute right-0 mt-2 w-52 p-1 shadow-xl">
                   <Link
                     href="/panel/cotizaciones"
                     onClick={() => setPanelOpen(false)}
@@ -146,7 +195,7 @@ export default function SiteHeader() {
                   >
                     Cerrar sesión
                   </button>
-                </div>
+                </Glass>
               )}
             </div>
           )}
@@ -175,9 +224,9 @@ export default function SiteHeader() {
       </div>
 
       {open && (
-        <div className="bg-white/95 backdrop-blur-xl md:hidden">
+        <Glass variant="glass-card" className="relative z-10 md:hidden">
           <div className="mx-auto max-w-6xl px-4 pb-4">
-            <div className="rounded-2xl border border-slate-200 p-2">
+            <div className="rounded-2xl border border-slate-200/50 p-2">
               {NAV.map((n) => (
                 <Link
                   key={n.href}
@@ -237,8 +286,8 @@ export default function SiteHeader() {
               </div>
             </div>
           </div>
-        </div>
+        </Glass>
       )}
-    </header>
+    </Glass>
   );
 }

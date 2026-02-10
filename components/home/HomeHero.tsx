@@ -19,7 +19,7 @@ export default function HomeHero() {
         <aside className="order-2 md:order-1 md:col-span-3">
           <div className="reveal-stagger grid gap-4">
             {STATS.map((s) => (
-              <div key={s.k} className="reveal card-lift-dark glass-card p-5 text-white">
+              <div key={s.k} className="reveal card-lift-dark dark-glass-card p-5 text-white">
                 <p className="text-xs font-medium text-brand-300">{s.k}</p>
                 <p className="mt-1 text-sm font-semibold">{s.v}</p>
               </div>
@@ -37,7 +37,7 @@ export default function HomeHero() {
           <p className="reveal mt-6 text-lg leading-relaxed text-white/75">
             Diseñamos y ejecutamos plataformas para monitoreo, control y continuidad: VMS/CCTV, control de acceso, BMS, analíticas y energía. Enfocado en entornos donde cada evento debe ser auditable y cada sede debe operar bajo estándar.
           </p>
-          <div className="reveal mt-7 glass-card p-5">
+          <div className="reveal mt-7 dark-glass-card p-5">
             <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">NUESTRA TENDENCIA</p>
             <p className="mt-2 text-sm leading-relaxed text-white/70">No entregamos &quot;instalación&quot;: entregamos <span className="font-semibold text-white">operación lista</span>. Levantamiento, arquitectura, integración multi-marca, documentación, QA y acompañamiento post-puesta en marcha.</p>
           </div>

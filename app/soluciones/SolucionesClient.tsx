@@ -85,7 +85,7 @@ export default function SolucionesClient() {
               <p className="mt-3 text-white/60">En proyectos enterprise, el valor está en la arquitectura, trazabilidad y documentación.</p>
             </div>
             <div className="md:col-span-7">
-              <div className="glass-card p-6">
+              <div className="dark-glass-card p-6">
                 <ul className="space-y-3">{DELIVERABLES.map((d) => (<li key={d} className="flex items-start gap-3"><span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand-400" /><span className="text-sm text-white/75">{d}</span></li>))}</ul>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Link href="/contacto" className="rounded-xl bg-white px-5 py-3 text-center text-sm font-semibold text-brand-950 transition hover:opacity-90">Agendar reunión técnica</Link>

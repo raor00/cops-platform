@@ -1,4 +1,5 @@
 ﻿@import "tailwindcss";
+@import "glass-refraction/css";
 
 /* ═══════════════════════════════════════════════════
    COP'S Electronics – Premium Corporate Blue Theme
@@ -227,15 +228,73 @@ html { scroll-behavior: smooth; }
 }
 
 /* ═════════════════════════════════
-   Glass card (for dark backgrounds)
+   Dark glass card (for dark backgrounds)
    ═════════════════════════════════ */
-.glass-card {
+.dark-glass-card {
   border: 1px solid rgba(255,255,255,.08);
   background: rgba(255,255,255,.04);
   backdrop-filter: blur(12px);
   border-radius: 16px;
 }
-.glass-card:hover {
+.dark-glass-card:hover {
   border-color: rgba(255,255,255,.15);
   background: rgba(255,255,255,.07);
+}
+
+/* ═════════════════════════════════
+   Glass-refraction theme overrides
+   ═════════════════════════════════ */
+:root {
+  --gr-blur: 28px;
+  --gr-blur-card: 22px;
+  --gr-blur-pill: 10px;
+  --gr-saturation: 1.8;
+  --gr-saturation-card: 1.6;
+  --gr-radius: 18px;
+  --gr-radius-card: 16px;
+  --gr-bg-start: rgba(255, 255, 255, 0.12);
+  --gr-bg-end: rgba(240, 245, 255, 0.08);
+  --gr-chromatic-blue: rgba(47, 84, 224, 0.06);
+  --gr-chromatic-violet: rgba(106, 90, 255, 0.05);
+  --gr-chromatic-pink: rgba(255, 100, 200, 0.04);
+  --gr-chromatic-green: rgba(100, 220, 180, 0.03);
+  --gr-shimmer-duration: 6s;
+  --gr-specular-duration: 4s;
+}
+
+/* ═════════════════════════════════
+   Site Header – Liquid Glass States
+   ═════════════════════════════════ */
+.site-header.glass {
+  border-radius: 0;
+  position: sticky;
+}
+
+/* Home page (unscrolled): dark frosted glass over hero */
+.site-header--home.glass {
+  --gr-bg-start: rgba(18, 22, 40, 0.55);
+  --gr-bg-end: rgba(12, 16, 30, 0.50);
+  --gr-chromatic-blue: rgba(90, 160, 255, 0.07);
+  --gr-chromatic-violet: rgba(130, 100, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Scrolled state: light frosted glass */
+.site-header--scrolled.glass {
+  --gr-bg-start: rgba(255, 255, 255, 0.72);
+  --gr-bg-end: rgba(245, 248, 255, 0.65);
+  --gr-blur: 32px;
+  --gr-saturation: 2;
+  --gr-chromatic-blue: rgba(47, 84, 224, 0.04);
+  --gr-chromatic-violet: rgba(106, 90, 255, 0.03);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(47, 84, 224, 0.03);
+}
+
+/* Default pages (not home, not scrolled): clean light glass */
+.site-header--default.glass {
+  --gr-bg-start: rgba(255, 255, 255, 0.85);
+  --gr-bg-end: rgba(250, 252, 255, 0.80);
+  --gr-blur: 24px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }

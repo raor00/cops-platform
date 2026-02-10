@@ -10,7 +10,7 @@ export default function HomeDifferentiators() {
             { t: "Escalabilidad enterprise", d: "Diseños listos para multi-sede, estandarización de modelos piloto y despliegue por fases." },
             { t: "Soporte y continuidad", d: "Planificación, documentación y acompañamiento post-implementación para operación estable." },
           ].map((s) => (
-            <div key={s.t} className="reveal card-lift-dark glass-card p-6">
+            <div key={s.t} className="reveal card-lift-dark dark-glass-card p-6">
               <h3 className="text-base font-semibold text-white">{s.t}</h3>
               <p className="mt-3 text-sm leading-relaxed text-white/55">{s.d}</p>
             </div>

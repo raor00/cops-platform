@@ -36,7 +36,7 @@ export default function PartnerModal({ partner, open, onClose }: { partner: Part
                   <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-white/70">{partner.capabilities.map((c) => <li key={c}>{c}</li>)}</ul>
                 </div>
                 <div className="md:col-span-4">
-                  <div className="glass-card p-5">
+                  <div className="dark-glass-card p-5">
                     <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">ACCIONES</p>
                     <div className="mt-4 grid gap-3">
                       {partner.website ? (
