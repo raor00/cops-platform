@@ -66,6 +66,7 @@ export function getCatalog(): CatalogItem[] {
       brand: item.brand || "General",
       subcategory: item.subcategory || "General",
       variant: item.variant || "",
+      imageUrl: item.imageUrl || "",
     }))
     const mergedByCode = new Map<string, CatalogItem>()
     for (const item of DEFAULT_CATALOG) {
@@ -74,10 +75,17 @@ export function getCatalog(): CatalogItem[] {
         brand: item.brand || "General",
         subcategory: item.subcategory || "General",
         variant: item.variant || "",
+        imageUrl: item.imageUrl || "",
       })
     }
     for (const item of normalizedSaved) {
-      mergedByCode.set(item.code.trim().toLowerCase(), item)
+      const codeKey = item.code.trim().toLowerCase()
+      const defaultItem = mergedByCode.get(codeKey)
+      mergedByCode.set(codeKey, {
+        ...defaultItem,
+        ...item,
+        imageUrl: item.imageUrl || defaultItem?.imageUrl || "",
+      })
     }
     const merged = Array.from(mergedByCode.values())
     const mergedString = JSON.stringify(merged)
@@ -91,6 +99,7 @@ export function getCatalog(): CatalogItem[] {
       brand: item.brand || "General",
       subcategory: item.subcategory || "General",
       variant: item.variant || "",
+      imageUrl: item.imageUrl || "",
     }))
   }
 }
@@ -109,6 +118,7 @@ export function addCatalogItem(item: CatalogItem): void {
     brand: item.brand || "General",
     subcategory: item.subcategory || "General",
     variant: item.variant || "",
+    imageUrl: item.imageUrl || "",
   })
   saveCatalog(catalog)
 }
@@ -122,6 +132,7 @@ export function updateCatalogItem(item: CatalogItem): void {
       brand: item.brand || "General",
       subcategory: item.subcategory || "General",
       variant: item.variant || "",
+      imageUrl: item.imageUrl || "",
     }
     saveCatalog(catalog)
   }

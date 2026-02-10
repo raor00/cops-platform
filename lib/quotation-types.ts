@@ -9,6 +9,7 @@ export interface CatalogItem {
   code: string
   description: string
   unitPrice: number
+  imageUrl?: string
   category: CatalogCategory
   brand?: string
   subcategory?: string

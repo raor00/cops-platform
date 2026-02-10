@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge"
 import type { CatalogItem, CatalogCategory, CatalogDiscountConfig } from "@/lib/quotation-types"
 import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
-import { getCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem, getCatalogDiscountConfig, saveCatalogDiscountConfig } from "@/lib/quotation-storage"
+import { getCatalog, saveCatalog, addCatalogItem, updateCatalogItem, deleteCatalogItem, getCatalogDiscountConfig, saveCatalogDiscountConfig } from "@/lib/quotation-storage"
+import { ABLEREX_CATALOG } from "@/lib/ablerex-catalog"
 import { Plus, Search, Pencil, Trash2, Package, Cable, Filter, Tags, Percent, DollarSign } from "lucide-react"
 import { toast } from "sonner"
 
@@ -17,6 +18,7 @@ const EMPTY_ITEM: Omit<CatalogItem, "id"> = {
   code: "",
   description: "",
   unitPrice: 0,
+  imageUrl: "",
   brand: "General",
   category: "CCTV",
   subcategory: "General",
@@ -114,6 +116,7 @@ export function CatalogManager() {
       code: item.code,
       description: item.description,
       unitPrice: item.unitPrice,
+      imageUrl: item.imageUrl || "",
       brand: item.brand || "General",
       category: item.category,
       subcategory: item.subcategory || "General",
@@ -140,6 +143,15 @@ export function CatalogManager() {
       toast.success("Item agregado al catalogo")
     }
     setDialogOpen(false)
+  }
+
+  const handleSyncAblerexCatalog = () => {
+    const current = getCatalog()
+    const keep = current.filter((item) => (item.brand || "General").toLowerCase() !== "ablerex")
+    const merged = [...keep, ...ABLEREX_CATALOG]
+    saveCatalog(merged)
+    setCatalog(merged)
+    toast.success(`Catalogo Ablerex actualizado (${ABLEREX_CATALOG.length} productos)`)
   }
 
   const handleSaveDiscountConfig = () => {
@@ -196,6 +208,14 @@ export function CatalogManager() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSyncAblerexCatalog}
+            className="border-border bg-transparent text-muted-foreground hover:bg-muted"
+          >
+            Actualizar Ablerex
+          </Button>
           <Button
             size="sm"
             onClick={openCreate}
@@ -411,6 +431,7 @@ export function CatalogManager() {
               <span className="rounded bg-muted px-2 py-0.5">{item.unit}</span>
               <span className="rounded bg-muted px-2 py-0.5">{item.subcategory || "General"}</span>
               {(item.variant || "").trim() !== "" && <span className="rounded bg-muted px-2 py-0.5">{item.variant}</span>}
+              {item.imageUrl && <span className="rounded bg-muted px-2 py-0.5">Con imagen</span>}
               <span className="font-mono text-sm font-semibold text-foreground">
                 ${formatCurrency(getEffectivePrice(item))}
               </span>
@@ -559,6 +580,15 @@ export function CatalogManager() {
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Descripcion completa del producto"
+                className="border-border bg-card text-foreground"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">URL de imagen (opcional)</Label>
+              <Input
+                value={form.imageUrl || ""}
+                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                placeholder="https://... o /catalogo/ablerex/modelo.jpg"
                 className="border-border bg-card text-foreground"
               />
             </div>

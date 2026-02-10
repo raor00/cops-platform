@@ -438,7 +438,23 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                 onClick={() => addFromCatalog(preset)}
                 className="flex w-full items-start justify-between gap-4 rounded-lg border border-border p-3 text-left transition-colors hover:border-[#1a5276] hover:bg-muted/50"
               >
-                <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted/30">
+                    {preset.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={preset.imageUrl}
+                        alt={preset.code}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[10px] text-muted-foreground">
+                        Sin imagen
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
                   <p className="font-mono text-xs font-semibold text-[#1a5276]">{preset.code}</p>
                   <p className="mt-0.5 text-sm text-foreground">{preset.description}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
@@ -449,6 +465,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                       <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.variant}</span>
                     )}
                   </div>
+                </div>
                 </div>
                 <p className="shrink-0 font-mono text-sm font-semibold text-foreground">${formatCurrency(preset.unitPrice)}</p>
               </button>
