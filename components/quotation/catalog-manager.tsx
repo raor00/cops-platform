@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import type { CatalogCategory, CatalogDiscountConfig, CatalogItem } from "@/lib/quotation-types"
 import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
 import {
@@ -29,7 +28,6 @@ import {
   ChevronLeft,
   ChevronRight,
   DollarSign,
-  Filter,
   Package,
   Pencil,
   Percent,
@@ -61,7 +59,7 @@ type BrandFilter = "todos" | "ablerex"
 type PriceAction = "increase" | "decrease"
 type PriceScope = "selected" | "visible" | "category" | "all-ablerex"
 
-function normalizeCategory(item: CatalogItem): string {
+export function normalizeCategory(item: CatalogItem): string {
   const brand = (item.brand || "General").toLowerCase()
   if (brand !== "ablerex") return item.category
 
@@ -125,10 +123,10 @@ const GENERAL_CATEGORY_ORDER = [
 ]
 
 function getCategoryIcon(cat: string) {
-  if (cat.includes("Batería") || cat.includes("Almacen")) return <Battery className="h-3 w-3" />
-  if (cat === "Materiales" || cat.includes("Cable")) return <Cable className="h-3 w-3" />
-  if (cat.includes("UPS") || cat.includes("Energi") || cat === "Energia") return <Zap className="h-3 w-3" />
-  return <Package className="h-3 w-3" />
+  if (cat.includes("Batería") || cat.includes("Almacen")) return <Battery className="h-3 w-3 shrink-0" />
+  if (cat === "Materiales" || cat.includes("Cable")) return <Cable className="h-3 w-3 shrink-0" />
+  if (cat.includes("UPS") || cat.includes("Energi") || cat === "Energia") return <Zap className="h-3 w-3 shrink-0" />
+  return <Package className="h-3 w-3 shrink-0" />
 }
 
 export function CatalogManager() {
@@ -182,14 +180,11 @@ export function CatalogManager() {
       const nc = normalizeCategory(item)
       cats.set(nc, (cats.get(nc) || 0) + 1)
     })
-
     const order = brandFilter === "ablerex" ? ABLEREX_CATEGORY_ORDER : [...GENERAL_CATEGORY_ORDER, ...ABLEREX_CATEGORY_ORDER]
     const sorted = Array.from(cats.entries()).sort((a, b) => {
       const ia = order.indexOf(a[0])
       const ib = order.indexOf(b[0])
-      const oa = ia >= 0 ? ia : 999
-      const ob = ib >= 0 ? ib : 999
-      return oa - ob
+      return (ia >= 0 ? ia : 999) - (ib >= 0 ? ib : 999)
     })
     return sorted
   }, [brandFiltered, brandFilter])
@@ -312,10 +307,7 @@ export function CatalogManager() {
   }
 
   const applyMassivePriceAdjustment = () => {
-    if (priceValue <= 0) {
-      toast.error("Indique un valor mayor a 0")
-      return
-    }
+    if (priceValue <= 0) { toast.error("Indique un valor mayor a 0"); return }
     let targetIds: string[] = []
     if (priceScope === "selected") targetIds = selectedIds
     if (priceScope === "visible") targetIds = visibleIds
@@ -370,18 +362,18 @@ export function CatalogManager() {
   const endIdx = Math.min(safePage * PAGE_SIZE, filtered.length)
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4 overflow-hidden">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="font-heading text-xl font-bold text-foreground sm:text-2xl">Catálogo de Productos</h2>
+        <div className="min-w-0">
+          <h2 className="truncate font-heading text-xl font-bold text-foreground sm:text-2xl">Catálogo de Productos</h2>
           <p className="text-xs text-muted-foreground">{counts.all} productos · {counts.ablerex} Ablerex</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <Button variant="outline" size="sm" onClick={handleSyncAblerexCatalog} className="text-xs">
             Sync Ablerex
           </Button>
-          <Button size="sm" onClick={openCreate} className="bg-[#1a5276] text-white hover:bg-[#0e3a57] text-xs">
+          <Button size="sm" onClick={openCreate} className="bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]">
             <Plus className="mr-1 h-3.5 w-3.5" />
             Nuevo
           </Button>
@@ -417,38 +409,36 @@ export function CatalogManager() {
         ))}
       </div>
 
-      {/* Category chips */}
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-1.5 pb-2">
+      {/* Category chips — wrapping grid instead of horizontal scroll */}
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          onClick={() => { setSelectedCategory("all"); setFilterSubcategory("all"); setPage(1); setAnimKey((k) => k + 1) }}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-200",
+            selectedCategory === "all"
+              ? "bg-[#1a5276] text-white shadow-sm"
+              : "bg-muted/60 text-muted-foreground hover:bg-muted"
+          )}
+        >
+          Todas
+        </button>
+        {availableCategories.map(([cat, count]) => (
           <button
-            onClick={() => { setSelectedCategory("all"); setFilterSubcategory("all"); setPage(1); setAnimKey((k) => k + 1) }}
+            key={cat}
+            onClick={() => { setSelectedCategory(cat); setFilterSubcategory("all"); setPage(1); setAnimKey((k) => k + 1) }}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-200",
-              selectedCategory === "all"
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all duration-200",
+              selectedCategory === cat
                 ? "bg-[#1a5276] text-white shadow-sm"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted"
             )}
           >
-            Todas ({filtered.length})
+            {getCategoryIcon(cat)}
+            <span className="truncate">{cat}</span>
+            <span className="opacity-60">({count})</span>
           </button>
-          {availableCategories.map(([cat, count]) => (
-            <button
-              key={cat}
-              onClick={() => { setSelectedCategory(cat); setFilterSubcategory("all"); setPage(1); setAnimKey((k) => k + 1) }}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-200",
-                selectedCategory === cat
-                  ? "bg-[#1a5276] text-white shadow-sm"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
-              )}
-            >
-              {getCategoryIcon(cat)}
-              {cat} ({count})
-            </button>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+        ))}
+      </div>
 
       {/* Subcategory filter */}
       {subcategories.length > 1 && (
@@ -466,36 +456,36 @@ export function CatalogManager() {
       )}
 
       {/* Selection bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/20 px-3 py-2">
         <div className="flex items-center gap-2">
           <Checkbox checked={allPageSelected} onCheckedChange={(c) => toggleSelectAllPage(Boolean(c))} />
-          <span className="text-xs text-muted-foreground">Seleccionar página</span>
+          <span className="text-xs text-muted-foreground">Página</span>
         </div>
         {selectedIds.length > 0 && (
           <>
-            <Badge variant="secondary" className="text-[11px]">{selectedIds.length} seleccionados</Badge>
-            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-6 text-[11px] text-muted-foreground">
+            <Badge variant="secondary" className="text-[11px]">{selectedIds.length} sel.</Badge>
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-6 px-2 text-[11px] text-muted-foreground">
               Limpiar
             </Button>
           </>
         )}
         <span className="ml-auto text-[11px] text-muted-foreground">
-          Mostrando {startIdx}–{endIdx} de {filtered.length}
+          {filtered.length > 0 ? `${startIdx}–${endIdx} de ${filtered.length}` : "0 resultados"}
         </span>
       </div>
 
       {/* Collapsible: Price Adjustment */}
       <Collapsible open={priceOpen} onOpenChange={setPriceOpen}>
         <CollapsibleTrigger asChild>
-          <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-left transition-colors hover:bg-muted/30">
-            <Settings2 className="h-4 w-4 text-[#1a5276]" />
-            <span className="text-sm font-semibold text-foreground">Ajuste de Precios</span>
-            <ChevronDown className={cn("ml-auto h-4 w-4 text-muted-foreground transition-transform duration-200", priceOpen && "rotate-180")} />
+          <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/30">
+            <Settings2 className="h-4 w-4 shrink-0 text-[#1a5276]" />
+            <span className="text-xs font-semibold text-foreground sm:text-sm">Ajuste de Precios</span>
+            <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", priceOpen && "rotate-180")} />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-[collapse_0.2s_ease] data-[state=open]:animate-[expand_0.2s_ease]">
-          <div className="mt-2 rounded-lg border border-border bg-card p-4">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <CollapsibleContent>
+          <div className="mt-2 rounded-lg border border-border bg-card p-3">
+            <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
               <Select value={priceAction} onValueChange={(v) => setPriceAction(v as PriceAction)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -506,30 +496,30 @@ export function CatalogManager() {
               <Select value={priceMode} onValueChange={(v) => setPriceMode(v as CatalogDiscountConfig["mode"])}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">Porcentaje (%)</SelectItem>
-                  <SelectItem value="amount">Monto (USD)</SelectItem>
+                  <SelectItem value="percentage">% Porcentaje</SelectItem>
+                  <SelectItem value="amount">USD Monto</SelectItem>
                 </SelectContent>
               </Select>
               <div className="relative">
                 {priceMode === "percentage"
-                  ? <Percent className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-                  : <DollarSign className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                  ? <Percent className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+                  : <DollarSign className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
                 }
-                <Input type="number" min={0} step={0.01} value={priceValue} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setPriceValue(e.target.value === "" ? 0 : Number(e.target.value))} className="h-8 pl-8 text-xs" />
+                <Input type="number" min={0} step={0.01} value={priceValue} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setPriceValue(e.target.value === "" ? 0 : Number(e.target.value))} className="h-8 pl-7 text-xs" />
               </div>
               <Select value={priceScope} onValueChange={(v) => setPriceScope(v as PriceScope)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="selected">Seleccionados</SelectItem>
-                  <SelectItem value="visible">Visibles filtrados</SelectItem>
-                  <SelectItem value="category">Por categoría</SelectItem>
+                  <SelectItem value="visible">Visibles</SelectItem>
+                  <SelectItem value="category">Categoría</SelectItem>
                   <SelectItem value="all-ablerex">Todo Ablerex</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={priceCategory || "none"} onValueChange={(v) => setPriceCategory(v === "none" ? "" : v)} disabled={priceScope !== "category"}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Categoría objetivo" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Categoría" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Seleccione categoría</SelectItem>
+                  <SelectItem value="none">Seleccione</SelectItem>
                   {Array.from(new Set(catalog.map((item) => item.category))).sort().map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
@@ -546,23 +536,23 @@ export function CatalogManager() {
       {/* Collapsible: Discount Config */}
       <Collapsible open={discountOpen} onOpenChange={setDiscountOpen}>
         <CollapsibleTrigger asChild>
-          <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-left transition-colors hover:bg-muted/30">
-            <Tags className="h-4 w-4 text-[#1a5276]" />
-            <span className="text-sm font-semibold text-foreground">Descuento Global (cotizaciones)</span>
-            {discountConfig.enabled && <Badge variant="secondary" className="ml-2 text-[10px]">Activo</Badge>}
-            <ChevronDown className={cn("ml-auto h-4 w-4 text-muted-foreground transition-transform duration-200", discountOpen && "rotate-180")} />
+          <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/30">
+            <Tags className="h-4 w-4 shrink-0 text-[#1a5276]" />
+            <span className="min-w-0 truncate text-xs font-semibold text-foreground sm:text-sm">Descuento Global</span>
+            {discountConfig.enabled && <Badge variant="secondary" className="shrink-0 text-[10px]">Activo</Badge>}
+            <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", discountOpen && "rotate-180")} />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-[collapse_0.2s_ease] data-[state=open]:animate-[expand_0.2s_ease]">
-          <div className="mt-2 rounded-lg border border-border bg-card p-4">
-            <div className="grid gap-3 md:grid-cols-4">
+        <CollapsibleContent>
+          <div className="mt-2 rounded-lg border border-border bg-card p-3">
+            <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
               <Select value={discountConfig.enabled ? "si" : "no"} onValueChange={(v) => setDiscountConfig((prev) => ({ ...prev, enabled: v === "si" }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
               </Select>
               <Select value={discountConfig.mode} onValueChange={(v) => setDiscountConfig((prev) => ({ ...prev, mode: v as CatalogDiscountConfig["mode"] }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="percentage">Porcentaje (%)</SelectItem><SelectItem value="amount">Monto (USD)</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="percentage">% Porcentaje</SelectItem><SelectItem value="amount">USD Monto</SelectItem></SelectContent>
               </Select>
               <Input type="number" min={0} step={0.01} value={discountConfig.value} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setDiscountConfig((prev) => ({ ...prev, value: e.target.value === "" ? 0 : Number(e.target.value) }))} className="h-8 text-xs" />
               <Button onClick={handleSaveDiscountConfig} size="sm" className="h-8 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]">Guardar</Button>
@@ -572,12 +562,12 @@ export function CatalogManager() {
       </Collapsible>
 
       {/* Product grid */}
-      <div key={animKey} className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+      <div key={animKey} className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {paginated.map((item, idx) => (
           <div
             key={item.id}
-            className="group overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-            style={{ animation: `fadeIn 0.3s ease ${idx * 30}ms forwards`, opacity: 0 }}
+            className="group min-w-0 overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+            style={{ animation: `fadeIn 0.3s ease ${idx * 25}ms forwards`, opacity: 0 }}
           >
             <div className="relative">
               <div className="absolute left-2 top-2 z-10">
@@ -590,7 +580,7 @@ export function CatalogManager() {
               <button
                 type="button"
                 onClick={() => item.imageUrl && setPreviewImage({ src: item.imageUrl, code: item.code, description: item.description })}
-                className="flex h-32 w-full items-center justify-center bg-gradient-to-b from-muted/20 to-muted/40"
+                className="flex h-28 w-full items-center justify-center bg-gradient-to-b from-muted/20 to-muted/40 sm:h-32"
               >
                 {item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -602,17 +592,17 @@ export function CatalogManager() {
                   />
                 ) : (
                   <div className="flex flex-col items-center gap-1 text-muted-foreground/40">
-                    <Package className="h-8 w-8" />
+                    <Package className="h-7 w-7" />
                     <span className="text-[10px]">Sin imagen</span>
                   </div>
                 )}
               </button>
             </div>
 
-            <div className="space-y-1.5 p-3">
+            <div className="space-y-1 p-2.5">
               <div className="flex items-start justify-between gap-1">
-                <p className="font-mono text-[11px] font-semibold text-[#1a5276] leading-tight">{item.code}</p>
-                <div className="flex shrink-0 items-center gap-0.5">
+                <p className="min-w-0 truncate font-mono text-[11px] font-semibold text-[#1a5276] leading-tight">{item.code}</p>
+                <div className="flex shrink-0 items-center">
                   <Button variant="ghost" size="sm" onClick={() => openEdit(item)} className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <Pencil className="h-3 w-3" />
                   </Button>
@@ -622,26 +612,26 @@ export function CatalogManager() {
                 </div>
               </div>
 
-              <p className="line-clamp-2 text-xs leading-snug text-foreground/80">{item.description}</p>
+              <p className="line-clamp-2 text-[11px] leading-snug text-foreground/80">{item.description}</p>
 
               <div className="flex flex-wrap items-center gap-1">
-                <Badge variant="secondary" className="gap-0.5 text-[10px] px-1.5 py-0">
+                <Badge variant="secondary" className="max-w-full gap-0.5 truncate px-1.5 py-0 text-[10px]">
                   {getCategoryIcon(normalizeCategory(item))}
-                  {normalizeCategory(item)}
+                  <span className="truncate">{normalizeCategory(item)}</span>
                 </Badge>
                 {(item.brand || "General").toLowerCase() === "ablerex" && (
-                  <span className="rounded bg-blue-50 px-1.5 py-0 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Ablerex</span>
+                  <span className="shrink-0 rounded bg-blue-50 px-1.5 py-0 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">Ablerex</span>
                 )}
               </div>
 
-              <div className="flex items-end justify-between pt-1">
-                <div>
+              <div className="flex items-end justify-between pt-0.5">
+                <div className="min-w-0">
                   <p className="font-mono text-sm font-bold text-foreground">${formatCurrency(item.unitPrice)}</p>
                   {discountConfig.enabled && getEffectivePrice(item) !== item.unitPrice && (
                     <p className="text-[10px] text-green-600">${formatCurrency(getEffectivePrice(item))} cotiz.</p>
                   )}
                 </div>
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{item.unit}</span>
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{item.unit}</span>
               </div>
             </div>
           </div>
@@ -649,26 +639,20 @@ export function CatalogManager() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
-          <Package className="mx-auto h-10 w-10 text-muted-foreground/30" />
-          <p className="mt-2 text-sm text-muted-foreground">No se encontraron productos con los filtros aplicados.</p>
+        <div className="rounded-xl border border-dashed border-border p-8 text-center sm:p-12">
+          <Package className="mx-auto h-8 w-8 text-muted-foreground/30" />
+          <p className="mt-2 text-sm text-muted-foreground">No se encontraron productos.</p>
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-1.5 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => goToPage(safePage - 1)}
-            disabled={safePage <= 1}
-            className="h-8 w-8 p-0"
-          >
+        <div className="flex flex-wrap items-center justify-center gap-1 pt-2">
+          <Button variant="outline" size="sm" onClick={() => goToPage(safePage - 1)} disabled={safePage <= 1} className="h-8 w-8 p-0">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2)
+            .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
             .reduce<(number | "dots")[]>((acc, p, i, arr) => {
               if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("dots")
               acc.push(p)
@@ -678,24 +662,12 @@ export function CatalogManager() {
               p === "dots" ? (
                 <span key={`dots-${i}`} className="px-1 text-xs text-muted-foreground">…</span>
               ) : (
-                <Button
-                  key={p}
-                  variant={p === safePage ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => goToPage(p)}
-                  className={cn("h-8 w-8 p-0 text-xs", p === safePage && "bg-[#1a5276] text-white")}
-                >
+                <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" onClick={() => goToPage(p)} className={cn("h-8 w-8 p-0 text-xs", p === safePage && "bg-[#1a5276] text-white")}>
                   {p}
                 </Button>
               )
             )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => goToPage(safePage + 1)}
-            disabled={safePage >= totalPages}
-            className="h-8 w-8 p-0"
-          >
+          <Button variant="outline" size="sm" onClick={() => goToPage(safePage + 1)} disabled={safePage >= totalPages} className="h-8 w-8 p-0">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -703,12 +675,12 @@ export function CatalogManager() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-card text-foreground sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto bg-card text-foreground sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-foreground">{editingItem ? "Editar Item" : "Nuevo Item de Catálogo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Código / Modelo</Label>
                 <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="h-8 text-xs" />
@@ -739,25 +711,25 @@ export function CatalogManager() {
             </div>
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">URL de imagen</Label>
-              <Input value={form.imageUrl || ""} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://... o /catalogo/ablerex/modelo.jpg" className="h-8 text-xs" />
+              <Input value={form.imageUrl || ""} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://..." className="h-8 text-xs" />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Precio Unitario (USD)</Label>
+                <Label className="text-xs text-muted-foreground">Precio (USD)</Label>
                 <Input type="number" min={0} step={0.01} value={form.unitPrice} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setForm({ ...form, unitPrice: e.target.value === "" ? 0 : Number(e.target.value) })} className="h-8 text-xs" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Unidad de Medida</Label>
+                <Label className="text-xs text-muted-foreground">Unidad</Label>
                 <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="UND">UND - Unidad</SelectItem>
-                    <SelectItem value="BOB">BOB - Bobina</SelectItem>
-                    <SelectItem value="BLS">BLS - Bolsa</SelectItem>
-                    <SelectItem value="MTS">MTS - Metros</SelectItem>
-                    <SelectItem value="RLL">RLL - Rollo</SelectItem>
-                    <SelectItem value="KIT">KIT - Kit</SelectItem>
-                    <SelectItem value="GLB">GLB - Global</SelectItem>
+                    <SelectItem value="UND">UND</SelectItem>
+                    <SelectItem value="BOB">BOB</SelectItem>
+                    <SelectItem value="BLS">BLS</SelectItem>
+                    <SelectItem value="MTS">MTS</SelectItem>
+                    <SelectItem value="RLL">RLL</SelectItem>
+                    <SelectItem value="KIT">KIT</SelectItem>
+                    <SelectItem value="GLB">GLB</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -784,26 +756,21 @@ export function CatalogManager() {
 
       {/* Image Preview */}
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-4xl bg-card text-foreground">
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-y-auto bg-card text-foreground">
           <DialogHeader>
             <DialogTitle className="font-mono text-sm text-[#1a5276]">{previewImage?.code}</DialogTitle>
           </DialogHeader>
           {previewImage && (
             <div className="space-y-3">
-              <div className="flex max-h-[70vh] min-h-[320px] items-center justify-center rounded-lg border border-border bg-muted/20 p-3">
+              <div className="flex max-h-[60vh] min-h-[200px] items-center justify-center rounded-lg border border-border bg-muted/20 p-3 sm:min-h-[320px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={previewImage.src}
-                  alt={previewImage.code}
-                  className="max-h-[65vh] w-auto max-w-full object-contain object-center"
-                />
+                <img src={previewImage.src} alt={previewImage.code} className="max-h-[55vh] w-auto max-w-full object-contain object-center" />
               </div>
               <p className="text-sm text-muted-foreground">{previewImage.description}</p>
             </div>
           )}
         </DialogContent>
       </Dialog>
-
     </div>
   )
 }
