@@ -36,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="antialiased">
-      <body className="min-h-screen bg-white text-slate-900">
+      <body className="min-h-screen bg-[#050a18] text-slate-200">
         <GlassProvider />
         <RevealProvider />
         <SiteHeader />

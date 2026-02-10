@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Glass, GlassPill } from "glass-refraction";
+import { Glass } from "glass-refraction";
 import { MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE } from "../lib/masterAuth";
 
 const NAV = [
@@ -26,14 +26,11 @@ function hasSession() {
 export default function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const loggedIn = hasSession();
-  const onDark = isHome && !scrolled;
 
-  /* ── Mouse tracking for liquid glass highlight ── */
   const headerRef = useRef<HTMLElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
@@ -60,12 +57,6 @@ export default function SiteHeader() {
     router.push("/");
   };
 
-  const linkCls = isHome && !scrolled
-    ? "text-white/90 hover:text-white"
-    : "text-slate-700 hover:text-brand-700";
-
-  const logoCls = isHome && !scrolled ? "text-white" : "text-brand-900";
-
   return (
     <Glass
       as="header"
@@ -75,14 +66,10 @@ export default function SiteHeader() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={`site-header sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "site-header--scrolled"
-          : isHome
-            ? "site-header--home"
-            : "site-header--default"
+        scrolled ? "site-header--scrolled" : ""
       }`}
     >
-      {/* Interactive liquid glass spotlight that follows the mouse */}
+      {/* Interactive liquid glass spotlight */}
       <div
         className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit] transition-opacity duration-500"
         style={{ opacity: isHovering ? 1 : 0 }}
@@ -92,11 +79,9 @@ export default function SiteHeader() {
           style={{
             left: mousePos.x,
             top: mousePos.y,
-            width: 320,
-            height: 320,
-            background: onDark
-              ? "radial-gradient(circle, rgba(144,177,255,0.15) 0%, rgba(47,84,224,0.06) 40%, transparent 70%)"
-              : "radial-gradient(circle, rgba(47,84,224,0.08) 0%, rgba(107,147,247,0.04) 40%, transparent 70%)",
+            width: 350,
+            height: 350,
+            background: "radial-gradient(circle, rgba(107,147,247,0.12) 0%, rgba(47,84,224,0.05) 40%, transparent 70%)",
             filter: "blur(2px)",
             transition: "left 0.15s ease-out, top 0.15s ease-out",
           }}
@@ -104,7 +89,7 @@ export default function SiteHeader() {
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
-        <Link href="/" className={`text-base font-bold tracking-tight sm:text-lg transition-colors ${logoCls}`}>
+        <Link href="/" className="text-base font-bold tracking-tight text-white sm:text-lg transition-colors hover:text-brand-300">
           COP&apos;S Electronics
         </Link>
 
@@ -117,11 +102,9 @@ export default function SiteHeader() {
                 setOpen(false);
                 setPanelOpen(false);
               }}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${linkCls} ${
+              className={`rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 text-white/70 hover:text-white hover:bg-white/[0.06] ${
                 pathname === n.href
-                  ? isHome && !scrolled
-                    ? "bg-white/15 text-white"
-                    : "bg-brand-50 text-brand-700"
+                  ? "bg-white/[0.08] text-white"
                   : ""
               }`}
             >
@@ -129,21 +112,16 @@ export default function SiteHeader() {
             </Link>
           ))}
 
-          <GlassPill
-            as="span"
-            className="ml-3"
+          <Link
+            href="/contacto"
+            onClick={() => {
+              setOpen(false);
+              setPanelOpen(false);
+            }}
+            className="btn-glass-primary ml-3"
           >
-            <Link
-              href="/contacto"
-              onClick={() => {
-                setOpen(false);
-                setPanelOpen(false);
-              }}
-              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-700/25"
-            >
-              Solicitar asesoría
-            </Link>
-          </GlassPill>
+            Solicitar asesoría
+          </Link>
 
           {!loggedIn && (
             <Link
@@ -152,11 +130,7 @@ export default function SiteHeader() {
                 setOpen(false);
                 setPanelOpen(false);
               }}
-              className={`ml-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                onDark
-                  ? "text-white/80 hover:bg-white/10 hover:text-white"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-              }`}
+              className="btn-glass ml-2"
             >
               Iniciar sesión
             </Link>
@@ -167,31 +141,31 @@ export default function SiteHeader() {
               <button
                 type="button"
                 onClick={() => setPanelOpen((v) => !v)}
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="btn-glass"
               >
                 Panel
               </button>
 
               {panelOpen && (
-                <Glass variant="glass-card" className="absolute right-0 mt-2 w-52 p-1 shadow-xl">
+                <Glass variant="glass-card" className="absolute right-0 mt-2 w-52 p-1 shadow-xl shadow-black/30">
                   <Link
                     href="/panel/cotizaciones"
                     onClick={() => setPanelOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50"
+                    className="block rounded-lg px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                   >
                     Cotizaciones
                   </Link>
                   <Link
                     href="/panel/tickets"
                     onClick={() => setPanelOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50"
+                    className="block rounded-lg px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                   >
                     Tickets
                   </Link>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                    className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10"
                   >
                     Cerrar sesión
                   </button>
@@ -202,21 +176,14 @@ export default function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 md:hidden">
-          <Link
-            href="/contacto"
-            className="rounded-xl bg-brand-600 px-3 py-2 text-xs font-semibold text-white shadow-sm"
-          >
+          <Link href="/contacto" className="btn-glass-primary text-xs !px-3 !py-2">
             Asesoría
           </Link>
           <button
             type="button"
             aria-label="Abrir menú"
             onClick={() => setOpen((v) => !v)}
-            className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-              isHome && !scrolled
-                ? "border-white/30 bg-white/10 text-white"
-                : "border-slate-300 bg-white text-slate-900"
-            }`}
+            className="btn-glass text-xs !px-3 !py-2"
           >
             {open ? "Cerrar" : "Menú"}
           </button>
@@ -226,7 +193,7 @@ export default function SiteHeader() {
       {open && (
         <Glass variant="glass-card" className="relative z-10 md:hidden">
           <div className="mx-auto max-w-6xl px-4 pb-4">
-            <div className="rounded-2xl border border-slate-200/50 p-2">
+            <div className="rounded-2xl border border-white/[0.06] p-2">
               {NAV.map((n) => (
                 <Link
                   key={n.href}
@@ -235,7 +202,7 @@ export default function SiteHeader() {
                     setOpen(false);
                     setPanelOpen(false);
                   }}
-                  className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-brand-50"
+                  className="block rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                 >
                   {n.label}
                 </Link>
@@ -246,21 +213,21 @@ export default function SiteHeader() {
                   <Link
                     href="/panel/cotizaciones"
                     onClick={() => setOpen(false)}
-                    className="mt-1 block rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-brand-50"
+                    className="mt-1 block rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                   >
                     Cotizaciones
                   </Link>
                   <Link
                     href="/panel/tickets"
                     onClick={() => setOpen(false)}
-                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-brand-50"
+                    className="block rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                   >
                     Tickets
                   </Link>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="block w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                    className="block w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10"
                   >
                     Cerrar sesión
                   </button>
@@ -269,7 +236,7 @@ export default function SiteHeader() {
                 <Link
                   href="/login"
                   onClick={() => setOpen(false)}
-                  className="mt-1 block rounded-xl px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-brand-50"
+                  className="mt-1 block rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                 >
                   Iniciar sesión
                 </Link>
@@ -279,7 +246,7 @@ export default function SiteHeader() {
                 <Link
                   href="/contacto"
                   onClick={() => setOpen(false)}
-                  className="block w-full rounded-xl bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white"
+                  className="btn-glass-primary block w-full text-center"
                 >
                   Solicitar consultoría gratuita
                 </Link>
