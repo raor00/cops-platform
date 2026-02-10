@@ -33,35 +33,31 @@ const SECTORS = [
   { title: "Gubernamental", desc: "Instalaciones críticas: cobertura por riesgo, perímetro, operación y protocolos." },
 ];
 
-function Badge({ text }: { text: string }) {
-  return <span className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">{text}</span>;
-}
-
 const fadeUp = { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.15 as const }, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } };
 
 export default function NosotrosClient() {
   return (
     <main>
-      {/* HERO dark */}
-      <section className="dark-section noise relative border-b border-white/8">
+      {/* HERO */}
+      <section className="dark-section noise relative border-b border-white/[0.06]">
         <div className="relative mx-auto max-w-6xl px-4 py-16">
           <motion.div {...fadeUp}>
             <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">NOSOTROS</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">COP&apos;S ELECTRONICS, S.A.</h1>
-            <p className="mt-4 max-w-4xl text-white/70">Somos una organización privada con <span className="font-semibold text-brand-300">28 años</span> de trayectoria ininterrumpida dedicada a la asesoría de proyectos tecnológicos de alta gama en sistemas de automatización, energía renovable, seguridad y protección.</p>
-            <p className="mt-4 max-w-4xl text-white/70">Hemos ejecutado <span className="font-semibold text-brand-300">más de 1500 obras</span> que afianzan nuestra gestión técnica y comercial.</p>
+            <p className="mt-4 max-w-4xl text-white/60">Somos una organización privada con <span className="font-semibold text-brand-300">28 años</span> de trayectoria ininterrumpida dedicada a la asesoría de proyectos tecnológicos de alta gama en sistemas de automatización, energía renovable, seguridad y protección.</p>
+            <p className="mt-4 max-w-4xl text-white/60">Hemos ejecutado <span className="font-semibold text-brand-300">más de 1500 obras</span> que afianzan nuestra gestión técnica y comercial.</p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link href="/proyectos" className="rounded-xl bg-white px-5 py-3 text-center text-sm font-semibold text-brand-950 transition hover:opacity-90">Ver proyectos</Link>
-              <Link href="/contacto" className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10">Agendar reunión técnica</Link>
+              <Link href="/proyectos" className="btn-glass-primary">Ver proyectos</Link>
+              <Link href="/contacto" className="btn-glass">Agendar reunión técnica</Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-2">
-              {["Banca nacional", "Proyectos enterprise", "Automatización + Seguridad", "Energía y continuidad", "+1500 obras", "28 años"].map((t) => <span key={t} className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-xs font-semibold text-white/70">{t}</span>)}
+              {["Banca nacional", "Proyectos enterprise", "Automatización + Seguridad", "Energía y continuidad", "+1500 obras", "28 años"].map((t) => <span key={t} className="tag-glass">{t}</span>)}
             </div>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STATS.map((s) => (
-                <div key={s.v} className="card-lift-dark glass-card p-5">
+                <div key={s.v} className="lg-card card-lift-dark p-5">
                   <p className="text-2xl font-bold text-brand-300">{s.k}</p>
-                  <p className="mt-1 text-sm text-white/55">{s.v}</p>
+                  <p className="mt-1 text-sm text-white/50">{s.v}</p>
                 </div>
               ))}
             </div>
@@ -69,80 +65,83 @@ export default function NosotrosClient() {
         </div>
       </section>
 
-      {/* Diferenciadores - light */}
-      <section className="mx-auto max-w-6xl px-4 py-20">
-        <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
-          <div className="lg:col-span-4">
-            <motion.div {...fadeUp}>
-              <p className="text-[10px] font-bold tracking-[0.25em] text-brand-600">POR QUÉ COP&apos;S</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-brand-950">Diferenciación técnica real</h2>
-              <p className="mt-3 text-slate-600">Lo que nos distingue no es solo &quot;instalar&quot;, sino dejar una operación lista para auditar, escalar y sostener.</p>
-            </motion.div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
-            {DIFFERENTIATORS.map((d, i) => (
-              <motion.div key={d.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift rounded-2xl border border-slate-200 bg-white p-6">
-                <h3 className="text-lg font-semibold text-brand-950">{d.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{d.desc}</p>
+      {/* Diferenciadores */}
+      <section className="relative border-t border-white/[0.06]">
+        <div className="mx-auto max-w-6xl px-4 py-20">
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
+            <div className="lg:col-span-4">
+              <motion.div {...fadeUp}>
+                <p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">POR QUÉ COP&apos;S</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Diferenciación técnica real</h2>
+                <p className="mt-3 text-white/55">Lo que nos distingue no es solo &quot;instalar&quot;, sino dejar una operación lista para auditar, escalar y sostener.</p>
               </motion.div>
-            ))}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:col-span-8">
+              {DIFFERENTIATORS.map((d, i) => (
+                <motion.div key={d.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="lg-card p-6">
+                  <h3 className="text-lg font-semibold text-white">{d.title}</h3>
+                  <p className="mt-2 text-sm text-white/55">{d.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Cómo trabajamos - dark */}
-      <section className="dark-section noise relative border-y border-white/8">
+      {/* Cómo trabajamos */}
+      <section className="dark-section noise relative border-y border-white/[0.06]">
         <div className="relative mx-auto max-w-6xl px-4 py-20">
           <motion.div {...fadeUp}><p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">METODOLOGÍA</p><h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Proceso claro, avance medible</h2></motion.div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             {HOW_WE_WORK.map((s, i) => (
-              <motion.div key={s.step} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift-dark glass-card p-6">
+              <motion.div key={s.step} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="lg-card card-lift-dark p-6">
                 <p className="text-xs font-bold text-brand-400">{s.step}</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">{s.title}</h3>
-                <p className="mt-2 text-sm text-white/60">{s.desc}</p>
+                <p className="mt-2 text-sm text-white/55">{s.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Sectores - light */}
-      <section className="mx-auto max-w-6xl px-4 py-20">
-        <motion.div {...fadeUp}><p className="text-[10px] font-bold tracking-[0.25em] text-brand-600">SECTORES</p><h2 className="mt-3 text-3xl font-bold tracking-tight text-brand-950">Experiencia multi-sector</h2></motion.div>
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
-          {SECTORS.map((s, i) => (
-            <motion.div key={s.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift rounded-2xl border border-slate-200 bg-white p-6">
-              <h3 className="text-lg font-semibold text-brand-800">{s.title}</h3>
-              <p className="mt-2 text-sm text-slate-600">{s.desc}</p>
-            </motion.div>
-          ))}
+      {/* Sectores */}
+      <section className="relative border-t border-white/[0.06]">
+        <div className="mx-auto max-w-6xl px-4 py-20">
+          <motion.div {...fadeUp}><p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">SECTORES</p><h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Experiencia multi-sector</h2></motion.div>
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            {SECTORS.map((s, i) => (
+              <motion.div key={s.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="lg-card p-6">
+                <h3 className="text-lg font-semibold text-brand-300">{s.title}</h3>
+                <p className="mt-2 text-sm text-white/55">{s.desc}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Timeline - dark */}
+      {/* Timeline */}
       <section className="dark-section noise relative">
         <div className="relative mx-auto max-w-6xl px-4 py-20">
           <motion.div {...fadeUp}><p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">TRAYECTORIA</p><h2 className="mt-3 text-3xl font-bold tracking-tight text-white">28 años: evolución + consistencia</h2></motion.div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             {TIMELINE.map((t, i) => (
-              <motion.div key={t.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="card-lift-dark glass-card p-6">
+              <motion.div key={t.title} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.06 }} className="lg-card card-lift-dark p-6">
                 <p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">{t.tag.toUpperCase()}</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">{t.title}</h3>
-                <p className="mt-2 text-sm text-white/60">{t.desc}</p>
+                <p className="mt-2 text-sm text-white/55">{t.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          {/* CTA */}
-          <motion.div {...fadeUp} className="mt-12 glass-card p-8">
+          <motion.div {...fadeUp} className="mt-12 lg-card p-8">
             <div className="grid gap-6 md:grid-cols-12 md:items-center">
               <div className="md:col-span-8">
                 <h3 className="text-2xl font-bold text-white">¿Listo para avanzar con tu proyecto?</h3>
-                <p className="mt-2 text-white/60">Coordinamos una reunión técnica para levantar requerimientos y definir arquitectura, alcance y cronograma.</p>
+                <p className="mt-2 text-white/55">Coordinamos una reunión técnica para levantar requerimientos y definir arquitectura, alcance y cronograma.</p>
               </div>
               <div className="md:col-span-4 md:text-right">
-                <Link href="/contacto" className="inline-flex w-full justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-brand-950 transition hover:opacity-90 md:w-auto">Agendar reunión técnica</Link>
-                <p className="mt-3 text-xs text-white/40">Enfoque enterprise • Documentación • Puesta en marcha</p>
+                <Link href="/contacto" className="btn-glass-primary w-full md:w-auto">Agendar reunión técnica</Link>
+                <p className="mt-3 text-xs text-white/35">Enfoque enterprise &bull; Documentación &bull; Puesta en marcha</p>
               </div>
             </div>
           </motion.div>

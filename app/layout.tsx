@@ -3,6 +3,7 @@ import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import RevealProvider from "../components/RevealProvider";
+import GlassProvider from "../components/GlassProvider";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cops-electronics-web.vercel.app"),
@@ -35,7 +36,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="antialiased">
-      <body className="min-h-screen bg-white text-slate-900">
+      <body className="min-h-screen bg-[#050a18] text-slate-200">
+        <GlassProvider />
         <RevealProvider />
         <SiteHeader />
         {children}
