@@ -352,25 +352,25 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
 
       {/* Catalog Dialog */}
       <Dialog open={catalogOpen} onOpenChange={setCatalogOpen}>
-        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto bg-card text-foreground">
+        <DialogContent className="max-h-[85vh] w-[calc(100vw-1rem)] max-w-2xl overflow-x-hidden overflow-y-auto bg-card p-3 text-foreground sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-heading text-foreground">
               {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del Catalogo"}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex gap-3">
-            <div className="relative flex-1">
+          <div className="flex flex-wrap gap-2">
+            <div className="relative w-full sm:flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={companyFormat === "llc" ? "Search by code or description..." : "Buscar por codigo o descripcion..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="border-border bg-card pl-10 text-foreground"
+                className="h-11 border-border bg-card pl-10 text-foreground sm:h-10"
               />
             </div>
             {!catalogFilter && (
               <Select value={brandFilter} onValueChange={(value) => { setBrandFilter(value); setCatFilter("all"); setSubcatFilter("all"); setVariantFilter("all") }}>
-                <SelectTrigger className="w-40 border-border bg-card text-foreground">
+                <SelectTrigger className="h-11 w-full min-w-[150px] flex-1 border-border bg-card text-foreground sm:h-10 sm:w-40 sm:flex-none">
                   <SelectValue placeholder={companyFormat === "llc" ? "Brand" : "Marca"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -383,7 +383,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             )}
             {!catalogFilter && (
               <Select value={catFilter} onValueChange={(value) => { setCatFilter(value); setSubcatFilter("all") }}>
-                <SelectTrigger className="w-44 border-border bg-card text-foreground">
+                <SelectTrigger className="h-11 w-full min-w-[170px] flex-1 border-border bg-card text-foreground sm:h-10 sm:w-44 sm:flex-none">
                   <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,7 +396,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             )}
             {showMaterialsFilter && (
               <Select value={catFilter} onValueChange={(value) => { setCatFilter(value); setSubcatFilter("all") }}>
-                <SelectTrigger className="w-44 border-border bg-card text-foreground">
+                <SelectTrigger className="h-11 w-full min-w-[170px] flex-1 border-border bg-card text-foreground sm:h-10 sm:w-44 sm:flex-none">
                   <SelectValue placeholder={companyFormat === "llc" ? "Category" : "Categoria"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -408,7 +408,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               </Select>
             )}
             <Select value={subcatFilter} onValueChange={setSubcatFilter}>
-              <SelectTrigger className="w-44 border-border bg-card text-foreground">
+              <SelectTrigger className="h-11 w-full min-w-[170px] flex-1 border-border bg-card text-foreground sm:h-10 sm:w-44 sm:flex-none">
                 <SelectValue placeholder={companyFormat === "llc" ? "Subcategory" : "Subcategoria"} />
               </SelectTrigger>
               <SelectContent>
@@ -419,7 +419,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               </SelectContent>
             </Select>
             <Select value={variantFilter} onValueChange={setVariantFilter}>
-              <SelectTrigger className="w-40 border-border bg-card text-foreground">
+              <SelectTrigger className="h-11 w-full min-w-[150px] flex-1 border-border bg-card text-foreground sm:h-10 sm:w-40 sm:flex-none">
                 <SelectValue placeholder={companyFormat === "llc" ? "Variant" : "Variante"} />
               </SelectTrigger>
               <SelectContent>
@@ -430,13 +430,13 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {filteredCatalog.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
                 onClick={() => addFromCatalog(preset)}
-                className="flex w-full items-start justify-between gap-4 rounded-lg border border-border p-3 text-left transition-colors hover:border-[#1a5276] hover:bg-muted/50"
+                className="flex w-full flex-col gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:border-[#1a5276] hover:bg-muted/50 sm:flex-row sm:items-start sm:justify-between"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted/30">
@@ -445,7 +445,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                       <img
                         src={preset.imageUrl}
                         alt={preset.code}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain object-center p-1"
                         loading="lazy"
                       />
                     ) : (
@@ -456,7 +456,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   </div>
                   <div className="min-w-0 flex-1">
                   <p className="font-mono text-xs font-semibold text-[#1a5276]">{preset.code}</p>
-                  <p className="mt-0.5 text-sm text-foreground">{preset.description}</p>
+                  <p className="mt-0.5 break-words text-sm text-foreground">{preset.description}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.brand || "General"}</span>
                     <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{preset.category}</span>
@@ -467,7 +467,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   </div>
                 </div>
                 </div>
-                <p className="shrink-0 font-mono text-sm font-semibold text-foreground">${formatCurrency(preset.unitPrice)}</p>
+                <p className="self-end font-mono text-base font-semibold text-foreground sm:self-auto sm:text-sm">${formatCurrency(preset.unitPrice)}</p>
               </button>
             ))}
             {filteredCatalog.length === 0 && (

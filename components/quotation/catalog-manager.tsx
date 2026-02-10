@@ -49,6 +49,7 @@ export function CatalogManager() {
   const [filterVariant, setFilterVariant] = useState("all")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({})
+  const [previewImage, setPreviewImage] = useState<{ src: string; code: string; description: string } | null>(null)
 
   const [priceAction, setPriceAction] = useState<PriceAction>("increase")
   const [priceMode, setPriceMode] = useState<CatalogDiscountConfig["mode"]>("percentage")
@@ -410,14 +411,24 @@ export function CatalogManager() {
               <div className="absolute left-2 top-2 z-10 rounded-md bg-white/90 p-1">
                 <Checkbox checked={selectedIds.includes(item.id)} onCheckedChange={(c) => toggleSelected(item.id, Boolean(c))} />
               </div>
-              <div className="h-36 w-full bg-muted/30">
+              <button
+                type="button"
+                onClick={() =>
+                  item.imageUrl && setPreviewImage({ src: item.imageUrl, code: item.code, description: item.description })
+                }
+                className="h-36 w-full bg-muted/30"
+              >
                 {item.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.imageUrl} alt={item.code} className="h-full w-full object-cover" />
+                  <img
+                    src={item.imageUrl}
+                    alt={item.code}
+                    className="h-full w-full object-contain object-center p-2 transition-transform duration-200 hover:scale-[1.02]"
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sin imagen</div>
                 )}
-              </div>
+              </button>
             </div>
 
             <div className="space-y-2 p-3">
@@ -542,7 +553,27 @@ export function CatalogManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl bg-card text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-mono text-sm text-[#1a5276]">{previewImage?.code}</DialogTitle>
+          </DialogHeader>
+          {previewImage && (
+            <div className="space-y-3">
+              <div className="flex max-h-[70vh] min-h-[320px] items-center justify-center rounded-lg border border-border bg-muted/20 p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={previewImage.src}
+                  alt={previewImage.code}
+                  className="max-h-[65vh] w-auto max-w-full object-contain object-center"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">{previewImage.description}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

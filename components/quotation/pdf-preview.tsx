@@ -14,6 +14,23 @@ export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const applyMobileScale = () => {
+    const iframe = iframeRef.current
+    if (!iframe) return
+    const doc = iframe.contentDocument
+    if (!doc?.body) return
+
+    const viewportWidth = iframe.clientWidth || window.innerWidth
+    const baseWidth = 1024
+    const scale = viewportWidth < 640 ? Math.min(1, Math.max(0.45, viewportWidth / baseWidth)) : 1
+
+    doc.body.style.transformOrigin = "top left"
+    doc.body.style.transform = `scale(${scale})`
+    doc.body.style.width = `${100 / scale}%`
+    doc.documentElement.style.overflowX = "hidden"
+    doc.body.style.overflowX = "hidden"
+  }
+
   useEffect(() => {
     if (iframeRef.current) {
       try {
@@ -22,6 +39,7 @@ export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
           doc.open()
           doc.write(generatePDFContent(data))
           doc.close()
+          setTimeout(() => applyMobileScale(), 0)
         }
         setError(null)
       } catch (err) {
@@ -30,6 +48,12 @@ export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
       }
     }
   }, [data])
+
+  useEffect(() => {
+    const onResize = () => applyMobileScale()
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [])
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
@@ -42,7 +66,7 @@ export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
       <iframe
         ref={iframeRef}
         title="Vista previa de cotizacion"
-        className="h-[700px] w-full bg-white"
+        className="h-[68vh] min-h-[520px] w-full bg-white sm:h-[700px]"
         sandbox="allow-same-origin"
       />
       {error && (

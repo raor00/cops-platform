@@ -67,7 +67,7 @@ export function ClientInfoForm({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
       <h2 className="mb-5 flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
         <Building2 className="h-5 w-5 text-[#1a5276]" />
         {companyFormat === "llc" ? "Quote Details" : "Datos de la Cotizacion"}
@@ -81,7 +81,7 @@ export function ClientInfoForm({
             {companyFormat === "llc" ? "Quote Type" : "Tipo de Cotizacion"}
           </Label>
           <Select value={quotationType} onValueChange={(val) => onTypeChange(val as QuotationType)}>
-            <SelectTrigger className="border-border bg-card text-foreground">
+            <SelectTrigger className="h-12 border-border bg-card text-base text-foreground sm:h-10 sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -100,7 +100,7 @@ export function ClientInfoForm({
           <Input
             value={quotationCode}
             onChange={(e) => onCodeChange(e.target.value)}
-            className="border-border bg-card font-mono text-sm text-foreground"
+            className="h-12 border-border bg-card font-mono text-base text-foreground sm:h-10 sm:text-sm"
           />
         </div>
 
@@ -113,7 +113,7 @@ export function ClientInfoForm({
             value={subject}
             onChange={(e) => onSubjectChange(e.target.value)}
             placeholder={companyFormat === "llc" ? "Example: Supply and installation of CCTV" : "Ej: SUMINISTRO E INSTALACION DE CCTV"}
-            className="border-border bg-card text-foreground"
+            className="h-12 border-border bg-card text-base text-foreground sm:h-10 sm:text-sm"
           />
         </div>
 
@@ -123,7 +123,7 @@ export function ClientInfoForm({
             {companyFormat === "llc" ? "Format / Company" : "Formato / Empresa"}
           </Label>
           <div
-            className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-3 py-2"
+            className="flex min-h-12 cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-3 py-2 sm:min-h-10"
             onClick={toggleCompanyFormat}
             role="button"
             tabIndex={0}
@@ -135,10 +135,10 @@ export function ClientInfoForm({
             }}
           >
             <div className="space-y-0.5">
-              <p className="text-xs font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground sm:text-xs">
                 {companyFormat === "llc" ? "COPS ELECTRONICS LLC" : "COP'S ELECTRONICS S.A."}
               </p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground sm:text-[10px]">
                 {companyFormat === "llc" ? "Formato USA (Invoice)" : "Formato Venezuela"}
               </p>
             </div>
@@ -159,7 +159,7 @@ export function ClientInfoForm({
             type="date"
             value={issueDate}
             onChange={(e) => onIssueDateChange(e.target.value)}
-            className="border-border bg-card text-foreground"
+            className="h-12 border-border bg-card text-base text-foreground sm:h-10 sm:text-sm"
           />
         </div>
 
@@ -172,7 +172,7 @@ export function ClientInfoForm({
             type="date"
             value={validUntil}
             onChange={(e) => onValidUntilChange(e.target.value)}
-            className="border-border bg-card text-foreground"
+            className="h-12 border-border bg-card text-base text-foreground sm:h-10 sm:text-sm"
           />
         </div>
 
@@ -182,7 +182,7 @@ export function ClientInfoForm({
             {companyFormat === "llc" ? "Terms" : "Condicion de Pago"}
           </Label>
           <Select value={paymentCondition} onValueChange={onPaymentConditionChange}>
-            <SelectTrigger className="border-border bg-card text-foreground">
+            <SelectTrigger className="h-12 border-border bg-card text-base text-foreground sm:h-10 sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
