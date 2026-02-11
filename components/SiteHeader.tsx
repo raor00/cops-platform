@@ -308,39 +308,53 @@ export default function SiteHeader() {
             )}
           </div>
 
-          {/* Mobile */}
+          {/* Mobile toggle */}
           <div className="flex items-center gap-2 md:hidden">
-            <button type="button" aria-label="Abrir menu" onClick={() => setOpen((v) => !v)} className="capsule-btn text-xs !px-3 !py-1.5">
+            {loggedIn && (
+              <button
+                type="button"
+                onClick={() => { setPanelOpen((v) => !v); setOpen(false); }}
+                className="capsule-btn text-xs !px-3 !py-1.5"
+              >
+                Panel
+              </button>
+            )}
+            <button type="button" aria-label="Abrir menu" onClick={() => { setOpen((v) => !v); setPanelOpen(false); }} className="capsule-btn text-xs !px-3 !py-1.5">
               {open ? "Cerrar" : "Menu"}
             </button>
           </div>
         </nav>
 
-        {/* Mobile menu */}
+        {/* Mobile nav menu — rendered OUTSIDE the capsule as a dropdown */}
         {open && (
-          <div className="relative z-10 border-t border-white/[0.06] md:hidden">
-            <div className="px-4 pb-4 pt-2">
+          <div className="capsule-mobile-menu pointer-events-auto md:hidden">
+            <div className="px-4 py-3">
               <div className="space-y-0.5">
                 {navItems.map((n) => (
                   <Link key={n.href} href={n.href} onClick={() => { setOpen(false); setPanelOpen(false); }} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">{n.label}</Link>
                 ))}
-                {loggedIn ? (
-                  <>
-                    {canSeeAdministracion && (
-                      <>
-                        <Link href="/panel/perfiles" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Perfiles</Link>
-                        <Link href="/panel/autorizacion" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Autorizacion</Link>
-                      </>
-                    )}
-                    <button type="button" onClick={handleLogout} className="block w-full rounded-xl px-4 py-2.5 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10">Cerrar sesion</button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Iniciar sesion</Link>
-                    <Link href="/contacto" onClick={() => setOpen(false)} className="capsule-btn-primary mt-2 block w-full text-center">Solicitar consultoria gratuita</Link>
-                  </>
-                )}
               </div>
+              {!loggedIn && (
+                <div className="mt-2 space-y-1.5 border-t border-white/[0.06] pt-3">
+                  <Link href="/login" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Iniciar sesion</Link>
+                  <Link href="/contacto" onClick={() => setOpen(false)} className="capsule-btn-primary mt-1 block w-full text-center">Solicitar consultoria gratuita</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile panel dropdown (logged-in) */}
+        {panelOpen && (
+          <div className="capsule-mobile-menu pointer-events-auto md:hidden">
+            <div className="px-4 py-3 space-y-0.5">
+              {canSeeAdministracion && (
+                <>
+                  <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Perfiles</Link>
+                  <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Autorizacion</Link>
+                </>
+              )}
+              <button type="button" onClick={handleLogout} className="block w-full rounded-xl px-4 py-2.5 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10">Cerrar sesion</button>
             </div>
           </div>
         )}
