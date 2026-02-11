@@ -38,6 +38,10 @@ export default function RootLayout({
       <body className="min-h-screen bg-white text-slate-900">
         <RevealProvider />
         <SiteHeader />
+<<<<<<< Updated upstream
+=======
+        <div className="pt-[68px] md:pt-[76px]">
+>>>>>>> Stashed changes
         {children}
         <SiteFooter />
       </body>
