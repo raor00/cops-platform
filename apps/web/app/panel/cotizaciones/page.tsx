@@ -21,7 +21,7 @@ export default function CotizacionesPage() {
 
       <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/70">
         Configura en Vercel (proyecto web) la variable:
-        <code className="ml-1 rounded bg-white/10 px-1.5 py-0.5 text-white">COTIZACIONES_APP_URL</code>
+        <code className="ml-1 rounded bg-white/10 px-1.5 py-0.5 text-white">COTIZACIONES_APP_URL o cops_cotizaciones_key</code>
       </div>
 
       <div className="mt-4">
@@ -32,3 +32,4 @@ export default function CotizacionesPage() {
     </section>
   );
 }
+
