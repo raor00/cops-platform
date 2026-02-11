@@ -239,11 +239,11 @@ export default function SiteHeader() {
                   <div className="capsule-dropdown absolute right-0 mt-3 w-56 p-1.5">
                     {canSeeAdministracion && (
                       <>
-                        <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/90 hover:bg-white/[0.1] hover:text-white">Perfiles</Link>
-                        <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/90 hover:bg-white/[0.1] hover:text-white">Autorizacion</Link>
+                        <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="panel-menu-item">Perfiles</Link>
+                        <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="panel-menu-item">Autorizacion</Link>
                       </>
                     )}
-                    <button type="button" onClick={handleLogout} className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-200 hover:bg-red-500/15">Cerrar sesion</button>
+                    <button type="button" onClick={handleLogout} className="panel-menu-item panel-menu-item-danger mt-1 text-left">Cerrar sesion</button>
                   </div>
                 )}
               </div>
@@ -292,11 +292,11 @@ export default function SiteHeader() {
             <div className="px-4 py-3 space-y-0.5">
               {canSeeAdministracion && (
                 <>
-                  <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">Perfiles</Link>
-                  <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">Autorizacion</Link>
+                  <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="panel-menu-item">Perfiles</Link>
+                  <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="panel-menu-item">Autorizacion</Link>
                 </>
               )}
-              <button type="button" onClick={handleLogout} className="block w-full rounded-xl px-4 py-2.5 text-left text-sm font-semibold text-red-200 hover:bg-red-500/15">Cerrar sesion</button>
+              <button type="button" onClick={handleLogout} className="panel-menu-item panel-menu-item-danger text-left">Cerrar sesion</button>
             </div>
           </div>
         )}
