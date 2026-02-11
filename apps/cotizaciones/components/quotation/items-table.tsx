@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React from "react"
 
@@ -177,12 +177,12 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             className="h-7 border-border bg-transparent text-xs text-muted-foreground hover:bg-muted"
           >
             <Search className="mr-1 h-3 w-3" />
-            {companyFormat === "llc" ? "Catalog" : "Catálogo"}
+            {companyFormat === "llc" ? "Catalog" : "CatÃ¡logo"}
           </Button>
           <Button
             size="sm"
             onClick={addEmpty}
-            className="h-7 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]"
+            className="h-7 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]"
           >
             <Plus className="mr-1 h-3 w-3" />
             {companyFormat === "llc" ? "Add" : "Agregar"}
@@ -208,13 +208,13 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     <Input type="number" min={1} value={item.quantity} onFocus={(e) => e.currentTarget.select()} onChange={(e) => updateItem(item.id, "quantity", e.target.value === "" ? 0 : Number(e.target.value))} className="h-8 border-border bg-card text-center text-sm text-foreground" />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Code" : "Código"}</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Code" : "CÃ³digo"}</span>
                     <Input value={item.code} onChange={(e) => updateItem(item.id, "code", e.target.value)} placeholder="COD-001" className="h-8 border-border bg-card font-mono text-sm text-foreground" />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripción"}</span>
-                  <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="Descripción" rows={2} className="min-h-14 resize-none border-border bg-card text-sm text-foreground" />
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Description" : "DescripciÃ³n"}</span>
+                  <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="DescripciÃ³n" rows={2} className="min-h-14 resize-none border-border bg-card text-sm text-foreground" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
@@ -233,7 +233,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           ))}
           {items.length === 0 && (
             <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              {companyFormat === "llc" ? 'No items. Use "Add" or pick from "Catalog".' : 'Sin items. Use "Agregar" o seleccione del "Catálogo".'}
+              {companyFormat === "llc" ? 'No items. Use "Add" or pick from "Catalog".' : 'Sin items. Use "Agregar" o seleccione del "CatÃ¡logo".'}
             </div>
           )}
         </div>
@@ -246,8 +246,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 64 }}>{companyFormat === "llc" ? "Qty" : "Cant."}</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>{companyFormat === "llc" ? "Code" : "Código"}</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripción"}</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>{companyFormat === "llc" ? "Code" : "CÃ³digo"}</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{companyFormat === "llc" ? "Description" : "DescripciÃ³n"}</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>{companyFormat === "llc" ? "Unit Price" : "P. Unit."}</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>Total</th>
                 <th className="px-3 py-2.5" style={{ width: 40 }}><span className="sr-only">Acciones</span></th>
@@ -263,7 +263,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     <Input value={item.code} onChange={(e) => updateItem(item.id, "code", e.target.value)} placeholder="COD-001" className="h-8 w-36 border-border bg-card font-mono text-xs text-foreground" />
                   </td>
                   <td className="px-3 py-2">
-                    <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="Descripción del producto" rows={1} className="min-h-8 resize-none border-border bg-card text-xs text-foreground" />
+                    <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="DescripciÃ³n del producto" rows={1} className="min-h-8 resize-none border-border bg-card text-xs text-foreground" />
                   </td>
                   <td className="px-3 py-2">
                     <Input type="number" min={0} step={0.01} value={item.unitPrice} onFocus={(e) => e.currentTarget.select()} onChange={(e) => updateItem(item.id, "unitPrice", e.target.value === "" ? 0 : Number(e.target.value))} className="h-8 w-24 border-border bg-card text-right text-xs text-foreground" />
@@ -281,7 +281,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               {items.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-xs text-muted-foreground">
-                    {companyFormat === "llc" ? 'No items added yet.' : 'Sin items. Use "Agregar" o seleccione del "Catálogo".'}
+                    {companyFormat === "llc" ? 'No items added yet.' : 'Sin items. Use "Agregar" o seleccione del "CatÃ¡logo".'}
                   </td>
                 </tr>
               )}
@@ -297,8 +297,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           <div className="shrink-0 space-y-3 border-b border-border p-3 sm:p-4">
             <DialogHeader className="p-0">
               <DialogTitle className="flex items-center gap-2 font-heading text-base text-foreground">
-                <ShoppingCart className="h-4 w-4 text-[#1a5276]" />
-                {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del Catálogo"}
+                <ShoppingCart className="h-4 w-4 text-[#4a72ef]" />
+                {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del CatÃ¡logo"}
               </DialogTitle>
             </DialogHeader>
 
@@ -327,7 +327,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   className={cn(
                     "rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-150",
                     brandFilter === b
-                      ? "bg-[#1a5276] text-white shadow-sm"
+                      ? "bg-[#4a72ef] text-white shadow-sm"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   )}
                 >
@@ -343,7 +343,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-all duration-150",
                   catFilter === "all"
-                    ? "bg-[#1a5276] text-white"
+                    ? "bg-[#4a72ef] text-white"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted"
                 )}
               >
@@ -356,7 +356,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-all duration-150",
                     catFilter === cat
-                      ? "bg-[#1a5276] text-white"
+                      ? "bg-[#4a72ef] text-white"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -368,7 +368,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             {/* Result count */}
             <p className="text-[11px] text-muted-foreground">
               {filteredCatalog.length} {companyFormat === "llc" ? "products" : "productos"}
-              {pickerTotalPages > 1 && ` · pág. ${pickerSafePage}/${pickerTotalPages}`}
+              {pickerTotalPages > 1 && ` Â· pÃ¡g. ${pickerSafePage}/${pickerTotalPages}`}
             </p>
           </div>
 
@@ -380,7 +380,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   key={preset.id}
                   type="button"
                   onClick={() => addFromCatalog(preset)}
-                  className="flex w-full items-start gap-3 rounded-lg border border-border p-2.5 text-left transition-all duration-150 hover:border-[#1a5276]/50 hover:bg-muted/40 hover:shadow-sm active:scale-[0.99] sm:p-3"
+                  className="flex w-full items-start gap-3 rounded-lg border border-border p-2.5 text-left transition-all duration-150 hover:border-[#4a72ef]/50 hover:bg-muted/40 hover:shadow-sm active:scale-[0.99] sm:p-3"
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-gradient-to-b from-muted/20 to-muted/40 sm:h-14 sm:w-14">
                     {preset.imageUrl ? (
@@ -394,7 +394,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="min-w-0 truncate font-mono text-xs font-semibold text-[#1a5276]">{preset.code}</p>
+                      <p className="min-w-0 truncate font-mono text-xs font-semibold text-[#4a72ef]">{preset.code}</p>
                       <p className="shrink-0 font-mono text-sm font-bold text-foreground">${formatCurrency(preset.unitPrice)}</p>
                     </div>
                     <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-foreground/80">{preset.description}</p>
@@ -434,9 +434,9 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   }, [])
                   .map((p, i) =>
                     p === "dots" ? (
-                      <span key={`dots-${i}`} className="px-0.5 text-xs text-muted-foreground">…</span>
+                      <span key={`dots-${i}`} className="px-0.5 text-xs text-muted-foreground">â€¦</span>
                     ) : (
-                      <Button key={p} variant={p === pickerSafePage ? "default" : "outline"} size="sm" onClick={() => setPickerPage(p)} className={cn("h-7 w-7 p-0 text-[11px]", p === pickerSafePage && "bg-[#1a5276] text-white")}>
+                      <Button key={p} variant={p === pickerSafePage ? "default" : "outline"} size="sm" onClick={() => setPickerPage(p)} className={cn("h-7 w-7 p-0 text-[11px]", p === pickerSafePage && "bg-[#4a72ef] text-white")}>
                         {p}
                       </Button>
                     )
@@ -452,3 +452,5 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
     </div>
   )
 }
+
+

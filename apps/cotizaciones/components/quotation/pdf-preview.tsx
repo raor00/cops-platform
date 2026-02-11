@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useRef, useState } from "react"
 import type { QuotationData } from "@/lib/quotation-types"
@@ -79,3 +79,5 @@ export function PDFPreview({ data, companyFormat = "sa" }: PDFPreviewProps) {
     </div>
   )
 }
+
+

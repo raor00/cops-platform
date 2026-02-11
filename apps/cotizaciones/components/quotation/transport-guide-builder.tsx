@@ -264,11 +264,11 @@ export function TransportGuideBuilder() {
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             Limpiar
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} className="w-full border-[#1a5276] bg-transparent text-[#1a5276] hover:bg-[#1a5276] hover:text-white sm:w-auto">
+          <Button variant="outline" size="sm" onClick={handleSave} className="w-full border-[#4a72ef] bg-transparent text-[#4a72ef] hover:bg-[#4a72ef] hover:text-white sm:w-auto">
             <Save className="mr-1.5 h-3.5 w-3.5" />
             Guardar
           </Button>
-          <Button size="sm" onClick={handleExport} className="w-full bg-[#1a5276] text-white hover:bg-[#0e3a57] sm:w-auto">
+          <Button size="sm" onClick={handleExport} className="w-full bg-[#4a72ef] text-white hover:bg-[#2f54e0] sm:w-auto">
             <FileDown className="mr-1.5 h-3.5 w-3.5" />
             Exportar PDF
           </Button>
@@ -277,8 +277,8 @@ export function TransportGuideBuilder() {
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "editor" | "preview")}>
         <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted">
-          <TabsTrigger value="editor" className="text-xs data-[state=active]:bg-[#1a5276] data-[state=active]:text-white">Editor</TabsTrigger>
-          <TabsTrigger value="preview" className="text-xs data-[state=active]:bg-[#1a5276] data-[state=active]:text-white">Vista Previa</TabsTrigger>
+          <TabsTrigger value="editor" className="text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white">Editor</TabsTrigger>
+          <TabsTrigger value="preview" className="text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white">Vista Previa</TabsTrigger>
         </TabsList>
 
         <TabsContent value="editor" className="mt-6 space-y-4">
@@ -304,7 +304,7 @@ export function TransportGuideBuilder() {
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Productos a Transportar</CardTitle>
-              <Button type="button" size="sm" onClick={addItem} className="bg-[#1a5276] text-white hover:bg-[#0e3a57]"><FilePlus className="mr-1.5 h-3.5 w-3.5" />Agregar Item</Button>
+              <Button type="button" size="sm" onClick={addItem} className="bg-[#4a72ef] text-white hover:bg-[#2f54e0]"><FilePlus className="mr-1.5 h-3.5 w-3.5" />Agregar Item</Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {items.map((item) => (
@@ -346,7 +346,7 @@ export function TransportGuideBuilder() {
               {savedGuides.map((guide) => (
                 <div key={guide.id} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-mono text-xs font-semibold text-[#1a5276]">{guide.code}</p>
+                    <p className="font-mono text-xs font-semibold text-[#4a72ef]">{guide.code}</p>
                     <p className="text-sm text-foreground">{guide.authorizedName || "Sin autorizado"}</p>
                     <p className="text-xs text-muted-foreground">{guide.issueDate}</p>
                   </div>
@@ -367,4 +367,6 @@ export function TransportGuideBuilder() {
     </div>
   )
 }
+
+
 

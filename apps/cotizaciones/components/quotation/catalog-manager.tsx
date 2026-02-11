@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -65,27 +65,27 @@ export function normalizeCategory(item: CatalogItem): string {
 
   const cat = item.category.toUpperCase()
 
-  if (cat.includes("BOLSILLO")) return "Reguladores/Protección"
-  if (cat.includes("REGULADOR") || cat.includes("PROTECCION") || cat.includes("SOBRETENSION")) return "Reguladores/Protección"
-  if (cat.includes("MONITOREO") || cat.includes("ENERBATT")) return "Monitoreo Baterías"
+  if (cat.includes("BOLSILLO")) return "Reguladores/ProtecciÃ³n"
+  if (cat.includes("REGULADOR") || cat.includes("PROTECCION") || cat.includes("SOBRETENSION")) return "Reguladores/ProtecciÃ³n"
+  if (cat.includes("MONITOREO") || cat.includes("ENERBATT")) return "Monitoreo BaterÃ­as"
   if (cat.includes("ATS") || cat.includes("ITS") || cat.includes("TRANSFERENCIA")) return "Transferencias"
   if (cat.includes("CARGADOR") || cat.includes("BUCK")) return "Cargadores Solares"
   if (cat.includes("INVERSOR") || cat.includes("FOTOVOLTAIC")) {
-    if (cat.includes("HIBRID") || cat.includes("HOGAR")) return "Almacenamiento Energía"
+    if (cat.includes("HIBRID") || cat.includes("HOGAR")) return "Almacenamiento EnergÃ­a"
     return "Inversores Solares"
   }
-  if (cat.includes("ALMACEN") || cat.includes("ENERSALVYS") || cat.includes("ALMACENAMIENTO")) return "Almacenamiento Energía"
-  if (cat.includes("BANCO") || cat.includes("BATERIA")) return "Baterías Externas"
-  if (cat.includes("ENERSINE") || cat.includes("FILTRO")) return "Filtros Armónicos"
+  if (cat.includes("ALMACEN") || cat.includes("ENERSALVYS") || cat.includes("ALMACENAMIENTO")) return "Almacenamiento EnergÃ­a"
+  if (cat.includes("BANCO") || cat.includes("BATERIA")) return "BaterÃ­as Externas"
+  if (cat.includes("ENERSINE") || cat.includes("FILTRO")) return "Filtros ArmÃ³nicos"
   if (cat.includes("BRICM")) return "UPS Modulares"
   if (cat.includes("INTERACTIV")) return "UPS Interactivos"
   if (cat.includes("UPS ONLINE") || cat.includes("DOBLE CONVERSION")) {
     if (cat.includes("1-3KVA") || cat.includes("1-3 KVA") || cat.match(/1.*3KVA/) || cat.match(/1.*3\s*KVA/)) return "UPS Online 1-3kVA"
     if (cat.includes("6 - 10") || cat.includes("6-10") || cat.includes("6 -10")) return "UPS Online 6-10kVA"
-    if (cat.includes("TRIFAS") || cat.includes("3F")) return "UPS Trifásicos"
+    if (cat.includes("TRIFAS") || cat.includes("3F")) return "UPS TrifÃ¡sicos"
     return "UPS Online"
   }
-  if (cat.includes("TRIFAS") || cat.includes("3F")) return "UPS Trifásicos"
+  if (cat.includes("TRIFAS") || cat.includes("3F")) return "UPS TrifÃ¡sicos"
   if (cat.includes("ACCESORIO")) return "Accesorios"
   if (cat.includes("MODULAR")) return "UPS Modulares"
 
@@ -96,16 +96,16 @@ const ABLEREX_CATEGORY_ORDER = [
   "UPS Online 1-3kVA",
   "UPS Online 6-10kVA",
   "UPS Online",
-  "UPS Trifásicos",
+  "UPS TrifÃ¡sicos",
   "UPS Modulares",
   "UPS Interactivos",
   "Inversores Solares",
-  "Almacenamiento Energía",
+  "Almacenamiento EnergÃ­a",
   "Cargadores Solares",
-  "Baterías Externas",
-  "Filtros Armónicos",
-  "Reguladores/Protección",
-  "Monitoreo Baterías",
+  "BaterÃ­as Externas",
+  "Filtros ArmÃ³nicos",
+  "Reguladores/ProtecciÃ³n",
+  "Monitoreo BaterÃ­as",
   "Transferencias",
   "Accesorios",
   "Otros Ablerex",
@@ -123,7 +123,7 @@ const GENERAL_CATEGORY_ORDER = [
 ]
 
 function getCategoryIcon(cat: string) {
-  if (cat.includes("Batería") || cat.includes("Almacen")) return <Battery className="h-3 w-3 shrink-0" />
+  if (cat.includes("BaterÃ­a") || cat.includes("Almacen")) return <Battery className="h-3 w-3 shrink-0" />
   if (cat === "Materiales" || cat.includes("Cable")) return <Cable className="h-3 w-3 shrink-0" />
   if (cat.includes("UPS") || cat.includes("Energi") || cat === "Energia") return <Zap className="h-3 w-3 shrink-0" />
   return <Package className="h-3 w-3 shrink-0" />
@@ -366,14 +366,14 @@ export function CatalogManager() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="truncate font-heading text-xl font-bold text-foreground sm:text-2xl">Catálogo de Productos</h2>
-          <p className="text-xs text-muted-foreground">{counts.all} productos · {counts.ablerex} Ablerex</p>
+          <h2 className="truncate font-heading text-xl font-bold text-foreground sm:text-2xl">CatÃ¡logo de Productos</h2>
+          <p className="text-xs text-muted-foreground">{counts.all} productos Â· {counts.ablerex} Ablerex</p>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 flex-wrap justify-end gap-2">
           <Button variant="outline" size="sm" onClick={handleSyncAblerexCatalog} className="text-xs">
             Sync Ablerex
           </Button>
-          <Button size="sm" onClick={openCreate} className="bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]">
+          <Button size="sm" onClick={openCreate} className="bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]">
             <Plus className="mr-1 h-3.5 w-3.5" />
             Nuevo
           </Button>
@@ -386,7 +386,7 @@ export function CatalogManager() {
         <Input
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-          placeholder="Buscar por código o descripción..."
+          placeholder="Buscar por cÃ³digo o descripciÃ³n..."
           className="h-10 pl-10 text-sm"
         />
       </div>
@@ -400,7 +400,7 @@ export function CatalogManager() {
             className={cn(
               "rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200",
               brandFilter === b
-                ? "bg-[#1a5276] text-white shadow-sm"
+                ? "bg-[#4a72ef] text-white shadow-sm"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
@@ -409,14 +409,14 @@ export function CatalogManager() {
         ))}
       </div>
 
-      {/* Category chips — wrapping grid instead of horizontal scroll */}
+      {/* Category chips â€” wrapping grid instead of horizontal scroll */}
       <div className="flex flex-wrap gap-1.5">
         <button
           onClick={() => { setSelectedCategory("all"); setFilterSubcategory("all"); setPage(1); setAnimKey((k) => k + 1) }}
           className={cn(
             "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-200",
             selectedCategory === "all"
-              ? "bg-[#1a5276] text-white shadow-sm"
+              ? "bg-[#4a72ef] text-white shadow-sm"
               : "bg-muted/60 text-muted-foreground hover:bg-muted"
           )}
         >
@@ -429,7 +429,7 @@ export function CatalogManager() {
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all duration-200",
               selectedCategory === cat
-                ? "bg-[#1a5276] text-white shadow-sm"
+                ? "bg-[#4a72ef] text-white shadow-sm"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted"
             )}
           >
@@ -444,10 +444,10 @@ export function CatalogManager() {
       {subcategories.length > 1 && (
         <Select value={filterSubcategory} onValueChange={(v) => { setFilterSubcategory(v); setPage(1); setAnimKey((k) => k + 1) }}>
           <SelectTrigger className="h-8 text-xs">
-            <SelectValue placeholder="Subcategoría" />
+            <SelectValue placeholder="SubcategorÃ­a" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas las subcategorías</SelectItem>
+            <SelectItem value="all">Todas las subcategorÃ­as</SelectItem>
             {subcategories.map((sub) => (
               <SelectItem key={sub} value={sub}>{sub}</SelectItem>
             ))}
@@ -459,7 +459,7 @@ export function CatalogManager() {
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/20 px-3 py-2">
         <div className="flex items-center gap-2">
           <Checkbox checked={allPageSelected} onCheckedChange={(c) => toggleSelectAllPage(Boolean(c))} />
-          <span className="text-xs text-muted-foreground">Página</span>
+          <span className="text-xs text-muted-foreground">PÃ¡gina</span>
         </div>
         {selectedIds.length > 0 && (
           <>
@@ -470,7 +470,7 @@ export function CatalogManager() {
           </>
         )}
         <span className="ml-auto text-[11px] text-muted-foreground">
-          {filtered.length > 0 ? `${startIdx}–${endIdx} de ${filtered.length}` : "0 resultados"}
+          {filtered.length > 0 ? `${startIdx}â€“${endIdx} de ${filtered.length}` : "0 resultados"}
         </span>
       </div>
 
@@ -478,7 +478,7 @@ export function CatalogManager() {
       <Collapsible open={priceOpen} onOpenChange={setPriceOpen}>
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/30">
-            <Settings2 className="h-4 w-4 shrink-0 text-[#1a5276]" />
+            <Settings2 className="h-4 w-4 shrink-0 text-[#4a72ef]" />
             <span className="text-xs font-semibold text-foreground sm:text-sm">Ajuste de Precios</span>
             <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", priceOpen && "rotate-180")} />
           </button>
@@ -512,12 +512,12 @@ export function CatalogManager() {
                 <SelectContent>
                   <SelectItem value="selected">Seleccionados</SelectItem>
                   <SelectItem value="visible">Visibles</SelectItem>
-                  <SelectItem value="category">Categoría</SelectItem>
+                  <SelectItem value="category">CategorÃ­a</SelectItem>
                   <SelectItem value="all-ablerex">Todo Ablerex</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={priceCategory || "none"} onValueChange={(v) => setPriceCategory(v === "none" ? "" : v)} disabled={priceScope !== "category"}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Categoría" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="CategorÃ­a" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Seleccione</SelectItem>
                   {Array.from(new Set(catalog.map((item) => item.category))).sort().map((cat) => (
@@ -525,7 +525,7 @@ export function CatalogManager() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={applyMassivePriceAdjustment} size="sm" className="h-8 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]">
+              <Button onClick={applyMassivePriceAdjustment} size="sm" className="h-8 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]">
                 Aplicar
               </Button>
             </div>
@@ -537,7 +537,7 @@ export function CatalogManager() {
       <Collapsible open={discountOpen} onOpenChange={setDiscountOpen}>
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/30">
-            <Tags className="h-4 w-4 shrink-0 text-[#1a5276]" />
+            <Tags className="h-4 w-4 shrink-0 text-[#4a72ef]" />
             <span className="min-w-0 truncate text-xs font-semibold text-foreground sm:text-sm">Descuento Global</span>
             {discountConfig.enabled && <Badge variant="secondary" className="shrink-0 text-[10px]">Activo</Badge>}
             <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", discountOpen && "rotate-180")} />
@@ -548,14 +548,14 @@ export function CatalogManager() {
             <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
               <Select value={discountConfig.enabled ? "si" : "no"} onValueChange={(v) => setDiscountConfig((prev) => ({ ...prev, enabled: v === "si" }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="si">SÃ­</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
               </Select>
               <Select value={discountConfig.mode} onValueChange={(v) => setDiscountConfig((prev) => ({ ...prev, mode: v as CatalogDiscountConfig["mode"] }))}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="percentage">% Porcentaje</SelectItem><SelectItem value="amount">USD Monto</SelectItem></SelectContent>
               </Select>
               <Input type="number" min={0} step={0.01} value={discountConfig.value} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setDiscountConfig((prev) => ({ ...prev, value: e.target.value === "" ? 0 : Number(e.target.value) }))} className="h-8 text-xs" />
-              <Button onClick={handleSaveDiscountConfig} size="sm" className="h-8 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]">Guardar</Button>
+              <Button onClick={handleSaveDiscountConfig} size="sm" className="h-8 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]">Guardar</Button>
             </div>
           </div>
         </CollapsibleContent>
@@ -601,7 +601,7 @@ export function CatalogManager() {
 
             <div className="space-y-1 p-2.5">
               <div className="flex items-start justify-between gap-1">
-                <p className="min-w-0 truncate font-mono text-[11px] font-semibold text-[#1a5276] leading-tight">{item.code}</p>
+                <p className="min-w-0 truncate font-mono text-[11px] font-semibold text-[#4a72ef] leading-tight">{item.code}</p>
                 <div className="flex shrink-0 items-center">
                   <Button variant="ghost" size="sm" onClick={() => openEdit(item)} className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <Pencil className="h-3 w-3" />
@@ -660,9 +660,9 @@ export function CatalogManager() {
             }, [])
             .map((p, i) =>
               p === "dots" ? (
-                <span key={`dots-${i}`} className="px-1 text-xs text-muted-foreground">…</span>
+                <span key={`dots-${i}`} className="px-1 text-xs text-muted-foreground">â€¦</span>
               ) : (
-                <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" onClick={() => goToPage(p)} className={cn("h-8 w-8 p-0 text-xs", p === safePage && "bg-[#1a5276] text-white")}>
+                <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" onClick={() => goToPage(p)} className={cn("h-8 w-8 p-0 text-xs", p === safePage && "bg-[#4a72ef] text-white")}>
                   {p}
                 </Button>
               )
@@ -677,12 +677,12 @@ export function CatalogManager() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto bg-card text-foreground sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-foreground">{editingItem ? "Editar Item" : "Nuevo Item de Catálogo"}</DialogTitle>
+            <DialogTitle className="text-foreground">{editingItem ? "Editar Item" : "Nuevo Item de CatÃ¡logo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Código / Modelo</Label>
+                <Label className="text-xs text-muted-foreground">CÃ³digo / Modelo</Label>
                 <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="h-8 text-xs" />
               </div>
               <div className="space-y-1">
@@ -690,14 +690,14 @@ export function CatalogManager() {
                 <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-8 text-xs" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Categoría</Label>
+                <Label className="text-xs text-muted-foreground">CategorÃ­a</Label>
                 <Input list="catalog-categories-list" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as CatalogCategory })} className="h-8 text-xs" />
                 <datalist id="catalog-categories-list">
                   {Array.from(new Set([...CATALOG_CATEGORIES, ...catalog.map((item) => item.category)])).sort().map((cat) => <option key={cat} value={cat} />)}
                 </datalist>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Subcategoría</Label>
+                <Label className="text-xs text-muted-foreground">SubcategorÃ­a</Label>
                 <Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} className="h-8 text-xs" />
               </div>
               <div className="space-y-1">
@@ -706,7 +706,7 @@ export function CatalogManager() {
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Descripción</Label>
+              <Label className="text-xs text-muted-foreground">DescripciÃ³n</Label>
               <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="h-8 text-xs" />
             </div>
             <div className="space-y-1">
@@ -737,7 +737,7 @@ export function CatalogManager() {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleSave} className="bg-[#1a5276] text-white hover:bg-[#0e3a57]">{editingItem ? "Guardar" : "Agregar"}</Button>
+            <Button size="sm" onClick={handleSave} className="bg-[#4a72ef] text-white hover:bg-[#2f54e0]">{editingItem ? "Guardar" : "Agregar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -745,8 +745,8 @@ export function CatalogManager() {
       {/* Delete Confirm */}
       <Dialog open={!!deleteConfirmId} onOpenChange={() => setDeleteConfirmId(null)}>
         <DialogContent className="bg-card text-foreground sm:max-w-sm">
-          <DialogHeader><DialogTitle className="text-foreground">Confirmar eliminación</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Este item será eliminado permanentemente.</p>
+          <DialogHeader><DialogTitle className="text-foreground">Confirmar eliminaciÃ³n</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Este item serÃ¡ eliminado permanentemente.</p>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)}>Cancelar</Button>
             <Button variant="destructive" size="sm" onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}>Eliminar</Button>
@@ -758,7 +758,7 @@ export function CatalogManager() {
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-y-auto bg-card text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-mono text-sm text-[#1a5276]">{previewImage?.code}</DialogTitle>
+            <DialogTitle className="font-mono text-sm text-[#4a72ef]">{previewImage?.code}</DialogTitle>
           </DialogHeader>
           {previewImage && (
             <div className="space-y-3">
@@ -774,3 +774,5 @@ export function CatalogManager() {
     </div>
   )
 }
+
+

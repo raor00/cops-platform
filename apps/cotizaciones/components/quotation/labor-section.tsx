@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,7 +45,7 @@ export function LaborSection({ laborItems, onLaborItemsChange, companyFormat = "
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-2 text-foreground"
         >
-          <Wrench className="h-4 w-4 text-[#1a5276]" />
+          <Wrench className="h-4 w-4 text-[#4a72ef]" />
           <span className="font-heading text-sm font-semibold">{companyFormat === "llc" ? "Labor" : "Mano de Obra"}</span>
           <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
             {laborItems.length}
@@ -61,7 +61,7 @@ export function LaborSection({ laborItems, onLaborItemsChange, companyFormat = "
           <Button
             size="sm"
             onClick={addLabor}
-            className="h-7 bg-[#1a5276] text-xs text-white hover:bg-[#0e3a57]"
+            className="h-7 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]"
           >
             <Plus className="mr-1 h-3 w-3" />
             {companyFormat === "llc" ? "Add" : "Agregar"}
@@ -173,3 +173,5 @@ export function LaborSection({ laborItems, onLaborItemsChange, companyFormat = "
     </div>
   )
 }
+
+

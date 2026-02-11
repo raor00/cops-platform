@@ -328,7 +328,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             variant="outline"
             size="sm"
             onClick={handleSave}
-            className="w-full border-[#1a5276] bg-transparent text-[#1a5276] hover:bg-[#1a5276] hover:text-white sm:w-auto"
+            className="w-full border-[#4a72ef] bg-transparent text-[#4a72ef] hover:bg-[#4a72ef] hover:text-white sm:w-auto"
           >
             <Save className="mr-1.5 h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Save" : "Guardar"}
@@ -336,7 +336,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
           <Button
             size="sm"
             onClick={handleExportPDF}
-            className="w-full bg-[#1a5276] text-white hover:bg-[#0e3a57] sm:w-auto"
+            className="w-full bg-[#4a72ef] text-white hover:bg-[#2f54e0] sm:w-auto"
           >
             <FileDown className="mr-1.5 h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Export PDF" : "Exportar PDF"}
@@ -349,14 +349,14 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
         <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted">
           <TabsTrigger
             value="editor"
-            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#1a5276] data-[state=active]:text-white"
+            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white"
           >
             <PenLine className="h-3.5 w-3.5" />
             Editor
           </TabsTrigger>
           <TabsTrigger
             value="preview"
-            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#1a5276] data-[state=active]:text-white"
+            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white"
           >
             <Eye className="h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Preview" : "Vista Previa"}
@@ -385,7 +385,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
 
           <ItemsSection
             title={companyFormat === "llc" ? "Equipment & Services" : "Equipos y Servicios"}
-            icon={<Package className="h-4 w-4 text-[#1a5276]" />}
+            icon={<Package className="h-4 w-4 text-[#4a72ef]" />}
             items={equipmentItems}
             onItemsChange={setEquipmentItems}
             catalogFilter="Equipos"
@@ -394,7 +394,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
 
           <ItemsSection
             title={companyFormat === "llc" ? "Materials & Supplies" : "Materiales e Insumos"}
-            icon={<Cable className="h-4 w-4 text-[#1a5276]" />}
+            icon={<Cable className="h-4 w-4 text-[#4a72ef]" />}
             items={materialItems}
             onItemsChange={setMaterialItems}
             catalogFilter="Materiales"
@@ -436,4 +436,6 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     </div>
   )
 }
+
+
 

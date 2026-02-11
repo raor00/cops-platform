@@ -15,24 +15,24 @@ body {
 
 @layer base {
   :root {
-    --background: 220 58% 14%;
+    --background: 218 56% 20%;
     --foreground: 216 100% 96%;
-    --card: 220 52% 20%;
+    --card: 218 46% 26%;
     --card-foreground: 216 100% 96%;
-    --popover: 220 52% 18%;
+    --popover: 218 46% 24%;
     --popover-foreground: 216 100% 96%;
-    --primary: 220 88% 63%;
+    --primary: 222 82% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 40% 24%;
+    --secondary: 218 36% 30%;
     --secondary-foreground: 216 100% 96%;
-    --muted: 220 36% 26%;
-    --muted-foreground: 216 30% 78%;
-    --accent: 213 94% 68%;
+    --muted: 218 32% 33%;
+    --muted-foreground: 216 34% 84%;
+    --accent: 213 88% 70%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 76% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 217 40% 35%;
-    --input: 217 34% 30%;
+    --border: 217 44% 45%;
+    --input: 217 34% 36%;
     --ring: 215 95% 70%;
     --chart-1: 220 88% 63%;
     --chart-2: 199 86% 64%;
@@ -40,13 +40,13 @@ body {
     --chart-4: 171 61% 59%;
     --chart-5: 37 90% 62%;
     --radius: 0.75rem;
-    --sidebar-background: 220 52% 18%;
+    --sidebar-background: 218 46% 23%;
     --sidebar-foreground: 216 100% 96%;
     --sidebar-primary: 220 88% 63%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 40% 24%;
+    --sidebar-accent: 218 36% 30%;
     --sidebar-accent-foreground: 216 100% 96%;
-    --sidebar-border: 217 40% 35%;
+    --sidebar-border: 217 44% 43%;
     --sidebar-ring: 215 95% 70%;
 
     --gr-blur: 28px;
@@ -58,9 +58,9 @@ body {
     --gr-radius: 20px;
     --gr-radius-card: 18px;
     --gr-radius-pill: 9999px;
-    --gr-bg-start: rgba(255, 255, 255, 0.12);
-    --gr-bg-end: rgba(148, 191, 255, 0.08);
-    --gr-chromatic-blue: rgba(0, 180, 255, 0.08);
+    --gr-bg-start: rgba(255, 255, 255, 0.18);
+    --gr-bg-end: rgba(170, 207, 255, 0.12);
+    --gr-chromatic-blue: rgba(0, 180, 255, 0.1);
     --gr-chromatic-violet: rgba(120, 80, 255, 0.06);
     --gr-chromatic-pink: rgba(255, 120, 200, 0.04);
     --gr-chromatic-green: rgba(100, 255, 200, 0.03);
@@ -73,9 +73,9 @@ body {
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(ellipse 92% 62% at 12% 10%, rgba(138, 181, 255, 0.24) 0%, transparent 58%),
-      radial-gradient(ellipse 70% 48% at 88% 0%, rgba(103, 151, 255, 0.2) 0%, transparent 54%),
-      linear-gradient(180deg, #10295d 0%, #0f2b63 44%, #0c2453 100%);
+      radial-gradient(ellipse 92% 62% at 12% 10%, rgba(170, 205, 255, 0.32) 0%, transparent 58%),
+      radial-gradient(ellipse 70% 48% at 88% 0%, rgba(130, 178, 255, 0.26) 0%, transparent 54%),
+      linear-gradient(180deg, #21488f 0%, #1c437f 44%, #1a3d77 100%);
   }
 
   ::selection {
@@ -86,7 +86,7 @@ body {
 @layer components {
   .lg-card {
     border: 1px solid rgba(255, 255, 255, 0.14);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(174, 210, 255, 0.08) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(178, 214, 255, 0.12) 100%);
     backdrop-filter: blur(20px) saturate(1.4);
     border-radius: 18px;
   }
@@ -107,21 +107,21 @@ body {
 
   .btn-glass-primary {
     @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white;
-    border: 1px solid rgba(103, 151, 255, 0.45);
-    background: linear-gradient(135deg, rgba(82, 132, 244, 0.52) 0%, rgba(63, 114, 232, 0.38) 100%);
+    border: 1px solid rgba(125, 170, 255, 0.58);
+    background: linear-gradient(135deg, rgba(93, 141, 244, 0.64) 0%, rgba(72, 125, 241, 0.48) 100%);
     backdrop-filter: blur(10px) saturate(1.5);
     transition: all 220ms ease;
   }
 
   .btn-glass-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 12px 28px rgba(22, 66, 170, 0.34);
+    box-shadow: 0 12px 28px rgba(27, 70, 168, 0.4);
   }
 
   .tag-glass {
     @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
     border: 1px solid rgba(173, 209, 255, 0.32);
-    background: rgba(93, 140, 240, 0.24);
+    background: rgba(113, 158, 249, 0.28);
     color: rgba(220, 238, 255, 0.95);
     backdrop-filter: blur(8px);
   }

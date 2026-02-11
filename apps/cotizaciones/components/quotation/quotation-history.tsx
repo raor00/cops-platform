@@ -37,7 +37,7 @@ function formatDate(dateStr: string): string {
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   borrador: { label: "Borrador", className: "bg-muted text-muted-foreground" },
-  enviada: { label: "Enviada", className: "bg-[#dbeafe] text-[#1a5276]" },
+  enviada: { label: "Enviada", className: "bg-[#dbeafe] text-[#4a72ef]" },
   aprobada: { label: "Aprobada", className: "bg-[#dcfce7] text-[#166534]" },
   rechazada: { label: "Rechazada", className: "bg-[#fce4ec] text-[#b71c1c]" },
   anulado: { label: "Anulado", className: "bg-[#f3f4f6] text-[#6b7280]" },
@@ -177,7 +177,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-[#0a1628]">
+                <tr className="border-b border-border bg-[#153977]">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Cliente</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-white">Total</th>
@@ -188,7 +188,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
               <tbody className="divide-y divide-border">
                 {filteredQuotes.map((q) => (
                   <tr key={q.id} className="hover:bg-muted/40">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{q.code}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#4a72ef]">{q.code}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</td>
                     <td className="px-4 py-3 text-right font-mono text-sm text-foreground">${formatCurrency(q.total)}</td>
                     <td className="px-4 py-3 text-center">
@@ -226,7 +226,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-[#0a1628]">
+                <tr className="border-b border-border bg-[#153977]">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Cliente</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Atencion</th>
@@ -237,7 +237,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
               <tbody className="divide-y divide-border">
                 {filteredDelivery.map((note) => (
                   <tr key={note.id} className="hover:bg-muted/40">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{note.code}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#4a72ef]">{note.code}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{note.clientName}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{note.attention || "-"}</td>
                     <td className="px-4 py-3 text-center text-xs text-muted-foreground">{formatDate(note.issueDate)}</td>
@@ -261,7 +261,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-[#0a1628]">
+                <tr className="border-b border-border bg-[#153977]">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Autorizado</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Dirigido a</th>
@@ -272,7 +272,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
               <tbody className="divide-y divide-border">
                 {filteredTransport.map((guide) => (
                   <tr key={guide.id} className="hover:bg-muted/40">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#1a5276]">{guide.code}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-semibold text-[#4a72ef]">{guide.code}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{guide.authorizedName}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{guide.recipient}</td>
                     <td className="px-4 py-3 text-center text-xs text-muted-foreground">{formatDate(guide.issueDate)}</td>
@@ -308,4 +308,6 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
     </div>
   )
 }
+
+
 
