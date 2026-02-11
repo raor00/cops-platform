@@ -401,24 +401,113 @@ html { scroll-behavior: smooth; }
 .liquid-orb-3 { animation: liquid-flow 25s ease-in-out infinite reverse; }
 
 /* ═════════════════════════════════
-   Site Header – Liquid Glass
+   Floating Capsule Header
    ═════════════════════════════════ */
-.site-header.glass {
-  border-radius: 0;
-  position: sticky;
-  --gr-bg-start: rgba(5, 10, 24, 0.40);
-  --gr-bg-end: rgba(5, 10, 24, 0.30);
-  --gr-blur: 32px;
-  --gr-chromatic-blue: rgba(90, 160, 255, 0.06);
-  --gr-chromatic-violet: rgba(130, 100, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+.capsule-header {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  /* Glass-refraction overrides */
+  --gr-radius: 999px;
+  --gr-bg-start: rgba(15, 22, 45, 0.30);
+  --gr-bg-end: rgba(10, 16, 35, 0.20);
+  --gr-blur: 40px;
+  --gr-saturation: 1.8;
+  --gr-chromatic-blue: rgba(100, 170, 255, 0.07);
+  --gr-chromatic-violet: rgba(140, 100, 255, 0.05);
+  --gr-chromatic-pink: rgba(255, 120, 200, 0.04);
+  --gr-chromatic-green: rgba(100, 255, 200, 0.03);
 }
 
-.site-header--scrolled.glass {
-  --gr-bg-start: rgba(5, 10, 24, 0.65);
-  --gr-bg-end: rgba(5, 10, 24, 0.55);
-  --gr-blur: 36px;
-  --gr-saturation: 1.8;
-  border-bottom: 1px solid rgba(107, 147, 247, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), 0 0 60px rgba(47, 84, 224, 0.04);
+.capsule-header .glass {
+  border-radius: inherit !important;
+}
+
+.capsule-header--scrolled {
+  border-color: rgba(107, 147, 247, 0.12);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  backdrop-filter: blur(48px) saturate(2);
+  -webkit-backdrop-filter: blur(48px) saturate(2);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.35),
+    0 4px 16px rgba(47, 84, 224, 0.08),
+    0 0 0 0.5px rgba(107, 147, 247, 0.1) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  --gr-bg-start: rgba(10, 16, 35, 0.45);
+  --gr-bg-end: rgba(8, 14, 30, 0.35);
+  --gr-blur: 48px;
+  --gr-saturation: 2;
+}
+
+/* Capsule inner buttons */
+.capsule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 220ms ease;
+}
+.capsule-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.capsule-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid rgba(47, 84, 224, 0.3);
+  background: linear-gradient(135deg, rgba(47, 84, 224, 0.3) 0%, rgba(37, 67, 201, 0.2) 100%);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(47, 84, 224, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 220ms ease;
+}
+.capsule-btn-primary:hover {
+  background: linear-gradient(135deg, rgba(47, 84, 224, 0.45) 0%, rgba(37, 67, 201, 0.3) 100%);
+  border-color: rgba(107, 147, 247, 0.4);
+  box-shadow: 0 6px 24px rgba(47, 84, 224, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Capsule dropdown */
+.capsule-dropdown {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(15, 22, 45, 0.85) 0%, rgba(10, 16, 35, 0.9) 100%);
+  backdrop-filter: blur(40px) saturate(1.6);
+  -webkit-backdrop-filter: blur(40px) saturate(1.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Mobile open state — expand border-radius for content */
+.capsule-header:has(> .relative.z-10.border-t) {
+  border-radius: 28px;
 }

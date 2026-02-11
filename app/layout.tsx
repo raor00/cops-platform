@@ -40,7 +40,9 @@ export default function RootLayout({
         <GlassProvider />
         <RevealProvider />
         <SiteHeader />
+        <div className="pt-[72px] md:pt-[76px]">
         {children}
+        </div>
         <SiteFooter />
       </body>
     </html>
