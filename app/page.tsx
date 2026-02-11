@@ -1,5 +1,4 @@
-// app/page.tsx
-import HomeHero from "../components/home/HomeHero";
+﻿import HomeHero from "../components/home/HomeHero";
 import HomeTrajectory from "../components/home/HomeTrajectory";
 import HomeClients from "../components/home/HomeClients";
 import HomePartnersMarquee from "../components/home/HomePartnersMarquee";
@@ -35,12 +34,16 @@ export default function Home() {
     <div>
       <HomeHero />
       <HomeTrajectory />
+<<<<<<< HEAD
       <HomeClients
         title="HAN CONFIADO EN COP'S"
         subtitle="Organizaciones que han trabajado con COP'S Electronics a lo largo de 28 años de trayectoria."
         logos={CLIENTES}
         featuredCount={12}
       />
+=======
+      <HomeClients title="HAN CONFIADO EN COP'S" subtitle="Organizaciones que han trabajado con COP'S Electronics a lo largo de 28 años de trayectoria." logos={CLIENTES} featuredCount={12} />
+>>>>>>> d767d44c790a81da87a628ee26c740ecfe1fdfc4
       <HomePartnersMarquee logos={PARTNER_LOGOS} />
       <HomeSolutions />
       <HomeSectors />

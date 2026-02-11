@@ -6,136 +6,48 @@ import { motion } from "framer-motion";
 import PartnerModal from "../../components/PartnerModal";
 import { PARTNERS, type Partner } from "../../data/partners";
 
-function TagPill({ text }: { text: string }) {
-  return (
-    <span className="rounded-full border px-3 py-1 text-xs text-slate-600">
-      {text}
-    </span>
-  );
-}
-
 export default function PartnersPage() {
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<Partner | null>(null);
-
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return PARTNERS;
-
-    return PARTNERS.filter((p) => {
-      const hay =
-        `${p.name} ${p.subtitle} ${p.summary} ${p.tags.join(" ")}`.toLowerCase();
-      return hay.includes(s);
-    });
-  }, [q]);
+  const filtered = useMemo(() => { const s = q.trim().toLowerCase(); if (!s) return PARTNERS; return PARTNERS.filter((p) => `${p.name} ${p.subtitle} ${p.summary} ${p.tags.join(" ")}`.toLowerCase().includes(s)); }, [q]);
 
   return (
     <div>
       {/* HERO */}
-      <section className="border-b bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">
-            Partners tecnológicos
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-            Ecosistema internacional para proyectos enterprise
-          </h1>
-          <p className="mt-4 max-w-3xl text-slate-700">
-            Seleccionamos tecnología con foco en operación crítica: integración,
-            escalabilidad, continuidad y eficiencia.
-          </p>
-
-          {/* Search */}
+      <section className="dark-section noise relative border-b border-white/[0.06]">
+        <div className="relative mx-auto max-w-6xl px-4 py-16">
+          <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">PARTNERS TECNOLÓGICOS</p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Ecosistema internacional para proyectos enterprise</h1>
+          <p className="mt-4 max-w-3xl text-white/55">Seleccionamos tecnología con foco en operación crítica: integración, escalabilidad, continuidad y eficiencia.</p>
           <div className="mt-8">
-            <label className="text-sm font-semibold text-slate-700">
-              Buscar partner
-            </label>
-            <div className="mt-2">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Ej: Milestone, BMS, Acceso, Energía..."
-                className="w-full rounded-2xl border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-slate-200"
-              />
-            </div>
+            <label className="text-sm font-semibold text-white/70">Buscar partner</label>
+            <div className="mt-2"><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ej: Milestone, BMS, Acceso, Energía..." className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/30 outline-none backdrop-blur-sm transition focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20" /></div>
           </div>
         </div>
       </section>
 
       {/* GRID */}
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <motion.div
-          layout
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          {filtered.map((p) => (
-            <motion.article
-              key={p.id}
-              layout
-             className="rounded-3xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:shadow-lg"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              {/* Header */}
-              <div className="flex items-start gap-3">
-              <div className="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm md:h-20 md:w-20">
-                <Image
-                  src={p.logo}
-    alt={p.name}
-    width={180}
-    height={180}
-    className="h-full w-full object-contain contrast-125 saturate-125"
-  />
-</div>
-
-                <div className="min-w-0">
-                  <h2 className="truncate text-lg font-semibold">{p.name}</h2>
-                  <p className="mt-1 text-sm text-slate-600">{p.subtitle}</p>
+      <section className="relative border-t border-white/[0.06]">
+        <div className="mx-auto max-w-6xl px-4 py-20">
+          <motion.div layout className="grid gap-5 md:grid-cols-2 lg:grid-cols-3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+            {filtered.map((p) => (
+              <motion.article key={p.id} layout className="lg-card p-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                <div className="flex items-start gap-3">
+                  <div className="h-16 w-16 shrink-0 rounded-2xl border border-white/10 bg-white/[0.06] p-2 md:h-20 md:w-20">
+                    <Image src={p.logo} alt={p.name} width={180} height={180} className="h-full w-full object-contain brightness-125 contrast-110" />
+                  </div>
+                  <div className="min-w-0"><h2 className="truncate text-lg font-semibold text-white">{p.name}</h2><p className="mt-1 text-sm text-white/55">{p.subtitle}</p></div>
                 </div>
-              </div>
-
-              {/* Summary */}
-              <p className="mt-4 line-clamp-3 text-sm text-slate-700">
-                {p.summary}
-              </p>
-
-              {/* Tags */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {(p.tags ?? []).slice(0, 3).map((t) => (
-                  <TagPill key={t} text={t} />
-                ))}
-              </div>
-
-              {/* CTA (UNO SOLO) */}
-              <div className="mt-6 flex justify-end">
-                <button
-  onClick={() => setSelected(p)}
-  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
->
-  Ver más
-</button>
-              </div>
-            </motion.article>
-          ))}
-        </motion.div>
-
-        {filtered.length === 0 ? (
-          <div className="mt-10 rounded-2xl border bg-white p-6 text-slate-700">
-            No se encontraron resultados. Prueba con “Acceso”, “BMS”, “Energía”, “VMS”…
-          </div>
-        ) : null}
+                <p className="mt-4 line-clamp-3 text-sm text-white/50">{p.summary}</p>
+                <div className="mt-4 flex flex-wrap gap-2">{(p.tags ?? []).slice(0, 3).map((t) => <span key={t} className="tag-glass">{t}</span>)}</div>
+                <div className="mt-6 flex justify-end"><button onClick={() => setSelected(p)} className="btn-glass text-sm !px-4 !py-2">Ver más</button></div>
+              </motion.article>
+            ))}
+          </motion.div>
+          {filtered.length === 0 && <div className="mt-10 lg-card p-6 text-white/55">No se encontraron resultados.</div>}
+        </div>
       </section>
-
-      {/* MODAL */}
-      <PartnerModal
-        partner={selected}
-        open={!!selected}
-        onClose={() => setSelected(null)}
-      />
+      <PartnerModal partner={selected} open={!!selected} onClose={() => setSelected(null)} />
     </div>
   );
 }

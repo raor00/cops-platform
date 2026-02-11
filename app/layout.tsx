@@ -3,6 +3,10 @@ import "./globals.css";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import RevealProvider from "../components/RevealProvider";
+<<<<<<< HEAD
+=======
+import GlassProvider from "../components/GlassProvider";
+>>>>>>> d767d44c790a81da87a628ee26c740ecfe1fdfc4
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cops-electronics-web.vercel.app"),
@@ -35,6 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="antialiased">
+<<<<<<< HEAD
       <body className="min-h-screen bg-white text-slate-900">
         <RevealProvider />
         <SiteHeader />
@@ -42,7 +47,15 @@ export default function RootLayout({
 =======
         <div className="pt-[68px] md:pt-[76px]">
 >>>>>>> Stashed changes
+=======
+      <body className="min-h-screen bg-[#050a18] text-slate-200">
+        <GlassProvider />
+        <RevealProvider />
+        <SiteHeader />
+        <div className="pt-[72px] md:pt-[76px]">
+>>>>>>> d767d44c790a81da87a628ee26c740ecfe1fdfc4
         {children}
+        </div>
         <SiteFooter />
       </body>
     </html>
