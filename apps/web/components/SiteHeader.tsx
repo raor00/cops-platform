@@ -123,7 +123,7 @@ export default function SiteHeader() {
           className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[inherit]"
           style={{
             background:
-              "radial-gradient(circle at 20% 20%, rgba(159,191,255,0.22), transparent 40%), radial-gradient(circle at 80% 0%, rgba(133,173,255,0.18), transparent 45%)",
+              "radial-gradient(circle at 18% 20%, rgba(190,222,255,0.12), transparent 42%), radial-gradient(circle at 82% 0%, rgba(154,194,255,0.08), transparent 46%)",
           }}
         />
 
@@ -298,3 +298,4 @@ export default function SiteHeader() {
     </div>
   );
 }
+
