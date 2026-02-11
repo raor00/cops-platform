@@ -115,7 +115,7 @@ export default function SiteHeader() {
       >
         <Glass
           variant="glass"
-          className="!absolute !inset-0 !rounded-[inherit] !border-0"
+          className="!absolute !inset-0 !rounded-[inherit]"
           style={{ borderRadius: "inherit" } as React.CSSProperties}
         />
 
@@ -298,4 +298,5 @@ export default function SiteHeader() {
     </div>
   );
 }
+
 
