@@ -68,82 +68,26 @@ export default function SiteHeader() {
   const isPanelRoute = pathname.startsWith("/panel");
   const navItems = loggedIn && isPanelRoute ? privateNav : PUBLIC_NAV;
 
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
-
-  /* ── Sliding glass pill ── */
   const navContainerRef = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
   const [pillRect, setPillRect] = useState<Rect | null>(null);
   const [isNavHovering, setIsNavHovering] = useState(false);
-  const rafRef = useRef<number>(0);
 
-  // Measure active link on route change
+  const setPillForHref = useCallback((href: string) => {
+    if (!navContainerRef.current) return;
+    const el = linkRefs.current.get(href);
+    if (!el) return;
+    setPillRect(measureLink(el, navContainerRef.current));
+  }, []);
+
   useEffect(() => {
-    if (!navContainerRef.current) return;
-    const activeEl = linkRefs.current.get(pathname);
-    if (activeEl) {
-      setPillRect(measureLink(activeEl, navContainerRef.current));
-    } else {
-      setPillRect(null);
-    }
-  }, [pathname, navItems]);
-
-  // Track mouse over nav links — find the link under cursor
-  const handleNavMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!navContainerRef.current) return;
-    const containerRect = navContainerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - containerRect.left;
-
-    // Find which link the mouse is closest to (horizontally centered)
-    let closestHref: string | null = null;
-    let closestDist = Infinity;
-
-    linkRefs.current.forEach((el, href) => {
-      const lr = el.getBoundingClientRect();
-      const linkCenterX = lr.left - containerRect.left + lr.width / 2;
-      const dist = Math.abs(mouseX - linkCenterX);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestHref = href;
-      }
-    });
-
-    if (closestHref) {
-      const el = linkRefs.current.get(closestHref);
-      if (el) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = requestAnimationFrame(() => {
-          if (navContainerRef.current) {
-            setPillRect(measureLink(el, navContainerRef.current));
-          }
-        });
-      }
-    }
-
-    if (!isNavHovering) setIsNavHovering(true);
-  }, [isNavHovering]);
+    setPillForHref(pathname);
+  }, [pathname, navItems, setPillForHref]);
 
   const handleNavMouseLeave = useCallback(() => {
     setIsNavHovering(false);
-    cancelAnimationFrame(rafRef.current);
-    // Snap back to active page
-    if (navContainerRef.current) {
-      const activeEl = linkRefs.current.get(pathname);
-      if (activeEl) {
-        setPillRect(measureLink(activeEl, navContainerRef.current));
-      } else {
-        setPillRect(null);
-      }
-    }
-  }, [pathname]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!headerRef.current) return;
-    const rect = headerRef.current.getBoundingClientRect();
-    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  }, []);
+    setPillForHref(pathname);
+  }, [pathname, setPillForHref]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -165,10 +109,6 @@ export default function SiteHeader() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none px-4 py-3 md:py-4">
       <div
-        ref={headerRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
         className={`capsule-header pointer-events-auto relative w-full max-w-5xl transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${
           scrolled ? "capsule-header--scrolled" : ""
         }`}
@@ -179,56 +119,32 @@ export default function SiteHeader() {
           style={{ borderRadius: "inherit" } as React.CSSProperties}
         />
 
-        {/* Cursor spotlight */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[inherit] transition-opacity duration-500"
-          style={{ opacity: isHovering ? 1 : 0 }}
-        >
-          <div
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{
-              left: mousePos.x, top: mousePos.y,
-              width: 300, height: 300,
-              background: "radial-gradient(circle, rgba(107,147,247,0.18) 0%, rgba(47,84,224,0.08) 35%, rgba(120,80,255,0.04) 55%, transparent 70%)",
-              filter: "blur(1px)",
-              transition: "left 0.12s ease-out, top 0.12s ease-out",
-            }}
-          />
-          <div
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{
-              left: mousePos.x + 40, top: mousePos.y - 20,
-              width: 160, height: 160,
-              background: "radial-gradient(circle, rgba(200,160,255,0.08) 0%, transparent 65%)",
-              filter: "blur(6px)",
-              transition: "left 0.18s ease-out, top 0.18s ease-out",
-            }}
-          />
-        </div>
-
-        {/* Specular top edge */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[1px] rounded-[inherit]"
-          style={{ background: "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.12) 20%, rgba(200,220,255,0.18) 50%, rgba(255,255,255,0.12) 80%, transparent 95%)" }}
+          className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[inherit]"
+          style={{
+            background:
+              "radial-gradient(circle at 20% 20%, rgba(159,191,255,0.22), transparent 40%), radial-gradient(circle at 80% 0%, rgba(133,173,255,0.18), transparent 45%)",
+          }}
         />
 
-        {/* Content */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[1px] rounded-[inherit]"
+          style={{ background: "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.22) 20%, rgba(220,235,255,0.28) 50%, rgba(255,255,255,0.22) 80%, transparent 95%)" }}
+        />
+
         <nav className="relative z-10 flex items-center justify-between px-5 py-3 md:px-6">
           <Link
             href={loggedIn ? "/panel" : "/"}
-            className="text-[15px] font-bold tracking-tight text-white/90 transition-colors hover:text-white sm:text-base"
+            className="text-[15px] font-bold tracking-tight text-white/95 transition-colors hover:text-white sm:text-base"
           >
             COP&apos;S Electronics
           </Link>
 
-          {/* Nav links with sliding glass pill */}
           <div
             ref={navContainerRef}
             className="hidden items-center gap-0.5 md:flex relative"
-            onMouseMove={handleNavMouseMove}
             onMouseLeave={handleNavMouseLeave}
           >
-            {/* Glass pill indicator */}
             <div
               className="nav-glass-indicator absolute z-0 pointer-events-none"
               style={{
@@ -236,13 +152,13 @@ export default function SiteHeader() {
                 top: pillRect?.top ?? 0,
                 width: pillRect?.width ?? 0,
                 height: pillRect?.height ?? 0,
-                opacity: showPill ? (isNavHovering ? 1 : 0.6) : 0,
+                opacity: showPill ? (isNavHovering ? 1 : 0.72) : 0,
                 transition: [
-                  "left 0.4s cubic-bezier(.22,1,.36,1)",
-                  "width 0.35s cubic-bezier(.22,1,.36,1)",
-                  "top 0.4s cubic-bezier(.22,1,.36,1)",
-                  "height 0.35s cubic-bezier(.22,1,.36,1)",
-                  "opacity 0.3s ease",
+                  "left 0.24s cubic-bezier(.22,1,.36,1)",
+                  "width 0.24s cubic-bezier(.22,1,.36,1)",
+                  "top 0.24s cubic-bezier(.22,1,.36,1)",
+                  "height 0.24s cubic-bezier(.22,1,.36,1)",
+                  "opacity 0.2s ease",
                 ].join(", "),
               }}
             />
@@ -251,12 +167,25 @@ export default function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
-                ref={(el) => { if (el) linkRefs.current.set(n.href, el); }}
-                onClick={() => { setOpen(false); setPanelOpen(false); }}
-                className={`relative z-10 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-200 ${
+                ref={(el) => {
+                  if (el) linkRefs.current.set(n.href, el);
+                }}
+                onMouseEnter={() => {
+                  setIsNavHovering(true);
+                  setPillForHref(n.href);
+                }}
+                onFocus={() => {
+                  setIsNavHovering(true);
+                  setPillForHref(n.href);
+                }}
+                onClick={() => {
+                  setOpen(false);
+                  setPanelOpen(false);
+                }}
+                className={`relative z-10 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-150 ${
                   pathname === n.href
                     ? "text-white"
-                    : "text-white/60 hover:text-white/90"
+                    : "text-white/70 hover:text-white"
                 }`}
               >
                 {n.label}
@@ -269,14 +198,20 @@ export default function SiteHeader() {
               <>
                 <Link
                   href="/contacto"
-                  onClick={() => { setOpen(false); setPanelOpen(false); }}
+                  onClick={() => {
+                    setOpen(false);
+                    setPanelOpen(false);
+                  }}
                   className="capsule-btn-primary"
                 >
                   Solicitar asesoria
                 </Link>
                 <Link
                   href="/login"
-                  onClick={() => { setOpen(false); setPanelOpen(false); }}
+                  onClick={() => {
+                    setOpen(false);
+                    setPanelOpen(false);
+                  }}
                   className="capsule-btn"
                 >
                   Iniciar sesion
@@ -298,23 +233,25 @@ export default function SiteHeader() {
                   <div className="capsule-dropdown absolute right-0 mt-3 w-56 p-1.5">
                     {canSeeAdministracion && (
                       <>
-                        <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white">Perfiles</Link>
-                        <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white">Autorizacion</Link>
+                        <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/90 hover:bg-white/[0.1] hover:text-white">Perfiles</Link>
+                        <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/90 hover:bg-white/[0.1] hover:text-white">Autorizacion</Link>
                       </>
                     )}
-                    <button type="button" onClick={handleLogout} className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10">Cerrar sesion</button>
+                    <button type="button" onClick={handleLogout} className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-200 hover:bg-red-500/15">Cerrar sesion</button>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Mobile toggle */}
           <div className="flex items-center gap-2 md:hidden">
             {loggedIn && (
               <button
                 type="button"
-                onClick={() => { setPanelOpen((v) => !v); setOpen(false); }}
+                onClick={() => {
+                  setPanelOpen((v) => !v);
+                  setOpen(false);
+                }}
                 className="capsule-btn text-xs !px-3 !py-1.5"
               >
                 Panel
@@ -326,18 +263,17 @@ export default function SiteHeader() {
           </div>
         </nav>
 
-        {/* Mobile nav menu — rendered OUTSIDE the capsule as a dropdown */}
         {open && (
           <div className="capsule-mobile-menu pointer-events-auto md:hidden">
             <div className="px-4 py-3">
               <div className="space-y-0.5">
                 {navItems.map((n) => (
-                  <Link key={n.href} href={n.href} onClick={() => { setOpen(false); setPanelOpen(false); }} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">{n.label}</Link>
+                  <Link key={n.href} href={n.href} onClick={() => { setOpen(false); setPanelOpen(false); }} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">{n.label}</Link>
                 ))}
               </div>
               {!loggedIn && (
-                <div className="mt-2 space-y-1.5 border-t border-white/[0.06] pt-3">
-                  <Link href="/login" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Iniciar sesion</Link>
+                <div className="mt-2 space-y-1.5 border-t border-white/[0.08] pt-3">
+                  <Link href="/login" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">Iniciar sesion</Link>
                   <Link href="/contacto" onClick={() => setOpen(false)} className="capsule-btn-primary mt-1 block w-full text-center">Solicitar consultoria gratuita</Link>
                 </div>
               )}
@@ -345,17 +281,16 @@ export default function SiteHeader() {
           </div>
         )}
 
-        {/* Mobile panel dropdown (logged-in) */}
         {panelOpen && (
           <div className="capsule-mobile-menu pointer-events-auto md:hidden">
             <div className="px-4 py-3 space-y-0.5">
               {canSeeAdministracion && (
                 <>
-                  <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Perfiles</Link>
-                  <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white">Autorizacion</Link>
+                  <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">Perfiles</Link>
+                  <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">Autorizacion</Link>
                 </>
               )}
-              <button type="button" onClick={handleLogout} className="block w-full rounded-xl px-4 py-2.5 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10">Cerrar sesion</button>
+              <button type="button" onClick={handleLogout} className="block w-full rounded-xl px-4 py-2.5 text-left text-sm font-semibold text-red-200 hover:bg-red-500/15">Cerrar sesion</button>
             </div>
           </div>
         )}
@@ -363,4 +298,3 @@ export default function SiteHeader() {
     </div>
   );
 }
-
