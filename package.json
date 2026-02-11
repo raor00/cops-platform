@@ -1,11 +1,13 @@
 {
   "name": "cops-platform",
   "private": true,
-  "packageManager": "pnpm@10",
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "dev:web": "pnpm --filter web dev",
-    "dev:cotizaciones": "pnpm --filter cotizaciones dev",
-    "build:web": "pnpm --filter web build",
-    "build:cotizaciones": "pnpm --filter cotizaciones build"
+    "dev:web": "corepack pnpm --filter web dev",
+    "dev:cotizaciones": "corepack pnpm --filter cotizaciones dev",
+    "build:web": "corepack pnpm --filter web build",
+    "build:cotizaciones": "corepack pnpm --filter cotizaciones build",
+    "lint:web": "corepack pnpm --filter web lint",
+    "lint:cotizaciones": "corepack pnpm --filter cotizaciones lint"
   }
 }
