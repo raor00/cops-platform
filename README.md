@@ -5,11 +5,17 @@
 - apps/cotizaciones
 
 ## Comandos
-- `pnpm install`
-- `pnpm dev:web`
-- `pnpm dev:cotizaciones`
-- `pnpm build:web`
-- `pnpm build:cotizaciones`
+- `corepack pnpm install`
+- `corepack pnpm dev:web`
+- `corepack pnpm dev:cotizaciones`
+- `corepack pnpm build:web`
+- `corepack pnpm build:cotizaciones`
+
+## Navegacion Web -> Cotizaciones
+Configura en `apps/web` la variable:
+- `COTIZACIONES_APP_URL=https://tu-cotizaciones.vercel.app`
+
+Luego `/panel/cotizaciones` redirige al modulo de cotizaciones.
 
 ## Deploy en Vercel
 Crear 2 proyectos conectados al mismo repo:
