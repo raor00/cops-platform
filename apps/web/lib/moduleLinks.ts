@@ -1,3 +1,5 @@
+const DEFAULT_COTIZACIONES_APP_URL = "https://cops-platform-cotizaciones.vercel.app/";
+
 function toAbsoluteUrl(raw: string) {
   const trimmed = raw.trim();
   if (!trimmed) return null;
@@ -20,6 +22,7 @@ export function getCotizacionesAppUrl() {
     process.env.NEXT_PUBLIC_COTIZACIONES_APP_URL,
     process.env.cops_cotizaciones_key,
     process.env.NEXT_PUBLIC_COPS_COTIZACIONES_KEY,
+    DEFAULT_COTIZACIONES_APP_URL,
   ];
 
   for (const candidate of candidates) {
@@ -28,5 +31,5 @@ export function getCotizacionesAppUrl() {
     if (normalized) return normalized;
   }
 
-  return null;
+  return DEFAULT_COTIZACIONES_APP_URL;
 }
