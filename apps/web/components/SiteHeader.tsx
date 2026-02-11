@@ -65,7 +65,8 @@ export default function SiteHeader() {
     { href: "/panel/administracion", label: "Administracion", enabled: canSeeAdministracion },
   ].filter((item) => item.enabled);
 
-  const navItems = loggedIn ? privateNav : PUBLIC_NAV;
+  const isPanelRoute = pathname.startsWith("/panel");
+  const navItems = loggedIn && isPanelRoute ? privateNav : PUBLIC_NAV;
 
   const headerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -362,3 +363,4 @@ export default function SiteHeader() {
     </div>
   );
 }
+
