@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Glass } from "glass-refraction";
-import { MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE } from "../lib/masterAuth";
+import {
+  MASTER_ROLE_COOKIE,
+  MASTER_SESSION_COOKIE,
+  MASTER_SESSION_VALUE,
+  MASTER_USER_COOKIE,
+} from "../lib/masterAuth";
 
 const NAV = [
   { href: "/soluciones", label: "Soluciones" },
@@ -23,6 +28,15 @@ function hasSession() {
   return entry?.split("=")[1] === MASTER_SESSION_VALUE;
 }
 
+function getRole() {
+  if (typeof document === "undefined") return "";
+  const entry = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${MASTER_ROLE_COOKIE}=`));
+
+  return entry?.split("=")[1] ?? "";
+}
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
@@ -30,6 +44,7 @@ export default function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const loggedIn = hasSession();
+  const role = getRole();
 
   const headerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -53,6 +68,8 @@ export default function SiteHeader() {
 
   const handleLogout = () => {
     document.cookie = `${MASTER_SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    document.cookie = `${MASTER_ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    document.cookie = `${MASTER_USER_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
     setPanelOpen(false);
     router.push("/");
   };
@@ -185,19 +202,39 @@ export default function SiteHeader() {
                 {panelOpen && (
                   <div className="capsule-dropdown absolute right-0 mt-3 w-52 p-1.5">
                     <Link
-                      href="/panel/cotizaciones"
+                      href="/panel"
                       onClick={() => setPanelOpen(false)}
                       className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
                     >
-                      Cotizaciones
+                      Portal de modulos
                     </Link>
-                    <Link
-                      href="/panel/tickets"
-                      onClick={() => setPanelOpen(false)}
-                      className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Tickets
-                    </Link>
+                    {(role === "admin" || role === "cotizaciones") && (
+                      <Link
+                        href="/panel/cotizaciones"
+                        onClick={() => setPanelOpen(false)}
+                        className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Cotizacion
+                      </Link>
+                    )}
+                    {(role === "admin" || role === "soporte") && (
+                      <Link
+                        href="/panel/soporte"
+                        onClick={() => setPanelOpen(false)}
+                        className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Soporte
+                      </Link>
+                    )}
+                    {role === "admin" && (
+                      <Link
+                        href="/panel/administracion"
+                        onClick={() => setPanelOpen(false)}
+                        className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Administracion
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -249,19 +286,39 @@ export default function SiteHeader() {
                 {loggedIn ? (
                   <>
                     <Link
-                      href="/panel/cotizaciones"
+                      href="/panel"
                       onClick={() => setOpen(false)}
                       className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
                     >
-                      Cotizaciones
+                      Portal de modulos
                     </Link>
-                    <Link
-                      href="/panel/tickets"
-                      onClick={() => setOpen(false)}
-                      className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Tickets
-                    </Link>
+                    {(role === "admin" || role === "cotizaciones") && (
+                      <Link
+                        href="/panel/cotizaciones"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Cotizacion
+                      </Link>
+                    )}
+                    {(role === "admin" || role === "soporte") && (
+                      <Link
+                        href="/panel/soporte"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Soporte
+                      </Link>
+                    )}
+                    {role === "admin" && (
+                      <Link
+                        href="/panel/administracion"
+                        onClick={() => setOpen(false)}
+                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        Administracion
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={handleLogout}
