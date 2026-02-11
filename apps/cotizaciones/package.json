@@ -44,6 +44,7 @@
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.5.1",
+    "glass-refraction": "0.1.0",
     "html2canvas": "^1.4.1",
     "input-otp": "1.4.1",
     "jspdf": "^4.1.0",
@@ -72,4 +73,3 @@
     "typescript": "5.7.3"
   }
 }
-

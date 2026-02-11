@@ -61,19 +61,19 @@ export function AppShell() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen bg-background">
       {/* Sidebar - Desktop */}
-      <aside className="hidden w-60 shrink-0 border-r border-border bg-card lg:block">
-        <div className="sticky top-0 flex h-screen flex-col">
+      <aside className="hidden w-60 shrink-0 lg:block lg:px-3 lg:py-4">
+        <div className="glass-card sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden border border-white/15 bg-white/[0.08]">
           {/* Logo */}
-          <div className="border-b border-border bg-[#0a1628] px-5 py-5">
+          <div className="border-b border-white/12 bg-transparent px-5 py-5">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
+              <div className="glass-pill flex h-9 w-9 items-center justify-center rounded-md">
                 <Image src="/cops-logo.png" alt="COPS Electronics" width={28} height={28} />
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-wide text-white">{"COP'S ELECTRONICS"}</h1>
-                <p className="text-[10px] text-[#7a9cc7]">Sistema de Cotizaciones</p>
+                <p className="text-[10px] text-white/70">Sistema de Cotizaciones</p>
               </div>
             </div>
           </div>
@@ -86,10 +86,10 @@ export function AppShell() {
                   key={item.id}
                   type="button"
                   onClick={() => navigateTo(item.id)}
-                  className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
                     activeView === item.id
-                      ? "bg-[#1a5276] font-medium text-white"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "glass-pill bg-white/18 font-medium text-white shadow-[0_8px_20px_rgba(10,30,70,0.24)]"
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   {item.icon}
@@ -100,9 +100,9 @@ export function AppShell() {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-border px-5 py-4">
-            <div className="text-[10px] text-muted-foreground">
-              <p className="font-medium text-foreground">{"Cop's Electronics S.A."}</p>
+          <div className="border-t border-white/12 px-5 py-4">
+            <div className="text-[10px] text-white/65">
+              <p className="font-medium text-white">{"Cop's Electronics S.A."}</p>
               <p className="mt-0.5">0212-7934136 / 7940316</p>
               <p>proyectos@copselectronics.com</p>
             </div>
@@ -113,17 +113,17 @@ export function AppShell() {
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-foreground/20" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64 border-r border-border bg-card shadow-lg">
-            <div className="border-b border-border bg-[#0a1628] px-5 py-5">
+          <div className="absolute inset-0 bg-[#07112c]/45" onClick={() => setMobileMenuOpen(false)} />
+          <aside className="glass absolute left-0 top-0 h-full w-64 border-r border-white/15 bg-white/[0.08] shadow-lg">
+            <div className="border-b border-white/12 bg-transparent px-5 py-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
+                  <div className="glass-pill flex h-9 w-9 items-center justify-center rounded-md">
                     <Image src="/cops-logo.png" alt="COPS Electronics" width={26} height={26} />
                   </div>
                   <span className="text-sm font-bold text-white">{"COP'S"}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(false)} className="h-8 w-8 p-0 text-white hover:bg-white/10">
+                <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(false)} className="h-8 w-8 p-0 text-white hover:bg-white/12">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -135,10 +135,10 @@ export function AppShell() {
                     key={item.id}
                     type="button"
                     onClick={() => navigateTo(item.id)}
-                    className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
                       activeView === item.id
-                        ? "bg-[#1a5276] font-medium text-white"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ? "glass-pill bg-white/18 font-medium text-white shadow-[0_8px_20px_rgba(10,30,70,0.24)]"
+                        : "text-white/70 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {item.icon}
@@ -155,13 +155,13 @@ export function AppShell() {
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {/* Mobile Header */}
-        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 lg:hidden">
-          <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(true)} className="h-8 w-8 p-0 text-foreground">
+        <header className="glass mx-3 mt-3 flex items-center justify-between rounded-2xl border border-white/15 bg-white/[0.08] px-4 py-3 lg:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(true)} className="h-8 w-8 p-0 text-white">
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
             <Image src="/cops-logo.png" alt="COPS Electronics" width={20} height={20} />
-            <span className="text-sm font-bold text-foreground">{"COP'S ELECTRONICS"}</span>
+            <span className="text-sm font-bold text-white">{"COP'S ELECTRONICS"}</span>
           </div>
           <div className="w-8" />
         </header>
@@ -191,3 +191,4 @@ export function AppShell() {
     </div>
   )
 }
+
