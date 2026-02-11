@@ -8,7 +8,7 @@ const STATS = [
 
 export default function HomeHero() {
   return (
-    <section className="hero-mesh noise relative overflow-hidden border-b border-white/[0.06]">
+    <section className="hero-mesh noise relative overflow-hidden border-b border-white/[0.06] -mt-[68px] pt-[68px] md:-mt-[76px] md:pt-[76px]">
       {/* Liquid glass flowing orbs */}
       <div className="liquid-orb liquid-orb-1 -top-20 left-[10%] h-[500px] w-[500px] bg-brand-500/20" />
       <div className="liquid-orb liquid-orb-2 top-20 right-[5%] h-[400px] w-[400px] bg-brand-400/15" style={{ animationDelay: "-4s" }} />
