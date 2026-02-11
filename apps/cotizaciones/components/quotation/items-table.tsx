@@ -177,7 +177,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             className="h-7 border-border bg-transparent text-xs text-muted-foreground hover:bg-muted"
           >
             <Search className="mr-1 h-3 w-3" />
-            {companyFormat === "llc" ? "Catalog" : "CatÃ¡logo"}
+            {companyFormat === "llc" ? "Catalog" : "Catalogo"}
           </Button>
           <Button
             size="sm"
@@ -208,13 +208,13 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     <Input type="number" min={1} value={item.quantity} onFocus={(e) => e.currentTarget.select()} onChange={(e) => updateItem(item.id, "quantity", e.target.value === "" ? 0 : Number(e.target.value))} className="h-8 border-border bg-card text-center text-sm text-foreground" />
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Code" : "CÃ³digo"}</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Code" : "Codigo"}</span>
                     <Input value={item.code} onChange={(e) => updateItem(item.id, "code", e.target.value)} placeholder="COD-001" className="h-8 border-border bg-card font-mono text-sm text-foreground" />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Description" : "DescripciÃ³n"}</span>
-                  <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="DescripciÃ³n" rows={2} className="min-h-14 resize-none border-border bg-card text-sm text-foreground" />
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripcion"}</span>
+                  <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="Descripcion" rows={2} className="min-h-14 resize-none border-border bg-card text-sm text-foreground" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
@@ -233,7 +233,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           ))}
           {items.length === 0 && (
             <div className="rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              {companyFormat === "llc" ? 'No items. Use "Add" or pick from "Catalog".' : 'Sin items. Use "Agregar" o seleccione del "CatÃ¡logo".'}
+              {companyFormat === "llc" ? 'No items. Use "Add" or pick from "Catalog".' : 'Sin items. Use "Agregar" o seleccione del "Catalogo".'}
             </div>
           )}
         </div>
@@ -246,8 +246,8 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 64 }}>{companyFormat === "llc" ? "Qty" : "Cant."}</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>{companyFormat === "llc" ? "Code" : "CÃ³digo"}</th>
-                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{companyFormat === "llc" ? "Description" : "DescripciÃ³n"}</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 150 }}>{companyFormat === "llc" ? "Code" : "Codigo"}</th>
+                <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{companyFormat === "llc" ? "Description" : "Descripcion"}</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>{companyFormat === "llc" ? "Unit Price" : "P. Unit."}</th>
                 <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground" style={{ width: 110 }}>Total</th>
                 <th className="px-3 py-2.5" style={{ width: 40 }}><span className="sr-only">Acciones</span></th>
@@ -263,7 +263,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     <Input value={item.code} onChange={(e) => updateItem(item.id, "code", e.target.value)} placeholder="COD-001" className="h-8 w-36 border-border bg-card font-mono text-xs text-foreground" />
                   </td>
                   <td className="px-3 py-2">
-                    <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="DescripciÃ³n del producto" rows={1} className="min-h-8 resize-none border-border bg-card text-xs text-foreground" />
+                    <Textarea value={item.description} onChange={(e) => updateItem(item.id, "description", e.target.value)} placeholder="Descripcion del producto" rows={1} className="min-h-8 resize-none border-border bg-card text-xs text-foreground" />
                   </td>
                   <td className="px-3 py-2">
                     <Input type="number" min={0} step={0.01} value={item.unitPrice} onFocus={(e) => e.currentTarget.select()} onChange={(e) => updateItem(item.id, "unitPrice", e.target.value === "" ? 0 : Number(e.target.value))} className="h-8 w-24 border-border bg-card text-right text-xs text-foreground" />
@@ -281,7 +281,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
               {items.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-xs text-muted-foreground">
-                    {companyFormat === "llc" ? 'No items added yet.' : 'Sin items. Use "Agregar" o seleccione del "CatÃ¡logo".'}
+                    {companyFormat === "llc" ? 'No items added yet.' : 'Sin items. Use "Agregar" o seleccione del "Catalogo".'}
                   </td>
                 </tr>
               )}
@@ -298,7 +298,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             <DialogHeader className="p-0">
               <DialogTitle className="flex items-center gap-2 font-heading text-base text-foreground">
                 <ShoppingCart className="h-4 w-4 text-[#4a72ef]" />
-                {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del CatÃ¡logo"}
+                {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del Catalogo"}
               </DialogTitle>
             </DialogHeader>
 
@@ -368,7 +368,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
             {/* Result count */}
             <p className="text-[11px] text-muted-foreground">
               {filteredCatalog.length} {companyFormat === "llc" ? "products" : "productos"}
-              {pickerTotalPages > 1 && ` Â· pÃ¡g. ${pickerSafePage}/${pickerTotalPages}`}
+              {pickerTotalPages > 1 && `  - pag. ${pickerSafePage}/${pickerTotalPages}`}
             </p>
           </div>
 
@@ -434,7 +434,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   }, [])
                   .map((p, i) =>
                     p === "dots" ? (
-                      <span key={`dots-${i}`} className="px-0.5 text-xs text-muted-foreground">â€¦</span>
+                      <span key={`dots-${i}`} className="px-0.5 text-xs text-muted-foreground">...</span>
                     ) : (
                       <Button key={p} variant={p === pickerSafePage ? "default" : "outline"} size="sm" onClick={() => setPickerPage(p)} className={cn("h-7 w-7 p-0 text-[11px]", p === pickerSafePage && "bg-[#4a72ef] text-white")}>
                         {p}
@@ -452,5 +452,6 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
     </div>
   )
 }
+
 
 

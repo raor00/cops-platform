@@ -3,7 +3,7 @@
 import React from "react"
 import Image from "next/image"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { QuotationBuilder } from "./quotation-builder"
 import { CatalogManager } from "./catalog-manager"
@@ -36,7 +36,9 @@ export function AppShell() {
   const [activeView, setActiveView] = useState<View>("new")
   const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileHeaderVisible, setMobileHeaderVisible] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
+  const lastScrollRef = useRef(0)
 
   const handleEditQuotation = useCallback((data: QuotationData) => {
     setEditingQuotation(data)
@@ -60,11 +62,39 @@ export function AppShell() {
     setMobileMenuOpen(false)
   }
 
+  useEffect(() => {
+    const onScroll = () => {
+      if (window.innerWidth >= 1024) return
+
+      const y = window.scrollY
+      const delta = y - lastScrollRef.current
+
+      if (y < 20) {
+        setMobileHeaderVisible(true)
+      } else if (delta > 6 && !mobileMenuOpen) {
+        setMobileHeaderVisible(false)
+      } else if (delta < -6) {
+        setMobileHeaderVisible(true)
+      }
+
+      lastScrollRef.current = y
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [mobileMenuOpen])
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      setMobileHeaderVisible(true)
+    }
+  }, [mobileMenuOpen])
+
   return (
-    <div className="relative flex min-h-screen bg-background">
+    <div className="relative flex min-h-screen overflow-x-hidden bg-background">
       {/* Sidebar - Desktop */}
       <aside className="hidden w-60 shrink-0 lg:block lg:px-3 lg:py-4">
-        <div className="glass-card sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden border border-white/15 bg-white/[0.08]">
+        <div className="glass-card sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden border border-white/24 bg-white/[0.14] shadow-[0_18px_44px_rgba(7,20,52,0.34)]">
           {/* Logo */}
           <div className="border-b border-white/12 bg-transparent px-5 py-5">
             <div className="flex items-center gap-2.5">
@@ -113,8 +143,8 @@ export function AppShell() {
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-[#16366d]/44 backdrop-blur-[2px]" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="glass absolute left-0 top-0 h-full w-[85vw] max-w-72 border-r border-white/20 bg-white/[0.12] shadow-lg">
+          <div className="absolute inset-0 bg-[#102a58]/54 backdrop-blur-[2px]" onClick={() => setMobileMenuOpen(false)} />
+          <aside className="glass absolute left-0 top-0 h-full w-[85vw] max-w-72 border-r border-white/24 bg-white/[0.16] shadow-lg">
             <div className="border-b border-white/12 bg-transparent px-5 py-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -155,7 +185,7 @@ export function AppShell() {
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {/* Mobile Header */}
-        <header className="glass mx-3 mt-3 flex items-center justify-between rounded-2xl border border-white/20 bg-white/[0.12] px-4 py-3 lg:hidden">
+        <header className={`glass sticky top-3 z-30 mx-3 mt-3 flex items-center justify-between rounded-2xl border border-white/24 bg-white/[0.16] px-4 py-3 transition-transform duration-300 lg:hidden ${mobileHeaderVisible ? "translate-y-0" : "-translate-y-[130%]"}`}>
           <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(true)} className="h-8 w-8 p-0 text-white">
             <Menu className="h-5 w-5" />
           </Button>
@@ -191,6 +221,7 @@ export function AppShell() {
     </div>
   )
 }
+
 
 
 

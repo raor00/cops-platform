@@ -135,13 +135,13 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h2 className="font-heading text-2xl font-bold text-foreground">Historial</h2>
         <p className="mt-1 text-sm text-muted-foreground">Seccionado por tipo de documento</p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -152,7 +152,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
           />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-36 border-border bg-card text-foreground">
+          <SelectTrigger className="w-full border-border bg-card text-foreground sm:w-36">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -167,15 +167,17 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
       </div>
 
       <Tabs defaultValue="quotes">
-        <TabsList className="grid w-full max-w-md grid-cols-3 bg-muted">
-          <TabsTrigger value="quotes">Cotizaciones</TabsTrigger>
-          <TabsTrigger value="delivery">Notas de Entrega</TabsTrigger>
-          <TabsTrigger value="transport">Guias de Transporte</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="inline-flex min-w-full bg-muted sm:grid sm:w-full sm:max-w-md sm:grid-cols-3">
+            <TabsTrigger value="quotes" className="whitespace-nowrap px-4 text-xs sm:text-sm">Cotizaciones</TabsTrigger>
+            <TabsTrigger value="delivery" className="whitespace-nowrap px-4 text-xs sm:text-sm">Notas de Entrega</TabsTrigger>
+            <TabsTrigger value="transport" className="whitespace-nowrap px-4 text-xs sm:text-sm">Guias de Transporte</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="quotes" className="mt-4">
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+            <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-border bg-[#153977]">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
@@ -223,8 +225,8 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
         </TabsContent>
 
         <TabsContent value="delivery" className="mt-4">
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+            <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-border bg-[#153977]">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
@@ -258,8 +260,8 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
         </TabsContent>
 
         <TabsContent value="transport" className="mt-4">
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+            <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-border bg-[#153977]">
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
@@ -308,6 +310,7 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
     </div>
   )
 }
+
 
 
 

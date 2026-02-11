@@ -297,7 +297,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   }, [companyFormat])
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Action Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -314,7 +314,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
                 : (companyFormat === "llc" ? "Preventive Maintenance" : "Mantenimiento Preventivo")}
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
             variant="outline"
             size="sm"
@@ -436,6 +436,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     </div>
   )
 }
+
 
 
 

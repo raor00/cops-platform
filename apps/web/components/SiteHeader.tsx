@@ -49,8 +49,10 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
   const [open, setOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+  const lastScrollRef = useRef(0);
 
   const loggedIn = hasSession();
   const role = readCookie(MASTER_ROLE_COOKIE);
@@ -92,11 +94,32 @@ export default function SiteHeader() {
   }, [pathname, setPillForHref]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastScrollRef.current;
+      setScrolled(currentY > 16);
+
+      if (currentY < 24) {
+        setHeaderVisible(true);
+      } else if (delta > 8 && !open && !panelOpen) {
+        setHeaderVisible(false);
+      } else if (delta < -8) {
+        setHeaderVisible(true);
+      }
+
+      lastScrollRef.current = currentY;
+    };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [open, panelOpen]);
+
+  useEffect(() => {
+    if (open || panelOpen) {
+      setHeaderVisible(true);
+    }
+  }, [open, panelOpen]);
 
   const handleLogout = () => {
     document.cookie = `${MASTER_SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
@@ -109,7 +132,11 @@ export default function SiteHeader() {
   const showPill = pillRect !== null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none px-4 py-3 md:py-4">
+    <div
+      className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 py-3 transition-transform duration-300 md:py-4 ${
+        headerVisible ? "translate-y-0" : "-translate-y-[130%]"
+      }`}
+    >
       <div
         className={`capsule-header pointer-events-auto relative w-full max-w-5xl transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${
           scrolled ? "capsule-header--scrolled" : ""
@@ -269,17 +296,29 @@ export default function SiteHeader() {
           </div>
         </nav>
 
+        {(open || panelOpen) && (
+          <button
+            type="button"
+            aria-label="Cerrar menu"
+            onClick={() => {
+              setOpen(false);
+              setPanelOpen(false);
+            }}
+            className="fixed inset-0 z-[5] bg-[#081938]/48 backdrop-blur-[2px] md:hidden"
+          />
+        )}
+
         {open && (
           <div className="capsule-mobile-menu pointer-events-auto md:hidden">
             <div className="px-4 py-3">
               <div className="space-y-0.5">
                 {navItems.map((n) => (
-                  <Link key={n.href} href={n.href} prefetch={false} onClick={() => { setOpen(false); setPanelOpen(false); }} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">{n.label}</Link>
+                  <Link key={n.href} href={n.href} prefetch={false} onClick={() => { setOpen(false); setPanelOpen(false); }} className="mobile-nav-item">{n.label}</Link>
                 ))}
               </div>
               {!loggedIn && (
                 <div className="mt-2 space-y-1.5 border-t border-white/[0.08] pt-3">
-                  <Link href="/login" onClick={() => setOpen(false)} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">Iniciar sesion</Link>
+                  <Link href="/login" onClick={() => setOpen(false)} className="mobile-nav-item">Iniciar sesion</Link>
                   <Link href="/contacto" onClick={() => setOpen(false)} className="capsule-btn-primary mt-1 block w-full text-center">Solicitar consultoria gratuita</Link>
                 </div>
               )}

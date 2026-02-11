@@ -202,13 +202,13 @@ export function DeliveryNoteBuilder() {
   const previewData = useMemo(() => buildData(), [buildData])
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-heading text-2xl font-bold text-foreground">Nota de Entrega</h2>
           <p className="mt-1 text-sm text-muted-foreground">Estructura basada en formato NE Excel (ATENCION, CLIENTE, C.I, FECHA, items, RECIBE, ENTREGA, FIRMA).</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button variant="outline" size="sm" onClick={clearForm} className="w-full border-border bg-transparent text-muted-foreground hover:bg-muted sm:w-auto">
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             Limpiar
@@ -357,6 +357,7 @@ export function DeliveryNoteBuilder() {
     </div>
   )
 }
+
 
 
 

@@ -164,7 +164,7 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   { id: "42", code: "MAT-CURVA-EMT-3/4", description: "Curva EMT 3/4\" Galvanizada", unitPrice: 1.5, category: "Materiales", unit: "UND" },
   { id: "43", code: "MAT-CONECTOR-EMT-3/4", description: "Conector EMT 3/4\" Recto", unitPrice: 0.8, category: "Materiales", unit: "UND" },
   { id: "44", code: "MAT-ABRAZADERA-3/4", description: "Abrazadera Metalica Tipo Omega 3/4\"", unitPrice: 0.3, category: "Materiales", unit: "UND" },
-  { id: "45", code: "MAT-CABLE-ST-2X18", description: "Cable de SeÃ±al Blindado 2x18 AWG (por metro)", unitPrice: 0.85, category: "Materiales", unit: "MTS" },
+  { id: "45", code: "MAT-CABLE-ST-2X18", description: "Cable de Senal Blindado 2x18 AWG (por metro)", unitPrice: 0.85, category: "Materiales", unit: "MTS" },
   { id: "46", code: "MAT-CABLE-POT-2X16", description: "Cable de Potencia 2x16 AWG (por metro)", unitPrice: 0.65, category: "Materiales", unit: "MTS" },
   { id: "47", code: "MAT-PATCH-CORD-1M", description: "Patch Cord UTP Cat6 1m", unitPrice: 2.5, category: "Materiales", unit: "UND" },
   { id: "48", code: "MAT-PATCH-CORD-3M", description: "Patch Cord UTP Cat6 3m", unitPrice: 4, category: "Materiales", unit: "UND" },
@@ -229,5 +229,6 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })
 }
+
 
 
