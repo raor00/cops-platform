@@ -3,8 +3,8 @@ export const MASTER_ROLE_COOKIE = "cops_master_role";
 export const MASTER_USER_COOKIE = "cops_master_user";
 export const MASTER_SESSION_VALUE = "active";
 
-export type UserRole = "admin" | "soporte" | "cotizaciones";
-export type ModuleId = "soporte" | "cotizaciones" | "administracion";
+export type UserRole = "admin" | "tickets" | "cotizaciones";
+export type ModuleId = "tickets" | "cotizaciones" | "administracion";
 
 export type ModuleAccess = {
   id: ModuleId;
@@ -32,11 +32,11 @@ export const APP_USERS: AppUser[] = [
 
 export const MODULE_ACCESS: ModuleAccess[] = [
   {
-    id: "soporte",
-    title: "Soporte",
+    id: "tickets",
+    title: "Tickets",
     description: "Gestion de tickets, incidentes y seguimiento operativo.",
-    href: "/panel/soporte",
-    roles: ["admin", "soporte"],
+    href: "/panel/tickets",
+    roles: ["admin", "tickets"],
   },
   {
     id: "cotizaciones",
@@ -76,4 +76,8 @@ export function getVisibleModules(role: string | undefined) {
   if (!role) return [];
 
   return MODULE_ACCESS.filter((module) => module.roles.includes(role as UserRole));
+}
+
+export function isAdmin(role: string | undefined) {
+  return role === "admin";
 }

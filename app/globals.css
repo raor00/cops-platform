@@ -509,6 +509,63 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.05) inset;
 }
 
+/* ═════════════════════════════════
+   Nav sliding glass pill indicator
+   ═════════════════════════════════ */
+.nav-glass-indicator {
+  border-radius: 9999px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 2px 12px rgba(47, 84, 224, 0.12),
+    0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
+    0 1px 0 rgba(255, 255, 255, 0.10) inset;
+  filter: url(#glass-refract);
+}
+
+/* Chromatic shimmer on the indicator */
+.nav-glass-indicator::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(100, 170, 255, 0.08) 0%,
+    rgba(140, 100, 255, 0.06) 30%,
+    rgba(255, 130, 200, 0.04) 60%,
+    rgba(100, 255, 200, 0.05) 100%
+  );
+  opacity: 0.7;
+  animation: nav-shimmer 4s ease-in-out infinite alternate;
+}
+
+/* Specular top edge on the indicator */
+.nav-glass-indicator::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 50%
+  );
+  opacity: 0.6;
+}
+
+@keyframes nav-shimmer {
+  0%   { opacity: 0.4; background-position: 0% 50%; }
+  100% { opacity: 0.8; background-position: 100% 50%; }
+}
+
 /* Mobile open state — expand border-radius for content */
 .capsule-header:has(> .relative.z-10.border-t) {
   border-radius: 28px;

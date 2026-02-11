@@ -11,7 +11,7 @@ import {
   MASTER_USER_COOKIE,
 } from "../lib/masterAuth";
 
-const NAV = [
+const PUBLIC_NAV = [
   { href: "/soluciones", label: "Soluciones" },
   { href: "/proyectos", label: "Proyectos" },
   { href: "/partners", label: "Partners" },
@@ -19,23 +19,21 @@ const NAV = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-function hasSession() {
-  if (typeof document === "undefined") return false;
-  const entry = document.cookie
-    .split("; ")
-    .find((cookie) => cookie.startsWith(`${MASTER_SESSION_COOKIE}=`));
-
-  return entry?.split("=")[1] === MASTER_SESSION_VALUE;
-}
-
-function getRole() {
+function readCookie(name: string) {
   if (typeof document === "undefined") return "";
+
   const entry = document.cookie
     .split("; ")
-    .find((cookie) => cookie.startsWith(`${MASTER_ROLE_COOKIE}=`));
+    .find((cookie) => cookie.startsWith(`${name}=`));
 
   return entry?.split("=")[1] ?? "";
 }
+
+function hasSession() {
+  return readCookie(MASTER_SESSION_COOKIE) === MASTER_SESSION_VALUE;
+}
+
+type Rect = { left: number; width: number; top: number; height: number };
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -43,12 +41,84 @@ export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
+
   const loggedIn = hasSession();
-  const role = getRole();
+  const role = readCookie(MASTER_ROLE_COOKIE);
+
+  const canSeeTickets = role === "admin" || role === "tickets";
+  const canSeeCotizaciones = role === "admin" || role === "cotizaciones";
+  const canSeeAdministracion = role === "admin";
+
+  const privateNav = [
+    { href: "/panel", label: "Portal", enabled: true },
+    { href: "/panel/tickets", label: "Tickets", enabled: canSeeTickets },
+    {
+      href: "/panel/cotizaciones",
+      label: "Cotizacion",
+      enabled: canSeeCotizaciones,
+    },
+    {
+      href: "/panel/administracion",
+      label: "Administracion",
+      enabled: canSeeAdministracion,
+    },
+  ].filter((item) => item.enabled);
+
+  const navItems = loggedIn ? privateNav : PUBLIC_NAV;
 
   const headerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+
+  /* ── Sliding glass pill indicator ── */
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const [hoverRect, setHoverRect] = useState<Rect | null>(null);
+  const [activeRect, setActiveRect] = useState<Rect | null>(null);
+  const [isNavHovering, setIsNavHovering] = useState(false);
+  const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
+
+  // Measure the active link on mount / route change
+  useEffect(() => {
+    const activeLink = linkRefs.current.get(pathname);
+    if (activeLink && navContainerRef.current) {
+      const containerRect = navContainerRef.current.getBoundingClientRect();
+      const linkRect = activeLink.getBoundingClientRect();
+      setActiveRect({
+        left: linkRect.left - containerRect.left,
+        width: linkRect.width,
+        top: linkRect.top - containerRect.top,
+        height: linkRect.height,
+      });
+    } else {
+      setActiveRect(null);
+    }
+  }, [pathname, navItems]);
+
+  const handleNavMouseEnter = useCallback(
+    (href: string) => {
+      const el = linkRefs.current.get(href);
+      if (el && navContainerRef.current) {
+        const containerRect = navContainerRef.current.getBoundingClientRect();
+        const linkRect = el.getBoundingClientRect();
+        setHoverRect({
+          left: linkRect.left - containerRect.left,
+          width: linkRect.width,
+          top: linkRect.top - containerRect.top,
+          height: linkRect.height,
+        });
+      }
+      setIsNavHovering(true);
+    },
+    [],
+  );
+
+  const handleNavMouseLeave = useCallback(() => {
+    setIsNavHovering(false);
+  }, []);
+
+  // The rect to show: hover takes priority, otherwise active page
+  const indicatorRect = isNavHovering ? hoverRect : activeRect;
+  const showIndicator = indicatorRect !== null;
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!headerRef.current) return;
@@ -85,7 +155,6 @@ export default function SiteHeader() {
           scrolled ? "capsule-header--scrolled" : ""
         }`}
       >
-        {/* Glass refraction layer */}
         <Glass
           variant="glass"
           className="!absolute !inset-0 !rounded-[inherit] !border-0"
@@ -110,7 +179,6 @@ export default function SiteHeader() {
               transition: "left 0.12s ease-out, top 0.12s ease-out",
             }}
           />
-          {/* Secondary warm highlight for chromatic feel */}
           <div
             className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
@@ -138,25 +206,49 @@ export default function SiteHeader() {
         {/* Content */}
         <nav className="relative z-10 flex items-center justify-between px-5 py-3 md:px-6">
           <Link
-            href="/"
+            href={loggedIn ? "/panel" : "/"}
             className="text-[15px] font-bold tracking-tight text-white/90 transition-colors hover:text-white sm:text-base"
           >
             COP&apos;S Electronics
           </Link>
 
-          <div className="hidden items-center gap-0.5 md:flex">
-            {NAV.map((n) => (
+          {/* Nav links with sliding glass indicator */}
+          <div
+            ref={navContainerRef}
+            className="hidden items-center gap-0.5 md:flex relative"
+            onMouseLeave={handleNavMouseLeave}
+          >
+            {/* Sliding glass pill indicator */}
+            <div
+              className="nav-glass-indicator absolute z-0 pointer-events-none"
+              style={{
+                left: indicatorRect?.left ?? 0,
+                top: indicatorRect?.top ?? 0,
+                width: indicatorRect?.width ?? 0,
+                height: indicatorRect?.height ?? 0,
+                opacity: showIndicator ? 1 : 0,
+                transition: isNavHovering
+                  ? "left 0.35s cubic-bezier(.16,1,.3,1), top 0.35s cubic-bezier(.16,1,.3,1), width 0.3s cubic-bezier(.16,1,.3,1), height 0.3s cubic-bezier(.16,1,.3,1), opacity 0.25s ease"
+                  : "opacity 0.3s ease, left 0.35s cubic-bezier(.16,1,.3,1), width 0.3s cubic-bezier(.16,1,.3,1)",
+              }}
+            />
+
+            {navItems.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
+                ref={(el) => {
+                  if (el) linkRefs.current.set(n.href, el);
+                }}
                 onClick={() => {
                   setOpen(false);
                   setPanelOpen(false);
                 }}
-                className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-200 ${
+                onMouseEnter={() => handleNavMouseEnter(n.href)}
+                className={`relative z-10 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-200 ${
                   pathname === n.href
-                    ? "bg-white/[0.1] text-white"
-                    : "text-white/60 hover:text-white/90 hover:bg-white/[0.06]"
+                    ? "text-white"
+                    : "text-white/60 hover:text-white/90"
                 }`}
               >
                 {n.label}
@@ -165,28 +257,29 @@ export default function SiteHeader() {
           </div>
 
           <div className="hidden items-center gap-2 md:flex">
-            <Link
-              href="/contacto"
-              onClick={() => {
-                setOpen(false);
-                setPanelOpen(false);
-              }}
-              className="capsule-btn-primary"
-            >
-              Solicitar asesoría
-            </Link>
-
             {!loggedIn && (
-              <Link
-                href="/login"
-                onClick={() => {
-                  setOpen(false);
-                  setPanelOpen(false);
-                }}
-                className="capsule-btn"
-              >
-                Iniciar sesión
-              </Link>
+              <>
+                <Link
+                  href="/contacto"
+                  onClick={() => {
+                    setOpen(false);
+                    setPanelOpen(false);
+                  }}
+                  className="capsule-btn-primary"
+                >
+                  Solicitar asesoria
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => {
+                    setOpen(false);
+                    setPanelOpen(false);
+                  }}
+                  className="capsule-btn"
+                >
+                  Iniciar sesion
+                </Link>
+              </>
             )}
 
             {loggedIn && (
@@ -200,47 +293,31 @@ export default function SiteHeader() {
                 </button>
 
                 {panelOpen && (
-                  <div className="capsule-dropdown absolute right-0 mt-3 w-52 p-1.5">
-                    <Link
-                      href="/panel"
-                      onClick={() => setPanelOpen(false)}
-                      className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Portal de modulos
-                    </Link>
-                    {(role === "admin" || role === "cotizaciones") && (
-                      <Link
-                        href="/panel/cotizaciones"
-                        onClick={() => setPanelOpen(false)}
-                        className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Cotizacion
-                      </Link>
-                    )}
-                    {(role === "admin" || role === "soporte") && (
-                      <Link
-                        href="/panel/soporte"
-                        onClick={() => setPanelOpen(false)}
-                        className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Soporte
-                      </Link>
-                    )}
-                    {role === "admin" && (
-                      <Link
-                        href="/panel/administracion"
-                        onClick={() => setPanelOpen(false)}
-                        className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Administracion
-                      </Link>
+                  <div className="capsule-dropdown absolute right-0 mt-3 w-56 p-1.5">
+                    {canSeeAdministracion && (
+                      <>
+                        <Link
+                          href="/panel/perfiles"
+                          onClick={() => setPanelOpen(false)}
+                          className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
+                        >
+                          Perfiles
+                        </Link>
+                        <Link
+                          href="/panel/autorizacion"
+                          onClick={() => setPanelOpen(false)}
+                          className="block rounded-xl px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/[0.06] hover:text-white"
+                        >
+                          Autorizacion
+                        </Link>
+                      </>
                     )}
                     <button
                       type="button"
                       onClick={handleLogout}
                       className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10"
                     >
-                      Cerrar sesión
+                      Cerrar sesion
                     </button>
                   </div>
                 )}
@@ -250,16 +327,13 @@ export default function SiteHeader() {
 
           {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <Link href="/contacto" className="capsule-btn-primary text-xs !px-3 !py-1.5">
-              Asesoría
-            </Link>
             <button
               type="button"
-              aria-label="Abrir menú"
+              aria-label="Abrir menu"
               onClick={() => setOpen((v) => !v)}
               className="capsule-btn text-xs !px-3 !py-1.5"
             >
-              {open ? "Cerrar" : "Menú"}
+              {open ? "Cerrar" : "Menu"}
             </button>
           </div>
         </nav>
@@ -269,7 +343,7 @@ export default function SiteHeader() {
           <div className="relative z-10 border-t border-white/[0.06] md:hidden">
             <div className="px-4 pb-4 pt-2">
               <div className="space-y-0.5">
-                {NAV.map((n) => (
+                {navItems.map((n) => (
                   <Link
                     key={n.href}
                     href={n.href}
@@ -285,67 +359,50 @@ export default function SiteHeader() {
 
                 {loggedIn ? (
                   <>
-                    <Link
-                      href="/panel"
-                      onClick={() => setOpen(false)}
-                      className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
-                    >
-                      Portal de modulos
-                    </Link>
-                    {(role === "admin" || role === "cotizaciones") && (
-                      <Link
-                        href="/panel/cotizaciones"
-                        onClick={() => setOpen(false)}
-                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Cotizacion
-                      </Link>
-                    )}
-                    {(role === "admin" || role === "soporte") && (
-                      <Link
-                        href="/panel/soporte"
-                        onClick={() => setOpen(false)}
-                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Soporte
-                      </Link>
-                    )}
-                    {role === "admin" && (
-                      <Link
-                        href="/panel/administracion"
-                        onClick={() => setOpen(false)}
-                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
-                      >
-                        Administracion
-                      </Link>
+                    {canSeeAdministracion && (
+                      <>
+                        <Link
+                          href="/panel/perfiles"
+                          onClick={() => setOpen(false)}
+                          className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
+                        >
+                          Perfiles
+                        </Link>
+                        <Link
+                          href="/panel/autorizacion"
+                          onClick={() => setOpen(false)}
+                          className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
+                        >
+                          Autorizacion
+                        </Link>
+                      </>
                     )}
                     <button
                       type="button"
                       onClick={handleLogout}
                       className="block w-full rounded-xl px-4 py-2.5 text-left text-sm font-semibold text-red-400 hover:bg-red-500/10"
                     >
-                      Cerrar sesión
+                      Cerrar sesion
                     </button>
                   </>
                 ) : (
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
-                  >
-                    Iniciar sesión
-                  </Link>
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setOpen(false)}
+                      className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white"
+                    >
+                      Iniciar sesion
+                    </Link>
+                    <Link
+                      href="/contacto"
+                      onClick={() => setOpen(false)}
+                      className="capsule-btn-primary mt-2 block w-full text-center"
+                    >
+                      Solicitar consultoria gratuita
+                    </Link>
+                  </>
                 )}
-
-                <div className="pt-2">
-                  <Link
-                    href="/contacto"
-                    onClick={() => setOpen(false)}
-                    className="capsule-btn-primary block w-full text-center"
-                  >
-                    Solicitar consultoría gratuita
-                  </Link>
-                </div>
               </div>
             </div>
           </div>

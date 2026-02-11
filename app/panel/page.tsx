@@ -9,7 +9,7 @@ import {
 } from "../../lib/masterAuth";
 
 const iconByModule: Record<ModuleId, typeof Headset> = {
-  soporte: Headset,
+  tickets: Headset,
   cotizaciones: FileSpreadsheet,
   administracion: ShieldCheck,
 };

@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/panel", request.url));
   }
 
-  if (pathname.startsWith("/panel/soporte") && !canAccessModule(role, "soporte")) {
+  if (pathname.startsWith("/panel/tickets") && !canAccessModule(role, "tickets")) {
     return NextResponse.redirect(new URL("/panel", request.url));
   }
 
@@ -42,7 +42,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/panel", request.url));
   }
 
-  if (pathname.startsWith("/panel/tickets") && !canAccessModule(role, "soporte")) {
+  if (pathname.startsWith("/panel/soporte") && !canAccessModule(role, "tickets")) {
+    return NextResponse.redirect(new URL("/panel", request.url));
+  }
+
+  if (
+    (pathname.startsWith("/panel/perfiles") ||
+      pathname.startsWith("/panel/autorizacion")) &&
+    role !== "admin"
+  ) {
     return NextResponse.redirect(new URL("/panel", request.url));
   }
 
