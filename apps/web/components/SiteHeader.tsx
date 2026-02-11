@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Glass } from "glass-refraction";
+import { getCotizacionesClientUrl } from "../lib/moduleLinks";
 import {
   MASTER_ROLE_COOKIE,
   MASTER_SESSION_COOKIE,
@@ -57,11 +58,12 @@ export default function SiteHeader() {
   const canSeeTickets = role === "admin" || role === "tickets";
   const canSeeCotizaciones = role === "admin" || role === "cotizaciones";
   const canSeeAdministracion = role === "admin";
+  const cotizacionesHref = getCotizacionesClientUrl();
 
   const privateNav = [
     { href: "/panel", label: "Portal", enabled: true },
     { href: "/panel/tickets", label: "Tickets", enabled: canSeeTickets },
-    { href: "/panel/cotizaciones", label: "Cotizacion", enabled: canSeeCotizaciones },
+    { href: cotizacionesHref, label: "Cotizacion", enabled: canSeeCotizaciones },
     { href: "/panel/administracion", label: "Administracion", enabled: canSeeAdministracion },
   ].filter((item) => item.enabled);
 
@@ -82,7 +84,7 @@ export default function SiteHeader() {
 
   useEffect(() => {
     setPillForHref(pathname);
-  }, [pathname, navItems, setPillForHref]);
+  }, [pathname, setPillForHref]);
 
   const handleNavMouseLeave = useCallback(() => {
     setIsNavHovering(false);
@@ -129,7 +131,10 @@ export default function SiteHeader() {
 
         <div
           className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[1px] rounded-[inherit]"
-          style={{ background: "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.22) 20%, rgba(220,235,255,0.28) 50%, rgba(255,255,255,0.22) 80%, transparent 95%)" }}
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.22) 20%, rgba(220,235,255,0.28) 50%, rgba(255,255,255,0.22) 80%, transparent 95%)",
+          }}
         />
 
         <nav className="relative z-10 flex items-center justify-between px-5 py-3 md:px-6">
@@ -167,6 +172,7 @@ export default function SiteHeader() {
               <Link
                 key={n.href}
                 href={n.href}
+                prefetch={false}
                 ref={(el) => {
                   if (el) linkRefs.current.set(n.href, el);
                 }}
@@ -268,7 +274,7 @@ export default function SiteHeader() {
             <div className="px-4 py-3">
               <div className="space-y-0.5">
                 {navItems.map((n) => (
-                  <Link key={n.href} href={n.href} onClick={() => { setOpen(false); setPanelOpen(false); }} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">{n.label}</Link>
+                  <Link key={n.href} href={n.href} prefetch={false} onClick={() => { setOpen(false); setPanelOpen(false); }} className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-white/85 hover:bg-white/[0.1] hover:text-white">{n.label}</Link>
                 ))}
               </div>
               {!loggedIn && (
@@ -298,5 +304,3 @@ export default function SiteHeader() {
     </div>
   );
 }
-
-

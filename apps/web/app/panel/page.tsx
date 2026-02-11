@@ -7,6 +7,7 @@ import {
   ModuleId,
   getVisibleModules,
 } from "../../lib/masterAuth";
+import { getCotizacionesAppUrl } from "../../lib/moduleLinks";
 
 const iconByModule: Record<ModuleId, typeof Headset> = {
   tickets: Headset,
@@ -18,7 +19,10 @@ export default async function PanelHomePage() {
   const cookieStore = await cookies();
   const role = cookieStore.get(MASTER_ROLE_COOKIE)?.value;
   const username = cookieStore.get(MASTER_USER_COOKIE)?.value ?? "usuario";
-  const modules = getVisibleModules(role);
+  const cotizacionesHref = getCotizacionesAppUrl();
+  const modules = getVisibleModules(role).map((module) =>
+    module.id === "cotizaciones" ? { ...module, href: cotizacionesHref } : module,
+  );
 
   return (
     <section className="relative py-6">
@@ -40,6 +44,7 @@ export default async function PanelHomePage() {
               <Link
                 key={module.id}
                 href={module.href}
+                prefetch={false}
                 className="lg-card card-lift group relative overflow-hidden p-5"
               >
                 <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brand-500/10 blur-2xl transition group-hover:bg-brand-400/20" />

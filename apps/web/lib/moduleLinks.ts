@@ -33,3 +33,22 @@ export function getCotizacionesAppUrl() {
 
   return DEFAULT_COTIZACIONES_APP_URL;
 }
+
+export function getCotizacionesClientUrl() {
+  if (typeof window === "undefined") {
+    return DEFAULT_COTIZACIONES_APP_URL;
+  }
+
+  const candidates = [
+    process.env.NEXT_PUBLIC_COTIZACIONES_APP_URL,
+    process.env.NEXT_PUBLIC_COPS_COTIZACIONES_KEY,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const normalized = toAbsoluteUrl(candidate);
+    if (normalized) return normalized;
+  }
+
+  return DEFAULT_COTIZACIONES_APP_URL;
+}
