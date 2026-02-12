@@ -204,7 +204,7 @@ export default function SiteHeader() {
                 top: pillRect?.top ?? 0,
                 width: pillRect?.width ?? 0,
                 height: pillRect?.height ?? 0,
-                opacity: showPill ? (panelOpen ? 0 : isNavHovering ? 1 : 0.72) : 0,
+                opacity: showPill ? (panelOpen || isPanelRoute ? 0 : isNavHovering ? 1 : 0.72) : 0,
                 transition: [
                   "left 0.24s cubic-bezier(.22,1,.36,1)",
                   "width 0.24s cubic-bezier(.22,1,.36,1)",
@@ -290,7 +290,7 @@ export default function SiteHeader() {
                         <Link href="/panel/autorizacion" onClick={() => setPanelOpen(false)} className="panel-menu-item">Autorizacion</Link>
                       </>
                     )}
-                    <button type="button" onClick={handleLogout} className="panel-menu-item panel-menu-item-danger mt-1 text-left">Cerrar sesion</button>
+                    <button type="button" onClick={handleLogout} className="panel-menu-item panel-menu-item-danger text-left">Cerrar sesion</button>
                   </div>
                 )}
               </div>

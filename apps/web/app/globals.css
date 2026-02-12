@@ -498,6 +498,9 @@ html { scroll-behavior: smooth; }
 
 /* Capsule dropdown */
 .capsule-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(148, 188, 255, 0.10) 100%);
@@ -507,8 +510,10 @@ html { scroll-behavior: smooth; }
 }
 
 .panel-menu-item {
-  display: block;
   width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
   border-radius: 12px;
   border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.08);
