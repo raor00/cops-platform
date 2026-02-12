@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Glass } from "glass-refraction";
 import { getCotizacionesClientUrl } from "../lib/moduleLinks";
 import {
   MASTER_ROLE_COOKIE,
   MASTER_SESSION_COOKIE,
   MASTER_SESSION_VALUE,
-  MASTER_USER_COOKIE,
 } from "../lib/masterAuth";
 
 const PUBLIC_NAV = [
@@ -47,7 +46,6 @@ function measureLink(el: HTMLElement, container: HTMLElement): Rect {
 
 export default function SiteHeader() {
   const pathname = usePathname();
-  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [open, setOpen] = useState(false);
@@ -71,6 +69,27 @@ export default function SiteHeader() {
 
   const isPanelRoute = pathname.startsWith("/panel");
   const navItems = loggedIn && isPanelRoute ? privateNav : PUBLIC_NAV;
+  const activeNavHref = useMemo(() => {
+    if (!loggedIn || !isPanelRoute) return pathname;
+
+    if (
+      pathname.startsWith("/panel/administracion") ||
+      pathname.startsWith("/panel/perfiles") ||
+      pathname.startsWith("/panel/autorizacion")
+    ) {
+      return "/panel/administracion";
+    }
+
+    if (pathname.startsWith("/panel/tickets") || pathname.startsWith("/panel/soporte")) {
+      return "/panel/tickets";
+    }
+
+    if (pathname.startsWith("/panel/cotizaciones")) {
+      return cotizacionesHref;
+    }
+
+    return "/panel";
+  }, [cotizacionesHref, isPanelRoute, loggedIn, pathname]);
 
   const navContainerRef = useRef<HTMLDivElement>(null);
   const linkRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
@@ -80,18 +99,21 @@ export default function SiteHeader() {
   const setPillForHref = useCallback((href: string) => {
     if (!navContainerRef.current) return;
     const el = linkRefs.current.get(href);
-    if (!el) return;
+    if (!el) {
+      setPillRect(null);
+      return;
+    }
     setPillRect(measureLink(el, navContainerRef.current));
   }, []);
 
   useEffect(() => {
-    setPillForHref(pathname);
-  }, [pathname, setPillForHref]);
+    setPillForHref(activeNavHref);
+  }, [activeNavHref, setPillForHref]);
 
   const handleNavMouseLeave = useCallback(() => {
     setIsNavHovering(false);
-    setPillForHref(pathname);
-  }, [pathname, setPillForHref]);
+    setPillForHref(activeNavHref);
+  }, [activeNavHref, setPillForHref]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -122,11 +144,9 @@ export default function SiteHeader() {
   }, [open, panelOpen]);
 
   const handleLogout = () => {
-    document.cookie = `${MASTER_SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
-    document.cookie = `${MASTER_ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
-    document.cookie = `${MASTER_USER_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    setOpen(false);
     setPanelOpen(false);
-    router.push("/");
+    window.location.assign("/logout");
   };
 
   const showPill = pillRect !== null;
@@ -184,7 +204,7 @@ export default function SiteHeader() {
                 top: pillRect?.top ?? 0,
                 width: pillRect?.width ?? 0,
                 height: pillRect?.height ?? 0,
-                opacity: showPill ? (isNavHovering ? 1 : 0.72) : 0,
+                opacity: showPill ? (panelOpen ? 0 : isNavHovering ? 1 : 0.72) : 0,
                 transition: [
                   "left 0.24s cubic-bezier(.22,1,.36,1)",
                   "width 0.24s cubic-bezier(.22,1,.36,1)",
@@ -216,7 +236,7 @@ export default function SiteHeader() {
                   setPanelOpen(false);
                 }}
                 className={`relative z-10 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-150 ${
-                  pathname === n.href
+                  activeNavHref === n.href
                     ? "text-white"
                     : "text-white/70 hover:text-white"
                 }`}
@@ -263,7 +283,7 @@ export default function SiteHeader() {
                 </button>
 
                 {panelOpen && (
-                  <div className="capsule-dropdown absolute right-0 mt-3 w-56 p-1.5">
+                  <div className="capsule-dropdown absolute right-0 z-30 mt-3 w-56 p-1.5">
                     {canSeeAdministracion && (
                       <>
                         <Link href="/panel/perfiles" onClick={() => setPanelOpen(false)} className="panel-menu-item">Perfiles</Link>

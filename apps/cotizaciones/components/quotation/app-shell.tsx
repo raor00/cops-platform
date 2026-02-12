@@ -73,10 +73,9 @@ export function AppShell() {
   }, [webAppUrl])
 
   const logoutToWeb = useCallback(() => {
-    document.cookie = "cops_master_session=; Path=/; Max-Age=0; SameSite=Lax"
-    document.cookie = "cops_master_role=; Path=/; Max-Age=0; SameSite=Lax"
-    document.cookie = "cops_master_user=; Path=/; Max-Age=0; SameSite=Lax"
-    window.location.href = `${webAppUrl}/`
+    setMobileMenuOpen(false)
+    setMobileAccountMenuOpen(false)
+    window.location.href = `${webAppUrl}/logout`
   }, [webAppUrl])
 
   useEffect(() => {
