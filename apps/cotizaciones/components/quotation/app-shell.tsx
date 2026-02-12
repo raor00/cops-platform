@@ -20,6 +20,9 @@ import {
   Menu,
   X,
   ChevronRight,
+  LayoutGrid,
+  LogOut,
+  MoreVertical,
 } from "lucide-react"
 
 type View = "new" | "delivery" | "transport" | "catalog" | "history"
@@ -36,9 +39,11 @@ export function AppShell() {
   const [activeView, setActiveView] = useState<View>("new")
   const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileAccountMenuOpen, setMobileAccountMenuOpen] = useState(false)
   const [mobileHeaderVisible, setMobileHeaderVisible] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
   const lastScrollRef = useRef(0)
+  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
 
   const handleEditQuotation = useCallback((data: QuotationData) => {
     setEditingQuotation(data)
@@ -60,7 +65,19 @@ export function AppShell() {
     }
     setActiveView(view)
     setMobileMenuOpen(false)
+    setMobileAccountMenuOpen(false)
   }
+
+  const goToPortal = useCallback(() => {
+    window.location.href = `${webAppUrl}/panel`
+  }, [webAppUrl])
+
+  const logoutToWeb = useCallback(() => {
+    document.cookie = "cops_master_session=; Path=/; Max-Age=0; SameSite=Lax"
+    document.cookie = "cops_master_role=; Path=/; Max-Age=0; SameSite=Lax"
+    document.cookie = "cops_master_user=; Path=/; Max-Age=0; SameSite=Lax"
+    window.location.href = `${webAppUrl}/`
+  }, [webAppUrl])
 
   useEffect(() => {
     const onScroll = () => {
@@ -71,7 +88,7 @@ export function AppShell() {
 
       if (y < 20) {
         setMobileHeaderVisible(true)
-      } else if (delta > 6 && !mobileMenuOpen) {
+      } else if (delta > 6 && !mobileMenuOpen && !mobileAccountMenuOpen) {
         setMobileHeaderVisible(false)
       } else if (delta < -6) {
         setMobileHeaderVisible(true)
@@ -82,13 +99,13 @@ export function AppShell() {
 
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [mobileMenuOpen])
+  }, [mobileMenuOpen, mobileAccountMenuOpen])
 
   useEffect(() => {
-    if (mobileMenuOpen) {
+    if (mobileMenuOpen || mobileAccountMenuOpen) {
       setMobileHeaderVisible(true)
     }
-  }, [mobileMenuOpen])
+  }, [mobileMenuOpen, mobileAccountMenuOpen])
 
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
@@ -136,6 +153,16 @@ export function AppShell() {
               <p className="mt-0.5">0212-7934136 / 7940316</p>
               <p>proyectos@copselectronics.com</p>
             </div>
+            <div className="mt-3 space-y-2">
+              <Button type="button" onClick={goToPortal} className="h-8 w-full justify-start bg-white/12 text-xs text-white hover:bg-white/18">
+                <LayoutGrid className="mr-2 h-3.5 w-3.5" />
+                Cambiar modulo
+              </Button>
+              <Button type="button" onClick={logoutToWeb} className="h-8 w-full justify-start border border-red-300/40 bg-red-500/25 text-xs text-red-100 hover:bg-red-500/38">
+                <LogOut className="mr-2 h-3.5 w-3.5" />
+                Cerrar sesion
+              </Button>
+            </div>
           </div>
         </div>
       </aside>
@@ -182,6 +209,27 @@ export function AppShell() {
         </div>
       )}
 
+      {mobileAccountMenuOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar menu de cuenta"
+            onClick={() => setMobileAccountMenuOpen(false)}
+            className="absolute inset-0 bg-[#102a58]/54 backdrop-blur-[2px]"
+          />
+          <div className="glass absolute right-3 top-20 w-56 rounded-2xl border border-white/24 bg-white/[0.16] p-2 shadow-lg">
+            <Button type="button" onClick={goToPortal} className="h-9 w-full justify-start bg-white/12 text-sm text-white hover:bg-white/18">
+              <LayoutGrid className="mr-2 h-4 w-4" />
+              Cambiar modulo
+            </Button>
+            <Button type="button" onClick={logoutToWeb} className="mt-2 h-9 w-full justify-start border border-red-300/40 bg-red-500/25 text-sm text-red-100 hover:bg-red-500/38">
+              <LogOut className="mr-2 h-4 w-4" />
+              Cerrar sesion
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {/* Mobile Header */}
@@ -193,7 +241,17 @@ export function AppShell() {
             <Image src="/cops-logo.png" alt="COPS Electronics" width={20} height={20} />
             <span className="truncate text-sm font-bold text-white">{"COP'S ELECTRONICS"}</span>
           </div>
-          <div className="w-8" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setMobileAccountMenuOpen((v) => !v)
+              setMobileMenuOpen(false)
+            }}
+            className="h-8 w-8 p-0 text-white"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
         </header>
 
         {/* Content Area */}
