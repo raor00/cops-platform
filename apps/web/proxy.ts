@@ -11,7 +11,7 @@ function hasMasterSession(request: NextRequest) {
   return request.cookies.get(MASTER_SESSION_COOKIE)?.value === MASTER_SESSION_VALUE;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const loggedIn = hasMasterSession(request);
   const role = request.cookies.get(MASTER_ROLE_COOKIE)?.value;
