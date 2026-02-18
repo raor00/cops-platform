@@ -15,6 +15,7 @@ import type {
   PaginatedResponse,
   PaymentMethod,
   SesionTrabajo,
+  SystemConfig,
   TechnicianKPI,
   TechnicianPayment,
   Ticket,
@@ -948,4 +949,34 @@ export function processPaymentDemo(
   }
   demoPayments[index] = updated
   return deepClone(updated)
+}
+
+// ─── Sistema de Configuración Demo ────────────────────────────────────────────
+
+let demoConfig: SystemConfig[] = [
+  { id: 1, clave: "empresa_nombre", valor: "COPS Electronics", descripcion: "Nombre de la empresa", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 2, clave: "empresa_rif", valor: "J-12345678-9", descripcion: "RIF fiscal de la empresa", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 3, clave: "empresa_telefono", valor: "+58 212 000 0000", descripcion: "Teléfono de contacto principal", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 4, clave: "empresa_email", valor: "ops@copselectronics.com", descripcion: "Email operacional", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 5, clave: "empresa_direccion", valor: "Caracas, Venezuela", descripcion: "Dirección fiscal", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 6, clave: "logo_url", valor: "", descripcion: "URL del logo de la empresa (vacío = default)", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 7, clave: "ticket_tiempo_respuesta_horas", valor: "24", descripcion: "SLA: tiempo máximo de respuesta (horas)", tipo_dato: "number", updated_at: new Date().toISOString() },
+  { id: 8, clave: "ticket_tiempo_resolucion_horas", valor: "72", descripcion: "SLA: tiempo máximo de resolución (horas)", tipo_dato: "number", updated_at: new Date().toISOString() },
+  { id: 9, clave: "ticket_monto_servicio_default", valor: "40", descripcion: "Monto por defecto para nuevos servicios (USD)", tipo_dato: "number", updated_at: new Date().toISOString() },
+  { id: 10, clave: "comision_porcentaje_default", valor: "50", descripcion: "Porcentaje de comisión para técnicos", tipo_dato: "number", updated_at: new Date().toISOString() },
+  { id: 11, clave: "inspeccion_requerida", valor: "false", descripcion: "Requerir inspección antes de finalizar ticket", tipo_dato: "boolean", updated_at: new Date().toISOString() },
+  { id: 12, clave: "notif_email_nuevo_ticket", valor: "true", descripcion: "Notificar por email al crear ticket", tipo_dato: "boolean", updated_at: new Date().toISOString() },
+  { id: 13, clave: "notif_email_cambio_estado", valor: "true", descripcion: "Notificar cambios de estado por email", tipo_dato: "boolean", updated_at: new Date().toISOString() },
+  { id: 14, clave: "notif_slack_webhook", valor: "", descripcion: "Webhook de Slack (vacío = desactivado)", tipo_dato: "string", updated_at: new Date().toISOString() },
+]
+
+export function getDemoConfig(): SystemConfig[] {
+  return deepClone(demoConfig)
+}
+
+export function updateDemoConfig(clave: string, valor: string): SystemConfig | null {
+  const idx = demoConfig.findIndex((c) => c.clave === clave)
+  if (idx === -1) return null
+  demoConfig[idx] = { ...demoConfig[idx]!, valor, updated_at: new Date().toISOString() }
+  return deepClone(demoConfig[idx]!)
 }

@@ -27,7 +27,7 @@ export function DashboardLayoutClient({ user, children }: DashboardLayoutClientP
     <div className="min-h-screen">
       {/* Sidebar - Desktop */}
       <div className="hidden md:block">
-        <Sidebar user={user} onLogout={handleLogout} />
+        <Sidebar user={user} onLogout={handleLogout} collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
       </div>
 
       {/* Mobile sidebar overlay */}

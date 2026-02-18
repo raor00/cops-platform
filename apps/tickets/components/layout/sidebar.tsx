@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Ticket,
   FolderKanban,
+  Kanban,
   Users,
   CreditCard,
   FileBarChart2,
@@ -25,6 +26,8 @@ import { ROLE_LABELS, hasPermission, ROLE_HIERARCHY } from "@/types"
 interface SidebarProps {
   user: User | UserProfile
   onLogout: () => void
+  collapsed?: boolean
+  onCollapsedChange?: (val: boolean) => void
 }
 
 // ─── Navigation groups ───────────────────────────────────────────────────────
@@ -50,6 +53,13 @@ const PRIMARY_NAV = [
     matchHref: "/dashboard/tickets",
     icon: FolderKanban,
     permission: null,
+  },
+  {
+    name: "Pipeline",
+    href: "/dashboard/pipeline",
+    icon: Kanban,
+    permission: null,
+    exact: false,
   },
 ] as const
 
@@ -83,9 +93,14 @@ const SYSTEM_NAV = [
   },
 ] as const
 
-export function Sidebar({ user, onLogout }: SidebarProps) {
+export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const [internalCollapsed, setInternalCollapsed] = useState(false)
+  const collapsed = controlledCollapsed ?? internalCollapsed
+  const setCollapsed = (val: boolean) => {
+    setInternalCollapsed(val)
+    onCollapsedChange?.(val)
+  }
 
   function isActive(item: { href: string; matchHref?: string; exact?: boolean }) {
     const match = item.matchHref || item.href.split("?")[0]

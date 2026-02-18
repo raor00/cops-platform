@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Plus,
   FolderKanban,
+  Kanban,
   TrendingUp,
   Activity,
   Users,
@@ -280,9 +281,17 @@ async function DashboardContent() {
               <CardTitle className="text-base">Pipeline de Tickets</CardTitle>
               <p className="text-xs text-white/40 mt-0.5">Vista de flujo por estado</p>
             </div>
-            <Button variant="ghost" size="sm" asChild className="text-white/50 hover:text-white text-xs border border-white/10">
-              <Link href="/dashboard/tickets">Ver todos</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild className="text-white/50 hover:text-white text-xs border border-white/10">
+                <Link href="/dashboard/pipeline">
+                  <Kanban className="h-3.5 w-3.5 mr-1.5" />
+                  Pipeline completo
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" asChild className="text-white/50 hover:text-white text-xs border border-white/10">
+                <Link href="/dashboard/tickets">Ver lista</Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <PipelineBoard tickets={tickets} />
