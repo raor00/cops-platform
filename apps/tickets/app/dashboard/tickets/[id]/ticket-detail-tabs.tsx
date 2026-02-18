@@ -10,18 +10,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { TicketDetails } from "./ticket-details"
 import { TicketFasesList } from "@/components/tickets/ticket-fases-list"
-import { TicketFotosGrid } from "@/components/tickets/ticket-fotos-grid"
-import type { FotoItem } from "@/components/tickets/ticket-fotos-grid"
+import { FotosGallery } from "@/components/fotos/fotos-gallery"
 
 interface TicketDetailTabsProps {
   ticket: Ticket
   fases: TicketFase[]
   historial: ChangeHistory[]
   inspeccion: Inspeccion | null
-  fotos?: FotoItem[]
   canManageFases: boolean
   canUpdateProgress: boolean
   canUploadFotos?: boolean
+  canDeleteFotos?: boolean
 }
 
 export function TicketDetailTabs({
@@ -29,10 +28,10 @@ export function TicketDetailTabs({
   fases,
   historial,
   inspeccion,
-  fotos = [],
   canManageFases,
   canUpdateProgress,
   canUploadFotos = false,
+  canDeleteFotos = false,
 }: TicketDetailTabsProps) {
   const isProyecto = ticket.tipo === "proyecto"
 
@@ -63,11 +62,6 @@ export function TicketDetailTabs({
         <TabsTrigger value="fotos">
           <Camera className="h-4 w-4 mr-1.5" />
           Fotos
-          {fotos.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-purple-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-purple-300">
-              {fotos.length}
-            </span>
-          )}
         </TabsTrigger>
         <TabsTrigger value="historial">
           <History className="h-4 w-4 mr-1.5" />
@@ -118,7 +112,11 @@ export function TicketDetailTabs({
 
       {/* ─── Tab: Fotos ───────────────────────────────────────────────────── */}
       <TabsContent value="fotos">
-        <TicketFotosGrid fotos={fotos} canUpload={canUploadFotos} />
+        <FotosGallery
+          ticketId={ticket.id}
+          canUpload={canUploadFotos}
+          canDelete={canDeleteFotos}
+        />
       </TabsContent>
 
       {/* ─── Tab: Historial ───────────────────────────────────────────────── */}

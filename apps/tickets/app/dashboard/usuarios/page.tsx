@@ -7,27 +7,23 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { getCurrentUser } from "@/lib/actions/auth"
-import { createClient } from "@/lib/supabase/server"
+import { getAllUsers } from "@/lib/actions/usuarios"
 import { isLocalMode } from "@/lib/local-mode"
 import { getDemoUsers } from "@/lib/mock-data"
 import { ROLE_HIERARCHY, ROLE_LABELS } from "@/types"
 import { getInitials } from "@/lib/utils"
-import type { User } from "@/types"
+import type { User, UserProfile } from "@/types"
+import { AvatarImage } from "@/components/ui/avatar"
 
 export const metadata = { title: "Usuarios" }
 
-async function getUsers(): Promise<User[]> {
+async function getUsers(): Promise<UserProfile[]> {
   if (isLocalMode()) {
-    return getDemoUsers()
+    return getDemoUsers() as UserProfile[]
   }
 
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("users")
-    .select("*")
-    .order("nivel_jerarquico", { ascending: false })
-    .order("nombre")
-  return (data as User[]) || []
+  const result = await getAllUsers()
+  return result.data || []
 }
 
 export default async function UsuariosPage() {
@@ -59,6 +55,9 @@ export default async function UsuariosPage() {
           <Card key={u.id} variant="glass" className="p-5">
             <div className="flex items-start gap-4">
               <Avatar className="h-12 w-12">
+                {u.foto_perfil_url && (
+                  <AvatarImage src={u.foto_perfil_url} alt={`${u.nombre} ${u.apellido}`} />
+                )}
                 <AvatarFallback>{getInitials(u.nombre, u.apellido)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
