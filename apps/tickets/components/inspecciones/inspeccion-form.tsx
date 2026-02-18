@@ -45,24 +45,27 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
 
   function initializeChecklist(): ChecklistItem[] {
     return DEFAULT_CHECKLIST_CATEGORIAS.flatMap((cat) =>
-      cat.items.map((item) => ({
+      cat.items.map((descripcion, i) => ({
+        id: `${cat.categoria}-${i}`,
         categoria: cat.categoria,
-        item,
-        cumple: false,
-        observacion: "",
+        descripcion,
+        aplica: true,
+        estado: "pendiente" as const,
+        notas: null,
+        foto_ids: [],
       }))
     )
   }
 
   function handleCheckChange(index: number, checked: boolean) {
     const updated = [...checklist]
-    updated[index].cumple = checked
+    updated[index] = { ...updated[index], estado: checked ? "ok" : "pendiente" }
     setChecklist(updated)
   }
 
   function handleObservacionChange(index: number, value: string) {
     const updated = [...checklist]
-    updated[index].observacion = value
+    updated[index] = { ...updated[index], notas: value || null }
     setChecklist(updated)
   }
 
@@ -139,7 +142,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
   }, {} as Record<string, (ChecklistItem & { index: number })[]>)
 
   const totalItems = checklist.length
-  const completedItems = checklist.filter((item) => item.cumple).length
+  const completedItems = checklist.filter((item) => item.estado === "ok").length
   const completionPercentage = Math.round((completedItems / totalItems) * 100)
 
   return (
@@ -192,7 +195,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
       {/* Checklist por categorías */}
       <div className="space-y-4">
         {Object.entries(groupedChecklist).map(([categoria, items]) => {
-          const categoryCompleted = items.filter((i) => i.cumple).length
+          const categoryCompleted = items.filter((i) => i.estado === "ok").length
           const categoryTotal = items.length
           const categoryPercentage = Math.round((categoryCompleted / categoryTotal) * 100)
 
@@ -214,7 +217,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
                     <div className="flex items-start gap-3">
                       <Checkbox
                         id={`item-${item.index}`}
-                        checked={item.cumple}
+                        checked={item.estado === "ok"}
                         onCheckedChange={(checked) =>
                           handleCheckChange(item.index, checked === true)
                         }
@@ -224,16 +227,16 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
                       <Label
                         htmlFor={`item-${item.index}`}
                         className={`text-sm flex-1 cursor-pointer ${
-                          item.cumple ? "text-white/90" : "text-white/70"
+                          item.estado === "ok" ? "text-white/90" : "text-white/70"
                         }`}
                       >
-                        {item.item}
+                        {item.descripcion}
                       </Label>
                     </div>
-                    {!item.cumple && (
+                    {item.estado !== "ok" && (
                       <Textarea
                         placeholder="Observación (opcional)"
-                        value={item.observacion}
+                        value={item.notas ?? ""}
                         onChange={(e) =>
                           handleObservacionChange(item.index, e.target.value)
                         }
@@ -287,7 +290,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
       </Card>
 
       {/* Advertencias */}
-      {completedItems < totalItems && canEdit && (
+      {completedItems < totalItems && canEdit && checklist.length > 0 && (
         <div className="flex items-start gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
           <AlertCircle className="h-5 w-5 text-yellow-400 mt-0.5" />
           <div className="flex-1">

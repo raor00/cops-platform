@@ -48,7 +48,7 @@ export function FotoUploadDialog({
     if (!file) return
 
     // Validar tipo
-    if (!FOTO_UPLOAD_CONFIG.allowedTypes.includes(file.type)) {
+    if (!FOTO_UPLOAD_CONFIG.allowedTypes.includes(file.type as "image/jpeg" | "image/png" | "image/webp" | "image/heic")) {
       toast.error("Tipo de archivo no permitido. Solo JPEG, PNG, WEBP o HEIC")
       return
     }

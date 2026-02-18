@@ -23,7 +23,7 @@ export function InspeccionView({ inspeccion, ticket }: InspeccionViewProps) {
   }, {} as Record<string, typeof inspeccion.datos_checklist>)
 
   const totalItems = inspeccion.datos_checklist.length
-  const completedItems = inspeccion.datos_checklist.filter((item) => item.cumple).length
+  const completedItems = inspeccion.datos_checklist.filter((item) => item.estado === "ok").length
   const completionPercentage = Math.round((completedItems / totalItems) * 100)
 
   return (
@@ -136,15 +136,15 @@ export function InspeccionView({ inspeccion, ticket }: InspeccionViewProps) {
                   {items.map((item, idx) => (
                     <tr key={idx}>
                       <td className="text-center">
-                        {item.cumple ? (
+                        {item.estado === "ok" ? (
                           <CheckCircle className="h-5 w-5 text-green-600 inline-block" />
                         ) : (
                           <XCircle className="h-5 w-5 text-red-600 inline-block" />
                         )}
                       </td>
-                      <td>{item.item}</td>
+                      <td>{item.descripcion}</td>
                       <td className="text-sm text-gray-600">
-                        {item.observacion || "—"}
+                        {item.notas || "—"}
                       </td>
                     </tr>
                   ))}
