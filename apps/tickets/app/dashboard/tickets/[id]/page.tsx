@@ -118,8 +118,10 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
         fases={fasesResult.data ?? []}
         historial={historialResult.data ?? []}
         inspeccion={null}
+        fotos={[]}
         canManageFases={canManageFases}
         canUpdateProgress={canUpdateProgress}
+        canUploadFotos={ROLE_HIERARCHY[user.rol] >= 2}
       />
     </div>
   )

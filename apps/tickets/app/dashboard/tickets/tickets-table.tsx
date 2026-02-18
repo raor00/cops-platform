@@ -82,7 +82,7 @@ export async function TicketsTable({ page, status, priority, search }: TicketsTa
     <div>
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="table-glass">
+        <table className="table-glass table-row-stagger">
           <thead>
             <tr>
               <th>Ticket</th>
@@ -97,16 +97,16 @@ export async function TicketsTable({ page, status, priority, search }: TicketsTa
           </thead>
           <tbody>
             {tickets.map((ticket) => (
-              <tr key={ticket.id}>
+              <tr key={ticket.id} className="group/row transition-colors hover:bg-white/[0.04]">
                 <td>
-                  <Link 
+                  <Link
                     href={`/dashboard/tickets/${ticket.id}`}
-                    className="font-medium text-blue-400 hover:text-blue-300"
+                    className="font-medium text-blue-400 hover:text-blue-300 transition-colors duration-150 underline-offset-2 hover:underline"
                   >
                     {ticket.numero_ticket}
                   </Link>
                   <div className="text-xs text-white/50 mt-0.5">
-                    {ticket.tipo === "proyecto" ? "Proyecto" : "Servicio"}
+                    {ticket.tipo === "proyecto" ? "🗂 Proyecto" : "🔧 Servicio"}
                   </div>
                 </td>
                 <td>
@@ -119,7 +119,11 @@ export async function TicketsTable({ page, status, priority, search }: TicketsTa
                   <div className="max-w-[200px] truncate">{ticket.asunto}</div>
                 </td>
                 <td>
-                  <Badge className={STATUS_COLORS[ticket.estado]}>
+                  <Badge
+                    className={`${STATUS_COLORS[ticket.estado]} transition-all duration-200 ${
+                      ticket.estado === "en_progreso" ? "animate-pulse-subtle" : ""
+                    }`}
+                  >
                     {STATUS_LABELS[ticket.estado]}
                   </Badge>
                 </td>

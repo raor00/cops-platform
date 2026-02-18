@@ -70,25 +70,36 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl p-6 border transition-all duration-500",
-        "bg-white/5 backdrop-blur-sm",
+        "group relative overflow-hidden rounded-2xl p-6 border",
+        "bg-white/5 backdrop-blur-sm cursor-default",
+        "transition-all duration-500 ease-out",
+        "hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(14,47,111,0.4)]",
         borderColorClass,
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
       style={{ transitionDelay: `${delay * 1000}ms` }}
     >
-      {/* Glow */}
+      {/* Glow de fondo — se intensifica en hover */}
       <div
         className={cn(
-          "absolute -top-8 -right-8 h-28 w-28 rounded-full opacity-10 blur-2xl pointer-events-none",
+          "absolute -top-8 -right-8 h-28 w-28 rounded-full blur-2xl pointer-events-none",
+          "opacity-10 transition-opacity duration-500 group-hover:opacity-20",
           colorClass
+        )}
+      />
+
+      {/* Línea top decorativa */}
+      <div
+        className={cn(
+          "absolute top-0 left-6 right-6 h-px opacity-40",
+          colorClass.replace("bg-", "bg-")
         )}
       />
 
       <div className="relative flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-white/60 truncate">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-white tracking-tight tabular-nums">
+          <p className="mt-2 text-3xl font-bold text-white tracking-tight tabular-nums animate-count-up">
             {displayValue}
           </p>
           {subtitle && (
@@ -97,11 +108,11 @@ export function KpiCard({
           {trend !== undefined && (
             <div
               className={cn(
-                "mt-2 flex items-center gap-1 text-xs font-medium",
+                "mt-2 flex items-center gap-1 text-xs font-semibold",
                 trend >= 0 ? "text-green-400" : "text-red-400"
               )}
             >
-              <span>{trend >= 0 ? "↑" : "↓"}</span>
+              <span className="text-base leading-none">{trend >= 0 ? "↑" : "↓"}</span>
               <span>{Math.abs(trend)}% vs mes anterior</span>
             </div>
           )}
@@ -110,6 +121,7 @@ export function KpiCard({
         <div
           className={cn(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ml-3",
+            "transition-transform duration-300 group-hover:scale-110",
             colorClass,
             borderColorClass
           )}
