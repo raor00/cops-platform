@@ -52,31 +52,33 @@ export default async function UsuariosPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {users.map((u) => (
-          <Card key={u.id} variant="glass" className="p-5">
-            <div className="flex items-start gap-4">
-              <Avatar className="h-12 w-12">
-                {u.foto_perfil_url && (
-                  <AvatarImage src={u.foto_perfil_url} alt={`${u.nombre} ${u.apellido}`} />
-                )}
-                <AvatarFallback>{getInitials(u.nombre, u.apellido)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-medium text-white truncate">
-                    {u.nombre} {u.apellido}
-                  </h3>
-                  <Badge variant={u.estado === "activo" ? "success" : "secondary"}>
-                    {u.estado}
-                  </Badge>
+          <Link key={u.id} href={`/dashboard/usuarios/${u.id}`} className="block hover:-translate-y-0.5 transition-transform duration-200">
+            <Card variant="glass" className="p-5 hover:border-white/20 transition-colors h-full">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-12 w-12">
+                  {u.foto_perfil_url && (
+                    <AvatarImage src={u.foto_perfil_url} alt={`${u.nombre} ${u.apellido}`} />
+                  )}
+                  <AvatarFallback>{getInitials(u.nombre, u.apellido)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-medium text-white truncate">
+                      {u.nombre} {u.apellido}
+                    </h3>
+                    <Badge variant={u.estado === "activo" ? "success" : "secondary"}>
+                      {u.estado}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-white/60 truncate">{u.email}</p>
+                  <p className="text-xs text-blue-400 mt-1">{ROLE_LABELS[u.rol]}</p>
                 </div>
-                <p className="text-sm text-white/60 truncate">{u.email}</p>
-                <p className="text-xs text-blue-400 mt-1">{ROLE_LABELS[u.rol]}</p>
               </div>
-            </div>
-            {u.telefono && (
-              <p className="text-xs text-white/50 mt-3 pl-16">{u.telefono}</p>
-            )}
-          </Card>
+              {u.telefono && (
+                <p className="text-xs text-white/50 mt-3 pl-16">{u.telefono}</p>
+              )}
+            </Card>
+          </Link>
         ))}
 
         {users.length === 0 && (

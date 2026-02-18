@@ -106,9 +106,9 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
       <Link
         href={item.href}
         className={cn(
-          "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+          "sidebar-nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
           active
-            ? "bg-gradient-to-r from-blue-500/25 to-purple-500/15 text-white border border-blue-500/30 shadow-[0_0_20px_rgba(47,84,224,0.12)]"
+            ? "active bg-gradient-to-r from-blue-500/25 to-purple-500/15 text-white border border-blue-500/30 shadow-[0_0_20px_rgba(47,84,224,0.12)]"
             : "text-white/60 hover:bg-white/8 hover:text-white"
         )}
       >
