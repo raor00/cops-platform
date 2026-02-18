@@ -53,6 +53,8 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
     user.rol === "tecnico" && ticket.tecnico_id === user.id
   const canViewComprobante =
     ticket.estado === "finalizado" && ROLE_HIERARCHY[user.rol] >= 2
+  const canUploadFotos = ROLE_HIERARCHY[user.rol] >= 2
+  const canDeleteFotos = ROLE_HIERARCHY[user.rol] >= 3
 
   // Fetches paralelos: fases e historial (no bloquean entre sí)
   const [fasesResult, historialResult] = await Promise.all([
@@ -118,10 +120,10 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
         fases={fasesResult.data ?? []}
         historial={historialResult.data ?? []}
         inspeccion={null}
-        fotos={[]}
         canManageFases={canManageFases}
         canUpdateProgress={canUpdateProgress}
-        canUploadFotos={ROLE_HIERARCHY[user.rol] >= 2}
+        canUploadFotos={canUploadFotos}
+        canDeleteFotos={canDeleteFotos}
       />
     </div>
   )

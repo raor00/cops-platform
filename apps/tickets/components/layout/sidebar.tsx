@@ -17,13 +17,13 @@ import {
   Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import type { User } from "@/types"
+import type { User, UserProfile } from "@/types"
 import { ROLE_LABELS, hasPermission, ROLE_HIERARCHY } from "@/types"
 
 interface SidebarProps {
-  user: User
+  user: User | UserProfile
   onLogout: () => void
 }
 
@@ -208,6 +208,9 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         <div className="border-t border-white/10 p-3">
           <div className={cn("flex items-center gap-3 rounded-xl p-2", collapsed ? "justify-center" : "")}>
             <Avatar className="h-9 w-9 shrink-0 ring-1 ring-white/20">
+              {"foto_perfil_url" in user && user.foto_perfil_url && (
+                <AvatarImage src={user.foto_perfil_url} alt={`${user.nombre} ${user.apellido}`} />
+              )}
               <AvatarFallback className="bg-gradient-to-br from-blue-600/40 to-purple-600/40 text-white text-xs font-bold">
                 {user.nombre.charAt(0)}{user.apellido.charAt(0)}
               </AvatarFallback>
