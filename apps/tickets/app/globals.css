@@ -622,7 +622,7 @@
     transform: scaleY(1);
   }
   .sidebar-nav-item:hover {
-    @apply bg-white/8;
+    background-color: rgb(255 255 255 / 0.08);
     padding-left: calc(theme('spacing.3') + 2px);
   }
 }
