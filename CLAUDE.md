@@ -20,14 +20,14 @@ This file keeps the most important technical context so future work does not los
 | Sprint 2 | ✅ Completo | Ticket detail con tabs, sistema de Fases, wizard de estados, creación de usuarios, modal de pagos |
 | Sprint 3 | ✅ Completo | Fotos (Supabase Storage), FotosGallery, perfiles de usuario, comprobante PDF, export CSV de pagos |
 | Sprint 4 | ✅ Completo | Inspección técnica real, perfil `/usuarios/[id]`, página de reportes KPIs, sidebar animations |
-| Sprint 5 | ⏳ Pendiente | UI mobile para técnicos, pipeline board, configuración, notificaciones |
+| Sprint 5 | ✅ Completo | Vista móvil técnicos, pipeline board dedicado, config page, loading skeletons, fix sidebar collapse |
 
-### Sprint 4 — Entregados (2025-02)
-- **A2** `tickets/[id]/page.tsx`: Fetch real de `getInspeccionByTicket` en paralelo (no más `null` hardcodeado)
-- **B** `usuarios/[id]/page.tsx`: Página nueva con 3 tabs — Perfil, Tickets asignados, Rendimiento con KPIs
-- **C** `reportes/page.tsx` + `report-export-button.tsx`: Dashboard de reportes con 4 KPI cards, distribución por estado, tabla de técnicos, gráfico mensual, exportación CSV
-- **D** `sidebar.tsx`: Clases `sidebar-nav-item` + `active` para animación de barra izquierda CSS
-- **E** `usuarios/page.tsx`: Cards de usuario ahora son links a `/dashboard/usuarios/[id]`
+### Sprint 5 — Entregados (2026-02-18)
+- **15** `tickets/page.tsx`: Vista móvil responsive para técnicos — cards con borde de color por estado + pills de filtro (`<768px`); desktop sigue mostrando tabla.
+- **16** `app/dashboard/pipeline/page.tsx`: Pipeline board dedicado — todas las tarjetas sin límite, scroll por columna, indicador SLA ⚠ (>72h), filtros técnico/prioridad para coordinador+.
+- **17** `app/dashboard/configuracion/page.tsx`: Página de configuración del sistema — 14 parámetros agrupados (empresa, SLA/tickets, notificaciones). Vista: gerente+. Edición: vicepresidente+.
+- **18** Loading skeletons en 8 rutas: `dashboard`, `tickets`, `tickets/[id]`, `pipeline`, `configuracion`, `reportes`, `pagos`, `usuarios`.
+- **Bug fix** `sidebar.tsx` + `layout-client.tsx`: El estado `sidebarCollapsed` ahora está sincronizado como prop controlada → margen del contenido desktop funciona correctamente.
 
 ---
 
@@ -36,11 +36,12 @@ This file keeps the most important technical context so future work does not los
 | Ruta | Acceso mínimo |
 |------|--------------|
 | `/dashboard` | todos |
-| `/dashboard/tickets` | todos |
+| `/dashboard/tickets` | todos (cards mobile para técnico, tabla para resto) |
 | `/dashboard/tickets/[id]` | todos |
 | `/dashboard/tickets/[id]/inspeccion` | coordinador(2)+ |
-| `/dashboard/tickets/[id]/inspeccion/view` | coordinador(2)+ |
 | `/dashboard/tickets/[id]/comprobante` | coordinador(2)+ |
+| `/dashboard/pipeline` | todos (técnico ve solo los suyos) |
+| `/dashboard/configuracion` | gerente(3)+ (editar: vicepresidente(4)+) |
 | `/dashboard/usuarios` | gerente(3)+ |
 | `/dashboard/usuarios/nuevo` | gerente(3)+ |
 | `/dashboard/usuarios/[id]` | gerente(3)+ o propio usuario |
@@ -57,8 +58,40 @@ This file keeps the most important technical context so future work does not los
 | `InspeccionForm` | `components/inspecciones/inspeccion-form.tsx` | ChecklistItem: usar `estado/notas/descripcion` |
 | `InspeccionView` | `components/inspecciones/inspeccion-view.tsx` | Vista imprimible de inspección |
 | `ProfileEditDialog` | `components/usuarios/profile-edit-dialog.tsx` | Foto + campos del perfil |
-| `Sidebar` | `components/layout/sidebar.tsx` | NavLink con clase `sidebar-nav-item` |
+| `Sidebar` | `components/layout/sidebar.tsx` | Props controladas: `collapsed?` + `onCollapsedChange?` |
 | `PagosFiltersBar` | `components/pagos/pagos-filters.tsx` | Filtros + export CSV de pagos |
+| `ConfigSection` | `components/configuracion/config-section.tsx` | Client component — secciones config con edición inline |
+| `PipelinePageBoard` | `components/pipeline/pipeline-page-board.tsx` | Board completo sin límite + SLA warning |
+| `TechnicianMobileList` | `components/tickets/technician-mobile-list.tsx` | Client component — pills de estado + cards stack |
+
+---
+
+## Sprint 5 — Nuevos archivos
+
+```
+lib/actions/configuracion.ts          → getConfiguracion(), updateConfigValue()
+lib/mock-data.ts                      → + getDemoConfig(), updateDemoConfig() (14 entradas)
+components/configuracion/
+  config-skeleton.tsx
+  config-edit-dialog.tsx              → Dialog edición un SystemConfig (boolean/number/string)
+  config-section.tsx                  → Client component — grupo de configs editables
+components/pipeline/
+  pipeline-filters.tsx                → Client — Select técnico + prioridad
+  pipeline-page-board.tsx             → Board completo con scroll/columna + SLA indicator
+components/tickets/
+  technician-mobile-card.tsx          → Card con borde de color por estado
+  technician-mobile-list.tsx          → Client — pills filtro + stack de cards
+app/dashboard/pipeline/
+  page.tsx, loading.tsx
+app/dashboard/configuracion/
+  page.tsx, loading.tsx
+app/dashboard/loading.tsx
+app/dashboard/tickets/loading.tsx
+app/dashboard/tickets/[id]/loading.tsx
+app/dashboard/reportes/loading.tsx
+app/dashboard/pagos/loading.tsx
+app/dashboard/usuarios/loading.tsx
+```
 
 ---
 
@@ -126,13 +159,6 @@ corepack pnpm dev:cotizaciones # puerto 3001
 corepack pnpm dev:tickets      # puerto 3002
 ```
 
-Solo tickets:
-```bash
-cd apps/tickets
-npm run dev
-# Abre http://localhost:3000 (o 3002 si se configura)
-```
-
 TypeScript check (debe dar 0 errores):
 ```bash
 cd apps/tickets && npx tsc --noEmit
@@ -152,11 +178,19 @@ corepack pnpm --filter tickets build
 export async function actionName(input): Promise<ActionResponse<T>> {
   const user = await getCurrentUser()
   if (!user) return { success: false, error: "No autenticado" }
-  if (ROLE_HIERARCHY[user.rol] < N) return { success: false, error: "Sin permisos" }
+  if (!hasPermission(user.rol, 'permission:name')) return { success: false, error: "Sin permisos" }
   if (isLocalMode()) { return { success: true, data: mockData, message: "..." } }
   const supabase = await createClient()
   // query supabase...
+  revalidatePath("/dashboard/ruta")
 }
+```
+
+### IMPORTANTE: getAllUsers() NO tiene isLocalMode branch
+```typescript
+// ✅ CORRECTO — en páginas que necesiten usuarios en local mode:
+const users = isLocalMode() ? getDemoUsers() : (await getAllUsers()).data ?? []
+// ❌ INCORRECTO — llamar getAllUsers() directamente en local mode falla
 ```
 
 ### ChecklistItem — Tipo CORRECTO
@@ -173,6 +207,13 @@ export async function actionName(input): Promise<ActionResponse<T>> {
 const tickets = result.data?.data ?? []
 ```
 
+### Sidebar collapse (sincronizado desde Sprint 5)
+```typescript
+// layout-client.tsx pasa estado controlado:
+<Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
+// Sidebar acepta props opcionales; si no se pasan usa estado interno propio
+```
+
 ---
 
 ## Design System Constraints
@@ -182,6 +223,8 @@ const tickets = result.data?.data ?? []
 - Cards: `<Card variant="glass">`
 - Animaciones: `animate-fade-in`, `animate-slide-up`, `animate-scale-in`
 - Stagger delays: `stagger-1` ... `stagger-6` (definidos en globals.css)
+- Mobile tech cards: clase `mobile-ticket-card mobile-ticket-card-{estado}` (borde izquierdo de color)
+- Status pills bar: clase `status-pills-bar` (scroll horizontal sin scrollbar)
 - **NO framer-motion** — solo CSS de globals.css + Tailwind transitions
 - Sidebar activo: clase `sidebar-nav-item active`
 
@@ -203,3 +246,4 @@ const tickets = result.data?.data ?? []
 - V0 (Vercel) puede generar código con tipos incorrectos — siempre adaptar a `types/index.ts`.
 - `downloadCSV` está en `@/lib/utils/csv-export` (NO en `@/lib/utils`).
 - `useToast` es un wrapper local en `hooks/use-toast.ts` sobre sonner.
+- `Lucide` icons NO aceptan prop `title` directamente — envolver en `<span title="...">`.
