@@ -5,8 +5,10 @@
   "scripts": {
     "dev:web": "corepack pnpm --filter web dev",
     "dev:cotizaciones": "corepack pnpm --filter cotizaciones dev",
+    "dev:tickets": "corepack pnpm --filter tickets dev",
     "build:web": "corepack pnpm --filter web build",
     "build:cotizaciones": "corepack pnpm --filter cotizaciones build",
+    "build:tickets": "corepack pnpm --filter tickets build",
     "lint:web": "corepack pnpm --filter web lint",
     "lint:cotizaciones": "corepack pnpm --filter cotizaciones lint"
   }

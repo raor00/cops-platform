@@ -3,5 +3,5 @@
 import { GlassFilters } from "glass-refraction"
 
 export default function GlassProvider() {
-  return <GlassFilters scale={10} strongScale={18} />
+  return <GlassFilters scale={7} strongScale={12} />
 }

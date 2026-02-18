@@ -75,6 +75,8 @@ body {
     --gr-chromatic-violet: rgba(120, 80, 255, 0.06);
     --gr-chromatic-pink: rgba(255, 120, 200, 0.04);
     --gr-chromatic-green: rgba(100, 255, 200, 0.03);
+    --gr-shimmer-duration: 18s;
+    --gr-specular-duration: 14s;
   }
 
   * {
