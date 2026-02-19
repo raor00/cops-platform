@@ -1,249 +1,520 @@
-# COPS Platform - Working Context
+# COPS Platform — Contexto Completo para LLM
 
-This file keeps the most important technical context so future work does not lose continuity.
-
----
-
-## Monorepo Structure
-
-- `apps/web`: Corporate website + master portal (login + module selector).
-- `apps/cotizaciones`: Quotation system UI.
-- `apps/tickets`: Tickets/support/field-service management system (trabajo de grado).
+Este archivo contiene todo el contexto técnico del proyecto. Un LLM que lea este archivo
+puede continuar el desarrollo sin perder continuidad. Actualizado: 2026-02-19.
 
 ---
 
-## Sprint Progress — apps/tickets (Trabajo de Grado)
+## 1. Resumen del Proyecto
+
+**COPS Electronics** — Sistema de gestión de servicios y proyectos técnicos (campo, soporte, instalación).
+Es el sistema de tickets de campo para una empresa de electrónica/CCTV/seguridad electrónica.
+
+**Repositorio:** https://github.com/raor00/cops-platform
+**Branch activo:** `main`
+**Estructura:** Monorepo con 3 apps Next.js
+
+```
+cops-platform/
+├── apps/
+│   ├── web/            → Portal corporativo + selector de módulos (puerto 3000)
+│   ├── cotizaciones/   → Sistema de cotizaciones (puerto 3001)
+│   └── tickets/        → Sistema de tickets/servicios (puerto 3002) ← FOCO PRINCIPAL
+├── CLAUDE.md           ← este archivo
+└── package.json        (pnpm workspaces)
+```
+
+---
+
+## 2. Stack Técnico — apps/tickets
+
+| Tecnología | Versión / Detalle |
+|---|---|
+| Framework | Next.js 15/16, App Router, TypeScript strict |
+| UI | Tailwind CSS + Radix UI primitivos |
+| Datos | Supabase (PostgreSQL + Storage) |
+| Forms | React Hook Form + Zod |
+| Toast | Sonner |
+| Gráficas | Recharts |
+| Icons | Lucide React |
+| Animaciones | **SOLO CSS** — NO framer-motion |
+| Package mgr | pnpm (corepack) |
+
+---
+
+## 3. Comandos
+
+```bash
+# Desde raíz del monorepo
+corepack pnpm install
+corepack pnpm dev:tickets      # puerto 3002
+corepack pnpm dev:web          # puerto 3000
+corepack pnpm --filter tickets build
+
+# Desde apps/tickets
+npx tsc --noEmit               # TypeScript check (debe dar 0 errores)
+```
+
+**Demo credentials:** Email: `admin@copselectronics.com` / Password: cualquier valor en local mode
+
+---
+
+## 4. Modos de Ejecución
+
+El sistema tiene **dual mode**:
+
+| Modo | Activación | Datos |
+|---|---|---|
+| **Local/Demo** | `TICKETS_LOCAL_MODE=true` o sin vars de Supabase | `lib/mock-data.ts` en memoria |
+| **Real** | Vars de Supabase configuradas | Supabase PostgreSQL |
+
+```typescript
+// Siempre usar este patrón en server actions:
+import { isLocalMode } from "@/lib/local-mode"
+
+if (isLocalMode()) {
+  return { success: true, data: getDemoXxx() }
+}
+const supabase = await createClient()
+// ... query real
+```
+
+**CRÍTICO:** `getAllUsers()` NO tiene rama local mode. Usar así:
+```typescript
+const users = isLocalMode() ? getDemoUsers() : (await getAllUsers()).data ?? []
+```
+
+---
+
+## 5. Estado de Sprints
 
 | Sprint | Estado | Entregables |
 |--------|--------|-------------|
-| Sprint 1 | ✅ Completo | Schema SQL, tipos, mock-data, dashboard KPIs+charts, sidebar glass-morphism |
-| Sprint 2 | ✅ Completo | Ticket detail con tabs, sistema de Fases, wizard de estados, creación de usuarios, modal de pagos |
-| Sprint 3 | ✅ Completo | Fotos (Supabase Storage), FotosGallery, perfiles de usuario, comprobante PDF, export CSV de pagos |
-| Sprint 4 | ✅ Completo | Inspección técnica real, perfil `/usuarios/[id]`, página de reportes KPIs, sidebar animations |
-| Sprint 5 | ✅ Completo | Vista móvil técnicos, pipeline board dedicado, config page, loading skeletons, fix sidebar collapse |
-
-### Sprint 5 — Entregados (2026-02-18)
-- **15** `tickets/page.tsx`: Vista móvil responsive para técnicos — cards con borde de color por estado + pills de filtro (`<768px`); desktop sigue mostrando tabla.
-- **16** `app/dashboard/pipeline/page.tsx`: Pipeline board dedicado — todas las tarjetas sin límite, scroll por columna, indicador SLA ⚠ (>72h), filtros técnico/prioridad para coordinador+.
-- **17** `app/dashboard/configuracion/page.tsx`: Página de configuración del sistema — 14 parámetros agrupados (empresa, SLA/tickets, notificaciones). Vista: gerente+. Edición: vicepresidente+.
-- **18** Loading skeletons en 8 rutas: `dashboard`, `tickets`, `tickets/[id]`, `pipeline`, `configuracion`, `reportes`, `pagos`, `usuarios`.
-- **Bug fix** `sidebar.tsx` + `layout-client.tsx`: El estado `sidebarCollapsed` ahora está sincronizado como prop controlada → margen del contenido desktop funciona correctamente.
+| Sprint 1 | ✅ | Schema SQL, tipos TypeScript, mock-data, dashboard KPIs+charts, sidebar glass-morphism |
+| Sprint 2 | ✅ | Ticket detail (tabs), sistema de Fases, wizard de estados, creación de usuarios, modal de pagos |
+| Sprint 3 | ✅ | Fotos Supabase Storage, FotosGallery autónoma, perfiles de usuario, comprobante PDF, export CSV pagos |
+| Sprint 4 | ✅ | Inspección técnica real (25 ítems), perfil `/usuarios/[id]` con 3 tabs, reportes KPIs, sidebar animations, links usuarios |
+| Sprint 5 | ✅ | Vista móvil técnicos (cards+pills), pipeline board dedicado (/pipeline), config page (/configuracion), loading.tsx en 8 rutas, fix sidebar collapse |
 
 ---
 
-## Rutas Activas — apps/tickets
+## 6. Roles y Permisos
 
-| Ruta | Acceso mínimo |
-|------|--------------|
-| `/dashboard` | todos |
-| `/dashboard/tickets` | todos (cards mobile para técnico, tabla para resto) |
-| `/dashboard/tickets/[id]` | todos |
-| `/dashboard/tickets/[id]/inspeccion` | coordinador(2)+ |
-| `/dashboard/tickets/[id]/comprobante` | coordinador(2)+ |
-| `/dashboard/pipeline` | todos (técnico ve solo los suyos) |
-| `/dashboard/configuracion` | gerente(3)+ (editar: vicepresidente(4)+) |
-| `/dashboard/usuarios` | gerente(3)+ |
-| `/dashboard/usuarios/nuevo` | gerente(3)+ |
-| `/dashboard/usuarios/[id]` | gerente(3)+ o propio usuario |
-| `/dashboard/reportes` | coordinador(2)+ |
-| `/dashboard/pagos` | coordinador(2)+ |
-
----
-
-## Componentes Clave (NO modificar sin revisar)
-
-| Componente | Ruta | Nota |
-|---|---|---|
-| `FotosGallery` | `components/fotos/fotos-gallery.tsx` | Autónomo — carga fotos con `ticketId` |
-| `InspeccionForm` | `components/inspecciones/inspeccion-form.tsx` | ChecklistItem: usar `estado/notas/descripcion` |
-| `InspeccionView` | `components/inspecciones/inspeccion-view.tsx` | Vista imprimible de inspección |
-| `ProfileEditDialog` | `components/usuarios/profile-edit-dialog.tsx` | Foto + campos del perfil |
-| `Sidebar` | `components/layout/sidebar.tsx` | Props controladas: `collapsed?` + `onCollapsedChange?` |
-| `PagosFiltersBar` | `components/pagos/pagos-filters.tsx` | Filtros + export CSV de pagos |
-| `ConfigSection` | `components/configuracion/config-section.tsx` | Client component — secciones config con edición inline |
-| `PipelinePageBoard` | `components/pipeline/pipeline-page-board.tsx` | Board completo sin límite + SLA warning |
-| `TechnicianMobileList` | `components/tickets/technician-mobile-list.tsx` | Client component — pills de estado + cards stack |
-
----
-
-## Sprint 5 — Nuevos archivos
-
-```
-lib/actions/configuracion.ts          → getConfiguracion(), updateConfigValue()
-lib/mock-data.ts                      → + getDemoConfig(), updateDemoConfig() (14 entradas)
-components/configuracion/
-  config-skeleton.tsx
-  config-edit-dialog.tsx              → Dialog edición un SystemConfig (boolean/number/string)
-  config-section.tsx                  → Client component — grupo de configs editables
-components/pipeline/
-  pipeline-filters.tsx                → Client — Select técnico + prioridad
-  pipeline-page-board.tsx             → Board completo con scroll/columna + SLA indicator
-components/tickets/
-  technician-mobile-card.tsx          → Card con borde de color por estado
-  technician-mobile-list.tsx          → Client — pills filtro + stack de cards
-app/dashboard/pipeline/
-  page.tsx, loading.tsx
-app/dashboard/configuracion/
-  page.tsx, loading.tsx
-app/dashboard/loading.tsx
-app/dashboard/tickets/loading.tsx
-app/dashboard/tickets/[id]/loading.tsx
-app/dashboard/reportes/loading.tsx
-app/dashboard/pagos/loading.tsx
-app/dashboard/usuarios/loading.tsx
-```
-
----
-
-## Current Product Direction
-
-- Mantener lenguaje visual unificado (`glass-morphism` dark blue) en todos los módulos.
-- Cada app evoluciona independientemente con UX compartida.
-- Portal en `web` enruta limpiamente a cada módulo vía `getTicketsAppUrl()`.
-
----
-
-## Auth and Session Strategy
-
-### `apps/web`
-- Usa cookies de sesión master desde `apps/web/lib/masterAuth.ts`.
-- Lógica de header/menú y visibilidad por rol en `apps/web/components/SiteHeader.tsx`.
-
-### `apps/tickets`
-- Soporta dos modos:
-  1. **Real mode** (Supabase) — requiere vars de entorno
-  2. **Local demo mode** — sin Supabase, para testing visual/dev
-
-- Modo local controlado por:
-  - `TICKETS_LOCAL_MODE=true` (server)
-  - `NEXT_PUBLIC_TICKETS_LOCAL_MODE=true` (client hint)
-- Fallback también activa si faltan vars de Supabase.
-
-Archivos clave:
-- `apps/tickets/lib/local-mode.ts`
-- `apps/tickets/lib/mock-data.ts`
-- `apps/tickets/lib/actions/auth.ts`
-- `apps/tickets/lib/actions/tickets.ts`
-- `apps/tickets/middleware.ts`
-
-**Demo credentials:**
-- Email: `admin@copselectronics.com`
-- Password: `admin123` (cualquier valor en local mode)
-
----
-
-## Env Variables
-
-### Web
-- `NEXT_PUBLIC_PLATFORM_COTIZACIONES_URL`
-- `NEXT_PUBLIC_TICKETS_APP_URL` (fallback: `https://cops-platform-tickets.vercel.app/`)
-
-### Tickets
-- `TICKETS_LOCAL_MODE`
-- `NEXT_PUBLIC_TICKETS_LOCAL_MODE`
-- `TICKETS_DEMO_EMAIL`
-- `TICKETS_DEMO_PASSWORD`
-- `NEXT_PUBLIC_SUPABASE_URL` (real mode)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (real mode)
-
----
-
-## Commands
-
-Desde la raíz del monorepo:
-
-```bash
-corepack pnpm install
-corepack pnpm dev:web          # puerto 3000
-corepack pnpm dev:cotizaciones # puerto 3001
-corepack pnpm dev:tickets      # puerto 3002
-```
-
-TypeScript check (debe dar 0 errores):
-```bash
-cd apps/tickets && npx tsc --noEmit
-```
-
-Build:
-```bash
-corepack pnpm --filter tickets build
-```
-
----
-
-## Patrones de Código Importantes
-
-### Server Action pattern
 ```typescript
-export async function actionName(input): Promise<ActionResponse<T>> {
+// Jerarquía numérica (ROLE_HIERARCHY en types/index.ts)
+tecnico       = 1
+coordinador   = 2
+gerente       = 3
+vicepresidente = 4
+presidente    = 5
+
+// Verificar permiso de nivel
+ROLE_HIERARCHY[user.rol] >= 2   // coordinador o superior
+
+// Verificar permiso granular
+hasPermission(user.rol, 'tickets:create')
+hasPermission(user.rol, 'config:view')   // gerente(3)+
+hasPermission(user.rol, 'config:edit')   // vicepresidente(4)+
+```
+
+**Permisos disponibles:** `tickets:view`, `tickets:create`, `tickets:edit`, `tickets:delete`, `users:view`, `users:create`, `users:edit`, `payments:view`, `payments:process`, `reports:view`, `config:view`, `config:edit`, `audit:view`
+
+---
+
+## 7. Rutas Activas — apps/tickets
+
+| Ruta | Archivo | Acceso | Notas |
+|------|---------|--------|-------|
+| `/dashboard` | `page.tsx` | todos | KPIs, charts, pipeline widget, activity feed |
+| `/dashboard/tickets` | `tickets/page.tsx` | todos | Cards móvil para técnico / tabla para otros |
+| `/dashboard/tickets/nuevo` | `nuevo/page.tsx` | coordinador(2)+ | Formulario creación |
+| `/dashboard/tickets/[id]` | `[id]/page.tsx` | todos | 5 tabs: Detalle, Fases, Fotos, Historial, Inspección |
+| `/dashboard/tickets/[id]/inspeccion` | `inspeccion/page.tsx` | coordinador(2)+ | Checklist 25 ítems |
+| `/dashboard/tickets/[id]/inspeccion/view` | `view/page.tsx` | coordinador(2)+ | Vista imprimible inspección |
+| `/dashboard/tickets/[id]/comprobante` | `comprobante/page.tsx` | coordinador(2)+ | Comprobante PDF |
+| `/dashboard/pipeline` | `pipeline/page.tsx` | todos | Board completo, técnico ve solo los suyos |
+| `/dashboard/configuracion` | `configuracion/page.tsx` | gerente(3)+ / editar: vp(4)+ | 14 parámetros del sistema |
+| `/dashboard/usuarios` | `usuarios/page.tsx` | gerente(3)+ | Grid de cards de usuarios |
+| `/dashboard/usuarios/nuevo` | `nuevo/page.tsx` | gerente(3)+ | Formulario creación usuario |
+| `/dashboard/usuarios/[id]` | `[id]/page.tsx` | gerente(3)+ o propio | 3 tabs: Perfil, Tickets, Rendimiento |
+| `/dashboard/reportes` | `reportes/page.tsx` | coordinador(2)+ | 4 KPIs, distribución estado, tabla técnicos, gráfico mensual |
+| `/dashboard/pagos` | `pagos/page.tsx` | coordinador(2)+ | Tabla pagos con filtros avanzados y export CSV |
+
+**Loading skeletons** (`loading.tsx`): dashboard, tickets, tickets/[id], pipeline, configuracion, reportes, pagos, usuarios
+
+---
+
+## 8. Todos los Archivos del Proyecto
+
+### app/ (rutas Next.js)
+
+```
+app/
+├── globals.css                          → Estilos globales, design system, animaciones CSS
+├── layout.tsx                           → Root layout con fuentes
+├── login/page.tsx                       → Página de login
+├── middleware.ts                        → Auth guard (Next.js middleware)
+└── dashboard/
+    ├── layout.tsx                       → Auth check + DashboardLayoutClient
+    ├── layout-client.tsx                → Sidebar + Header layout (sidebarCollapsed controlado)
+    ├── loading.tsx                      → Skeleton dashboard
+    ├── page.tsx                         → Dashboard principal (KPIs, charts, pipeline widget)
+    ├── tickets/
+    │   ├── loading.tsx
+    │   ├── page.tsx                     → Lista tickets (mobile cards técnico / tabla otros)
+    │   ├── tickets-filters.tsx          → Filtros de búsqueda (client component)
+    │   ├── tickets-table.tsx            → Tabla paginada (server component)
+    │   ├── nuevo/
+    │   │   ├── page.tsx
+    │   │   └── create-ticket-form.tsx   → Formulario nuevo ticket (RHF+Zod)
+    │   └── [id]/
+    │       ├── loading.tsx
+    │       ├── page.tsx                 → Detail page (fetch paralelo)
+    │       ├── ticket-details.tsx       → Header del ticket con badges y acciones
+    │       ├── ticket-detail-tabs.tsx   → 5 tabs: Detalle/Fases/Fotos/Historial/Inspección
+    │       ├── ticket-status-actions.tsx → Wizard de cambio de estado
+    │       ├── inspeccion/
+    │       │   ├── page.tsx
+    │       │   └── view/page.tsx
+    │       └── comprobante/
+    │           ├── page.tsx
+    │           └── comprobante-view.tsx
+    ├── pipeline/
+    │   ├── loading.tsx
+    │   └── page.tsx                     → Board completo 4 columnas + filtros técnico/prioridad
+    ├── configuracion/
+    │   ├── loading.tsx
+    │   └── page.tsx                     → Config del sistema (14 parámetros, 3 secciones)
+    ├── usuarios/
+    │   ├── loading.tsx
+    │   ├── page.tsx                     → Grid cards usuarios
+    │   ├── nuevo/
+    │   │   ├── page.tsx
+    │   │   └── nuevo-usuario-form.tsx
+    │   └── [id]/
+    │       └── page.tsx                 → Perfil usuario (3 tabs: Perfil/Tickets/Rendimiento)
+    ├── reportes/
+    │   ├── loading.tsx
+    │   ├── page.tsx                     → 4 KPIs + distribución + tabla técnicos + gráfico mensual
+    │   └── report-export-button.tsx     → Botón export CSV reportes
+    └── pagos/
+        ├── loading.tsx
+        ├── page.tsx
+        └── pagos-client.tsx             → Client con filtros, paginación, modal de pago
+```
+
+### components/ (componentes reutilizables)
+
+```
+components/
+├── glass-provider.tsx                   → Provider de glass morphism
+├── ui/                                  → Primitivos Radix UI
+│   ├── alert-dialog.tsx
+│   ├── avatar.tsx
+│   ├── badge.tsx
+│   ├── button.tsx
+│   ├── card.tsx                         → Acepta variant="glass"
+│   ├── checkbox.tsx
+│   ├── dialog.tsx
+│   ├── dropdown-menu.tsx
+│   ├── input.tsx
+│   ├── label.tsx
+│   ├── popover.tsx
+│   ├── select.tsx
+│   ├── tabs.tsx
+│   ├── textarea.tsx
+│   └── index.ts
+├── layout/
+│   ├── header.tsx                       → Header con hamburger móvil
+│   ├── sidebar.tsx                      → Sidebar con collapsed controlado + Pipeline nav
+│   └── index.ts
+├── dashboard/
+│   ├── activity-feed.tsx                → Feed de actividad reciente
+│   ├── dashboard-shell.tsx
+│   ├── kpi-card.tsx                     → Card KPI con contador animado
+│   ├── pipeline-board.tsx               → Widget del dashboard (máx 5 cards/col)
+│   ├── status-distribution-chart.tsx    → Donut chart por estado
+│   ├── technician-performance-chart.tsx → Bar chart rendimiento técnicos
+│   └── tickets-by-month-chart.tsx       → Line chart últimos 6 meses
+├── tickets/
+│   ├── technician-mobile-card.tsx       → Card móvil con borde de color por estado ← Sprint 5
+│   ├── technician-mobile-list.tsx       → Lista con pills de filtro estado ← Sprint 5
+│   ├── ticket-fases-list.tsx            → Lista de fases del proyecto
+│   ├── ticket-fotos-grid.tsx            → Grid de fotos en tab
+│   └── ticket-status-changer.tsx        → Wizard de cambio de estado
+├── fotos/
+│   ├── foto-edit-dialog.tsx
+│   ├── foto-upload-dialog.tsx
+│   └── fotos-gallery.tsx                → Autónomo: carga sus propias fotos con ticketId
+├── inspecciones/
+│   ├── inspeccion-form.tsx              → Checklist 25 ítems, 5 categorías
+│   └── inspeccion-view.tsx              → Vista imprimible
+├── pagos/
+│   ├── pagos-filters.tsx                → Filtros avanzados + export CSV
+│   ├── payment-dialog.tsx               → Modal procesar pago
+│   └── pending-payments-list.tsx
+├── usuarios/
+│   └── profile-edit-dialog.tsx          → Editar foto de perfil + campos
+├── pipeline/                            ← Sprint 5
+│   ├── pipeline-filters.tsx             → Select técnico + prioridad (client)
+│   └── pipeline-page-board.tsx          → Board completo + SLA warning
+└── configuracion/                       ← Sprint 5
+    ├── config-edit-dialog.tsx           → Dialog edición (boolean/number/string)
+    ├── config-section.tsx               → Sección agrupada de configuraciones
+    └── config-skeleton.tsx              → Skeleton loading
+```
+
+### lib/ (lógica, datos, utilidades)
+
+```
+lib/
+├── local-mode.ts                        → isLocalMode(), DEMO_SESSION_COOKIE
+├── mock-data.ts                         → Store demo completo en memoria
+│   Exporta: getDemoUsers(), getDemoTickets(), getDemoPayments(),
+│            getDemoFases(), getDemoFotos(), getDemoSessions(),
+│            getDemoInspecciones(), getDemoConfig(), updateDemoConfig()
+│            + funciones de mutación demo (createDemo*, updateDemo*, etc.)
+├── utils.ts (o utils/index.ts)          → cn(), formatCurrency(), formatRelativeTime(), getInitials()
+├── utils/
+│   └── csv-export.ts                    → generatePaymentsCSV(), downloadCSV()
+├── validations/
+│   └── index.ts                         → Schemas Zod (LoginSchema, TicketCreateSchema, etc.)
+├── supabase/
+│   ├── client.ts                        → createBrowserClient()
+│   ├── server.ts                        → createClient() (server)
+│   └── middleware.ts                    → updateSession()
+└── actions/
+    ├── auth.ts                          → loginAction(), getCurrentUser(), logoutAction()
+    ├── tickets.ts                       → getTickets(), getTicketById(), createTicket(),
+    │                                      updateTicket(), changeTicketStatus(), assignTicket(),
+    │                                      deleteTicket(), updateTicketFromTecnico()
+    ├── dashboard.ts                     → getDashboardStats(), getEnhancedDashboardStats(),
+    │                                      getTechnicianStats()
+    ├── fotos.ts                         → uploadTicketFoto(), getTicketFotos(),
+    │                                      deleteTicketFoto(), updateTicketFoto()
+    ├── inspecciones.ts                  → getInspeccionByTicket(), createInspeccion(),
+    │                                      updateInspeccion(), completarInspeccion()
+    ├── fases.ts                         → getFasesByTicket(), createFase(),
+    │                                      updateFase(), deleteFase()
+    ├── pagos.ts                         → processPaymentAction()
+    ├── usuarios.ts                      → getAllUsers()*, getUserById(), createUser(),
+    │                                      updateUserProfile(), uploadProfilePhoto()
+    │                                      (* sin isLocalMode branch — ver nota crítica)
+    ├── configuracion.ts                 → getConfiguracion(), updateConfigValue() ← Sprint 5
+    └── index.ts                         → re-exports de auth + tickets
+```
+
+---
+
+## 9. Tipos Principales (types/index.ts)
+
+### Tipos base
+```typescript
+type UserRole = 'tecnico' | 'coordinador' | 'gerente' | 'vicepresidente' | 'presidente'
+type TicketStatus = 'asignado' | 'iniciado' | 'en_progreso' | 'finalizado' | 'cancelado'
+type TicketPriority = 'baja' | 'media' | 'alta' | 'urgente'
+type TicketType = 'servicio' | 'proyecto'
+type FaseEstado = 'pendiente' | 'en_progreso' | 'completada' | 'cancelada'
+type TipoFoto = 'progreso' | 'inspeccion' | 'documento' | 'antes' | 'despues'
+type InspeccionEstado = 'borrador' | 'completada' | 'reportada'
+```
+
+### Interfaces clave
+```typescript
+interface User { id, nombre, apellido, email, rol, nivel_jerarquico, telefono, cedula, estado, created_at, updated_at }
+interface UserProfile extends User { foto_perfil_path, especialidad, activo_desde, foto_perfil_url? }
+interface Ticket { id, numero_ticket, tipo, asunto, descripcion, cliente_nombre, cliente_email,
+                   cliente_telefono, estado, prioridad, origen, monto_servicio, porcentaje_comision,
+                   tiempo_estimado_horas, tecnico_id, tecnico?, asignado_por, created_at, updated_at,
+                   fases?, historial_cambios? }
+interface SystemConfig { id, clave, valor, descripcion, tipo_dato: 'string'|'number'|'boolean'|'json', updated_at }
+interface ActionResponse<T> { success: boolean, data?: T, error?: string, message?: string }
+interface PaginatedResponse<T> { data: T[], total, page, pageSize, totalPages }
+// PaginatedResponse usa .data[] NO .items[]
+
+// ChecklistItem — CRÍTICO: no usar campos de V0 (cumple/observacion/item)
+interface ChecklistItem { id, categoria, descripcion, aplica, estado: 'ok'|'falla'|'pendiente'|'na', notas, foto_ids }
+```
+
+### Constantes exportadas
+```typescript
+ROLE_HIERARCHY: Record<UserRole, number>    // tecnico=1..presidente=5
+VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]>  // máquina de estados
+STATUS_LABELS, STATUS_COLORS                // para badges/UI
+PRIORITY_LABELS, PRIORITY_COLORS
+ROLE_LABELS
+DEFAULT_COMMISSION_PERCENTAGE              // 50
+```
+
+---
+
+## 10. Patrón de Server Actions
+
+```typescript
+"use server"
+
+export async function actionName(input: InputType): Promise<ActionResponse<OutputType>> {
+  // 1. Auth
   const user = await getCurrentUser()
   if (!user) return { success: false, error: "No autenticado" }
+
+  // 2. Permisos (elegir uno)
+  if (ROLE_HIERARCHY[user.rol] < 2) return { success: false, error: "Sin permisos" }
   if (!hasPermission(user.rol, 'permission:name')) return { success: false, error: "Sin permisos" }
-  if (isLocalMode()) { return { success: true, data: mockData, message: "..." } }
+
+  // 3. Local mode
+  if (isLocalMode()) {
+    const data = getDemoXxx()
+    revalidatePath("/dashboard/ruta")      // solo en mutaciones
+    return { success: true, data, message: "Operación exitosa" }
+  }
+
+  // 4. Supabase
   const supabase = await createClient()
-  // query supabase...
-  revalidatePath("/dashboard/ruta")
+  const { data, error } = await supabase.from("tabla").select("*")
+  if (error) return { success: false, error: error.message }
+  revalidatePath("/dashboard/ruta")        // solo en mutaciones
+  return { success: true, data }
 }
 ```
 
-### IMPORTANTE: getAllUsers() NO tiene isLocalMode branch
-```typescript
-// ✅ CORRECTO — en páginas que necesiten usuarios en local mode:
-const users = isLocalMode() ? getDemoUsers() : (await getAllUsers()).data ?? []
-// ❌ INCORRECTO — llamar getAllUsers() directamente en local mode falla
+---
+
+## 11. Design System
+
+### Glass morphism
+```
+Cards:    bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl
+Dialogs:  bg-[#0e2f6f]/95 backdrop-blur-2xl border border-white/20
+Stat:     bg-white/[0.04] con glow overlay de color
 ```
 
-### ChecklistItem — Tipo CORRECTO
-```typescript
-// ✅ CORRECTO
-{ id, categoria, descripcion, aplica, estado: 'ok'|'falla'|'pendiente'|'na', notas, foto_ids }
-// ❌ INCORRECTO (V0 genera esto — NO usar)
-{ cumple, observacion, item }
+### Colores base (CSS variables)
+```
+--background: 222 60% 24%      → azul oscuro principal #1a3a6b
+--primary:    225 80% 56%      → azul brillante #2F54E0
+Fuentes: Space Grotesk (heading), Inter (body)
 ```
 
-### PaginatedResponse
-```typescript
-// .data[] — NO .items[]
-const tickets = result.data?.data ?? []
+### Componente Card
+```tsx
+<Card variant="glass">  // glass morphism
+<Card>                  // card estándar
 ```
 
-### Sidebar collapse (sincronizado desde Sprint 5)
-```typescript
-// layout-client.tsx pasa estado controlado:
-<Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
-// Sidebar acepta props opcionales; si no se pasan usa estado interno propio
+### Animaciones disponibles (NO framer-motion)
+```css
+/* Clases de animación (definidas en globals.css): */
+animate-fade-in        /* 0.35s ease-out */
+animate-slide-up       /* 0.4s ease-out */
+animate-scale-in       /* 0.22s ease-out */
+animate-bounce-in      /* 0.45s cubic-bezier */
+animate-count-up       /* 0.5s para números */
+animate-spin-slow      /* rotación lenta */
+animate-pulse-glow     /* brillo pulsante */
+
+/* Stagger delays: */
+stagger-1 (50ms) ... stagger-6 (300ms)
+```
+
+### Clases móvil (Sprint 5)
+```css
+mobile-ticket-card                        /* card con borde izquierdo */
+mobile-ticket-card-asignado               /* borde azul */
+mobile-ticket-card-iniciado               /* borde amarillo */
+mobile-ticket-card-en_progreso            /* borde púrpura */
+mobile-ticket-card-finalizado             /* borde verde */
+mobile-ticket-card-cancelado              /* borde rojo */
+status-pills-bar                          /* scroll horizontal sin scrollbar */
+```
+
+### Skeleton loading
+```css
+.skeleton        /* base pulse con shimmer */
+.skeleton-text, .skeleton-title, .skeleton-avatar, .skeleton-card
+```
+
+### Layout helpers
+```css
+.page-container      /* p-4 md:p-6 lg:p-8 */
+.page-header         /* flex col→row responsive */
+.page-title          /* heading principal */
+.page-description    /* subtítulo */
+```
+
+### Sidebar nav
+```tsx
+// Clases para links activos
+className={cn("sidebar-nav-item", active && "active")}
+// Sidebar recibe props controladas desde Sprint 5:
+<Sidebar collapsed={bool} onCollapsedChange={fn} />
 ```
 
 ---
 
-## Design System Constraints
+## 12. Configuración del Sistema (Sprint 5)
 
-- Glass morphism: `bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl`
-- Dialogs: `bg-[#0e2f6f]/95 backdrop-blur-2xl border border-white/20`
-- Cards: `<Card variant="glass">`
-- Animaciones: `animate-fade-in`, `animate-slide-up`, `animate-scale-in`
-- Stagger delays: `stagger-1` ... `stagger-6` (definidos en globals.css)
-- Mobile tech cards: clase `mobile-ticket-card mobile-ticket-card-{estado}` (borde izquierdo de color)
-- Status pills bar: clase `status-pills-bar` (scroll horizontal sin scrollbar)
-- **NO framer-motion** — solo CSS de globals.css + Tailwind transitions
-- Sidebar activo: clase `sidebar-nav-item active`
+14 parámetros en 3 grupos:
+
+| Clave | Tipo | Default | Grupo |
+|-------|------|---------|-------|
+| empresa_nombre | string | COPS Electronics | empresa |
+| empresa_rif | string | J-12345678-9 | empresa |
+| empresa_telefono | string | +58 212 000 0000 | empresa |
+| empresa_email | string | ops@copselectronics.com | empresa |
+| empresa_direccion | string | Caracas, Venezuela | empresa |
+| logo_url | string | (vacío) | empresa |
+| ticket_tiempo_respuesta_horas | number | 24 | tickets |
+| ticket_tiempo_resolucion_horas | number | 72 | tickets |
+| ticket_monto_servicio_default | number | 40 | tickets |
+| comision_porcentaje_default | number | 50 | tickets |
+| inspeccion_requerida | boolean | false | tickets |
+| notif_email_nuevo_ticket | boolean | true | notif |
+| notif_email_cambio_estado | boolean | true | notif |
+| notif_slack_webhook | string | (vacío) | notif |
 
 ---
 
-## UX/Visual Decisions Applied
+## 13. Variables de Entorno
 
-- Contraste aumentado en dropdown y mobile menu glass containers en `apps/web`.
-- Estilo glass mantenido con jerarquía de ítems más limpia.
-- Shimmer glass más lento en `apps/cotizaciones`.
-- Intensidad de filtro refracción reducida en `apps/cotizaciones/components/glass-provider.tsx`.
+```bash
+# apps/tickets
+TICKETS_LOCAL_MODE=true                   # activa modo demo sin Supabase
+NEXT_PUBLIC_TICKETS_LOCAL_MODE=true       # pista para client components
+TICKETS_DEMO_EMAIL=admin@copselectronics.com
+TICKETS_DEMO_PASSWORD=admin123
+NEXT_PUBLIC_SUPABASE_URL=...              # solo modo real
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...        # solo modo real
+
+# apps/web
+NEXT_PUBLIC_TICKETS_APP_URL=http://localhost:3002
+NEXT_PUBLIC_PLATFORM_COTIZACIONES_URL=http://localhost:3001
+```
 
 ---
 
-## Known Notes
+## 14. Gotchas y Notas Críticas
 
-- Next.js advierte que `middleware` convention está deprecado en favor de `proxy`; no bloquea, migrar en limpieza futura.
-- Hacer commits desde la raíz del monorepo para incluir cambios de todas las apps.
-- V0 (Vercel) puede generar código con tipos incorrectos — siempre adaptar a `types/index.ts`.
-- `downloadCSV` está en `@/lib/utils/csv-export` (NO en `@/lib/utils`).
-- `useToast` es un wrapper local en `hooks/use-toast.ts` sobre sonner.
-- `Lucide` icons NO aceptan prop `title` directamente — envolver en `<span title="...">`.
+| Problema | Solución |
+|----------|----------|
+| `getAllUsers()` no funciona en local mode | Usar `isLocalMode() ? getDemoUsers() : (await getAllUsers()).data ?? []` |
+| `PaginatedResponse` usa `.data[]` no `.items[]` | `result.data?.data ?? []` |
+| V0 genera `ChecklistItem` con `cumple/observacion/item` | Adaptar a `estado/notas/descripcion` |
+| Lucide icons no aceptan prop `title` | Envolver en `<span title="...">` |
+| En Windows, heredocs de bash no funcionan | Usar `node -e "..."` para crear archivos |
+| `downloadCSV` está en `csv-export` no en `utils` | `import { downloadCSV } from "@/lib/utils/csv-export"` |
+| `useToast` es wrapper sobre sonner | `import { toast } from "sonner"` directamente o el wrapper en `hooks/use-toast.ts` |
+| Hacer commits desde raíz del monorepo | `git -C "ruta/al/repo" add .` |
+| TypeScript strict — verificar siempre | `npx tsc --noEmit` antes de commit |
+
+---
+
+## 15. Próximos Pasos Sugeridos (Post Sprint 5)
+
+- **error.tsx**: No existe en ninguna ruta — agregar manejo de errores granular
+- **Notificaciones reales**: El webhook de Slack y el email de notificación en config son campos mock
+- **Drag & drop en pipeline**: El pipeline board es read-only — agregar DnD para mover tickets entre estados
+- **PWA / offline**: Los técnicos en campo necesitan modo offline
+- **Supabase real-time**: Suscripciones para actualizar el pipeline en vivo
+- **Audit log UI**: El tipo de datos existe (`audit:view` permission), la página no
+- **Tests**: No hay tests automatizados — agregar Vitest/Playwright
