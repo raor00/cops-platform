@@ -245,57 +245,75 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Crear Solicitud de Pago</DialogTitle>
-          <DialogDescription className="text-white/50">
-            {payment.tecnico.nombre} {payment.tecnico.apellido} — {payment.ticket.numero_ticket}
-          </DialogDescription>
-        </DialogHeader>
+      {/*
+        Layout: flex-col + max-h-[90dvh]
+        ├── header  — fijo (título + monto + selector)
+        ├── body    — flex-1 overflow-y-auto (campos dinámicos + observaciones)
+        └── footer  — fijo (botones)
+      */}
+      <DialogContent className="max-w-md w-[calc(100vw-2rem)] p-0 gap-0 flex flex-col max-h-[90dvh] overflow-hidden">
 
-        {/* Monto */}
-        <div className="rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 text-center">
-          <p className="text-xs text-white/40 mb-0.5">Monto a cancelar</p>
-          <p className="text-2xl font-bold text-white">{formatCurrency(payment.monto_a_pagar)}</p>
-          <p className="text-xs text-white/30 mt-0.5 truncate">{payment.ticket.asunto}</p>
-        </div>
+        {/* ── Header fijo ─────────────────────────────────── */}
+        <div className="px-5 pt-5 pb-0 shrink-0 space-y-4">
+          <DialogHeader className="space-y-0.5">
+            <DialogTitle className="text-base">Crear Solicitud de Pago</DialogTitle>
+            <DialogDescription className="text-xs text-white/40">
+              {payment.tecnico.nombre} {payment.tecnico.apellido} · {payment.ticket.numero_ticket}
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Selector de método */}
-        <div className="space-y-2">
-          <p className="text-xs text-white/50 font-medium">Método de pago</p>
-          <div className="grid grid-cols-4 gap-2">
-            {METHODS.map((m) => {
-              const Icon = m.icon
-              const isActive = metodo === m.value
-              return (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => setMetodo(m.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-xl border py-2.5 px-1 text-[11px] font-medium transition-all duration-150",
-                    isActive ? m.activeClass : m.inactiveClass
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="leading-tight text-center">{m.label}</span>
-                </button>
-              )
-            })}
+          {/* Monto — fila compacta */}
+          <div className="flex items-center justify-between rounded-xl bg-white/[0.04] border border-white/10 px-4 py-2.5">
+            <div>
+              <p className="text-[11px] text-white/40">Monto a cancelar</p>
+              <p className="text-lg font-bold text-white leading-tight">
+                {formatCurrency(payment.monto_a_pagar)}
+              </p>
+            </div>
+            <p className="text-xs text-white/30 truncate max-w-[45%] text-right">
+              {payment.ticket.asunto}
+            </p>
+          </div>
+
+          {/* Selector de método */}
+          <div className="space-y-2">
+            <p className="text-[11px] text-white/40 font-medium uppercase tracking-wide">Método de pago</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {METHODS.map((m) => {
+                const Icon = m.icon
+                const isActive = metodo === m.value
+                return (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setMetodo(m.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-xl border py-2 px-1 text-[10px] font-semibold transition-all duration-150 leading-tight",
+                      isActive ? m.activeClass : m.inactiveClass
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="text-center w-full">{m.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Divisor */}
+          <div className="flex items-center gap-2 pt-1">
+            <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", activeMethod.dotClass)} />
+            <span className="text-[11px] text-white/35">Datos para {activeMethod.label}</span>
+            <div className="flex-1 h-px bg-white/[0.07]" />
           </div>
         </div>
 
-        {/* Separador con indicador de método activo */}
-        <div className="flex items-center gap-2">
-          <div className={cn("h-1.5 w-1.5 rounded-full", activeMethod.dotClass)} />
-          <span className="text-xs text-white/40">Datos para {activeMethod.label}</span>
-          <div className="flex-1 h-px bg-white/8" />
-        </div>
+        {/* ── Body scrollable ──────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3 scroll-smooth
+          [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent
+          [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
 
-        {/* Campos dinámicos */}
-        <div className="space-y-3 min-h-[120px]">
-
-          {/* ── Pago Móvil ── */}
+          {/* Pago Móvil */}
           {metodo === "pago_movil" && (
             <div className="space-y-3 animate-fade-in">
               <BancoSelect id="pm-banco" label="Banco" value={pmBanco} onChange={setPmBanco} required />
@@ -312,14 +330,14 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
             </div>
           )}
 
-          {/* ── Transferencia ── */}
+          {/* Transferencia */}
           {metodo === "transferencia" && (
             <div className="space-y-3 animate-fade-in">
               <div className="grid grid-cols-2 gap-3">
                 <BancoSelect id="tr-banco" label="Banco" value={trBanco} onChange={setTrBanco} required />
                 <div className="space-y-1.5">
                   <Label className="text-white/70 text-xs font-medium">
-                    Tipo de cuenta<span className="text-red-400 ml-0.5">*</span>
+                    Tipo<span className="text-red-400 ml-0.5">*</span>
                   </Label>
                   <Select value={trTipo} onValueChange={(v) => setTrTipo(v as "corriente" | "ahorro")}>
                     <SelectTrigger>
@@ -333,7 +351,7 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
                 </div>
               </div>
               <CopyInput
-                id="tr-cuenta" label="Número de cuenta" placeholder="0000-0000-00-0000000000"
+                id="tr-cuenta" label="N° de cuenta" placeholder="0000-0000-00-0000000000"
                 value={trCuenta} onChange={setTrCuenta} required
               />
               <div className="grid grid-cols-2 gap-3">
@@ -349,16 +367,18 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
             </div>
           )}
 
-          {/* ── Efectivo ── */}
+          {/* Efectivo */}
           {metodo === "efectivo" && (
-            <div className="animate-fade-in rounded-xl border border-green-500/15 bg-green-500/[0.06] p-4 text-center">
-              <Banknote className="h-8 w-8 mx-auto mb-2 text-green-400/60" />
-              <p className="text-sm text-white/60">Pago en efectivo</p>
-              <p className="text-xs text-white/30 mt-1">Agrega observaciones si es necesario</p>
+            <div className="animate-fade-in flex items-center gap-3 rounded-xl border border-green-500/15 bg-green-500/[0.06] px-4 py-3">
+              <Banknote className="h-7 w-7 shrink-0 text-green-400/60" />
+              <div>
+                <p className="text-sm font-medium text-white/70">Pago en efectivo</p>
+                <p className="text-xs text-white/30 mt-0.5">Agrega observaciones si necesitas dejar registro</p>
+              </div>
             </div>
           )}
 
-          {/* ── Depósito ── */}
+          {/* Depósito */}
           {metodo === "deposito" && (
             <div className="space-y-3 animate-fade-in">
               <BancoSelect id="dep-banco" label="Banco" value={depBanco} onChange={setDepBanco} required />
@@ -369,32 +389,36 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
               />
             </div>
           )}
+
+          {/* Observaciones */}
+          <div className="space-y-1.5 pt-1">
+            <Label htmlFor="obs" className="text-white/50 text-[11px] font-medium">
+              Observaciones <span className="text-white/25">(opcional)</span>
+            </Label>
+            <Textarea
+              id="obs"
+              placeholder="Notas para administración…"
+              value={observaciones}
+              onChange={(e) => setObservaciones(e.target.value)}
+              rows={2}
+              className="resize-none text-sm"
+            />
+          </div>
         </div>
 
-        {/* Observaciones — siempre visible */}
-        <div className="space-y-1.5">
-          <Label htmlFor="obs" className="text-white/70 text-xs font-medium">
-            Observaciones <span className="text-white/30">(opcional)</span>
-          </Label>
-          <Textarea
-            id="obs"
-            placeholder="Notas adicionales para administración…"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-            rows={2}
-            className="resize-none"
-          />
+        {/* ── Footer fijo ──────────────────────────────────── */}
+        <div className="px-5 py-4 border-t border-white/[0.07] shrink-0">
+          <div className="flex gap-2 justify-end">
+            <Button variant="ghost" size="sm" onClick={() => handleClose(false)} disabled={isLoading}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleSubmit} isLoading={isLoading} disabled={!isValid()}>
+              <CreditCard className="h-4 w-4" />
+              Crear Solicitud
+            </Button>
+          </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => handleClose(false)} disabled={isLoading}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!isValid()}>
-            <CreditCard className="h-4 w-4" />
-            Crear Solicitud
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
