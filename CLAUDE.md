@@ -1,7 +1,7 @@
 # COPS Platform — Contexto Completo para LLM
 
 Este archivo contiene todo el contexto técnico del proyecto. Un LLM que lea este archivo
-puede continuar el desarrollo sin perder continuidad. Actualizado: 2026-02-19.
+puede continuar el desarrollo sin perder continuidad. Actualizado: 2026-02-19 (Sprint 6).
 
 ---
 
@@ -95,6 +95,8 @@ const users = isLocalMode() ? getDemoUsers() : (await getAllUsers()).data ?? []
 | Sprint 3 | ✅ | Fotos Supabase Storage, FotosGallery autónoma, perfiles de usuario, comprobante PDF, export CSV pagos |
 | Sprint 4 | ✅ | Inspección técnica real (25 ítems), perfil `/usuarios/[id]` con 3 tabs, reportes KPIs, sidebar animations, links usuarios |
 | Sprint 5 | ✅ | Vista móvil técnicos (cards+pills), pipeline board dedicado (/pipeline), config page (/configuracion), loading.tsx en 8 rutas, fix sidebar collapse |
+| Sprint 6 | ✅ | Visual redesign (sky-500 + gray-900), estados bidireccionales admin, timeline UpdateLog, back button, filas clickeables, wizard materiales toggle, botón imprimir, tabla estadísticas técnicos |
+| Sprint 7 | ⏳ | Clientes DB (/clientes), generador cuadro de pagos por técnico |
 
 ---
 
@@ -137,7 +139,7 @@ hasPermission(user.rol, 'config:edit')   // vicepresidente(4)+
 | `/dashboard/usuarios` | `usuarios/page.tsx` | gerente(3)+ | Grid de cards de usuarios |
 | `/dashboard/usuarios/nuevo` | `nuevo/page.tsx` | gerente(3)+ | Formulario creación usuario |
 | `/dashboard/usuarios/[id]` | `[id]/page.tsx` | gerente(3)+ o propio | 3 tabs: Perfil, Tickets, Rendimiento |
-| `/dashboard/reportes` | `reportes/page.tsx` | coordinador(2)+ | 4 KPIs, distribución estado, tabla técnicos, gráfico mensual |
+| `/dashboard/reportes` | `reportes/page.tsx` | coordinador(2)+ | 4 KPIs, distribución estado, TechnicianStatsTable interactiva, gráfico mensual |
 | `/dashboard/pagos` | `pagos/page.tsx` | coordinador(2)+ | Tabla pagos con filtros avanzados y export CSV |
 
 **Loading skeletons** (`loading.tsx`): dashboard, tickets, tickets/[id], pipeline, configuracion, reportes, pagos, usuarios
@@ -212,7 +214,8 @@ components/
 │   ├── alert-dialog.tsx
 │   ├── avatar.tsx
 │   ├── badge.tsx
-│   ├── button.tsx
+│   ├── back-button.tsx                  → Reutilizable: router.back() o router.push(href) ← Sprint 6
+│   ├── button.tsx                       → primary variant: sky-600 (desde Sprint 6)
 │   ├── card.tsx                         → Acepta variant="glass"
 │   ├── checkbox.tsx
 │   ├── dialog.tsx
@@ -241,7 +244,9 @@ components/
 │   ├── technician-mobile-list.tsx       → Lista con pills de filtro estado ← Sprint 5
 │   ├── ticket-fases-list.tsx            → Lista de fases del proyecto
 │   ├── ticket-fotos-grid.tsx            → Grid de fotos en tab
-│   └── ticket-status-changer.tsx        → Wizard de cambio de estado
+│   ├── ticket-status-changer.tsx        → Wizard de cambio de estado
+│   ├── tickets-table-rows.tsx           → Client component: filas clickeables + stopPropagation ← Sprint 6
+│   └── update-log-panel.tsx             → Timeline de notas UpdateLog (textarea + lista) ← Sprint 6
 ├── fotos/
 │   ├── foto-edit-dialog.tsx
 │   ├── foto-upload-dialog.tsx
@@ -258,10 +263,12 @@ components/
 ├── pipeline/                            ← Sprint 5
 │   ├── pipeline-filters.tsx             → Select técnico + prioridad (client)
 │   └── pipeline-page-board.tsx          → Board completo + SLA warning
-└── configuracion/                       ← Sprint 5
-    ├── config-edit-dialog.tsx           → Dialog edición (boolean/number/string)
-    ├── config-section.tsx               → Sección agrupada de configuraciones
-    └── config-skeleton.tsx              → Skeleton loading
+├── configuracion/                       ← Sprint 5
+│   ├── config-edit-dialog.tsx           → Dialog edición (boolean/number/string)
+│   ├── config-section.tsx               → Sección agrupada de configuraciones
+│   └── config-skeleton.tsx              → Skeleton loading
+└── reportes/                            ← Sprint 6
+    └── technician-stats-table.tsx       → Tabla técnicos con panel detalle expandible (TechnicianKPI[])
 ```
 
 ### lib/ (lógica, datos, utilidades)
@@ -272,7 +279,8 @@ lib/
 ├── mock-data.ts                         → Store demo completo en memoria
 │   Exporta: getDemoUsers(), getDemoTickets(), getDemoPayments(),
 │            getDemoFases(), getDemoFotos(), getDemoSessions(),
-│            getDemoInspecciones(), getDemoConfig(), updateDemoConfig()
+│            getDemoInspecciones(), getDemoConfig(), updateDemoConfig(),
+│            getDemoUpdateLogs(), addDemoUpdateLog()               ← Sprint 6
 │            + funciones de mutación demo (createDemo*, updateDemo*, etc.)
 ├── utils.ts (o utils/index.ts)          → cn(), formatCurrency(), formatRelativeTime(), getInitials()
 ├── utils/
@@ -286,8 +294,9 @@ lib/
 └── actions/
     ├── auth.ts                          → loginAction(), getCurrentUser(), logoutAction()
     ├── tickets.ts                       → getTickets(), getTicketById(), createTicket(),
-    │                                      updateTicket(), changeTicketStatus(), assignTicket(),
-    │                                      deleteTicket(), updateTicketFromTecnico()
+    │                                      updateTicket(), changeTicketStatus() (bidireccional ← S6),
+    │                                      assignTicket(), deleteTicket(), updateTicketFromTecnico(),
+    │                                      getTicketUpdateLogs(), addTicketUpdateLog()  ← Sprint 6
     ├── dashboard.ts                     → getDashboardStats(), getEnhancedDashboardStats(),
     │                                      getTechnicianStats()
     ├── fotos.ts                         → uploadTicketFoto(), getTicketFotos(),
@@ -339,11 +348,15 @@ interface ChecklistItem { id, categoria, descripcion, aplica, estado: 'ok'|'fall
 ### Constantes exportadas
 ```typescript
 ROLE_HIERARCHY: Record<UserRole, number>    // tecnico=1..presidente=5
-VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]>  // máquina de estados
+VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]>   // máquina de estados (forward)
+ADMIN_REVERSE_TRANSITIONS: Record<TicketStatus, TicketStatus[]>  // reverso para gerente+ ← Sprint 6
 STATUS_LABELS, STATUS_COLORS                // para badges/UI
 PRIORITY_LABELS, PRIORITY_COLORS
 ROLE_LABELS
 DEFAULT_COMMISSION_PERCENTAGE              // 50
+
+// UpdateLog (Sprint 6)
+interface UpdateLog { id, ticket_id, autor_id, contenido, tipo: 'nota'|'cambio_estado', created_at, autor? }
 ```
 
 ---
@@ -385,14 +398,15 @@ export async function actionName(input: InputType): Promise<ActionResponse<Outpu
 ### Glass morphism
 ```
 Cards:    bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl
-Dialogs:  bg-[#0e2f6f]/95 backdrop-blur-2xl border border-white/20
+Dialogs:  bg-[#0f1729]/95 backdrop-blur-2xl border border-white/20   (Sprint 6: neutro, no azul eléctrico)
 Stat:     bg-white/[0.04] con glow overlay de color
 ```
 
-### Colores base (CSS variables)
+### Colores base (CSS variables) — Sprint 6
 ```
---background: 222 60% 24%      → azul oscuro principal #1a3a6b
---primary:    225 80% 56%      → azul brillante #2F54E0
+--background: cuerpo oscuro #0d1a2e→#111827→#0a1628 (slate/navy)
+--primary:    199 89% 48%   → sky-500 #0ea5e9  (antes era blue #2F54E0)
+Sidebar:      bg-[#111827]  (gray-900, antes #0e2f6f azul eléctrico)
 Fuentes: Space Grotesk (heading), Inter (body)
 ```
 
@@ -509,12 +523,57 @@ NEXT_PUBLIC_PLATFORM_COTIZACIONES_URL=http://localhost:3001
 
 ---
 
-## 15. Próximos Pasos Sugeridos (Post Sprint 5)
+## 15. Sprint 6 — Patrones Nuevos
 
+### Estados Bidireccionales (gerente+ puede revertir)
+```typescript
+// En ticket-status-actions.tsx:
+const canRevert = ROLE_HIERARCHY[userRole] >= 3
+const reverseTransitions = ADMIN_REVERSE_TRANSITIONS[ticket.estado]
+// Botones de reverso con estilo orange-300/70
+
+// En changeTicketStatus():
+const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
+const forwardOk = VALID_TRANSITIONS[ticket.estado].includes(newStatus)
+const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado].includes(newStatus)
+```
+
+### Timeline UpdateLog
+```typescript
+// ticket-detail-tabs.tsx recibe:
+updateLogs?: UpdateLog[]
+userRole?: string
+// UpdateLogPanel muestra textarea solo si canAdd && ticket activo
+// addTicketUpdateLog(ticketId, contenido) — server action
+```
+
+### BackButton
+```tsx
+import { BackButton } from "@/components/ui/back-button"
+<BackButton />                          // usa router.back()
+<BackButton href="/dashboard/tickets" /> // push a ruta específica
+```
+
+### Wizard Materiales Toggle (ticket-status-actions.tsx)
+```tsx
+// Paso 1 del wizard tiene toggle "¿Se utilizaron materiales?"
+// Si usedMaterials=false → materiales_usados=[]
+// Si usedMaterials=true → muestra tabla de materiales
+```
+
+---
+
+## 16. Próximos Pasos — Sprint 7
+
+- **`/dashboard/clientes`** — CRUD de empresas (nombre, RIF, contacto principal)
+  - Al crear ticket/proyecto → selector de cliente (no repetir datos)
+  - Modelo: `Cliente { id, nombre, rif, email, telefono, direccion, created_at }`
+- **Generador cuadro de pagos** — Botón en `/dashboard/pagos` o nueva ruta
+  - Agrupa servicios finalizados (sin pago) por técnico
+  - Columnas: Fecha, Cliente, Descripción, Monto
+  - Total por técnico + total global
+  - Export PDF o impresión directa
 - **error.tsx**: No existe en ninguna ruta — agregar manejo de errores granular
-- **Notificaciones reales**: El webhook de Slack y el email de notificación en config son campos mock
-- **Drag & drop en pipeline**: El pipeline board es read-only — agregar DnD para mover tickets entre estados
-- **PWA / offline**: Los técnicos en campo necesitan modo offline
-- **Supabase real-time**: Suscripciones para actualizar el pipeline en vivo
-- **Audit log UI**: El tipo de datos existe (`audit:view` permission), la página no
-- **Tests**: No hay tests automatizados — agregar Vitest/Playwright
+- **Drag & drop en pipeline**: El pipeline board es read-only — agregar DnD
+- **Supabase real-time**: Suscripciones para actualizar pipeline en vivo
+- **Tests**: No hay tests — agregar Vitest/Playwright
