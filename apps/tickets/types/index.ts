@@ -20,7 +20,7 @@ export type TicketOrigin = 'email' | 'telefono' | 'carta_aceptacion'
 
 export type PaymentStatus = 'pendiente' | 'pagado'
 
-export type PaymentMethod = 'efectivo' | 'transferencia' | 'deposito' | 'cheque'
+export type PaymentMethod = 'pago_movil' | 'transferencia' | 'efectivo' | 'deposito' | 'cheque'
 
 export type ChangeType = 'creacion' | 'asignacion' | 'cambio_estado' | 'modificacion' | 'finalizacion' | 'foto_subida' | 'inspeccion' | 'sesion_trabajo' | 'bloqueador'
 

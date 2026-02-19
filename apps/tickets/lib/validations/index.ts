@@ -214,12 +214,12 @@ export const ticketTechnicianSchema = z.object({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const paymentProcessSchema = z.object({
-  metodo_pago: z.enum(['efectivo', 'transferencia', 'deposito', 'cheque'], {
+  metodo_pago: z.enum(['pago_movil', 'transferencia', 'efectivo', 'deposito', 'cheque'], {
     errorMap: () => ({ message: 'Método de pago inválido' }),
   }),
   referencia_pago: z
     .string()
-    .max(100, 'La referencia no puede exceder 100 caracteres')
+    .max(1000, 'La referencia no puede exceder 1000 caracteres')
     .optional()
     .or(z.literal('')),
   observaciones: z

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils"
 import { PendingPaymentsList } from "@/components/pagos/pending-payments-list"
+import { BankingDetails } from "@/components/pagos/banking-details"
 import {
   PagosFiltersBar,
   ActiveFiltersDisplay,
@@ -184,23 +185,21 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
                   key={payment.id}
                   className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10"
                 >
-                  <div className="flex items-center gap-4">
-                    <Avatar>
+                  <div className="flex items-center gap-4 min-w-0">
+                    <Avatar className="shrink-0">
                       <AvatarFallback>
                         {getInitials(payment.tecnico.nombre, payment.tecnico.apellido)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium text-white">
                         {payment.tecnico.nombre} {payment.tecnico.apellido}
                       </p>
                       <p className="text-sm text-white/60">{payment.ticket.numero_ticket}</p>
-                      {payment.metodo_pago && (
-                        <p className="text-xs text-white/40 capitalize mt-1">
-                          {payment.metodo_pago}
-                          {payment.referencia_pago && ` - Ref: ${payment.referencia_pago}`}
-                        </p>
-                      )}
+                      <BankingDetails
+                        referencia_pago={payment.referencia_pago}
+                        metodo_pago={payment.metodo_pago}
+                      />
                     </div>
                   </div>
                   <div className="text-right">
