@@ -75,11 +75,11 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
         observaciones: observaciones || undefined,
       })
       if (result.success) {
-        toast.success("Pago procesado", { description: result.message })
+        toast.success("Solicitud de pago creada", { description: result.message })
         handleClose(false)
         router.refresh()
       } else {
-        toast.error("Error al procesar pago", { description: result.error })
+        toast.error("Error al crear solicitud", { description: result.error })
       }
     } finally {
       setIsLoading(false)
@@ -90,7 +90,7 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Procesar Pago</DialogTitle>
+          <DialogTitle>Crear Solicitud de Pago</DialogTitle>
           <DialogDescription>
             {payment.tecnico.nombre} {payment.tecnico.apellido} — {payment.ticket.numero_ticket}
           </DialogDescription>
@@ -151,7 +151,7 @@ export function PaymentDialog({ payment, open, onOpenChange }: PaymentDialogProp
           </Button>
           <Button onClick={handlePay} isLoading={isLoading} disabled={!metodoPago}>
             <CreditCard className="h-4 w-4 mr-2" />
-            Confirmar Pago
+            Crear Solicitud
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -160,7 +160,7 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-400" />
-            Pagos Pendientes ({pending.length})
+            Solicitudes de Pago Pendientes ({pending.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -174,7 +174,7 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-400" />
-              Pagos Realizados ({completed.length})
+              Solicitudes Pagadas ({completed.length})
             </CardTitle>
           </CardHeader>
           <CardContent>

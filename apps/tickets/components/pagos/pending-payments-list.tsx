@@ -70,7 +70,7 @@ export function PendingPaymentsList({ payments }: PendingPaymentsListProps) {
               </div>
               <Button size="sm" onClick={() => setActivePayment(payment)}>
                 <CreditCard className="h-4 w-4 mr-2" />
-                Pagar
+                Crear solicitud
               </Button>
             </div>
           </div>

@@ -61,7 +61,7 @@ export function CuadroPagos({ report }: CuadroPagosProps) {
       {/* Header — print-hidden */}
       <div className="page-header print:hidden">
         <div>
-          <h1 className="page-title">Cuadro de Pagos</h1>
+          <h1 className="page-title">Cuadro de Solicitudes de Pago</h1>
           <p className="page-description">
             Período: {fmtDate(report.periodo_desde)} — {fmtDate(report.periodo_hasta)}
           </p>
@@ -80,11 +80,18 @@ export function CuadroPagos({ report }: CuadroPagosProps) {
 
       {/* Print header */}
       <div className="hidden print:block mb-6">
-        <h1 className="text-2xl font-bold text-black">COPS Electronics — Cuadro de Pagos</h1>
-        <p className="text-sm text-gray-600">
-          Período: {fmtDate(report.periodo_desde)} al {fmtDate(report.periodo_hasta)} |
+        <h1 className="text-2xl font-bold text-black">COPS Electronics — Cuadro de Solicitudes de Pago</h1>
+        <p className="text-sm text-gray-600 mt-1">
+          Período: {fmtDate(report.periodo_desde)} al {fmtDate(report.periodo_hasta)} &nbsp;|&nbsp;
           Generado: {fmtDate(report.generado_en)} por {report.generado_por}
         </p>
+        {/* Resumen rápido en el encabezado impreso */}
+        <div className="mt-3 flex gap-8 text-sm border-t border-b border-gray-300 py-2">
+          <span><strong>Total Servicios:</strong> ${fmt(report.total_servicio)}</span>
+          <span><strong>Total Comisiones:</strong> ${fmt(report.total_comision)}</span>
+          <span className="text-yellow-700"><strong>Pendiente a Cancelar:</strong> ${fmt(report.total_pendiente)}</span>
+          <span className="text-green-700"><strong>Cancelado:</strong> ${fmt(report.total_pagado)}</span>
+        </div>
       </div>
 
       {/* Summary KPIs */}
@@ -150,7 +157,7 @@ export function CuadroPagos({ report }: CuadroPagosProps) {
                   <th className="text-left px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs">Fecha</th>
                   <th className="text-left px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs">N° Ticket</th>
                   <th className="text-left px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs">Cliente</th>
-                  <th className="text-left px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs hidden md:table-cell">Descripción</th>
+                  <th className="text-left px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs hidden md:table-cell print:table-cell">Descripción</th>
                   <th className="text-right px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs">Monto</th>
                   <th className="text-right px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs">Comis.%</th>
                   <th className="text-right px-3 py-2.5 text-white/50 font-medium print:text-gray-600 text-xs">A Pagar</th>
@@ -172,7 +179,7 @@ export function CuadroPagos({ report }: CuadroPagosProps) {
                         <div className="text-white/40 print:text-gray-500 text-xs">{row.cliente_empresa}</div>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-white/60 print:text-gray-600 text-xs hidden md:table-cell max-w-[200px] truncate">
+                    <td className="px-3 py-2.5 text-white/60 print:text-gray-600 text-xs hidden md:table-cell print:table-cell max-w-[200px] truncate">
                       {row.descripcion}
                     </td>
                     <td className="px-3 py-2.5 text-right text-white/80 print:text-gray-800 text-xs font-mono">
