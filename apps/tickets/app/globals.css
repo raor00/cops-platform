@@ -8,25 +8,27 @@
 
 @layer base {
   :root {
-    --background: 222 60% 24%;
+    /* ── Paleta corporativa — slate/navy sobrio ── */
+    --background: 222 47% 11%;
     --foreground: 220 20% 98%;
 
-    --card: 222 55% 20%;
+    --card: 220 40% 13%;
     --card-foreground: 220 20% 98%;
 
-    --popover: 222 60% 22%;
+    --popover: 220 47% 10%;
     --popover-foreground: 220 20% 98%;
 
-    --primary: 225 80% 56%;
+    /* Sky-500 como accent corporativo (reemplaza azul eléctrico) */
+    --primary: 199 89% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 40% 30%;
+    --secondary: 220 30% 22%;
     --secondary-foreground: 220 20% 98%;
 
-    --muted: 222 40% 25%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 220 15% 60%;
 
-    --accent: 225 70% 50%;
+    --accent: 199 80% 42%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -38,26 +40,27 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 222 30% 35%;
-    --input: 222 30% 28%;
-    --ring: 225 80% 56%;
+    --border: 220 20% 22%;
+    --input: 220 25% 16%;
+    --ring: 199 89% 48%;
 
     --radius: 0.75rem;
 
-    --chart-1: 225 80% 56%;
+    --chart-1: 199 89% 48%;
     --chart-2: 142 72% 45%;
     --chart-3: 38 92% 50%;
     --chart-4: 280 70% 55%;
     --chart-5: 0 72% 51%;
 
-    --sidebar-background: 222 60% 18%;
+    /* Sidebar: gray-900 corporativo */
+    --sidebar-background: 220 47% 8%;
     --sidebar-foreground: 220 20% 98%;
-    --sidebar-primary: 225 80% 56%;
+    --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 25%;
+    --sidebar-accent: 220 30% 16%;
     --sidebar-accent-foreground: 220 20% 98%;
-    --sidebar-border: 222 30% 25%;
-    --sidebar-ring: 225 80% 56%;
+    --sidebar-border: 220 20% 14%;
+    --sidebar-ring: 199 89% 48%;
   }
 }
 
@@ -73,9 +76,9 @@
   body {
     @apply bg-background text-foreground;
     background:
-      radial-gradient(ellipse 90% 60% at 18% 20%, rgba(145,190,255,.15) 0%, transparent 60%),
-      radial-gradient(ellipse 70% 50% at 88% 0%, rgba(118,162,255,.12) 0%, transparent 62%),
-      linear-gradient(180deg, #0e2f6f 0%, #123777 42%, #0b2a61 100%);
+      radial-gradient(ellipse 80% 50% at 15% 20%, rgba(14,165,233,.08) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 40% at 85% 5%, rgba(14,165,233,.06) 0%, transparent 55%),
+      linear-gradient(180deg, #0d1a2e 0%, #111827 45%, #0a1628 100%);
     min-height: 100vh;
     font-family: var(--font-inter), system-ui, sans-serif;
   }

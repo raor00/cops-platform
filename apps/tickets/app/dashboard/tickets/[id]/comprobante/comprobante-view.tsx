@@ -2,6 +2,7 @@
 
 import { Printer } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BackButton } from "@/components/ui/back-button"
 import type { Ticket, User } from "@/types"
 import { formatDate, formatCurrency, formatMinutesToDuration } from "@/lib/utils"
 
@@ -25,15 +26,18 @@ export function ComprobanteView({ ticket, emisor }: ComprobanteViewProps) {
   return (
     <>
       {/* ── Barra de acción (oculta en impresión) ── */}
-      <div className="no-print flex items-center justify-between mb-6 page-container">
-        <div>
-          <h1 className="page-title">Comprobante de Servicio</h1>
-          <p className="page-description">{ticket.numero_ticket} — {ticket.asunto}</p>
+      <div className="no-print mb-6 page-container">
+        <BackButton />
+        <div className="flex items-center justify-between mt-2">
+          <div>
+            <h1 className="page-title">Comprobante de Servicio</h1>
+            <p className="page-description">{ticket.numero_ticket} — {ticket.asunto}</p>
+          </div>
+          <Button onClick={handlePrint} className="gap-2">
+            <Printer className="h-4 w-4" />
+            Imprimir / PDF
+          </Button>
         </div>
-        <Button onClick={handlePrint} className="gap-2">
-          <Printer className="h-4 w-4" />
-          Imprimir / PDF
-        </Button>
       </div>
 
       {/* ══════════════════════════════════════════════════════════

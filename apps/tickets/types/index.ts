@@ -64,6 +64,15 @@ export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   cancelado: [],
 } as const
 
+// Transiciones inversas — solo para gerente+ (ROLE_HIERARCHY >= 3)
+export const ADMIN_REVERSE_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  asignado: [],
+  iniciado: ['asignado'],
+  en_progreso: ['iniciado'],
+  finalizado: ['en_progreso'],
+  cancelado: ['asignado'],
+} as const
+
 export const STATUS_LABELS: Record<TicketStatus, string> = {
   asignado: 'Asignado',
   iniciado: 'Iniciado',
@@ -799,3 +808,15 @@ export const CHANGE_TYPE_LABELS: Record<ChangeType, string> = {
   sesion_trabajo: 'Sesión de Trabajo',
   bloqueador: 'Bloqueador Reportado',
 } as const
+
+// ─── Log de Actualizaciones (timeline en_progreso) ────────────────────────────
+
+export interface UpdateLog {
+  id: string
+  ticket_id: string
+  autor_id: string
+  contenido: string
+  tipo: 'nota' | 'cambio_estado'
+  created_at: string
+  autor?: Pick<User, 'nombre' | 'apellido' | 'rol'>
+}

@@ -9,17 +9,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-[rgba(47,84,224,0.3)] bg-gradient-to-br from-[rgba(47,84,224,0.35)] to-[rgba(37,67,201,0.25)] text-white shadow-[0_4px_20px_rgba(47,84,224,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_12px_40px_rgba(47,84,224,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] hover:border-[rgba(107,147,247,0.4)] hover:from-[rgba(47,84,224,0.45)] hover:to-[rgba(37,67,201,0.35)]",
+          "border border-[rgba(14,165,233,0.3)] bg-gradient-to-br from-[rgba(14,165,233,0.3)] to-[rgba(2,132,199,0.2)] text-white shadow-[0_4px_20px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_12px_40px_rgba(14,165,233,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:border-[rgba(56,189,248,0.4)] hover:from-[rgba(14,165,233,0.4)] hover:to-[rgba(2,132,199,0.3)]",
         destructive:
           "border border-red-500/30 bg-gradient-to-br from-red-600/35 to-red-700/25 text-white shadow-[0_4px_20px_rgba(220,38,38,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_12px_40px_rgba(220,38,38,0.3)] hover:border-red-400/40",
         outline:
-          "border border-white/10 bg-gradient-to-br from-white/8 to-white/3 text-white backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(47,84,224,0.15)] hover:border-[rgba(107,147,247,0.2)] hover:from-white/12 hover:to-white/5",
+          "border border-white/10 bg-gradient-to-br from-white/8 to-white/3 text-white backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_8px_32px_rgba(14,165,233,0.1)] hover:border-[rgba(56,189,248,0.2)] hover:from-white/12 hover:to-white/5",
         secondary:
           "border border-white/15 bg-white/10 text-white backdrop-blur-xl hover:bg-white/15 hover:border-white/20",
         ghost:
           "text-white/80 hover:bg-white/10 hover:text-white",
         link:
-          "text-blue-400 underline-offset-4 hover:underline hover:text-blue-300",
+          "text-sky-400 underline-offset-4 hover:underline hover:text-sky-300",
       },
       size: {
         default: "h-11 px-5 py-2.5",

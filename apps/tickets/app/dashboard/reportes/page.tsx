@@ -15,9 +15,10 @@ import { Badge } from '@/components/ui/badge'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { getEnhancedDashboardStats } from '@/lib/actions/dashboard'
 import { STATUS_LABELS, STATUS_COLORS, ROLE_HIERARCHY } from '@/types'
-import type { EnhancedDashboardStats, TechnicianKPI } from '@/types'
+import type { EnhancedDashboardStats } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { ReportExportButton } from './report-export-button'
+import { TechnicianStatsTable } from '@/components/reportes/technician-stats-table'
 
 export const metadata = { title: 'Reportes' }
 
@@ -148,88 +149,17 @@ export default async function ReportesPage() {
       </Card>
 
       {/* ─── Rendimiento por Técnico ─── */}
-      {stats.technicianKPIs.length > 0 && (
-        <Card variant="glass" className="mb-6 animate-slide-up stagger-2">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-400" />
-              Rendimiento por Técnico
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left text-xs text-white/40 font-medium px-5 py-3 uppercase tracking-wider">
-                      Técnico
-                    </th>
-                    <th className="text-center text-xs text-white/40 font-medium px-3 py-3 uppercase tracking-wider">
-                      Asignados
-                    </th>
-                    <th className="text-center text-xs text-white/40 font-medium px-3 py-3 uppercase tracking-wider">
-                      Completados
-                    </th>
-                    <th className="text-center text-xs text-white/40 font-medium px-3 py-3 uppercase tracking-wider">
-                      Activos
-                    </th>
-                    <th className="text-center text-xs text-white/40 font-medium px-3 py-3 uppercase tracking-wider">
-                      Tasa
-                    </th>
-                    <th className="text-right text-xs text-white/40 font-medium px-5 py-3 uppercase tracking-wider">
-                      Pendiente Pago
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {stats.technicianKPIs.map((kpi: TechnicianKPI) => {
-                    const total = kpi.ticketsCompletados + kpi.ticketsActivos
-                    const tasa = total > 0 ? Math.round((kpi.ticketsCompletados / total) * 100) : 0
-                    return (
-                      <tr key={kpi.id} className="hover:bg-white/[0.03] transition-colors">
-                        <td className="px-5 py-3">
-                          <span className="font-medium text-white">
-                            {kpi.nombre} {kpi.apellido}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-center text-white/70">{total}</td>
-                        <td className="px-3 py-3 text-center">
-                          <span className="text-green-400 font-semibold">
-                            {kpi.ticketsCompletados}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-center text-white/70">
-                          {kpi.ticketsActivos}
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <div className="w-14 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500"
-                                style={{ width: `${tasa}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-white/60">{tasa}%</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          {kpi.montoPendiente > 0 ? (
-                            <span className="text-yellow-400 font-medium">
-                              {formatCurrency(kpi.montoPendiente)}
-                            </span>
-                          ) : (
-                            <span className="text-white/30 text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Card variant="glass" className="mb-6 animate-slide-up stagger-2">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
+            <Users className="h-4 w-4 text-sky-400" />
+            Rendimiento por Técnico
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TechnicianStatsTable kpis={stats.technicianKPIs} />
+        </CardContent>
+      </Card>
 
       {/* ─── Tickets por Mes (últimos 6) ─── */}
       {stats.ticketsPorMes.length > 0 && (

@@ -2,6 +2,7 @@ import {
   DEFAULT_COMMISSION_PERCENTAGE,
   ROLE_HIERARCHY,
   VALID_TRANSITIONS,
+  ADMIN_REVERSE_TRANSITIONS,
   generateTicketNumber,
 } from "@/types"
 import type {
@@ -26,7 +27,9 @@ import type {
   TicketStatus,
   TicketUpdateInput,
   TipoFoto,
+  UpdateLog,
   User,
+  UserRole,
 } from "@/types"
 
 const now = Date.now()
@@ -458,7 +461,8 @@ export function changeDemoTicketStatus(
     tiempo_trabajado?: number
     observaciones_tecnico?: string
     solucion_aplicada?: string
-  }
+  },
+  userRole?: UserRole
 ): { ticket?: Ticket; error?: string } {
   const index = demoTickets.findIndex((ticket) => ticket.id === id)
   if (index < 0) {
@@ -466,8 +470,10 @@ export function changeDemoTicketStatus(
   }
 
   const current = demoTickets[index]
-  const validTransitions = VALID_TRANSITIONS[current.estado]
-  if (!validTransitions.includes(newStatus)) {
+  const isAdmin = userRole ? ROLE_HIERARCHY[userRole] >= 3 : false
+  const forwardOk = VALID_TRANSITIONS[current.estado].includes(newStatus)
+  const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[current.estado].includes(newStatus)
+  if (!forwardOk && !reverseOk) {
     return { error: `No se puede cambiar de ${current.estado} a ${newStatus}` }
   }
 
@@ -979,4 +985,28 @@ export function updateDemoConfig(clave: string, valor: string): SystemConfig | n
   if (idx === -1) return null
   demoConfig[idx] = { ...demoConfig[idx]!, valor, updated_at: new Date().toISOString() }
   return deepClone(demoConfig[idx]!)
+}
+
+// ─── Update Logs (Timeline de actualizaciones) ────────────────────────────────
+
+let demoUpdateLogs: UpdateLog[] = []
+
+export function getDemoUpdateLogs(ticketId: string): UpdateLog[] {
+  return deepClone(
+    demoUpdateLogs
+      .filter((l) => l.ticket_id === ticketId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  )
+}
+
+export function addDemoUpdateLog(
+  log: Omit<UpdateLog, 'id' | 'created_at'>
+): UpdateLog {
+  const entry: UpdateLog = {
+    ...log,
+    id: crypto.randomUUID(),
+    created_at: new Date().toISOString(),
+  }
+  demoUpdateLogs.unshift(entry)
+  return deepClone(entry)
 }

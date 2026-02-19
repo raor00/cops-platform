@@ -12,6 +12,10 @@ import {
   TrendingUp,
   Activity,
   Users,
+  Hand,
+  Sun,
+  Sunset,
+  Moon,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -96,7 +100,7 @@ async function DashboardContent() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            {greeting()}, {user.nombre} 👋
+            {greeting()}, {user.nombre} <Hand className="inline h-5 w-5 ml-1 text-white/50 align-middle" />
           </h1>
           <p className="mt-1 text-sm text-white/50 capitalize">{today}</p>
         </div>

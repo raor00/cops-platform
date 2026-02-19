@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Play, CheckCircle, XCircle, Loader2, Plus, Trash2 } from "lucide-react"
+import { Play, CheckCircle, XCircle, Loader2, Plus, Trash2, RotateCcw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,20 +19,24 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { changeTicketStatus } from "@/lib/actions/tickets"
 import { cn, formatMinutesToDuration } from "@/lib/utils"
-import type { MaterialItem, Ticket, TicketStatus } from "@/types"
-import { VALID_TRANSITIONS } from "@/types"
+import type { MaterialItem, Ticket, TicketStatus, UserRole } from "@/types"
+import { VALID_TRANSITIONS, ADMIN_REVERSE_TRANSITIONS, ROLE_HIERARCHY, STATUS_LABELS } from "@/types"
 
 interface TicketStatusActionsProps {
   ticket: Ticket
+  userRole?: UserRole
 }
 
-export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
+export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   // Wizard state
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [usedMaterials, setUsedMaterials] = useState(
+    (ticket.materiales_planificados?.length ?? 0) > 0
+  )
   const [materiales, setMateriales] = useState<MaterialItem[]>(
     ticket.materiales_planificados ?? []
   )
@@ -41,10 +45,16 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
   const [observaciones, setObservaciones] = useState("")
 
   const validTransitions = VALID_TRANSITIONS[ticket.estado]
-  const isFinalized = ticket.estado === "finalizado" || ticket.estado === "cancelado"
+  const canRevert = userRole ? ROLE_HIERARCHY[userRole] >= 3 : false
+  const reverseTransitions = ADMIN_REVERSE_TRANSITIONS[ticket.estado]
+  // Hide all buttons if finalized/cancelled AND admin has no reverse transitions
+  const isFinalized =
+    (ticket.estado === "finalizado" || ticket.estado === "cancelado") &&
+    !(canRevert && reverseTransitions.length > 0)
 
   const resetWizard = () => {
     setStep(1)
+    setUsedMaterials((ticket.materiales_planificados?.length ?? 0) > 0)
     setMateriales(ticket.materiales_planificados ?? [])
     setTiempoTrabajado("")
     setSolucion("")
@@ -86,7 +96,7 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
     setIsLoading(true)
     try {
       const result = await changeTicketStatus(ticket.id, "finalizado", {
-        materiales_usados: materiales.filter((m) => m.nombre.trim()),
+        materiales_usados: usedMaterials ? materiales.filter((m) => m.nombre.trim()) : [],
         tiempo_trabajado: tiempoTrabajado ? parseInt(tiempoTrabajado) : undefined,
         solucion_aplicada: solucion,
         observaciones_tecnico: observaciones || undefined,
@@ -177,6 +187,25 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
             Cancelar
           </Button>
         )}
+
+        {/* ─── Botones de reversión (solo admin/gerente+) ─── */}
+        {canRevert && reverseTransitions.length > 0 && (
+          <div className="flex items-center gap-1.5 border-l border-white/15 pl-2 ml-1">
+            {reverseTransitions.map((s) => (
+              <Button
+                key={s}
+                variant="outline"
+                size="sm"
+                onClick={() => handleStatusChange(s)}
+                disabled={isLoading}
+                className="border-orange-400/25 text-orange-300/70 hover:border-orange-400/50 hover:text-orange-300 text-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                {STATUS_LABELS[s]}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ─── Wizard de Finalización (3 pasos) ───────────────────────────── */}
@@ -197,7 +226,7 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
                   className={cn(
                     "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 shrink-0",
                     step >= n
-                      ? "bg-blue-500/30 border border-blue-400 text-blue-300"
+                      ? "bg-sky-500/30 border border-sky-400 text-sky-300"
                       : "bg-white/5 border border-white/20 text-white/30"
                   )}
                 >
@@ -207,7 +236,7 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
                   <div
                     className={cn(
                       "flex-1 h-0.5 mx-2 transition-all duration-300",
-                      step > n ? "bg-blue-400/60" : "bg-white/10"
+                      step > n ? "bg-sky-400/60" : "bg-white/10"
                     )}
                   />
                 )}
@@ -219,10 +248,30 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
           {step === 1 && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-white/70">Materiales utilizados</p>
-              {materiales.length === 0 && (
+
+              {/* Toggle ¿Usó materiales? */}
+              <div className="flex items-center justify-between rounded-lg bg-white/5 border border-white/10 px-3 py-2.5">
+                <span className="text-sm text-white/70">¿Se utilizaron materiales?</span>
+                <button
+                  onClick={() => setUsedMaterials(!usedMaterials)}
+                  className={cn(
+                    "relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200",
+                    usedMaterials ? "bg-sky-500" : "bg-white/20"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200",
+                      usedMaterials ? "translate-x-4.5" : "translate-x-0.5"
+                    )}
+                  />
+                </button>
+              </div>
+
+              {usedMaterials && materiales.length === 0 && (
                 <p className="text-xs text-white/40 italic">Sin materiales registrados</p>
               )}
-              {materiales.map((m) => (
+              {usedMaterials && materiales.map((m) => (
                 <div key={m.id} className="flex items-center gap-2">
                   <Input
                     placeholder="Nombre del material"
@@ -254,15 +303,22 @@ export function TicketStatusActions({ ticket }: TicketStatusActionsProps) {
                   </Button>
                 </div>
               ))}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full border-dashed border-white/20 text-white/50 hover:text-white"
-                onClick={addMaterial}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar material
-              </Button>
+              {usedMaterials && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-dashed border-white/20 text-white/50 hover:text-white"
+                  onClick={addMaterial}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar material
+                </Button>
+              )}
+              {!usedMaterials && (
+                <p className="text-xs text-white/30 italic text-center py-2">
+                  Sin materiales — se finalizará sin lista de materiales
+                </p>
+              )}
             </div>
           )}
 

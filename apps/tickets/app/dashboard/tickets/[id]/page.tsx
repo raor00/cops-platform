@@ -5,7 +5,7 @@ import { ArrowLeft, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { getCurrentUser } from '@/lib/actions/auth'
-import { getTicketById, getTicketHistory } from '@/lib/actions/tickets'
+import { getTicketById, getTicketHistory, getTicketUpdateLogs } from '@/lib/actions/tickets'
 import { getFasesByTicket } from '@/lib/actions/fases'
 import { getInspeccionByTicket } from '@/lib/actions/inspecciones'
 import {
@@ -15,7 +15,7 @@ import {
   PRIORITY_COLORS,
   ROLE_HIERARCHY,
 } from '@/types'
-import type { Inspeccion, TicketFase } from '@/types'
+import type { Inspeccion, TicketFase, UserRole } from '@/types'
 import { TicketStatusActions } from './ticket-status-actions'
 import { TicketDetailTabs } from './ticket-detail-tabs'
 
@@ -47,12 +47,13 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
   const canUploadFotos = ROLE_HIERARCHY[user.rol] >= 2
   const canDeleteFotos = ROLE_HIERARCHY[user.rol] >= 3
 
-  const [fasesResult, historialResult, inspeccionResult] = await Promise.all([
+  const [fasesResult, historialResult, inspeccionResult, updateLogsResult] = await Promise.all([
     ticket.tipo === 'proyecto'
       ? getFasesByTicket(id)
       : Promise.resolve({ success: true, data: [] as TicketFase[] }),
     getTicketHistory(id),
     getInspeccionByTicket(id),
+    getTicketUpdateLogs(id),
   ])
 
   return (
@@ -83,7 +84,7 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
               </Link>
             </Button>
           )}
-          {canChangeStatus && <TicketStatusActions ticket={ticket} />}
+          {canChangeStatus && <TicketStatusActions ticket={ticket} userRole={user.rol} />}
           {canEdit && (
             <Button variant='outline' asChild>
               <Link href={`/dashboard/tickets/${ticket.id}?edit=true`}>Editar</Link>
@@ -96,6 +97,8 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
         ticket={ticket}
         fases={fasesResult.data ?? []}
         historial={historialResult.data ?? []}
+        updateLogs={updateLogsResult.data ?? []}
+        userRole={user.rol}
         inspeccion={(inspeccionResult.data ?? null) as Inspeccion | null}
         canManageFases={canManageFases}
         canUpdateProgress={canUpdateProgress}

@@ -4,23 +4,26 @@ import Link from "next/link"
 import { ClipboardCheck, GitBranch, History, FileSearch, Camera } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatDateTime } from "@/lib/utils"
-import type { ChangeHistory, Inspeccion, Ticket, TicketFase } from "@/types"
-import { CHANGE_TYPE_LABELS } from "@/types"
+import type { ChangeHistory, Inspeccion, Ticket, TicketFase, UpdateLog } from "@/types"
+import { CHANGE_TYPE_LABELS, ROLE_HIERARCHY } from "@/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { TicketDetails } from "./ticket-details"
 import { TicketFasesList } from "@/components/tickets/ticket-fases-list"
 import { FotosGallery } from "@/components/fotos/fotos-gallery"
+import { UpdateLogPanel } from "@/components/tickets/update-log-panel"
 
 interface TicketDetailTabsProps {
   ticket: Ticket
   fases: TicketFase[]
   historial: ChangeHistory[]
   inspeccion: Inspeccion | null
+  updateLogs?: UpdateLog[]
   canManageFases: boolean
   canUpdateProgress: boolean
   canUploadFotos?: boolean
   canDeleteFotos?: boolean
+  userRole?: string
 }
 
 export function TicketDetailTabs({
@@ -28,11 +31,19 @@ export function TicketDetailTabs({
   fases,
   historial,
   inspeccion,
+  updateLogs = [],
   canManageFases,
   canUpdateProgress,
   canUploadFotos = false,
   canDeleteFotos = false,
+  userRole,
 }: TicketDetailTabsProps) {
+  const canAddLog =
+    userRole === "tecnico"
+      ? ticket.tecnico_id !== null
+      : userRole
+        ? ROLE_HIERARCHY[userRole as keyof typeof ROLE_HIERARCHY] >= 2
+        : false
   const isProyecto = ticket.tipo === "proyecto"
 
   // Progreso global calculado desde las fases
@@ -121,44 +132,61 @@ export function TicketDetailTabs({
 
       {/* ─── Tab: Historial ───────────────────────────────────────────────── */}
       <TabsContent value="historial">
-        {historial.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-            <History className="h-10 w-10 text-white/20 mb-3" />
-            <p className="text-white/50 text-sm">Sin historial de cambios registrados</p>
+        <div className="space-y-6">
+          {/* Timeline de actualizaciones manuales */}
+          <div>
+            <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <History className="h-3.5 w-3.5" />
+              Actualizaciones del servicio
+            </h3>
+            <UpdateLogPanel
+              ticketId={ticket.id}
+              ticketStatus={ticket.estado}
+              initialLogs={updateLogs}
+              canAdd={canAddLog}
+            />
           </div>
-        ) : (
-          <div className="space-y-2">
-            {historial.map((entry, i) => (
-              <div
-                key={entry.id}
-                className="flex gap-4 p-3 rounded-xl bg-white/5 border border-white/10 transition-colors hover:bg-white/[0.07] animate-slide-up"
-                style={{ animationDelay: `${i * 40}ms` }}
-              >
-                <div className="text-xs text-white/35 w-32 shrink-0 pt-0.5">
-                  {formatDateTime(entry.created_at)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white/80 font-medium">
-                    {CHANGE_TYPE_LABELS[entry.tipo_cambio] ?? entry.tipo_cambio}
-                  </p>
-                  {entry.observacion && (
-                    <p className="text-xs text-white/50 mt-0.5 truncate">{entry.observacion}</p>
-                  )}
-                  {entry.valor_anterior && entry.valor_nuevo && (
-                    <p className="text-xs text-white/35 mt-0.5">
-                      {entry.valor_anterior} → {entry.valor_nuevo}
-                    </p>
-                  )}
-                  {entry.usuario && (
-                    <p className="text-xs text-white/30 mt-0.5">
-                      por {entry.usuario.nombre} {entry.usuario.apellido}
-                    </p>
-                  )}
-                </div>
+
+          {/* Historial de cambios del sistema */}
+          {historial.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">
+                Historial de cambios
+              </h3>
+              <div className="space-y-2">
+                {historial.map((entry, i) => (
+                  <div
+                    key={entry.id}
+                    className="flex gap-4 p-3 rounded-xl bg-white/5 border border-white/10 transition-colors hover:bg-white/[0.07] animate-slide-up"
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
+                    <div className="text-xs text-white/35 w-32 shrink-0 pt-0.5">
+                      {formatDateTime(entry.created_at)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white/80 font-medium">
+                        {CHANGE_TYPE_LABELS[entry.tipo_cambio] ?? entry.tipo_cambio}
+                      </p>
+                      {entry.observacion && (
+                        <p className="text-xs text-white/50 mt-0.5 truncate">{entry.observacion}</p>
+                      )}
+                      {entry.valor_anterior && entry.valor_nuevo && (
+                        <p className="text-xs text-white/35 mt-0.5">
+                          {entry.valor_anterior} → {entry.valor_nuevo}
+                        </p>
+                      )}
+                      {entry.usuario && (
+                        <p className="text-xs text-white/30 mt-0.5">
+                          por {entry.usuario.nombre} {entry.usuario.apellido}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </TabsContent>
 
       {/* ─── Tab: Inspección ──────────────────────────────────────────────── */}

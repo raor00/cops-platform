@@ -11,10 +11,12 @@ import type {
   TicketStatus,
   PaginatedResponse,
   DashboardStats,
+  UpdateLog,
 } from "@/types"
-import { 
-  ROLE_HIERARCHY, 
-  VALID_TRANSITIONS, 
+import {
+  ROLE_HIERARCHY,
+  VALID_TRANSITIONS,
+  ADMIN_REVERSE_TRANSITIONS,
   generateTicketNumber,
   DEFAULT_SERVICE_AMOUNT,
   DEFAULT_COMMISSION_PERCENTAGE,
@@ -31,6 +33,8 @@ import {
   getDemoTicketById,
   getDemoTicketsPage,
   updateDemoTicket,
+  getDemoUpdateLogs,
+  addDemoUpdateLog,
 } from "@/lib/mock-data"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -380,7 +384,7 @@ export async function changeTicketStatus(
       return { success: false, error: "No tienes permiso para modificar este ticket" }
     }
 
-    const result = changeDemoTicketStatusMock(id, newStatus, additionalData)
+    const result = changeDemoTicketStatusMock(id, newStatus, additionalData, currentUser.rol)
 
     if (result.error || !result.ticket) {
       return { success: false, error: result.error || "No se pudo actualizar el ticket" }
@@ -415,12 +419,14 @@ export async function changeTicketStatus(
     return { success: false, error: "No tienes permiso para modificar este ticket" }
   }
 
-  // Validar transición de estado (Máquina de Estados)
-  const validTransitions = VALID_TRANSITIONS[ticket.estado as TicketStatus]
-  if (!validTransitions.includes(newStatus)) {
-    return { 
-      success: false, 
-      error: `No se puede cambiar de ${ticket.estado} a ${newStatus}` 
+  // Validar transición de estado (bidireccional para admin)
+  const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
+  const forwardOk = VALID_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
+  const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
+  if (!forwardOk && !reverseOk) {
+    return {
+      success: false,
+      error: `No se puede cambiar de ${ticket.estado} a ${newStatus}`
     }
   }
 
@@ -792,4 +798,118 @@ export async function getTicketHistory(ticketId: string): Promise<ActionResponse
 
   if (error) return { success: false, error: error.message }
   return { success: true, data: (data ?? []) as ChangeHistory[] }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIMELINE DE ACTUALIZACIONES
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getTicketUpdateLogs(ticketId: string): Promise<ActionResponse<UpdateLog[]>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+
+  if (isLocalMode()) {
+    return { success: true, data: getDemoUpdateLogs(ticketId) }
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("historial_cambios")
+    .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at, usuario:users(nombre, apellido, rol)")
+    .eq("ticket_id", ticketId)
+    .in("tipo_cambio", ["sesion_trabajo", "cambio_estado"])
+    .order("created_at", { ascending: false })
+    .limit(100)
+
+  if (error) return { success: false, error: error.message }
+
+  const logs: UpdateLog[] = (data ?? []).map((row: Record<string, unknown>) => ({
+    id: row.id as string,
+    ticket_id: row.ticket_id as string,
+    autor_id: row.usuario_id as string,
+    contenido: (row.observacion as string) || (row.tipo_cambio === "cambio_estado" ? "Cambio de estado" : "Actualización"),
+    tipo: row.tipo_cambio === "cambio_estado" ? "cambio_estado" : "nota" as "nota" | "cambio_estado",
+    created_at: row.created_at as string,
+    autor: row.usuario as UpdateLog["autor"],
+  }))
+
+  return { success: true, data: logs }
+}
+
+export async function addTicketUpdateLog(
+  ticketId: string,
+  contenido: string
+): Promise<ActionResponse<UpdateLog>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+
+  if (!contenido.trim()) {
+    return { success: false, error: "El contenido no puede estar vacío" }
+  }
+
+  if (isLocalMode()) {
+    const ticket = getDemoTicketById(ticketId, currentUser)
+    if (!ticket) return { success: false, error: "Ticket no encontrado" }
+
+    const canAdd =
+      currentUser.rol === "tecnico"
+        ? ticket.tecnico_id === currentUser.id
+        : ROLE_HIERARCHY[currentUser.rol] >= 2
+
+    if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
+
+    const log = addDemoUpdateLog({
+      ticket_id: ticketId,
+      autor_id: currentUser.id,
+      contenido: contenido.trim(),
+      tipo: "nota",
+      autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
+    })
+
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    return { success: true, data: log, message: "Actualización agregada" }
+  }
+
+  const supabase = await createClient()
+
+  const { data: ticket, error: fetchError } = await supabase
+    .from("tickets")
+    .select("tecnico_id")
+    .eq("id", ticketId)
+    .single()
+
+  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
+
+  const canAdd =
+    currentUser.rol === "tecnico"
+      ? ticket.tecnico_id === currentUser.id
+      : ROLE_HIERARCHY[currentUser.rol] >= 2
+
+  if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
+
+  const { data, error } = await supabase
+    .from("historial_cambios")
+    .insert({
+      ticket_id: ticketId,
+      usuario_id: currentUser.id,
+      tipo_cambio: "sesion_trabajo",
+      observacion: contenido.trim(),
+    })
+    .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at")
+    .single()
+
+  if (error) return { success: false, error: error.message }
+
+  const log: UpdateLog = {
+    id: data.id,
+    ticket_id: data.ticket_id,
+    autor_id: data.usuario_id,
+    contenido: data.observacion ?? "",
+    tipo: "nota",
+    created_at: data.created_at,
+    autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
+  }
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  return { success: true, data: log, message: "Actualización agregada" }
 }

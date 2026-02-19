@@ -127,10 +127,10 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
             : "text-white/60 hover:bg-white/10 hover:text-white"
         )}
       >
-        <item.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-blue-400" : "")} />
+        <item.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-sky-400" : "")} />
         {!collapsed && <span>{item.name}</span>}
         {!collapsed && active && (
-          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-400" />
+          <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sky-400" />
         )}
       </Link>
     )
@@ -158,7 +158,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
       )}
     >
       {/* Glass background */}
-      <div className="absolute inset-0 border-r border-white/10 bg-gradient-to-b from-[#0e2f6f]/95 to-[#0b2456]/98 backdrop-blur-2xl" />
+      <div className="absolute inset-0 border-r border-white/8 bg-gradient-to-b from-[#0d1117]/98 to-[#111827]/99 backdrop-blur-2xl" />
 
       {/* Content */}
       <div className="relative flex h-full flex-col">
@@ -167,17 +167,17 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
         <div className="flex h-16 items-center justify-between px-4 border-b border-white/10">
           {!collapsed ? (
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/20 group-hover:border-blue-400/40 transition-colors">
-                <Zap className="h-5 w-5 text-blue-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/15 group-hover:border-sky-400/30 transition-colors">
+                <Zap className="h-5 w-5 text-sky-400" />
               </div>
               <div>
                 <span className="font-bold text-white text-sm">COPS</span>
-                <span className="font-bold text-blue-400 text-sm"> Tickets</span>
+                <span className="font-bold text-sky-400 text-sm"> Tickets</span>
               </div>
             </Link>
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/20 mx-auto">
-              <Zap className="h-5 w-5 text-blue-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/15 mx-auto">
+              <Zap className="h-5 w-5 text-sky-400" />
             </div>
           )}
         </div>
@@ -226,7 +226,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
               {"foto_perfil_url" in user && user.foto_perfil_url && (
                 <AvatarImage src={user.foto_perfil_url} alt={`${user.nombre} ${user.apellido}`} />
               )}
-              <AvatarFallback className="bg-gradient-to-br from-blue-600/40 to-purple-600/40 text-white text-xs font-bold">
+              <AvatarFallback className="bg-gradient-to-br from-sky-600/30 to-slate-600/30 text-white text-xs font-bold">
                 {user.nombre.charAt(0)}{user.apellido.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -256,7 +256,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
         {/* Collapse button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-[#0e2f6f] text-white/60 hover:text-white hover:bg-white/10 transition-colors shadow-lg"
+          className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-[#111827] text-white/60 hover:text-white hover:bg-white/10 transition-colors shadow-lg"
         >
           {collapsed ? (
             <ChevronRight className="h-3.5 w-3.5" />
