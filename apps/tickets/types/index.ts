@@ -356,6 +356,9 @@ export type Permission =
   | 'config:view'
   | 'config:edit'
   | 'audit:view'
+  | 'clients:view'
+  | 'clients:create'
+  | 'clients:edit'
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   tecnico: [
@@ -370,6 +373,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'reports:view',
     'reports:export',
     'audit:view',
+    'clients:view',
+    'clients:create',
+    'clients:edit',
   ],
   gerente: [
     'tickets:view_own',
@@ -389,6 +395,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'reports:view',
     'reports:export',
     'audit:view',
+    'clients:view',
+    'clients:create',
+    'clients:edit',
   ],
   vicepresidente: [
     'tickets:view_own',
@@ -410,6 +419,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'config:view',
     'config:edit',
     'audit:view',
+    'clients:view',
+    'clients:create',
+    'clients:edit',
   ],
   presidente: [
     'tickets:view_own',
@@ -431,6 +443,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'config:view',
     'config:edit',
     'audit:view',
+    'clients:view',
+    'clients:create',
+    'clients:edit',
   ],
 } as const
 
@@ -819,4 +834,79 @@ export interface UpdateLog {
   tipo: 'nota' | 'cambio_estado'
   created_at: string
   autor?: Pick<User, 'nombre' | 'apellido' | 'rol'>
+}
+
+// ─── Clientes DB (Sprint 7) ───────────────────────────────────────────────────
+
+export type ClienteStatus = 'activo' | 'inactivo'
+
+export interface Cliente {
+  id: string
+  nombre: string
+  apellido: string | null
+  empresa: string | null
+  email: string | null
+  telefono: string
+  direccion: string
+  rif_cedula: string | null
+  estado: ClienteStatus
+  observaciones: string | null
+  created_at: string
+  updated_at: string
+  // Computed
+  tickets_count?: number
+  ultimo_ticket_fecha?: string | null
+}
+
+export interface ClienteCreateInput {
+  nombre: string
+  apellido?: string
+  empresa?: string
+  email?: string
+  telefono: string
+  direccion: string
+  rif_cedula?: string
+  observaciones?: string
+}
+
+export interface ClienteUpdateInput extends Partial<ClienteCreateInput> {
+  estado?: ClienteStatus
+}
+
+// ─── Cuadro de Pagos (Sprint 7) ───────────────────────────────────────────────
+
+export interface PaymentScheduleRow {
+  fecha_finalizacion: string
+  ticket_numero: string
+  cliente_nombre: string
+  cliente_empresa: string | null
+  descripcion: string
+  monto_servicio: number
+  porcentaje_comision: number
+  monto_a_pagar: number
+  estado_pago: PaymentStatus
+  metodo_pago: PaymentMethod | null
+  referencia_pago: string | null
+}
+
+export interface TechnicianPaymentSchedule {
+  tecnico_id: string
+  tecnico_nombre: string
+  rows: PaymentScheduleRow[]
+  subtotal_servicio: number
+  subtotal_comision: number
+  pagados: number
+  pendientes: number
+}
+
+export interface PaymentScheduleReport {
+  periodo_desde: string
+  periodo_hasta: string
+  generado_en: string
+  generado_por: string
+  tecnicos: TechnicianPaymentSchedule[]
+  total_servicio: number
+  total_comision: number
+  total_pagado: number
+  total_pendiente: number
 }

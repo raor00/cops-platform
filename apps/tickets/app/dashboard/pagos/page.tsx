@@ -2,8 +2,9 @@ import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/actions/auth"
 import { createClient } from "@/lib/supabase/server"
 import { isLocalMode } from "@/lib/local-mode"
-import { getDemoPaymentsView } from "@/lib/mock-data"
+import { getDemoPaymentsView, getDemoUsers } from "@/lib/mock-data"
 import { ROLE_HIERARCHY } from "@/types"
+import { GenCuadroDialog } from "@/components/pagos/gen-cuadro-dialog"
 import { PagosClient } from "./pagos-client"
 
 export const metadata = { title: "Pagos" }
@@ -41,7 +42,9 @@ async function getAllPayments(): Promise<Payment[]> {
 
 async function getTechnicians(): Promise<Array<{ id: string; nombre: string; apellido: string }>> {
   if (isLocalMode()) {
-    return []
+    return getDemoUsers()
+      .filter((u) => u.rol === "tecnico" && u.estado === "activo")
+      .map((u) => ({ id: u.id, nombre: u.nombre, apellido: u.apellido }))
   }
 
   const supabase = await createClient()
@@ -71,6 +74,7 @@ export default async function PagosPage() {
           <h1 className="page-title">Pagos a Técnicos</h1>
           <p className="page-description">Gestiona los pagos por servicios realizados</p>
         </div>
+        <GenCuadroDialog technicians={technicians} />
       </div>
 
       <PagosClient allPayments={allPayments} technicians={technicians} />

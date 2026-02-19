@@ -8,6 +8,9 @@ import {
 import type {
   ActivityFeedItem,
   ChangeType,
+  Cliente,
+  ClienteCreateInput,
+  ClienteUpdateInput,
   DashboardStats,
   EnhancedDashboardStats,
   FaseEstado,
@@ -232,6 +235,14 @@ let demoPayments: TechnicianPayment[] = demoTickets
 
 export function getDemoCurrentUser(): User {
   return deepClone(DEMO_USERS[0]!)
+}
+
+export function getDemoTickets(): Ticket[] {
+  return deepClone(demoTickets)
+}
+
+export function getDemoPayments(): TechnicianPayment[] {
+  return deepClone(demoPayments)
 }
 
 export function getDemoUsers(): User[] {
@@ -1009,4 +1020,200 @@ export function addDemoUpdateLog(
   }
   demoUpdateLogs.unshift(entry)
   return deepClone(entry)
+}
+
+// ─── Clientes DB (Sprint 7) ───────────────────────────────────────────────────
+
+let demoClientes: Cliente[] = [
+  {
+    id: "c1000000-0000-0000-0000-000000000001",
+    nombre: "Banco Nacional",
+    apellido: null,
+    empresa: "Banco Nacional C.A.",
+    email: "ops@banconacional.com.ve",
+    telefono: "+58 212 600 0000",
+    direccion: "Av. Urdaneta, Caracas, Venezuela",
+    rif_cedula: "J-30000001-0",
+    estado: "activo",
+    observaciones: "Cliente corporativo prioritario. Sede principal + 3 sucursales.",
+    created_at: new Date(now - 90 * hour).toISOString(),
+    updated_at: new Date(now - 90 * hour).toISOString(),
+    tickets_count: 2,
+    ultimo_ticket_fecha: new Date(now - 48 * hour).toISOString(),
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000002",
+    nombre: "Centro Empresarial Hallandale",
+    apellido: null,
+    empresa: "CEH Group",
+    email: "gerencia@cehgroup.com",
+    telefono: "+58 241 800 0000",
+    direccion: "Zona Industrial, Valencia, Venezuela",
+    rif_cedula: "J-40000002-1",
+    estado: "activo",
+    observaciones: "Proyecto en curso: control de acceso multi-sede.",
+    created_at: new Date(now - 80 * hour).toISOString(),
+    updated_at: new Date(now - 80 * hour).toISOString(),
+    tickets_count: 1,
+    ultimo_ticket_fecha: new Date(now - 20 * hour).toISOString(),
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000003",
+    nombre: "Clínica del Norte",
+    apellido: null,
+    empresa: "Salud Norte C.A.",
+    email: "sistemas@clinicadelnorte.com",
+    telefono: "+58 414 555 1111",
+    direccion: "Av. Principal, Maracaibo, Venezuela",
+    rif_cedula: "J-20000003-2",
+    estado: "activo",
+    observaciones: "Requiere mantenimiento UPS trimestral.",
+    created_at: new Date(now - 72 * hour).toISOString(),
+    updated_at: new Date(now - 72 * hour).toISOString(),
+    tickets_count: 1,
+    ultimo_ticket_fecha: new Date(now - 72 * hour).toISOString(),
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000004",
+    nombre: "Pedro",
+    apellido: "Martínez",
+    empresa: null,
+    email: "pedro.m@gmail.com",
+    telefono: "+58 424 321 9876",
+    direccion: "Urb. Las Mercedes, Caracas, Venezuela",
+    rif_cedula: "V-15432100",
+    estado: "activo",
+    observaciones: null,
+    created_at: new Date(now - 50 * hour).toISOString(),
+    updated_at: new Date(now - 50 * hour).toISOString(),
+    tickets_count: 0,
+    ultimo_ticket_fecha: null,
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000005",
+    nombre: "Distribuidora TecnoMax",
+    apellido: null,
+    empresa: "TecnoMax S.R.L.",
+    email: "compras@tecnomax.com.ve",
+    telefono: "+58 212 700 4444",
+    direccion: "Centro Comercial El Recreo, Caracas, Venezuela",
+    rif_cedula: "J-50000005-3",
+    estado: "activo",
+    observaciones: "Distribuidor de equipos de seguridad. Descuento corporativo 10%.",
+    created_at: new Date(now - 30 * hour).toISOString(),
+    updated_at: new Date(now - 30 * hour).toISOString(),
+    tickets_count: 0,
+    ultimo_ticket_fecha: null,
+  },
+  {
+    id: "c1000000-0000-0000-0000-000000000006",
+    nombre: "Inversiones",
+    apellido: null,
+    empresa: "Inversiones Altamira C.A.",
+    email: null,
+    telefono: "+58 212 800 0099",
+    direccion: "Altamira Sur, Caracas, Venezuela",
+    rif_cedula: "J-60000006-4",
+    estado: "inactivo",
+    observaciones: "Contrato vencido. Pendiente renovación.",
+    created_at: new Date(now - 200 * hour).toISOString(),
+    updated_at: new Date(now - 100 * hour).toISOString(),
+    tickets_count: 0,
+    ultimo_ticket_fecha: null,
+  },
+]
+
+export function getDemoClientes(
+  options: { page?: number; pageSize?: number; search?: string; estado?: string } = {}
+): PaginatedResponse<Cliente> {
+  const page = options.page || 1
+  const pageSize = options.pageSize || 20
+  let filtered = [...demoClientes]
+
+  if (options.search) {
+    const q = options.search.toLowerCase()
+    filtered = filtered.filter(
+      (c) =>
+        c.nombre.toLowerCase().includes(q) ||
+        (c.empresa && c.empresa.toLowerCase().includes(q)) ||
+        (c.rif_cedula && c.rif_cedula.toLowerCase().includes(q)) ||
+        c.telefono.includes(q) ||
+        (c.email && c.email.toLowerCase().includes(q))
+    )
+  }
+
+  if (options.estado) {
+    filtered = filtered.filter((c) => c.estado === options.estado)
+  }
+
+  const total = filtered.length
+  const start = (page - 1) * pageSize
+  const data = filtered.slice(start, start + pageSize)
+
+  return { data: deepClone(data), total, page, pageSize, totalPages: Math.ceil(total / pageSize) }
+}
+
+export function getDemoClienteById(id: string): Cliente | null {
+  const c = demoClientes.find((c) => c.id === id)
+  return c ? deepClone(c) : null
+}
+
+export function createDemoCliente(input: ClienteCreateInput): Cliente {
+  const now = new Date().toISOString()
+  const cliente: Cliente = {
+    id: crypto.randomUUID(),
+    nombre: input.nombre,
+    apellido: input.apellido || null,
+    empresa: input.empresa || null,
+    email: input.email || null,
+    telefono: input.telefono,
+    direccion: input.direccion,
+    rif_cedula: input.rif_cedula || null,
+    estado: "activo",
+    observaciones: input.observaciones || null,
+    created_at: now,
+    updated_at: now,
+    tickets_count: 0,
+    ultimo_ticket_fecha: null,
+  }
+  demoClientes = [cliente, ...demoClientes]
+  return deepClone(cliente)
+}
+
+export function updateDemoCliente(id: string, input: ClienteUpdateInput): Cliente | null {
+  const idx = demoClientes.findIndex((c) => c.id === id)
+  if (idx === -1) return null
+  const updated: Cliente = {
+    ...demoClientes[idx]!,
+    ...input,
+    apellido: input.apellido !== undefined ? (input.apellido || null) : demoClientes[idx]!.apellido,
+    empresa: input.empresa !== undefined ? (input.empresa || null) : demoClientes[idx]!.empresa,
+    email: input.email !== undefined ? (input.email || null) : demoClientes[idx]!.email,
+    rif_cedula: input.rif_cedula !== undefined ? (input.rif_cedula || null) : demoClientes[idx]!.rif_cedula,
+    observaciones: input.observaciones !== undefined ? (input.observaciones || null) : demoClientes[idx]!.observaciones,
+    updated_at: new Date().toISOString(),
+  }
+  demoClientes[idx] = updated
+  return deepClone(updated)
+}
+
+export function deleteDemoCliente(id: string): boolean {
+  const idx = demoClientes.findIndex((c) => c.id === id)
+  if (idx === -1) return false
+  demoClientes = demoClientes.filter((c) => c.id !== id)
+  return true
+}
+
+export function searchDemoClientes(query: string): Cliente[] {
+  const q = query.toLowerCase()
+  return deepClone(
+    demoClientes
+      .filter(
+        (c) =>
+          c.nombre.toLowerCase().includes(q) ||
+          (c.empresa && c.empresa.toLowerCase().includes(q)) ||
+          c.telefono.includes(q)
+      )
+      .slice(0, 10)
+  )
 }

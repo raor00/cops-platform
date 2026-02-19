@@ -124,13 +124,13 @@
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-300;
+    @apply glass-card transition-all duration-150;
   }
 
   .glass-card-hover:hover {
-    @apply translate-y-[-4px];
-    box-shadow: 0 20px 60px rgba(21,57,120,0.24), 0 0 0 1px rgba(158,190,255,0.20);
-    border-color: rgba(107,147,247,0.15);
+    @apply translate-y-[-2px];
+    box-shadow: 0 10px 30px rgba(21,57,120,0.18), 0 0 0 1px rgba(158,190,255,0.12);
+    border-color: rgba(107,147,247,0.12);
     background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
   }
 
@@ -356,62 +356,6 @@
   .form-row {
     @apply grid gap-4 sm:grid-cols-2;
   }
-
-  .form-section {
-    @apply space-y-4 p-6 rounded-xl border border-white/10 bg-white/5;
-  }
-
-  .form-section-title {
-    @apply text-lg font-semibold text-white mb-4;
-  }
-}
-
-/* ═════════════════════════════════
-   Empty States
-   ═════════════════════════════════ */
-
-@layer components {
-  .empty-state {
-    @apply flex flex-col items-center justify-center py-16 text-center;
-  }
-
-  .empty-state-icon {
-    @apply h-16 w-16 text-white/20 mb-4;
-  }
-
-  .empty-state-title {
-    @apply text-lg font-semibold text-white/80 mb-2;
-  }
-
-  .empty-state-description {
-    @apply text-sm text-white/50 max-w-sm;
-  }
-}
-
-/* ═════════════════════════════════
-   Loading States
-   ═════════════════════════════════ */
-
-@layer components {
-  .skeleton {
-    @apply animate-pulse rounded-lg bg-white/10;
-  }
-
-  .skeleton-text {
-    @apply skeleton h-4 w-full;
-  }
-
-  .skeleton-title {
-    @apply skeleton h-6 w-3/4;
-  }
-
-  .skeleton-avatar {
-    @apply skeleton h-10 w-10 rounded-full;
-  }
-
-  .skeleton-button {
-    @apply skeleton h-10 w-24;
-  }
 }
 
 /* ═════════════════════════════════
@@ -528,11 +472,11 @@
   /* Botones: feedback táctil instantáneo */
   button:not(:disabled),
   [role="button"]:not(:disabled) {
-    transition: transform 120ms ease, opacity 120ms ease;
+    transition: transform 80ms ease, opacity 80ms ease;
   }
   button:not(:disabled):active,
   [role="button"]:not(:disabled):active {
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
 
   /* Links de navegación: underline slide */
@@ -549,24 +493,19 @@
     @apply w-full;
   }
 
-  /* Badge "en_progreso": pulso sutil */
-  .badge-en-progreso {
-    @apply animate-pulse-subtle;
-  }
-
   /* Cards interactivas con hover elevado */
   .interactive-card {
-    @apply glass-card transition-all duration-300 cursor-pointer;
+    @apply glass-card transition-all duration-150 cursor-pointer;
     will-change: transform, box-shadow;
   }
   .interactive-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow:
-      0 12px 40px rgba(14, 47, 111, 0.4),
-      0 0 0 1px rgba(107, 147, 247, 0.15);
+      0 8px 24px rgba(14, 47, 111, 0.25),
+      0 0 0 1px rgba(107, 147, 247, 0.10);
   }
   .interactive-card:active {
-    transform: translateY(-1px);
+    transform: translateY(0);
   }
 
   /* Input focus glow */
@@ -603,30 +542,28 @@
   }
 
   /* Dialog overlay */
-  [data-radix-popper-content-wrapper],
   [role="dialog"] {
     animation: scale-in 0.2s ease-out both;
   }
 
-  /* Sidebar nav items: slide from left */
+  /* Sidebar nav items */
   .sidebar-nav-item {
-    @apply transition-all duration-200 ease-out;
+    @apply transition-colors duration-100 ease-out;
     position: relative;
     overflow: hidden;
   }
   .sidebar-nav-item::before {
     content: '';
-    @apply absolute inset-y-0 left-0 w-0.5 bg-blue-400 rounded-r;
+    @apply absolute inset-y-0 left-0 w-0.5 bg-sky-400 rounded-r;
     transform: scaleY(0);
-    transition: transform 200ms ease;
+    transition: transform 150ms ease;
     transform-origin: center;
   }
   .sidebar-nav-item.active::before {
     transform: scaleY(1);
   }
   .sidebar-nav-item:hover {
-    background-color: rgb(255 255 255 / 0.08);
-    padding-left: calc(theme('spacing.3') + 2px);
+    background-color: rgb(255 255 255 / 0.06);
   }
 
   /* ─── Mobile Tech View ──────────────────────────────── */

@@ -9,6 +9,7 @@ import {
   FolderKanban,
   Kanban,
   Users,
+  Building2,
   CreditCard,
   FileBarChart2,
   Settings,
@@ -64,6 +65,12 @@ const PRIMARY_NAV = [
 ] as const
 
 const MANAGEMENT_NAV = [
+  {
+    name: "Clientes",
+    href: "/dashboard/clientes",
+    icon: Building2,
+    permission: "clients:view" as const,
+  },
   {
     name: "Usuarios",
     href: "/dashboard/usuarios",
@@ -123,7 +130,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
         className={cn(
           "sidebar-nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
           active
-            ? "active bg-gradient-to-r from-blue-500/25 to-purple-500/15 text-white border border-blue-500/30 shadow-[0_0_20px_rgba(47,84,224,0.12)]"
+            ? "active bg-sky-500/15 text-white border border-sky-500/30 shadow-[0_0_20px_rgba(14,165,233,0.12)]"
             : "text-white/60 hover:bg-white/10 hover:text-white"
         )}
       >
@@ -235,7 +242,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
                 <p className="text-sm font-semibold text-white truncate">
                   {user.nombre} {user.apellido}
                 </p>
-                <p className="text-xs text-white/40 truncate">{user.email}</p>
+                <p className="text-xs text-white/40 truncate">{ROLE_LABELS[user.rol]}</p>
               </div>
             )}
           </div>

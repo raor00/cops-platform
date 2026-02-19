@@ -72,8 +72,8 @@ export function KpiCard({
       className={cn(
         "group relative overflow-hidden rounded-2xl p-6 border",
         "bg-white/5 backdrop-blur-sm cursor-default",
-        "transition-all duration-500 ease-out",
-        "hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(14,47,111,0.4)]",
+        "transition-all duration-150 ease-out",
+        "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(14,47,111,0.25)]",
         borderColorClass,
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
@@ -96,38 +96,40 @@ export function KpiCard({
         )}
       />
 
-      <div className="relative flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white/60 truncate">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-white tracking-tight tabular-nums animate-count-up">
-            {displayValue}
-          </p>
-          {subtitle && (
-            <p className="mt-1 text-xs text-white/50 truncate">{subtitle}</p>
-          )}
-          {trend !== undefined && (
-            <div
-              className={cn(
-                "mt-2 flex items-center gap-1 text-xs font-semibold",
-                trend >= 0 ? "text-green-400" : "text-red-400"
-              )}
-            >
-              <span className="text-base leading-none">{trend >= 0 ? "↑" : "↓"}</span>
-              <span>{Math.abs(trend)}% vs mes anterior</span>
-            </div>
-          )}
-        </div>
+      {/* Ícono — posición absoluta para no competir con el texto */}
+      <div
+        className={cn(
+          "absolute top-5 right-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border",
+          "transition-transform duration-150 group-hover:scale-105",
+          colorClass,
+          borderColorClass
+        )}
+      >
+        {icon}
+      </div>
 
-        <div
-          className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ml-3",
-            "transition-transform duration-300 group-hover:scale-110",
-            colorClass,
-            borderColorClass
-          )}
-        >
-          {icon}
-        </div>
+      <div className="relative pr-14">
+        <p className="text-sm font-medium text-white/60 truncate">{title}</p>
+        <p className="mt-2 text-2xl font-bold text-white tracking-tight tabular-nums">
+          {displayValue}
+        </p>
+        {subtitle && (
+          <p className="mt-1 text-xs text-white/50 truncate">{subtitle}</p>
+        )}
+        {trend !== undefined && (
+          <div
+            title="vs mes anterior"
+            className={cn(
+              "mt-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold",
+              trend >= 0
+                ? "bg-green-500/15 text-green-400 border border-green-500/25"
+                : "bg-red-500/15 text-red-400 border border-red-500/25"
+            )}
+          >
+            <span className="text-sm leading-none">{trend >= 0 ? "↑" : "↓"}</span>
+            <span>{Math.abs(trend)}%</span>
+          </div>
+        )}
       </div>
     </div>
   )

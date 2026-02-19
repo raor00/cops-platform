@@ -16,6 +16,8 @@ import {
   Sun,
   Sunset,
   Moon,
+  Building2,
+  TableProperties,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -105,22 +107,52 @@ async function DashboardContent() {
           <p className="mt-1 text-sm text-white/50 capitalize">{today}</p>
         </div>
         {ROLE_HIERARCHY[user.rol] >= 2 && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="ghost" size="sm" asChild className="border border-white/10 text-white/70 hover:text-white hover:bg-white/10">
-              <Link href="/dashboard/tickets?tipo=proyecto">
-                <FolderKanban className="h-4 w-4 mr-1.5" />
-                Nuevo Proyecto
-              </Link>
-            </Button>
-            <Button asChild size="sm" className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 border-0 shadow-lg shadow-blue-500/25">
-              <Link href="/dashboard/tickets/nuevo">
-                <Plus className="h-4 w-4 mr-1.5" />
-                Nuevo Servicio
-              </Link>
-            </Button>
-          </div>
+          <Button asChild size="sm" className="bg-sky-600 hover:bg-sky-500 border-0 shadow-lg shadow-sky-500/25">
+            <Link href="/dashboard/tickets/nuevo">
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nuevo Servicio
+            </Link>
+          </Button>
         )}
       </div>
+
+      {/* ─── Quick Actions ─────────────────────────────────────────────────── */}
+      {ROLE_HIERARCHY[user.rol] >= 2 && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+            <Link href="/dashboard/tickets/nuevo">
+              <Plus className="h-3.5 w-3.5" />
+              Nuevo Servicio
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+            <Link href="/dashboard/tickets?tipo=proyecto">
+              <FolderKanban className="h-3.5 w-3.5" />
+              Nuevo Proyecto
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+            <Link href="/dashboard/pipeline">
+              <Kanban className="h-3.5 w-3.5" />
+              Ver Pipeline
+            </Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+            <Link href="/dashboard/clientes">
+              <Building2 className="h-3.5 w-3.5" />
+              Clientes
+            </Link>
+          </Button>
+          {canViewPayments && (
+            <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+              <Link href="/dashboard/pagos/cuadro">
+                <TableProperties className="h-3.5 w-3.5" />
+                Cuadro de Pagos
+              </Link>
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* ─── KPI Row ───────────────────────────────────────────────────────── */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">

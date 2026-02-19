@@ -63,11 +63,7 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
               <div className="max-w-[200px] truncate">{ticket.asunto}</div>
             </td>
             <td>
-              <Badge
-                className={`${STATUS_COLORS[ticket.estado]} transition-all duration-200 ${
-                  ticket.estado === "en_progreso" ? "animate-pulse-subtle" : ""
-                }`}
-              >
+              <Badge className={STATUS_COLORS[ticket.estado]}>
                 {STATUS_LABELS[ticket.estado]}
               </Badge>
             </td>
