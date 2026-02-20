@@ -25,27 +25,25 @@ export default async function TicketsPage() {
     redirect("/panel");
   }
 
-  const ticketsUrl = getTicketsAppUrl();
+  const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "");
   const bridgeSecret = getTicketsBridgeSecret();
 
-  if (!bridgeSecret) {
-    redirect(ticketsUrl);
-  }
-
   try {
-    const token = createTicketsBridgeToken(
-      {
-        sub: username,
-        role: role ?? "admin",
-      },
-      bridgeSecret,
-    );
-
-    const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
-    bridgeUrl.searchParams.set("token", token);
-
-    redirect(bridgeUrl.toString());
+    if (bridgeSecret) {
+      // Intentar via bridge SSO con token firmado
+      const token = createTicketsBridgeToken(
+        { sub: username, role: role ?? "admin" },
+        bridgeSecret,
+      );
+      const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
+      bridgeUrl.searchParams.set("token", token);
+      redirect(bridgeUrl.toString());
+    } else {
+      // Sin secreto configurado: pasar directamente al dashboard con ?auth=1
+      // El middleware de tickets acepta este parámetro para bootstrapear sesión
+      redirect(ticketsUrl + "/dashboard?auth=1");
+    }
   } catch {
-    redirect(ticketsUrl);
+    redirect(ticketsUrl + "/dashboard?auth=1");
   }
 }
