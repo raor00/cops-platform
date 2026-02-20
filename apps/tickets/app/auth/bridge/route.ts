@@ -8,15 +8,12 @@ function redirectToWebPanel() {
   return NextResponse.redirect(`${WEB_APP_URL}/panel`);
 }
 
-function redirectToWebLogin() {
-  return NextResponse.redirect(`${WEB_APP_URL}/login`);
-}
-
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const token = requestUrl.searchParams.get("token")?.trim();
   const localMode = isLocalMode();
 
+  // Sin token → volver al panel web
   if (!token) {
     return redirectToWebPanel();
   }
@@ -25,17 +22,21 @@ export async function GET(request: Request) {
 
   // Token inválido en producción → volver al panel web
   if (!verification.valid && !localMode) {
+    console.error("[bridge] Token inválido:", verification.reason);
     return redirectToWebPanel();
   }
 
-  // Token válido (o modo local) → establecer sesión y redirigir al dashboard
-  const response = NextResponse.redirect(new URL("/dashboard", request.url));
+  // Token válido (o modo local) → establecer cookie y redirigir al dashboard
+  // Usar requestUrl.origin para que el redirect sea siempre al mismo dominio
+  const dashboardUrl = new URL("/dashboard", requestUrl.origin);
+  const response = NextResponse.redirect(dashboardUrl.toString());
+
   response.cookies.set(DEMO_SESSION_COOKIE, "1", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: true, // siempre true — Vercel siempre es HTTPS
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: 60 * 60 * 12, // 12 horas
   });
 
   return response;
