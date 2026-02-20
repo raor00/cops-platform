@@ -17,14 +17,17 @@ export async function GET(request: Request) {
     return redirectToWebPanel();
   }
 
-  const verification = verifyTicketsBridgeToken(token);
-
-  if (!verification.valid && !localMode) {
-    console.error("[bridge] Token invalido:", verification.reason);
-    return redirectToWebPanel();
+  // En modo local se acepta cualquier token que venga del web app
+  // En producción con Supabase se verificaría la firma
+  if (!localMode) {
+    const verification = verifyTicketsBridgeToken(token);
+    if (!verification.valid) {
+      console.error("[bridge] Token invalido:", verification.reason);
+      return redirectToWebPanel();
+    }
   }
 
-  // Token valido (o modo local) -> HTML que setea cookie y redirige
+  // Token aceptado -> HTML que setea cookie y redirige
   // Evita problemas de cross-site cookie al venir redirect de otro dominio
   const cookieMaxAge = 60 * 60 * 12;
   const cookieStr = DEMO_SESSION_COOKIE + "=1; path=/; max-age=" + cookieMaxAge + "; SameSite=Lax; Secure";
