@@ -244,3 +244,28 @@ Antes de hacer público el sistema, verificar:
 ---
 
 *Guía generada para COPS Platform Sprint 8 — Febrero 2026*
+
+---
+
+## Bridge SSO Web -> Tickets (Obligatorio)
+
+Para evitar doble login y mantener tickets sin pantalla de login local:
+
+1. En `apps/web` (Vercel proyecto web):
+- `TICKETS_APP_URL=https://cops-platform-tickets.vercel.app`
+- `PLATFORM_TICKETS_BRIDGE_SECRET=<secreto-largo>`
+
+2. En `apps/tickets` (Vercel proyecto tickets):
+- `WEB_URL=https://cops-platform-web.vercel.app`
+- `PLATFORM_TICKETS_BRIDGE_SECRET=<mismo-secreto-del-web>`
+- `TICKETS_LOCAL_MODE=true` (si operas en demo/local mode)
+
+3. Flujo esperado:
+- Login en Web (`/login`) -> `/panel`
+- Click `Tickets` -> Web firma token -> `tickets/auth/bridge` -> `tickets/dashboard`
+- En Tickets:
+  - `Cambiar modulo` -> `web/panel`
+  - `Cerrar sesion` -> `web/`
+
+4. Acceso directo al dominio de Tickets sin sesion local:
+- Redirecciona a `web/login` (no muestra login local de tickets).

@@ -2,8 +2,7 @@
 
 import Link from "next/link"
 import { ClipboardCheck, GitBranch, History, FileSearch, Camera } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { formatDateTime } from "@/lib/utils"
+import { cn, formatDateTime } from "@/lib/utils"
 import type { ChangeHistory, Inspeccion, Ticket, TicketFase, UpdateLog } from "@/types"
 import { CHANGE_TYPE_LABELS, ROLE_HIERARCHY } from "@/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -44,13 +43,13 @@ export function TicketDetailTabs({
       : userRole
         ? ROLE_HIERARCHY[userRole as keyof typeof ROLE_HIERARCHY] >= 2
         : false
+
   const isProyecto = ticket.tipo === "proyecto"
   const isInspeccion = ticket.tipo === "inspeccion"
 
-  // Progreso global calculado desde las fases
   const progresoGlobal =
     fases.length > 0
-      ? Math.round(fases.reduce((sum, f) => sum + f.progreso_porcentaje, 0) / fases.length)
+      ? Math.round(fases.reduce((sum, fase) => sum + fase.progreso_porcentaje, 0) / fases.length)
       : 0
 
   return (
@@ -60,6 +59,7 @@ export function TicketDetailTabs({
           <ClipboardCheck className="h-4 w-4 mr-1.5" />
           Detalle
         </TabsTrigger>
+
         {isProyecto && (
           <TabsTrigger value="fases">
             <GitBranch className="h-4 w-4 mr-1.5" />
@@ -71,28 +71,30 @@ export function TicketDetailTabs({
             )}
           </TabsTrigger>
         )}
+
         <TabsTrigger value="fotos">
           <Camera className="h-4 w-4 mr-1.5" />
           Fotos
         </TabsTrigger>
+
         <TabsTrigger value="historial">
           <History className="h-4 w-4 mr-1.5" />
           Historial
         </TabsTrigger>
+
         {!isInspeccion && (
           <TabsTrigger value="inspeccion">
             <FileSearch className="h-4 w-4 mr-1.5" />
-            Inspección
+            Inspeccion
           </TabsTrigger>
         )}
       </TabsList>
 
-      {/* ─── Tab: Detalle ─────────────────────────────────────────────────── */}
       <TabsContent value="detalle">
         {isProyecto && fases.length > 0 && (
           <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4 animate-fade-in">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-white/70">Progreso Global del Proyecto</span>
+              <span className="text-sm font-medium text-white/70">Progreso global del proyecto</span>
               <span className="text-sm font-bold text-white">{progresoGlobal}%</span>
             </div>
             <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
@@ -105,14 +107,13 @@ export function TicketDetailTabs({
               />
             </div>
             <p className="text-xs text-white/40 mt-2">
-              {fases.filter((f) => f.estado === "completada").length} de {fases.length} fases completadas
+              {fases.filter((fase) => fase.estado === "completada").length} de {fases.length} fases completadas
             </p>
           </div>
         )}
         <TicketDetails ticket={ticket} />
       </TabsContent>
 
-      {/* ─── Tab: Fases (solo proyectos) ──────────────────────────────────── */}
       {isProyecto && (
         <TabsContent value="fases">
           <TicketFasesList
@@ -124,7 +125,6 @@ export function TicketDetailTabs({
         </TabsContent>
       )}
 
-      {/* ─── Tab: Fotos ───────────────────────────────────────────────────── */}
       <TabsContent value="fotos">
         <FotosGallery
           ticketId={ticket.id}
@@ -133,10 +133,8 @@ export function TicketDetailTabs({
         />
       </TabsContent>
 
-      {/* ─── Tab: Historial ───────────────────────────────────────────────── */}
       <TabsContent value="historial">
         <div className="space-y-6">
-          {/* Timeline de actualizaciones manuales */}
           <div>
             <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3 flex items-center gap-1.5">
               <History className="h-3.5 w-3.5" />
@@ -150,18 +148,17 @@ export function TicketDetailTabs({
             />
           </div>
 
-          {/* Historial de cambios del sistema */}
           {historial.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3">
                 Historial de cambios
               </h3>
               <div className="space-y-2">
-                {historial.map((entry, i) => (
+                {historial.map((entry, index) => (
                   <div
                     key={entry.id}
                     className="flex gap-4 p-3 rounded-xl bg-white/5 border border-white/10 transition-colors hover:bg-white/[0.07] animate-slide-up"
-                    style={{ animationDelay: `${i * 40}ms` }}
+                    style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div className="text-xs text-white/35 w-32 shrink-0 pt-0.5">
                       {formatDateTime(entry.created_at)}
@@ -175,7 +172,7 @@ export function TicketDetailTabs({
                       )}
                       {entry.valor_anterior && entry.valor_nuevo && (
                         <p className="text-xs text-white/35 mt-0.5">
-                          {entry.valor_anterior} → {entry.valor_nuevo}
+                          {entry.valor_anterior} -&gt; {entry.valor_nuevo}
                         </p>
                       )}
                       {entry.usuario && (
@@ -192,39 +189,37 @@ export function TicketDetailTabs({
         </div>
       </TabsContent>
 
-      {/* ─── Tab: Inspección ──────────────────────────────────────────────── */}
-      <TabsContent value="inspeccion">
-        {inspeccion ? (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-white">Inspección registrada</h3>
-              <span className="text-xs text-white/40">{formatDateTime(inspeccion.fecha_inspeccion)}</span>
+      {!isInspeccion && (
+        <TabsContent value="inspeccion">
+          {inspeccion ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-white">Inspeccion registrada</h3>
+                <span className="text-xs text-white/40">{formatDateTime(inspeccion.fecha_inspeccion)}</span>
+              </div>
+              <p className="text-sm text-white/60">
+                Estado: <span className="capitalize font-medium text-white/80">{inspeccion.estado}</span>
+              </p>
+              <p className="text-sm text-white/55">
+                Este ticket no permite crear ni editar inspecciones. Solo lectura por registro legacy.
+              </p>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/dashboard/tickets/${ticket.id}/inspeccion/view`}>
+                  Ver inspeccion completa
+                </Link>
+              </Button>
             </div>
-            <p className="text-sm text-white/60">
-              Estado:{" "}
-              <span className="capitalize font-medium text-white/80">{inspeccion.estado}</span>
-            </p>
-            {inspeccion.observaciones_generales && (
-              <p className="text-sm text-white/60">{inspeccion.observaciones_generales}</p>
-            )}
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/tickets/${ticket.id}/inspeccion`}>
-                Ver Inspección Completa
-              </Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
-            <FileSearch className="h-10 w-10 text-white/20 mb-3" />
-            <p className="text-white/50 text-sm mb-4">No hay inspección registrada para este ticket</p>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/dashboard/tickets/${ticket.id}/inspeccion`}>
-                Crear Inspección
-              </Link>
-            </Button>
-          </div>
-        )}
-      </TabsContent>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+              <FileSearch className="h-10 w-10 text-white/20 mb-3" />
+              <p className="text-white/70 text-sm font-medium">Ticket iniciado sin inspeccion</p>
+              <p className="text-white/45 text-sm mt-2 max-w-md">
+                La inspeccion solo se crea desde tickets tipo inspeccion en el flujo inicial.
+              </p>
+            </div>
+          )}
+        </TabsContent>
+      )}
     </Tabs>
   )
 }

@@ -10,8 +10,9 @@ import type { LoginInput } from "@/lib/validations"
 import { DEMO_SESSION_COOKIE, isLocalMode } from "@/lib/local-mode"
 import { getDemoCurrentUser } from "@/lib/mock-data"
 
-const DEMO_EMAIL = process.env.TICKETS_DEMO_EMAIL || "admin@copselectronics.com"
+const DEMO_USERNAME = process.env.TICKETS_DEMO_USERNAME || "admin"
 const DEMO_PASSWORD = process.env.TICKETS_DEMO_PASSWORD || "admin123"
+const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
 
 async function setDemoSessionCookie() {
   const cookieStore = await cookies()
@@ -38,7 +39,10 @@ export async function loginAction(
   data: LoginInput
 ): Promise<ActionResponse<{ user: User }>> {
   if (isLocalMode()) {
-    if (data.email !== DEMO_EMAIL || data.password !== DEMO_PASSWORD) {
+    const identifier = data.identifier.trim().toLowerCase()
+    const expectedIdentifier = DEMO_USERNAME.trim().toLowerCase()
+
+    if (identifier !== expectedIdentifier || data.password !== DEMO_PASSWORD) {
       return {
         success: false,
         error: "Credenciales invalidas para modo local",
@@ -57,10 +61,18 @@ export async function loginAction(
     }
   }
 
+  const identifier = data.identifier.trim()
+  if (!identifier.includes("@")) {
+    return {
+      success: false,
+      error: "En modo productivo debes iniciar sesion con tu correo",
+    }
+  }
+
   const supabase = await createClient()
 
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: data.email,
+    email: identifier,
     password: data.password,
   })
 
@@ -115,13 +127,13 @@ export async function logoutAction(): Promise<void> {
   if (isLocalMode()) {
     await clearDemoSessionCookie()
     revalidatePath("/", "layout")
-    redirect("/login")
+    redirect(`${WEB_APP_URL}/`)
   }
 
   const supabase = await createClient()
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
-  redirect("/login")
+  redirect(`${WEB_APP_URL}/`)
 }
 
 export async function logout(): Promise<void> {

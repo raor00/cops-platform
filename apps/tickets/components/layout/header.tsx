@@ -1,7 +1,7 @@
-"use client"
+﻿"use client"
 
 import React from "react"
-import { Bell, Search, Menu } from "lucide-react"
+import { Bell, Search, Menu, LayoutGrid } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -23,10 +23,15 @@ interface HeaderProps {
 }
 
 export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
+  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+
+  const goToModuleSelector = () => {
+    window.location.href = `${webAppUrl}/panel`
+  }
+
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-white/10 bg-[#0e2f6f]/80 backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-4 md:px-6">
-        {/* Left side */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -37,7 +42,6 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
             <Menu className="h-5 w-5" />
           </Button>
 
-          {/* Search */}
           <div className="hidden md:flex relative w-64 lg:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
             <Input
@@ -47,9 +51,7 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right side */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -70,7 +72,6 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -95,13 +96,17 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
               <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configuración</DropdownMenuItem>
+              <DropdownMenuItem>Configuracion</DropdownMenuItem>
+              <DropdownMenuItem onClick={goToModuleSelector}>
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Cambiar modulo
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-400 focus:text-red-400 focus:bg-red-500/10"
                 onClick={onLogout}
               >
-                Cerrar sesión
+                Cerrar sesion
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

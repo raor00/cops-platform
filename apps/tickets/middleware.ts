@@ -2,18 +2,18 @@ import { NextResponse, type NextRequest } from "next/server"
 import { updateSession } from '@/lib/supabase/middleware'
 import { DEMO_SESSION_COOKIE, isLocalMode } from "@/lib/local-mode"
 
+const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+
 export async function middleware(request: NextRequest) {
   if (isLocalMode()) {
-    const publicRoutes = ["/login", "/forgot-password", "/reset-password"]
+    const publicRoutes = ["/auth/bridge"]
     const isPublicRoute = publicRoutes.some((route) =>
       request.nextUrl.pathname.startsWith(route)
     )
     const hasDemoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1"
 
     if (!hasDemoSession && !isPublicRoute) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/login"
-      return NextResponse.redirect(url)
+      return NextResponse.redirect(`${WEB_APP_URL}/login`)
     }
 
     if (hasDemoSession && request.nextUrl.pathname === "/login") {

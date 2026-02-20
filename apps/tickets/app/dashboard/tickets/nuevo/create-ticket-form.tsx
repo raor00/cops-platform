@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -23,14 +23,43 @@ import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations"
 import { createTicket } from "@/lib/actions/tickets"
 import { searchClientes } from "@/lib/actions/clientes"
 import { generateId } from "@/lib/utils"
-import { TICKET_CATALOG, CATALOG_CATEGORIES, type CatalogEntry } from "@/lib/catalog-data"
+import { TICKET_CATALOG, type CatalogEntry } from "@/lib/catalog-data"
+import { getCatalogIdentifier, getCatalogSegment } from "@/lib/catalog-rules"
 import type { MaterialItem, Cliente } from "@/types"
 
-// Categorías de catálogo agrupadas por tipo
-const EQUIPOS_CATEGORIES = ["CCTV", "Control de Acceso", "Alarmas", "Redes", "VMS", "Automatizacion"] as const
-const MATERIALES_CATEGORIES = ["Materiales", "Energia"] as const
-
 type CatalogFilter = "all" | "equipos" | "materiales"
+
+const DEFAULT_COTIZACIONES_URL = "https://cops-platform-cotizaciones.vercel.app"
+
+function normalizeAbsoluteUrl(raw: string | undefined) {
+  if (!raw) return null
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+
+  try {
+    return new URL(withProtocol).toString().replace(/\/$/, "")
+  } catch {
+    return null
+  }
+}
+
+function getCotizacionesAppUrl() {
+  const candidates = [
+    process.env.NEXT_PUBLIC_PLATFORM_COTIZACIONES_URL,
+    process.env.NEXT_PUBLIC_COTIZACIONES_URL,
+    process.env.NEXT_PUBLIC_COTIZACIONES_APP_URL,
+    DEFAULT_COTIZACIONES_URL,
+  ]
+
+  for (const candidate of candidates) {
+    const normalized = normalizeAbsoluteUrl(candidate)
+    if (normalized) return normalized
+  }
+
+  return DEFAULT_COTIZACIONES_URL
+}
 
 interface CreateTicketFormProps {
   technicians: Array<{ id: string; nombre: string; apellido: string }>
@@ -92,9 +121,9 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
     let entries = TICKET_CATALOG
     // Apply category filter
     if (catalogFilter === "equipos") {
-      entries = entries.filter((e) => EQUIPOS_CATEGORIES.includes(e.category as typeof EQUIPOS_CATEGORIES[number]))
+      entries = entries.filter((entry) => getCatalogSegment(entry) === "equipo")
     } else if (catalogFilter === "materiales") {
-      entries = entries.filter((e) => MATERIALES_CATEGORIES.includes(e.category as typeof MATERIALES_CATEGORIES[number]))
+      entries = entries.filter((entry) => getCatalogSegment(entry) === "material")
     }
     // Apply text search
     if (catalogQuery) {
@@ -151,16 +180,36 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         subject: string
         notes?: string
         total: number
-        clientInfo?: { attention?: string; name?: string }
+        clientInfo?: {
+          attention?: string
+          name?: string
+          email?: string
+          phone?: string
+          address?: string
+          billToAttention?: string
+          billToName?: string
+          billToEmail?: string
+          billToPhone?: string
+          billToAddress?: string
+        }
         items?: Array<{ description: string; quantity: number; code?: string }>
         materials?: Array<{ description: string; quantity: number; code?: string }>
       }
       setCotizacionVinculada(data.code)
+      setSelectedCliente(null)
       if (data.subject) setValue("asunto", data.subject)
-      setValue("descripcion", `Proyecto basado en cotización ${data.code}.${data.notes ? " " + data.notes : ""}`)
+      setValue("descripcion", `Proyecto basado en cotizaciÃ³n ${data.code}.${data.notes ? " " + data.notes : ""}`)
       setValue("monto_servicio", data.total)
-      if (data.clientInfo?.attention) setValue("cliente_nombre", data.clientInfo.attention)
-      if (data.clientInfo?.name) setValue("cliente_empresa", data.clientInfo.name)
+      const clienteNombre = data.clientInfo?.attention || data.clientInfo?.billToAttention
+      const clienteEmpresa = data.clientInfo?.name || data.clientInfo?.billToName
+      const clienteEmail = data.clientInfo?.email || data.clientInfo?.billToEmail
+      const clienteTelefono = data.clientInfo?.phone || data.clientInfo?.billToPhone
+      const clienteDireccion = data.clientInfo?.address || data.clientInfo?.billToAddress
+      if (clienteNombre) setValue("cliente_nombre", clienteNombre)
+      if (clienteEmpresa) setValue("cliente_empresa", clienteEmpresa)
+      if (clienteEmail) setValue("cliente_email", clienteEmail)
+      if (clienteTelefono) setValue("cliente_telefono", clienteTelefono)
+      if (clienteDireccion) setValue("cliente_direccion", clienteDireccion)
       const allItems = [...(data.items || []), ...(data.materials || [])]
       if (allItems.length > 0) {
         setMaterials(
@@ -173,7 +222,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
           }))
         )
       }
-      toast.success(`Cotización ${data.code} vinculada`, {
+      toast.success(`CotizaciÃ³n ${data.code} vinculada`, {
         description: `${allItems.length} materiales importados`,
       })
     }
@@ -220,7 +269,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         nombre: entry.description,
         cantidad: 1,
         unidad: entry.unit,
-        observacion: entry.code,
+        observacion: getCatalogIdentifier(entry),
       },
     ])
     // Panel stays open for multi-selection; just clear the text search
@@ -229,7 +278,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
   }
 
   function abrirSelectorCotizacion() {
-    const cotizUrl = process.env.NEXT_PUBLIC_PLATFORM_COTIZACIONES_URL || "http://localhost:3001"
+    const cotizUrl = getCotizacionesAppUrl()
     window.open(
       `${cotizUrl}?select=true`,
       "cotizacion-select",
@@ -266,7 +315,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         toast.error("Error", { description: result.error || "No se pudo crear el ticket" })
       }
     } catch {
-      toast.error("Error", { description: "Ocurrió un error inesperado" })
+      toast.error("Error", { description: "OcurriÃ³ un error inesperado" })
     } finally {
       setIsSubmitting(false)
     }
@@ -275,7 +324,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
-      {/* ── Tipo y Origen ─────────────────────────────── */}
+      {/* â”€â”€ Tipo y Origen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
         <h3 className="form-section-title">Tipo de Ticket</h3>
         <div className="form-row">
@@ -291,7 +340,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               <SelectContent>
                 <SelectItem value="servicio">Servicio ($40 fijo)</SelectItem>
                 <SelectItem value="proyecto">Proyecto (monto variable)</SelectItem>
-                <SelectItem value="inspeccion">Inspección ($20 fijo)</SelectItem>
+                <SelectItem value="inspeccion">InspecciÃ³n ($20 fijo)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -306,21 +355,21 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="email">Correo electrónico</SelectItem>
-                <SelectItem value="telefono">Llamada telefónica</SelectItem>
-                <SelectItem value="carta_aceptacion">Carta de aceptación</SelectItem>
+                <SelectItem value="email">Correo electrÃ³nico</SelectItem>
+                <SelectItem value="telefono">Llamada telefÃ³nica</SelectItem>
+                <SelectItem value="carta_aceptacion">Carta de aceptaciÃ³n</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* Número de carta condicional */}
+        {/* NÃºmero de carta condicional */}
         <div
           className="overflow-hidden transition-all duration-200"
           style={{ maxHeight: origenTicket === "carta_aceptacion" ? "80px" : "0px", opacity: origenTicket === "carta_aceptacion" ? 1 : 0 }}
         >
           <div className="form-group pt-1">
-            <Label>Número de Carta</Label>
+            <Label>NÃºmero de Carta</Label>
             <Input
               placeholder="Ej: CA-2024-001"
               error={errors.numero_carta?.message}
@@ -381,21 +430,21 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
           )}
         </div>
 
-        {/* Info badge para inspección */}
+        {/* Info badge para inspecciÃ³n */}
         {tipoTicket === "inspeccion" && (
           <div className="flex items-start gap-2.5 rounded-xl bg-sky-500/8 border border-sky-500/20 px-3 py-2.5 text-sm mt-1">
             <Info className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
             <p className="text-sky-300/80">
-              Costo fijo: <span className="font-semibold text-sky-300">$20</span> — Al finalizar la inspección podrás convertirla en un servicio correctivo o proyecto.
+              Costo fijo: <span className="font-semibold text-sky-300">$20</span> â€” Al finalizar la inspecciÃ³n podrÃ¡s convertirla en un servicio correctivo o proyecto.
             </p>
           </div>
         )}
 
-        {/* Cotización vinculada (solo proyecto) — compacta */}
+        {/* CotizaciÃ³n vinculada (solo proyecto) â€” compacta */}
         {tipoTicket === "proyecto" && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/8">
             <Link2 className="h-3.5 w-3.5 text-white/40 shrink-0" />
-            <span className="text-xs text-white/50">Cotización vinculada:</span>
+            <span className="text-xs text-white/50">CotizaciÃ³n vinculada:</span>
             {cotizacionVinculada ? (
               <>
                 <span className="flex items-center gap-1 text-xs font-medium text-green-400">
@@ -424,7 +473,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         )}
       </div>
 
-      {/* ── Datos del Cliente ─────────────────────────── */}
+      {/* â”€â”€ Datos del Cliente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
         <h3 className="form-section-title">Datos del Cliente</h3>
 
@@ -436,7 +485,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               <span className="text-white font-medium truncate">
                 {selectedCliente.empresa ?? selectedCliente.nombre}
               </span>
-              <span className="text-white/40 text-xs truncate">— {selectedCliente.nombre}</span>
+              <span className="text-white/40 text-xs truncate">â€” {selectedCliente.nombre}</span>
               <button
                 type="button"
                 onClick={clearCliente}
@@ -511,7 +560,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
         <div className="form-row">
           <div className="form-group">
-            <Label>Correo Electrónico</Label>
+            <Label>Correo ElectrÃ³nico</Label>
             <Input
               type="email"
               placeholder="correo@ejemplo.com"
@@ -520,7 +569,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             />
           </div>
           <div className="form-group">
-            <Label>Teléfono *</Label>
+            <Label>TelÃ©fono *</Label>
             <Input
               type="tel"
               placeholder="+58 412 123 4567"
@@ -531,27 +580,27 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         </div>
 
         <div className="form-group">
-          <Label>Dirección *</Label>
+          <Label>DirecciÃ³n *</Label>
           <Textarea
-            placeholder="Dirección completa del cliente"
+            placeholder="DirecciÃ³n completa del cliente"
             error={errors.cliente_direccion?.message}
             {...register("cliente_direccion")}
           />
         </div>
       </div>
 
-      {/* ── Descripción del Trabajo ───────────────────── */}
+      {/* â”€â”€ DescripciÃ³n del Trabajo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
         <h3 className="form-section-title">
-          {tipoTicket === "inspeccion" ? "Motivo de la Inspección" : "Descripción del Trabajo"}
+          {tipoTicket === "inspeccion" ? "Motivo de la InspecciÃ³n" : "DescripciÃ³n del Trabajo"}
         </h3>
         <div className="form-group">
           <Label>Asunto *</Label>
           <Input
             placeholder={
               tipoTicket === "inspeccion"
-                ? "Breve descripción del motivo de la inspección"
-                : "Breve descripción del servicio"
+                ? "Breve descripciÃ³n del motivo de la inspecciÃ³n"
+                : "Breve descripciÃ³n del servicio"
             }
             error={errors.asunto?.message}
             {...register("asunto")}
@@ -560,7 +609,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
         <div className="form-group">
           <Label>
-            {tipoTicket === "inspeccion" ? "Descripción de la Inspección *" : "Descripción Detallada *"}
+            {tipoTicket === "inspeccion" ? "DescripciÃ³n de la InspecciÃ³n *" : "DescripciÃ³n Detallada *"}
           </Label>
           <Textarea
             placeholder={
@@ -575,7 +624,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         </div>
 
         <div className="form-group">
-          <Label>Notas para el Técnico</Label>
+          <Label>Notas para el TÃ©cnico</Label>
           <Textarea
             placeholder="Indica condiciones del lugar, equipos, accesos necesarios..."
             className="min-h-[100px]"
@@ -583,12 +632,12 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             {...register("requerimientos")}
           />
           <p className="text-xs text-white/40 mt-1">
-            Información que el técnico necesita saber antes de la visita
+            InformaciÃ³n que el tÃ©cnico necesita saber antes de la visita
           </p>
         </div>
       </div>
 
-      {/* ── Materiales Planificados ───────────────────── */}
+      {/* â”€â”€ Materiales Planificados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
         <div className="flex items-center justify-between mb-4">
           <h3 className="form-section-title mb-0">Materiales Planificados</h3>
@@ -601,7 +650,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               className={showCatalogSearch ? "border-sky-500/40 text-sky-400" : ""}
             >
               <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-              Del catálogo
+              Del catÃ¡logo
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={addMaterial}>
               <Plus className="h-4 w-4 mr-1" />
@@ -636,14 +685,14 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                 type="text"
                 value={catalogQuery}
                 onChange={(e) => setCatalogQuery(e.target.value)}
-                placeholder="Buscar por nombre, código o categoría..."
+                placeholder="Buscar por nombre, cÃ³digo o categorÃ­a..."
                 autoFocus
                 className="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-sky-500/50 transition-colors"
               />
             </div>
             <div className="max-h-52 overflow-y-auto space-y-0.5">
               {catalogFiltered.map((entry) => {
-                const alreadyAdded = materials.some((m) => m.observacion === entry.code)
+                const alreadyAdded = materials.some((m) => m.observacion === getCatalogIdentifier(entry))
                 return (
                   <button
                     key={entry.code}
@@ -655,7 +704,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                       {alreadyAdded && <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />}
                       <div className="min-w-0">
                         <p className="text-sm text-white truncate">{entry.description}</p>
-                        <p className="text-xs text-white/40">{entry.code} · {entry.category}</p>
+                        <p className="text-xs text-white/40">{entry.code} Â· {entry.category}</p>
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
@@ -676,7 +725,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
         {materials.length === 0 && !showCatalogSearch ? (
           <p className="text-sm text-white/50 text-center py-4">
-            Sin materiales. Usa &quot;Del catálogo&quot; para buscar o &quot;Manual&quot; para agregar libremente.
+            Sin materiales. Usa &quot;Del catÃ¡logo&quot; para buscar o &quot;Manual&quot; para agregar libremente.
           </p>
         ) : materials.length > 0 ? (
           <div className="space-y-3">
@@ -720,19 +769,19 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         ) : null}
       </div>
 
-      {/* ── Asignación ───────────────────────────────── */}
+      {/* â”€â”€ AsignaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
-        <h3 className="form-section-title">Asignación</h3>
+        <h3 className="form-section-title">AsignaciÃ³n</h3>
         <div className="form-group">
-          <Label>Técnico Asignado</Label>
+          <Label>TÃ©cnico Asignado</Label>
           <Select onValueChange={(value) => setValue("tecnico_id", value)}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccionar técnico (opcional)" />
+              <SelectValue placeholder="Seleccionar tÃ©cnico (opcional)" />
             </SelectTrigger>
             <SelectContent>
               {technicians.length === 0 ? (
                 <SelectItem value="" disabled>
-                  No hay técnicos disponibles
+                  No hay tÃ©cnicos disponibles
                 </SelectItem>
               ) : (
                 technicians.map((tech) => (
@@ -744,12 +793,12 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             </SelectContent>
           </Select>
           <p className="text-xs text-white/50 mt-1">
-            Puedes asignar el técnico ahora o hacerlo después
+            Puedes asignar el tÃ©cnico ahora o hacerlo despuÃ©s
           </p>
         </div>
       </div>
 
-      {/* ── Actions ──────────────────────────────────── */}
+      {/* â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
         <Button
           type="button"
@@ -766,10 +815,11 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               Creando...
             </>
           ) : (
-            tipoTicket === "inspeccion" ? "Crear Inspección" : "Crear Ticket"
+            tipoTicket === "inspeccion" ? "Crear InspecciÃ³n" : "Crear Ticket"
           )}
         </Button>
       </div>
     </form>
   )
 }
+

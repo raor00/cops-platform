@@ -14,6 +14,7 @@ import {
   FileBarChart2,
   Settings,
   LogOut,
+  LayoutGrid,
   ChevronLeft,
   ChevronRight,
   Zap,
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import type { User, UserProfile } from "@/types"
-import { ROLE_LABELS, hasPermission, ROLE_HIERARCHY } from "@/types"
+import { ROLE_LABELS, hasPermission } from "@/types"
 
 interface SidebarProps {
   user: User | UserProfile
@@ -102,6 +103,7 @@ const SYSTEM_NAV = [
 
 export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname()
+  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const collapsed = controlledCollapsed ?? internalCollapsed
   const setCollapsed = (val: boolean) => {
@@ -156,6 +158,10 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
       </div>
     </div>
   )
+
+  const goToModuleSelector = () => {
+    window.location.href = `${webAppUrl}/panel`
+  }
 
   return (
     <aside
@@ -237,6 +243,18 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
               </div>
             )}
           </div>
+
+          <Button
+            variant="ghost"
+            className={cn(
+              "mt-1 w-full text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm",
+              collapsed ? "px-0 justify-center" : "justify-start"
+            )}
+            onClick={goToModuleSelector}
+          >
+            <LayoutGrid className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="ml-2">Cambiar modulo</span>}
+          </Button>
 
           <Button
             variant="ghost"

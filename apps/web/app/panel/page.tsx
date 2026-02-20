@@ -7,7 +7,7 @@ import {
   ModuleId,
   getVisibleModules,
 } from "../../lib/masterAuth";
-import { getCotizacionesAppUrl, getTicketsAppUrl } from "../../lib/moduleLinks";
+import { getCotizacionesAppUrl } from "../../lib/moduleLinks";
 
 const iconByModule: Record<ModuleId, typeof Headset> = {
   tickets: Headset,
@@ -20,7 +20,7 @@ export default async function PanelHomePage() {
   const role = cookieStore.get(MASTER_ROLE_COOKIE)?.value;
   const username = cookieStore.get(MASTER_USER_COOKIE)?.value ?? "usuario";
   const cotizacionesHref = getCotizacionesAppUrl();
-  const ticketsHref = getTicketsAppUrl();
+  const ticketsHref = "/panel/tickets";
   const modules = getVisibleModules(role).map((module) => {
     if (module.id === "cotizaciones") return { ...module, href: cotizacionesHref };
     if (module.id === "tickets") return { ...module, href: ticketsHref };

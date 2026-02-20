@@ -85,7 +85,7 @@ export function AppShell() {
   const logoutToWeb = useCallback(() => {
     setMobileMenuOpen(false)
     setMobileAccountMenuOpen(false)
-    window.location.href = `${webAppUrl}/logout`
+    window.location.href = `${webAppUrl}/`
   }, [webAppUrl])
 
   useEffect(() => {
@@ -289,7 +289,6 @@ export function AppShell() {
     </div>
   )
 }
-
 
 
 

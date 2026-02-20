@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const WEB_APP_URL = (process.env.WEB_URL || 'https://cops-platform-web.vercel.app').replace(/\/$/, '')
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -24,17 +26,13 @@ export async function updateSession(request: NextRequest) {
               httpOnly?: boolean
               maxAge?: number
               path?: string
-              sameSite?: "lax" | "strict" | "none" | boolean
+              sameSite?: 'lax' | 'strict' | 'none' | boolean
               secure?: boolean
             }
           }>
         ) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -43,29 +41,20 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
+  // IMPORTANT: Keep logic after getUser to avoid random logout issues.
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Rutas públicas que no requieren autenticación
-  const publicRoutes = ['/login', '/forgot-password', '/reset-password']
-  const isPublicRoute = publicRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  )
+  // Only bridge route remains public in tickets.
+  const publicRoutes = ['/auth/bridge']
+  const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
   if (!user && !isPublicRoute) {
-    // No hay usuario y la ruta no es pública, redirigir a login
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(`${WEB_APP_URL}/login`)
   }
 
   if (user && request.nextUrl.pathname === '/login') {
-    // Usuario autenticado intentando acceder a login, redirigir a dashboard
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
