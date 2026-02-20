@@ -5,13 +5,16 @@ import { DEMO_SESSION_COOKIE, isLocalMode } from "@/lib/local-mode"
 const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
 
 export async function middleware(request: NextRequest) {
-  if (isLocalMode()) {
-    const publicRoutes = ["/auth/bridge"]
-    const isPublicRoute = publicRoutes.some((route) =>
-      request.nextUrl.pathname.startsWith(route)
-    )
-    const hasDemoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1"
+  const publicRoutes = ["/auth/bridge"]
+  const isPublicRoute = publicRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  )
 
+  // La cookie de sesión puente funciona tanto en local como en producción
+  const hasDemoSession = request.cookies.get(DEMO_SESSION_COOKIE)?.value === "1"
+
+  // Si hay cookie de sesión puente, manejar aquí directamente (sin Supabase)
+  if (hasDemoSession || isLocalMode()) {
     if (!hasDemoSession && !isPublicRoute) {
       return NextResponse.redirect(`${WEB_APP_URL}/login`)
     }
@@ -25,7 +28,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  return await updateSession(request)
+  // Sin cookie puente y sin local mode → usar Supabase auth
+  if (!isPublicRoute) {
+    return await updateSession(request)
+  }
+
+  return NextResponse.next({ request })
 }
 
 export const config = {

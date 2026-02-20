@@ -8,9 +8,17 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Si no hay Supabase configurado, redirigir al login de la web app
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.redirect(`${WEB_APP_URL}/login`)
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
