@@ -22,14 +22,13 @@ export async function GET(request: Request) {
   }
 
   const verification = verifyTicketsBridgeToken(token);
+
+  // Token inválido en producción → volver al panel web
   if (!verification.valid && !localMode) {
     return redirectToWebPanel();
   }
 
-  if (!localMode) {
-    return redirectToWebLogin();
-  }
-
+  // Token válido (o modo local) → establecer sesión y redirigir al dashboard
   const response = NextResponse.redirect(new URL("/dashboard", request.url));
   response.cookies.set(DEMO_SESSION_COOKIE, "1", {
     httpOnly: true,
