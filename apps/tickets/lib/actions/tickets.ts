@@ -19,6 +19,7 @@ import {
   ADMIN_REVERSE_TRANSITIONS,
   generateTicketNumber,
   DEFAULT_SERVICE_AMOUNT,
+  DEFAULT_INSPECTION_AMOUNT,
   DEFAULT_COMMISSION_PERCENTAGE,
 } from "@/types"
 import { getCurrentUser } from "./auth"
@@ -27,6 +28,7 @@ import {
   assignDemoTechnician,
   changeDemoTicketStatus as changeDemoTicketStatusMock,
   createDemoTicket,
+  createDemoConvertirInspeccion,
   deleteDemoTicket,
   getDemoDashboardStats,
   getDemoTechnicians,
@@ -912,4 +914,98 @@ export async function addTicketUpdateLog(
 
   revalidatePath(`/dashboard/tickets/${ticketId}`)
   return { success: true, data: log, message: "Actualización agregada" }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONVERTIR INSPECCIÓN → SERVICIO O PROYECTO
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function convertirInspeccion(
+  ticketId: string,
+  tipo: "servicio" | "proyecto"
+): Promise<ActionResponse<{ ticketId: string; numero: string }>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 2) {
+    return { success: false, error: "Sin permiso para convertir inspecciones" }
+  }
+
+  if (isLocalMode()) {
+    const result = createDemoConvertirInspeccion(ticketId, tipo, currentUser)
+    if (!result) {
+      return { success: false, error: "Ticket de inspección no encontrado o ya fue convertido" }
+    }
+    revalidatePath("/dashboard/tickets")
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    return {
+      success: true,
+      data: { ticketId: result.nuevoTicket.id, numero: result.nuevoTicket.numero_ticket },
+      message: `Inspección convertida a ${tipo}: ${result.nuevoTicket.numero_ticket}`,
+    }
+  }
+
+  const supabase = await createClient()
+
+  // Fetch inspection ticket
+  const { data: inspeccion, error: fetchError } = await supabase
+    .from("tickets")
+    .select("id, tipo, estado, ticket_derivado_id, cliente_nombre, cliente_empresa, cliente_email, cliente_telefono, cliente_direccion, prioridad, origen, tecnico_id, descripcion, requerimientos, asunto")
+    .eq("id", ticketId)
+    .single()
+
+  if (fetchError || !inspeccion) return { success: false, error: "Ticket no encontrado" }
+  if (inspeccion.tipo !== "inspeccion") return { success: false, error: "El ticket no es una inspección" }
+  if (inspeccion.ticket_derivado_id) return { success: false, error: "Esta inspección ya fue convertida" }
+
+  const { data: countData } = await supabase
+    .from("tickets")
+    .select("numero_ticket")
+    .eq("tipo", tipo)
+    .order("created_at", { ascending: false })
+    .limit(1)
+
+  const lastNum = countData?.[0]?.numero_ticket?.match(/(\d{4})$/)
+  const nextSeq = lastNum ? Number(lastNum[1]) + 1 : 1
+  const nuevoNumero = generateTicketNumber(tipo, nextSeq)
+
+  const { data: nuevoTicket, error: insertError } = await supabase
+    .from("tickets")
+    .insert({
+      tipo,
+      numero_ticket: nuevoNumero,
+      cliente_nombre: inspeccion.cliente_nombre,
+      cliente_empresa: inspeccion.cliente_empresa,
+      cliente_email: inspeccion.cliente_email,
+      cliente_telefono: inspeccion.cliente_telefono,
+      cliente_direccion: inspeccion.cliente_direccion,
+      asunto: tipo === "servicio"
+        ? `Servicio derivado de inspección`
+        : `Proyecto derivado de inspección`,
+      descripcion: inspeccion.descripcion,
+      requerimientos: inspeccion.requerimientos,
+      prioridad: inspeccion.prioridad,
+      origen: inspeccion.origen,
+      tecnico_id: inspeccion.tecnico_id,
+      creado_por: currentUser.id,
+      estado: "asignado",
+      monto_servicio: tipo === "servicio" ? DEFAULT_SERVICE_AMOUNT : 0,
+      ticket_origen_id: ticketId,
+    })
+    .select("id, numero_ticket")
+    .single()
+
+  if (insertError || !nuevoTicket) return { success: false, error: insertError?.message ?? "Error al crear ticket" }
+
+  await supabase
+    .from("tickets")
+    .update({ ticket_derivado_id: nuevoTicket.id, updated_at: new Date().toISOString() })
+    .eq("id", ticketId)
+
+  revalidatePath("/dashboard/tickets")
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  return {
+    success: true,
+    data: { ticketId: nuevoTicket.id, numero: nuevoTicket.numero_ticket },
+    message: `Inspección convertida a ${tipo}: ${nuevoTicket.numero_ticket}`,
+  }
 }

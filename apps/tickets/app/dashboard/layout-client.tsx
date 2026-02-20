@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
+import React, { useState, useEffect } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { logoutAction } from "@/lib/actions/auth"
@@ -15,8 +15,16 @@ interface DashboardLayoutClientProps {
 
 export function DashboardLayoutClient({ user, children }: DashboardLayoutClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Auto-collapse sidebar on desktop when navigating
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setSidebarCollapsed(true)
+    }
+  }, [pathname])
 
   const handleLogout = async () => {
     await logoutAction()

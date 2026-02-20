@@ -47,14 +47,19 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
   const canUploadFotos = ROLE_HIERARCHY[user.rol] >= 2
   const canDeleteFotos = ROLE_HIERARCHY[user.rol] >= 3
 
-  const [fasesResult, historialResult, inspeccionResult, updateLogsResult] = await Promise.all([
+  const [fasesResult, historialResult, inspeccionResult, updateLogsResult, origenResult, derivadoResult] = await Promise.all([
     ticket.tipo === 'proyecto'
       ? getFasesByTicket(id)
       : Promise.resolve({ success: true, data: [] as TicketFase[] }),
     getTicketHistory(id),
     getInspeccionByTicket(id),
     getTicketUpdateLogs(id),
+    ticket.ticket_origen_id ? getTicketById(ticket.ticket_origen_id) : Promise.resolve(null),
+    ticket.ticket_derivado_id ? getTicketById(ticket.ticket_derivado_id) : Promise.resolve(null),
   ])
+
+  const ticketOrigen = origenResult && 'success' in origenResult && origenResult.success ? origenResult.data : null
+  const ticketDerivado = derivadoResult && 'success' in derivadoResult && derivadoResult.success ? derivadoResult.data : null
 
   return (
     <div className='page-container'>
@@ -72,6 +77,20 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
             <Badge className={STATUS_COLORS[ticket.estado]}>{STATUS_LABELS[ticket.estado]}</Badge>
             <Badge className={PRIORITY_COLORS[ticket.prioridad]}>{PRIORITY_LABELS[ticket.prioridad]}</Badge>
             <Badge variant='outline' className='capitalize'>{ticket.tipo}</Badge>
+            {ticketOrigen && (
+              <Link href={`/dashboard/tickets/${ticketOrigen.id}`}>
+                <Badge variant='outline' className='border-violet-500/40 text-violet-300 hover:bg-violet-500/10 transition-colors cursor-pointer'>
+                  Inspección: {ticketOrigen.numero_ticket}
+                </Badge>
+              </Link>
+            )}
+            {ticketDerivado && (
+              <Link href={`/dashboard/tickets/${ticketDerivado.id}`}>
+                <Badge variant='outline' className='border-green-500/40 text-green-300 hover:bg-green-500/10 transition-colors cursor-pointer'>
+                  Convertido: {ticketDerivado.numero_ticket}
+                </Badge>
+              </Link>
+            )}
           </div>
           <p className='text-white/60'>{ticket.asunto}</p>
         </div>

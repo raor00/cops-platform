@@ -217,15 +217,6 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
           )}
         </nav>
 
-        {/* Role badge (only when expanded) */}
-        {!collapsed && (
-          <div className="px-4 pb-2">
-            <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-center">
-              <span className="text-[11px] text-white/40 font-medium">{ROLE_LABELS[user.rol]}</span>
-            </div>
-          </div>
-        )}
-
         {/* User section */}
         <div className="border-t border-white/10 p-3">
           <div className={cn("flex items-center gap-3 rounded-xl p-2", collapsed ? "justify-center" : "")}>

@@ -42,8 +42,18 @@ export function AppShell() {
   const [mobileAccountMenuOpen, setMobileAccountMenuOpen] = useState(false)
   const [mobileHeaderVisible, setMobileHeaderVisible] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [selectMode, setSelectMode] = useState(false)
   const lastScrollRef = useRef(0)
   const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+
+  // Detect ?select=true to activate select mode (Feature 3)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("select") === "true") {
+      setSelectMode(true)
+      setActiveView("history")
+    }
+  }, [])
 
   const handleEditQuotation = useCallback((data: QuotationData) => {
     setEditingQuotation(data)
@@ -270,6 +280,7 @@ export function AppShell() {
               <QuotationHistory
                 onEdit={handleEditQuotation}
                 refreshKey={refreshKey}
+                selectMode={selectMode}
               />
             )}
           </div>

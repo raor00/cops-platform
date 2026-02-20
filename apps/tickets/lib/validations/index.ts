@@ -87,7 +87,7 @@ const materialItemSchema = z.object({
 })
 
 export const ticketCreateSchema = z.object({
-  tipo: z.enum(['servicio', 'proyecto'], {
+  tipo: z.enum(['servicio', 'proyecto', 'inspeccion'], {
     errorMap: () => ({ message: 'Tipo de ticket inválido' }),
   }),
   // Datos del cliente
@@ -125,8 +125,9 @@ export const ticketCreateSchema = z.object({
     .max(5000, 'La descripción no puede exceder 5000 caracteres'),
   requerimientos: z
     .string()
-    .min(1, 'Los requerimientos son requeridos')
-    .max(5000, 'Los requerimientos no pueden exceder 5000 caracteres'),
+    .max(5000, 'Los requerimientos no pueden exceder 5000 caracteres')
+    .optional()
+    .or(z.literal('')),
   materiales_planificados: z.array(materialItemSchema).optional(),
   prioridad: z.enum(['baja', 'media', 'alta', 'urgente'], {
     errorMap: () => ({ message: 'Prioridad inválida' }),
@@ -134,12 +135,19 @@ export const ticketCreateSchema = z.object({
   origen: z.enum(['email', 'telefono', 'carta_aceptacion'], {
     errorMap: () => ({ message: 'Origen inválido' }),
   }),
+  numero_carta: z
+    .string()
+    .max(50, 'El número de carta no puede exceder 50 caracteres')
+    .optional()
+    .or(z.literal('')),
+  tipo_mantenimiento: z.enum(['correctivo', 'preventivo']).optional(),
   tecnico_id: z.string().uuid('ID de técnico inválido').optional().or(z.literal('')),
   monto_servicio: z
     .number()
     .min(0, 'El monto debe ser positivo')
     .optional()
     .default(40),
+  ticket_origen_id: z.string().uuid().optional().or(z.literal('')),
 })
 
 export const ticketUpdateSchema = z.object({

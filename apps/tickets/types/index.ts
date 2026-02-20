@@ -10,7 +10,7 @@ export type UserRole = 'tecnico' | 'coordinador' | 'gerente' | 'vicepresidente' 
 
 export type UserStatus = 'activo' | 'inactivo'
 
-export type TicketType = 'servicio' | 'proyecto'
+export type TicketType = 'servicio' | 'proyecto' | 'inspeccion'
 
 export type TicketStatus = 'asignado' | 'iniciado' | 'en_progreso' | 'finalizado' | 'cancelado'
 
@@ -159,6 +159,8 @@ export interface Ticket {
   materiales_planificados: MaterialItem[] | null
   prioridad: TicketPriority
   origen: TicketOrigin
+  numero_carta: string | null
+  tipo_mantenimiento: 'correctivo' | 'preventivo' | null
   carta_aceptacion_path: string | null
   // Asignación y estados
   creado_por: string
@@ -175,6 +177,9 @@ export interface Ticket {
   comprobante_path: string | null
   // Financiero
   monto_servicio: number
+  // Correlación inspección ↔ servicio/proyecto
+  ticket_origen_id: string | null
+  ticket_derivado_id: string | null
   // Auditoría
   modificado_por: string | null
   fecha_ultima_modificacion: string | null
@@ -203,12 +208,15 @@ export interface TicketCreateInput {
   cliente_direccion: string
   asunto: string
   descripcion: string
-  requerimientos: string
+  requerimientos?: string
   materiales_planificados?: MaterialItem[]
   prioridad: TicketPriority
   origen: TicketOrigin
+  numero_carta?: string
+  tipo_mantenimiento?: 'correctivo' | 'preventivo'
   tecnico_id?: string
   monto_servicio?: number
+  ticket_origen_id?: string
 }
 
 export interface TicketUpdateInput {
@@ -394,6 +402,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'payments:process',
     'reports:view',
     'reports:export',
+    'config:view',
     'audit:view',
     'clients:view',
     'clients:create',
@@ -502,7 +511,7 @@ export function canChangeTicketStatus(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function generateTicketNumber(type: TicketType, sequence: number): string {
-  const prefix = type === 'servicio' ? 'TKT' : 'PRY'
+  const prefix = type === 'servicio' ? 'TKT' : type === 'proyecto' ? 'PRY' : 'INS'
   const year = new Date().getFullYear()
   const paddedSequence = String(sequence).padStart(4, '0')
   return `${prefix}-${year}-${paddedSequence}`
@@ -513,6 +522,7 @@ export function generateTicketNumber(type: TicketType, sequence: number): string
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DEFAULT_SERVICE_AMOUNT = 40.00
+export const DEFAULT_INSPECTION_AMOUNT = 20.00
 export const DEFAULT_COMMISSION_PERCENTAGE = 50.00
 
 // ─────────────────────────────────────────────────────────────────────────────

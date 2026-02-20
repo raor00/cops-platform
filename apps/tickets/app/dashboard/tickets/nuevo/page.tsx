@@ -13,7 +13,11 @@ export const metadata = {
   title: "Nuevo Ticket",
 }
 
-export default async function NuevoTicketPage() {
+export default async function NuevoTicketPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tipo?: string }>
+}) {
   const user = await getCurrentUser()
 
   if (!user) {
@@ -29,6 +33,15 @@ export default async function NuevoTicketPage() {
   const techniciansResult = await getTechnicians()
   const technicians = techniciansResult.success ? techniciansResult.data || [] : []
 
+  const params = await searchParams
+  const defaultTipo = params?.tipo === 'inspeccion' ? 'inspeccion'
+    : params?.tipo === 'proyecto' ? 'proyecto'
+    : 'servicio'
+
+  const pageTitle = defaultTipo === 'inspeccion' ? 'Nueva Inspección'
+    : defaultTipo === 'proyecto' ? 'Nuevo Proyecto'
+    : 'Nuevo Servicio'
+
   return (
     <div className="page-container max-w-4xl mx-auto">
       {/* Back Button */}
@@ -41,9 +54,9 @@ export default async function NuevoTicketPage() {
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="page-title">Crear Nuevo Ticket</h1>
+        <h1 className="page-title">{pageTitle}</h1>
         <p className="page-description">
-          Registra un nuevo servicio o proyecto
+          Registra un nuevo servicio, inspección o proyecto
         </p>
       </div>
 
@@ -57,7 +70,7 @@ export default async function NuevoTicketPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateTicketForm technicians={technicians} />
+          <CreateTicketForm technicians={technicians} defaultTipo={defaultTipo as 'servicio' | 'proyecto' | 'inspeccion'} />
         </CardContent>
       </Card>
     </div>

@@ -590,4 +590,36 @@
     scrollbar-width: none;
   }
   .status-pills-bar::-webkit-scrollbar { display: none; }
+
+  /* ─── Interactive Card Hover ────────────────────────── */
+
+  .card-interactive {
+    @apply transition-all duration-150 cursor-pointer;
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(14, 165, 233, 0.08), 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .card-interactive:active {
+    transform: translateY(0px) scale(0.99);
+  }
+
+  /* ─── Button active feedback ────────────────────────── */
+  button:not([disabled]):active {
+    transform: scale(0.97);
+  }
+
+  /* ─── Status Badge transition ────────────────────────── */
+  .badge-status {
+    @apply transition-colors duration-200;
+  }
+
+  /* ─── Ticket row hover ────────────────────────────── */
+  .ticket-row-hover {
+    @apply transition-all duration-150;
+  }
+  .ticket-row-hover:hover {
+    background-color: rgb(255 255 255 / 0.04);
+    box-shadow: inset 3px 0 0 rgb(14 165 233 / 0.4);
+  }
 }

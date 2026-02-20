@@ -1,7 +1,7 @@
 # COPS Platform — Contexto Completo para LLM
 
 Este archivo contiene todo el contexto técnico del proyecto. Un LLM que lea este archivo
-puede continuar el desarrollo sin perder continuidad. Actualizado: 2026-02-19 (Sprint 6).
+puede continuar el desarrollo sin perder continuidad. Actualizado: 2026-02-20 (Sprint 8).
 
 ---
 
@@ -96,7 +96,8 @@ const users = isLocalMode() ? getDemoUsers() : (await getAllUsers()).data ?? []
 | Sprint 4 | ✅ | Inspección técnica real (25 ítems), perfil `/usuarios/[id]` con 3 tabs, reportes KPIs, sidebar animations, links usuarios |
 | Sprint 5 | ✅ | Vista móvil técnicos (cards+pills), pipeline board dedicado (/pipeline), config page (/configuracion), loading.tsx en 8 rutas, fix sidebar collapse |
 | Sprint 6 | ✅ | Visual redesign (sky-500 + gray-900), estados bidireccionales admin, timeline UpdateLog, back button, filas clickeables, wizard materiales toggle, botón imprimir, tabla estadísticas técnicos |
-| Sprint 7 | ⏳ | Clientes DB (/clientes), generador cuadro de pagos por técnico |
+| Sprint 7 | ✅ | Clientes DB (/clientes), cuadro de pagos (/pagos/cuadro), Quick Actions dashboard, bug fixes (dropdown/flicker/colores), redesign pagos dialog |
+| Sprint 8 | ⏳ | Quick fixes UI (botón duplicado, sidebar badge), config:view para gerente, login redesign, nuevo formulario tickets (selector clientes, tipo mantenimiento, nº carta, notas técnico), documentación |
 
 ---
 
@@ -141,6 +142,8 @@ hasPermission(user.rol, 'config:edit')   // vicepresidente(4)+
 | `/dashboard/usuarios/[id]` | `[id]/page.tsx` | gerente(3)+ o propio | 3 tabs: Perfil, Tickets, Rendimiento |
 | `/dashboard/reportes` | `reportes/page.tsx` | coordinador(2)+ | 4 KPIs, distribución estado, TechnicianStatsTable interactiva, gráfico mensual |
 | `/dashboard/pagos` | `pagos/page.tsx` | coordinador(2)+ | Tabla pagos con filtros avanzados y export CSV |
+| `/dashboard/pagos/cuadro` | `pagos/cuadro/page.tsx` | gerente(3)+ | Cuadro de pagos agrupado por técnico, print-friendly |
+| `/dashboard/clientes` | `clientes/page.tsx` | coordinador(2)+ (clients:view) | CRUD clientes con panel lateral de detalle |
 
 **Loading skeletons** (`loading.tsx`): dashboard, tickets, tickets/[id], pipeline, configuracion, reportes, pagos, usuarios
 
@@ -199,10 +202,14 @@ app/
     │   ├── loading.tsx
     │   ├── page.tsx                     → 4 KPIs + distribución + tabla técnicos + gráfico mensual
     │   └── report-export-button.tsx     → Botón export CSV reportes
-    └── pagos/
-        ├── loading.tsx
-        ├── page.tsx
-        └── pagos-client.tsx             → Client con filtros, paginación, modal de pago
+    ├── pagos/
+    │   ├── loading.tsx
+    │   ├── page.tsx
+    │   ├── pagos-client.tsx             → Client con filtros, paginación, modal de pago
+    │   └── cuadro/
+    │       └── page.tsx                 → Cuadro de pagos por técnico (print-friendly) ← Sprint 7
+    └── clientes/
+        └── page.tsx                     → CRUD clientes (tabla + panel detalle lateral) ← Sprint 7
 ```
 
 ### components/ (componentes reutilizables)
@@ -267,8 +274,13 @@ components/
 │   ├── config-edit-dialog.tsx           → Dialog edición (boolean/number/string)
 │   ├── config-section.tsx               → Sección agrupada de configuraciones
 │   └── config-skeleton.tsx              → Skeleton loading
-└── reportes/                            ← Sprint 6
-    └── technician-stats-table.tsx       → Tabla técnicos con panel detalle expandible (TechnicianKPI[])
+├── reportes/                            ← Sprint 6
+│   └── technician-stats-table.tsx       → Tabla técnicos con panel detalle expandible (TechnicianKPI[])
+├── clientes/                            ← Sprint 7
+│   ├── clientes-client.tsx              → Tabla + panel lateral detalle
+│   └── cliente-form-dialog.tsx          → Dialog crear/editar con Zod+RHF
+└── pagos/                               ← Sprint 7
+    └── cuadro-pagos.tsx                 → Cuadro agrupado por técnico, print-friendly, export CSV
 ```
 
 ### lib/ (lógica, datos, utilidades)
@@ -305,7 +317,9 @@ lib/
     │                                      updateInspeccion(), completarInspeccion()
     ├── fases.ts                         → getFasesByTicket(), createFase(),
     │                                      updateFase(), deleteFase()
-    ├── pagos.ts                         → processPaymentAction()
+    ├── pagos.ts                         → processPaymentAction(), generatePaymentSchedule() ← Sprint 7
+    ├── clientes.ts                      → getClientes(), getClienteById(), createCliente(),  ← Sprint 7
+    │                                      updateCliente(), deleteCliente(), searchClientes()
     ├── usuarios.ts                      → getAllUsers()*, getUserById(), createUser(),
     │                                      updateUserProfile(), uploadProfilePhoto()
     │                                      (* sin isLocalMode branch — ver nota crítica)
@@ -456,6 +470,26 @@ status-pills-bar                          /* scroll horizontal sin scrollbar */
 .page-description    /* subtítulo */
 ```
 
+### Dialogs responsivos (Sprint 7)
+```tsx
+// Para dialogs con mucho contenido — evitar overflow en móvil:
+<DialogContent className="max-h-[90dvh] flex flex-col overflow-hidden">
+  <DialogHeader />
+  <div className="flex-1 overflow-y-auto px-6 pb-6">
+    {/* contenido scrollable */}
+  </div>
+</DialogContent>
+// dvh (dynamic viewport height) = mejor que vh en móvil por barra del navegador
+```
+
+### Print styles (Sprint 7 — Cuadro de Pagos)
+```tsx
+// Clases print-friendly en cuadro-pagos.tsx:
+className="print:hidden"    // ocultar en impresión (filtros, botones)
+className="print:block"     // mostrar solo en impresión (título con logo)
+className="print:text-black print:bg-white"  // invertir colores para papel
+```
+
 ### Sidebar nav
 ```tsx
 // Clases para links activos
@@ -563,17 +597,58 @@ import { BackButton } from "@/components/ui/back-button"
 
 ---
 
-## 16. Próximos Pasos — Sprint 7
+## 16. Sprint 7 — Nuevos Tipos e Interfaces
 
-- **`/dashboard/clientes`** — CRUD de empresas (nombre, RIF, contacto principal)
-  - Al crear ticket/proyecto → selector de cliente (no repetir datos)
-  - Modelo: `Cliente { id, nombre, rif, email, telefono, direccion, created_at }`
-- **Generador cuadro de pagos** — Botón en `/dashboard/pagos` o nueva ruta
-  - Agrupa servicios finalizados (sin pago) por técnico
-  - Columnas: Fecha, Cliente, Descripción, Monto
-  - Total por técnico + total global
-  - Export PDF o impresión directa
-- **error.tsx**: No existe en ninguna ruta — agregar manejo de errores granular
-- **Drag & drop en pipeline**: El pipeline board es read-only — agregar DnD
-- **Supabase real-time**: Suscripciones para actualizar pipeline en vivo
-- **Tests**: No hay tests — agregar Vitest/Playwright
+```typescript
+interface Cliente { id, nombre, apellido?, empresa?, email?, telefono, direccion,
+                    rif_cedula?, estado: 'activo'|'inactivo', observaciones?, created_at, updated_at,
+                    tickets_count?, ultimo_ticket_fecha? }
+interface ClienteCreateInput { nombre, apellido?, empresa?, email?, telefono, direccion, rif_cedula?, observaciones? }
+interface PaymentScheduleRow { fecha_finalizacion, ticket_numero, cliente_nombre, cliente_empresa,
+                               descripcion, monto_servicio, porcentaje_comision, monto_a_pagar,
+                               estado_pago, metodo_pago, referencia_pago }
+interface TechnicianPaymentSchedule { tecnico: User, rows: PaymentScheduleRow[], total: number, pendiente: number }
+interface PaymentScheduleReport { periodo: {...}, tecnicos: TechnicianPaymentSchedule[], grandTotal: number }
+```
+
+### Sprint 7 — Nuevos campos en Ticket (Sprint 8)
+```typescript
+// Ticket ahora incluye (opcionales):
+numero_carta: string | null        // solo cuando origen === 'carta_aceptacion'
+tipo_mantenimiento: 'correctivo' | 'preventivo' | null   // solo cuando tipo === 'servicio'
+```
+
+### Sprint 7 — Clientes DB (mock-data)
+```typescript
+// Funciones disponibles en lib/mock-data.ts:
+getDemoClientes(options?), getDemoClienteById(id), createDemoCliente(input),
+updateDemoCliente(id, input), deleteDemoCliente(id), searchDemoClientes(query)
+```
+
+### Sprint 8 — Permisos corregidos
+```typescript
+// gerente ahora tiene config:view (antes solo vicepresidente+)
+// Sidebar muestra Configuración para gerente(3)+
+```
+
+### Sprint 8 — Formulario Nuevo Ticket
+- **Selector de cliente**: busca en `searchClientes(query)`, auto-rellena campos (editables)
+- **Tipo de servicio**: Select Correctivo/Preventivo — visible solo cuando tipo === "servicio"
+- **Número de carta**: Input opcional — visible solo cuando origen === "carta_aceptacion"
+- **Notas para el Técnico**: reemplaza "Requerimientos Técnicos", ahora opcional
+
+---
+
+## 17. Alcance Futuro — Sprint 9+
+
+| Feature | Complejidad |
+|---------|-------------|
+| Catálogo materiales / cotizaciones integradas | Alta — bridge entre apps separadas |
+| Vinculación proyecto-cotización | Alta |
+| Tabs Equipos/Materiales en ticket detail | Media |
+| Notificaciones para presidente | Media — Supabase realtime o polling |
+| Calendario dinámico de servicios | Alta |
+| Sección Mantenimiento (/dashboard/mantenimientos) | Media |
+| error.tsx granular por ruta | Baja |
+| Drag & drop en pipeline | Media |
+| Tests (Vitest/Playwright) | Media |

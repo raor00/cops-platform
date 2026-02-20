@@ -125,6 +125,8 @@ function buildTicket(partial: Partial<Ticket> & Pick<Ticket, "id" | "numero_tick
     materiales_planificados: partial.materiales_planificados ?? null,
     prioridad: partial.prioridad ?? "media",
     origen: partial.origen ?? "email",
+    numero_carta: partial.numero_carta ?? null,
+    tipo_mantenimiento: partial.tipo_mantenimiento ?? null,
     carta_aceptacion_path: partial.carta_aceptacion_path ?? null,
     creado_por: partial.creado_por ?? createdBy.id,
     tecnico_id: partial.tecnico_id ?? null,
@@ -138,6 +140,8 @@ function buildTicket(partial: Partial<Ticket> & Pick<Ticket, "id" | "numero_tick
     solucion_aplicada: partial.solucion_aplicada ?? null,
     comprobante_path: partial.comprobante_path ?? null,
     monto_servicio: partial.monto_servicio ?? 40,
+    ticket_origen_id: partial.ticket_origen_id ?? null,
+    ticket_derivado_id: partial.ticket_derivado_id ?? null,
     modificado_por: partial.modificado_por ?? null,
     fecha_ultima_modificacion: partial.fecha_ultima_modificacion ?? null,
     created_at: createdAt,
@@ -384,7 +388,7 @@ export function getDemoDashboardStats(user: User): DashboardStats {
   }
 }
 
-function getNextSequence(tipo: "servicio" | "proyecto"): number {
+function getNextSequence(tipo: "servicio" | "proyecto" | "inspeccion"): number {
   const current = demoTickets
     .filter((ticket) => ticket.tipo === tipo)
     .map((ticket) => {
@@ -422,13 +426,70 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
     tecnico,
     estado: "asignado",
     fecha_asignacion: nowIso,
-    monto_servicio: input.monto_servicio ?? 40,
+    monto_servicio: input.monto_servicio ?? (input.tipo === 'inspeccion' ? 20 : 40),
+    ticket_origen_id: input.ticket_origen_id || null,
+    ticket_derivado_id: null,
     created_at: nowIso,
     updated_at: nowIso,
   })
 
   demoTickets = [ticket, ...demoTickets]
   return deepClone(ticket)
+}
+
+export function createDemoConvertirInspeccion(
+  ticketId: string,
+  tipo: "servicio" | "proyecto",
+  currentUser: User
+): { ticket: Ticket; nuevoTicket: Ticket } | null {
+  const inspeccion = demoTickets.find((t) => t.id === ticketId)
+  if (!inspeccion || inspeccion.tipo !== "inspeccion") return null
+
+  const nowIso = new Date().toISOString()
+  const nuevoId = crypto.randomUUID()
+  const nuevoNumero = generateTicketNumber(tipo, getNextSequence(tipo))
+
+  const nuevoTicket = buildTicket({
+    id: nuevoId,
+    numero_ticket: nuevoNumero,
+    tipo,
+    cliente_nombre: inspeccion.cliente_nombre,
+    cliente_empresa: inspeccion.cliente_empresa,
+    cliente_email: inspeccion.cliente_email,
+    cliente_telefono: inspeccion.cliente_telefono,
+    cliente_direccion: inspeccion.cliente_direccion,
+    prioridad: inspeccion.prioridad,
+    origen: inspeccion.origen,
+    tecnico_id: inspeccion.tecnico_id,
+    asunto: tipo === "servicio"
+      ? `Servicio derivado de inspección ${inspeccion.numero_ticket}`
+      : `Proyecto derivado de inspección ${inspeccion.numero_ticket}`,
+    descripcion: inspeccion.descripcion,
+    requerimientos: inspeccion.requerimientos,
+    monto_servicio: tipo === "servicio" ? 40 : 0,
+    ticket_origen_id: ticketId,
+    ticket_derivado_id: null,
+    creado_por: currentUser.id,
+    creador: currentUser,
+    estado: "asignado",
+    fecha_asignacion: nowIso,
+    created_at: nowIso,
+    updated_at: nowIso,
+  })
+
+  // Update inspection ticket with derivado reference
+  demoTickets = demoTickets.map((t) =>
+    t.id === ticketId
+      ? { ...t, ticket_derivado_id: nuevoId, updated_at: nowIso }
+      : t
+  )
+
+  demoTickets = [nuevoTicket, ...demoTickets]
+
+  return {
+    ticket: deepClone(demoTickets.find((t) => t.id === ticketId)!),
+    nuevoTicket: deepClone(nuevoTicket),
+  }
 }
 
 export function updateDemoTicket(

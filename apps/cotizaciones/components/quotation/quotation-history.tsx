@@ -17,12 +17,13 @@ import { deleteTransportGuide, getTransportGuides } from "@/lib/transport-guide-
 import { downloadTransportGuidePDF } from "@/lib/generate-transport-guide-pdf"
 import type { DeliveryNoteData } from "@/lib/delivery-note-types"
 import type { TransportGuideData } from "@/lib/transport-guide-types"
-import { FileDown, FileText, Pencil, Search, Trash2 } from "lucide-react"
+import { CheckCircle2, FileDown, Pencil, Search, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 interface QuotationHistoryProps {
   onEdit: (data: QuotationData) => void
   refreshKey: number
+  selectMode?: boolean
 }
 
 function formatDate(dateStr: string): string {
@@ -43,12 +44,12 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   anulado: { label: "Anulado", className: "bg-[#f3f4f6] text-[#6b7280]" },
 }
 
-export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) {
+export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: QuotationHistoryProps) {
   const [quotations, setQuotations] = useState<QuotationData[]>([])
   const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNoteData[]>([])
   const [transportGuides, setTransportGuides] = useState<TransportGuideData[]>([])
   const [search, setSearch] = useState("")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterStatus, setFilterStatus] = useState<string>(selectMode ? "aprobada" : "all")
   const [deleteItem, setDeleteItem] = useState<{ type: "quote" | "delivery" | "transport"; id: string } | null>(null)
 
   const refreshAll = () => {
@@ -60,6 +61,37 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
   useEffect(() => {
     refreshAll()
   }, [refreshKey])
+
+  // Auto-filter to "aprobada" when select mode activates
+  useEffect(() => {
+    if (selectMode) setFilterStatus("aprobada")
+  }, [selectMode])
+
+  function handleSelectQuotation(q: QuotationData) {
+    if (window.opener) {
+      window.opener.postMessage(
+        {
+          type: "COPS_COTIZACION_SELECTED",
+          data: {
+            code: q.code,
+            subject: q.subject,
+            notes: (q as { notes?: string }).notes,
+            total: q.total,
+            clientInfo: q.clientInfo,
+            items: q.items,
+            materials: q.materials,
+            laborItems: q.laborItems,
+          },
+        },
+        "*"
+      )
+      window.close()
+    } else {
+      toast.error("No se pudo enviar la cotización", {
+        description: "Abre esta ventana desde el sistema de tickets.",
+      })
+    }
+  }
 
   const filteredQuotes = useMemo(
     () =>
@@ -136,10 +168,29 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
 
   return (
     <div className="min-w-0 space-y-6">
-      <div>
-        <h2 className="font-heading text-2xl font-bold text-foreground">Historial</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Seccionado por tipo de documento</p>
-      </div>
+      {selectMode ? (
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-[#4a72ef]/30 bg-[#dbeafe]/20 px-5 py-4">
+          <div>
+            <h2 className="font-heading text-xl font-bold text-foreground">Seleccionar cotización aprobada</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Haz clic en <strong>Seleccionar</strong> en la cotización que deseas vincular al proyecto.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            title="Cerrar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <div>
+          <h2 className="font-heading text-2xl font-bold text-foreground">Historial</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Seccionado por tipo de documento</p>
+        </div>
+      )}
 
       <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
@@ -167,13 +218,15 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
       </div>
 
       <Tabs defaultValue="quotes">
-        <div className="overflow-x-auto pb-1">
-          <TabsList className="inline-flex min-w-full bg-muted sm:grid sm:w-full sm:max-w-md sm:grid-cols-3">
-            <TabsTrigger value="quotes" className="whitespace-nowrap px-4 text-xs sm:text-sm">Cotizaciones</TabsTrigger>
-            <TabsTrigger value="delivery" className="whitespace-nowrap px-4 text-xs sm:text-sm">Notas de Entrega</TabsTrigger>
-            <TabsTrigger value="transport" className="whitespace-nowrap px-4 text-xs sm:text-sm">Guias de Transporte</TabsTrigger>
-          </TabsList>
-        </div>
+        {!selectMode && (
+          <div className="overflow-x-auto pb-1">
+            <TabsList className="inline-flex min-w-full bg-muted sm:grid sm:w-full sm:max-w-md sm:grid-cols-3">
+              <TabsTrigger value="quotes" className="whitespace-nowrap px-4 text-xs sm:text-sm">Cotizaciones</TabsTrigger>
+              <TabsTrigger value="delivery" className="whitespace-nowrap px-4 text-xs sm:text-sm">Notas de Entrega</TabsTrigger>
+              <TabsTrigger value="transport" className="whitespace-nowrap px-4 text-xs sm:text-sm">Guias de Transporte</TabsTrigger>
+            </TabsList>
+          </div>
+        )}
 
         <TabsContent value="quotes" className="mt-4">
           <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -208,16 +261,36 @@ export function QuotationHistory({ onEdit, refreshKey }: QuotationHistoryProps) 
                       </Select>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(q)} className="h-7 w-7 p-0"><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleExportQuote(q)} className="h-7 w-7 p-0"><FileDown className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteItem({ type: "quote", id: q.id })} className="h-7 w-7 p-0 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </div>
+                      {selectMode ? (
+                        <div className="flex items-center justify-center">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSelectQuotation(q)}
+                            disabled={q.status !== "aprobada"}
+                            className="h-7 gap-1.5 bg-[#166534] text-white hover:bg-[#14532d] text-xs px-3"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Seleccionar
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => onEdit(q)} className="h-7 w-7 p-0"><Pencil className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleExportQuote(q)} className="h-7 w-7 p-0"><FileDown className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteItem({ type: "quote", id: q.id })} className="h-7 w-7 p-0 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
                 {filteredQuotes.length === 0 && (
-                  <tr><td colSpan={5} className="py-10 text-center text-sm text-muted-foreground">No hay cotizaciones.</td></tr>
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                      {selectMode
+                        ? "No hay cotizaciones aprobadas. Cambia el estado de una cotización a 'Aprobada' para poder vincularla."
+                        : "No hay cotizaciones."}
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

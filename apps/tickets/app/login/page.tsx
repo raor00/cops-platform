@@ -57,35 +57,31 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      {/* Background orbs */}
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#0a1628]">
+      {/* Background gradient */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/15 rounded-full blur-[80px] animate-pulse delay-1000" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-sky-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-slate-500/10 rounded-full blur-[80px]" />
       </div>
 
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-sm">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/20 shadow-lg shadow-blue-500/20">
-              <Zap className="h-6 w-6 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="font-heading text-xl font-bold text-white">
-                COPS Electronics
-              </h1>
-              <p className="text-xs text-white/50">Sistema de Tickets</p>
-            </div>
+        <div className="flex flex-col items-center mb-8 gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/25 to-slate-500/20 border border-sky-400/20 shadow-lg shadow-sky-500/10">
+            <Zap className="h-7 w-7 text-sky-400" />
+          </div>
+          <div className="text-center">
+            <h1 className="font-heading text-xl font-bold text-white">COPS Electronics</h1>
+            <p className="text-sm text-white/40 mt-0.5">Sistema de Gestión de Servicios</p>
           </div>
         </div>
 
         {/* Login Card */}
-        <Card variant="glass" className="border-white/15">
+        <Card variant="glass" className="border-white/10">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+            <CardTitle className="text-xl">Iniciar Sesión</CardTitle>
             <CardDescription>
-              Ingresa tus credenciales para acceder al sistema
+              Ingresa tus credenciales para continuar
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
@@ -133,13 +129,13 @@ export default function LoginPage() {
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-sky-600 hover:bg-sky-500 border-0 shadow-lg shadow-sky-500/20"
                 size="lg"
                 isLoading={isLoading}
               >
                 {!isLoading && (
                   <>
-                    Ingresar
+                    Iniciar Sesión
                     <ArrowRight className="h-4 w-4 ml-1" />
                   </>
                 )}

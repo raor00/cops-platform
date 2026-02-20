@@ -28,6 +28,7 @@ import { StatusDistributionChart } from "@/components/dashboard/status-distribut
 import { TechnicianPerformanceChart } from "@/components/dashboard/technician-performance-chart"
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { PipelineBoard } from "@/components/dashboard/pipeline-board"
+import { InspeccionQuickAction } from "@/components/dashboard/inspeccion-quick-action"
 import { getEnhancedDashboardStats } from "@/lib/actions/dashboard"
 import { getTickets } from "@/lib/actions/tickets"
 import { getCurrentUser } from "@/lib/actions/auth"
@@ -120,12 +121,6 @@ async function DashboardContent() {
       {ROLE_HIERARCHY[user.rol] >= 2 && (
         <div className="flex flex-wrap gap-2">
           <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
-            <Link href="/dashboard/tickets/nuevo">
-              <Plus className="h-3.5 w-3.5" />
-              Nuevo Servicio
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
             <Link href="/dashboard/tickets?tipo=proyecto">
               <FolderKanban className="h-3.5 w-3.5" />
               Nuevo Proyecto
@@ -151,6 +146,7 @@ async function DashboardContent() {
               </Link>
             </Button>
           )}
+          <InspeccionQuickAction userRole={user.rol} />
         </div>
       )}
 

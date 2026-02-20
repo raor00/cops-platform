@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Play, CheckCircle, XCircle, Loader2, Plus, Trash2, RotateCcw } from "lucide-react"
+import { Play, CheckCircle, XCircle, Loader2, Plus, Trash2, RotateCcw, GitMerge } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { changeTicketStatus } from "@/lib/actions/tickets"
+import { changeTicketStatus, convertirInspeccion } from "@/lib/actions/tickets"
 import { cn, formatMinutesToDuration } from "@/lib/utils"
 import type { MaterialItem, Ticket, TicketStatus, UserRole } from "@/types"
 import { VALID_TRANSITIONS, ADMIN_REVERSE_TRANSITIONS, ROLE_HIERARCHY, STATUS_LABELS } from "@/types"
@@ -44,6 +44,11 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
   const [solucion, setSolucion] = useState("")
   const [observaciones, setObservaciones] = useState("")
 
+  // Convert inspection state
+  const [convertLoading, setConvertLoading] = useState(false)
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false)
+  const [convertTipo, setConvertTipo] = useState<"servicio" | "proyecto">("servicio")
+
   const validTransitions = VALID_TRANSITIONS[ticket.estado]
   const canRevert = userRole ? ROLE_HIERARCHY[userRole] >= 3 : false
   const reverseTransitions = ADMIN_REVERSE_TRANSITIONS[ticket.estado]
@@ -51,6 +56,14 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
   const isFinalized =
     (ticket.estado === "finalizado" || ticket.estado === "cancelado") &&
     !(canRevert && reverseTransitions.length > 0)
+
+  // Conversion: show when inspeccion is finalizada and not yet converted
+  const canConvert =
+    ticket.tipo === "inspeccion" &&
+    ticket.estado === "finalizado" &&
+    !ticket.ticket_derivado_id &&
+    userRole &&
+    ROLE_HIERARCHY[userRole] >= 2
 
   const resetWizard = () => {
     setStep(1)
@@ -115,6 +128,24 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
     }
   }
 
+  const handleConvert = async () => {
+    setConvertLoading(true)
+    try {
+      const result = await convertirInspeccion(ticket.id, convertTipo)
+      if (result.success) {
+        toast.success(`Convertido a ${convertTipo}`, { description: result.message })
+        setConvertDialogOpen(false)
+        router.push(`/dashboard/tickets/${result.data?.ticketId}`)
+      } else {
+        toast.error("Error", { description: result.error })
+      }
+    } catch {
+      toast.error("Error", { description: "Ocurrió un error inesperado" })
+    } finally {
+      setConvertLoading(false)
+    }
+  }
+
   // Material row helpers
   const addMaterial = () => {
     setMateriales([
@@ -131,10 +162,28 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
     setMateriales(materiales.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
   }
 
-  if (isFinalized) return null
+  if (isFinalized && !canConvert) return null
 
   return (
     <>
+      {/* ─── Botones de conversión (inspeccion finalizada) ─── */}
+      {canConvert && (
+        <Button
+          size="sm"
+          onClick={() => setConvertDialogOpen(true)}
+          className="bg-violet-600 hover:bg-violet-500 border-0 gap-1.5"
+        >
+          <GitMerge className="h-3.5 w-3.5" />
+          Convertir Inspección
+        </Button>
+      )}
+      {ticket.ticket_derivado_id && ticket.tipo === "inspeccion" && (
+        <span className="text-xs text-green-400/70 flex items-center gap-1">
+          <CheckCircle className="h-3.5 w-3.5" />
+          Ya convertida
+        </span>
+      )}
+
       <div className="flex items-center gap-2">
         {validTransitions.includes("iniciado") && (
           <Button
@@ -399,6 +448,62 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                 Finalizar Ticket
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Dialog: Convertir Inspección ───────────────────────────────── */}
+      <Dialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitMerge className="h-5 w-5 text-violet-400" />
+              Convertir Inspección
+            </DialogTitle>
+            <DialogDescription>
+              Se creará un nuevo ticket ({ticket.numero_ticket}) con los datos del cliente de esta inspección.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-white/70">¿En qué tipo deseas convertir?</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConvertTipo("servicio")}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
+                  convertTipo === "servicio"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-300"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                Servicio Correctivo
+              </button>
+              <button
+                type="button"
+                onClick={() => setConvertTipo("proyecto")}
+                className={`flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
+                  convertTipo === "proyecto"
+                    ? "border-blue-500/50 bg-blue-500/15 text-blue-300"
+                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                }`}
+              >
+                Proyecto
+              </button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setConvertDialogOpen(false)} disabled={convertLoading}>
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleConvert}
+              disabled={convertLoading}
+              className="bg-violet-600 hover:bg-violet-500 border-0"
+            >
+              {convertLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <GitMerge className="h-4 w-4 mr-2" />}
+              Convertir
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

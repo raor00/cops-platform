@@ -45,6 +45,7 @@ export function TicketDetailTabs({
         ? ROLE_HIERARCHY[userRole as keyof typeof ROLE_HIERARCHY] >= 2
         : false
   const isProyecto = ticket.tipo === "proyecto"
+  const isInspeccion = ticket.tipo === "inspeccion"
 
   // Progreso global calculado desde las fases
   const progresoGlobal =
@@ -78,10 +79,12 @@ export function TicketDetailTabs({
           <History className="h-4 w-4 mr-1.5" />
           Historial
         </TabsTrigger>
-        <TabsTrigger value="inspeccion">
-          <FileSearch className="h-4 w-4 mr-1.5" />
-          Inspección
-        </TabsTrigger>
+        {!isInspeccion && (
+          <TabsTrigger value="inspeccion">
+            <FileSearch className="h-4 w-4 mr-1.5" />
+            Inspección
+          </TabsTrigger>
+        )}
       </TabsList>
 
       {/* ─── Tab: Detalle ─────────────────────────────────────────────────── */}
