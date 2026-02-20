@@ -13,6 +13,8 @@ import {
   getTicketsBridgeSecret,
 } from "../../../lib/ticketsBridge";
 
+export const dynamic = "force-dynamic";
+
 export default async function TicketsPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get(MASTER_SESSION_COOKIE)?.value;
@@ -30,16 +32,20 @@ export default async function TicketsPage() {
     redirect(ticketsUrl);
   }
 
-  const token = createTicketsBridgeToken(
-    {
-      sub: username,
-      role: role ?? "admin",
-    },
-    bridgeSecret,
-  );
+  try {
+    const token = createTicketsBridgeToken(
+      {
+        sub: username,
+        role: role ?? "admin",
+      },
+      bridgeSecret,
+    );
 
-  const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
-  bridgeUrl.searchParams.set("token", token);
+    const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
+    bridgeUrl.searchParams.set("token", token);
 
-  redirect(bridgeUrl.toString());
+    redirect(bridgeUrl.toString());
+  } catch {
+    redirect(ticketsUrl);
+  }
 }

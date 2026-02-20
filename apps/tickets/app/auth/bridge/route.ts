@@ -15,17 +15,18 @@ function redirectToWebLogin() {
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const token = requestUrl.searchParams.get("token")?.trim();
+  const localMode = isLocalMode();
 
   if (!token) {
     return redirectToWebPanel();
   }
 
   const verification = verifyTicketsBridgeToken(token);
-  if (!verification.valid) {
+  if (!verification.valid && !localMode) {
     return redirectToWebPanel();
   }
 
-  if (!isLocalMode()) {
+  if (!localMode) {
     return redirectToWebLogin();
   }
 
