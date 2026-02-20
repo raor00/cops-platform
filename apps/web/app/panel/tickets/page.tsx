@@ -27,7 +27,7 @@ export default async function TicketsPage() {
   const bridgeSecret = getTicketsBridgeSecret();
 
   if (!bridgeSecret) {
-    redirect("/panel");
+    redirect(ticketsUrl);
   }
 
   const token = createTicketsBridgeToken(

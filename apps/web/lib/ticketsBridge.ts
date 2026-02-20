@@ -19,12 +19,19 @@ function sign(unsignedToken: string, secret: string) {
 }
 
 export function getTicketsBridgeSecret() {
-  const secret = process.env.PLATFORM_TICKETS_BRIDGE_SECRET?.trim();
-  if (!secret || secret.length < 16) {
-    return null;
+  const candidates = [
+    process.env.PLATFORM_TICKETS_BRIDGE_SECRET,
+    process.env.NEXT_PUBLIC_PLATFORM_TICKETS_BRIDGE_SECRET,
+  ];
+
+  for (const candidate of candidates) {
+    const secret = candidate?.trim();
+    if (secret && secret.length >= 16) {
+      return secret;
+    }
   }
 
-  return secret;
+  return null;
 }
 
 export function createTicketsBridgeToken(input: { sub: string; role: string }, secret: string) {

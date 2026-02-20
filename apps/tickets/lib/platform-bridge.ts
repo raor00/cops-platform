@@ -21,12 +21,19 @@ export type BridgeVerificationResult =
     };
 
 function readBridgeSecret() {
-  const secret = process.env.PLATFORM_TICKETS_BRIDGE_SECRET?.trim();
-  if (!secret || secret.length < 16) {
-    return null;
+  const candidates = [
+    process.env.PLATFORM_TICKETS_BRIDGE_SECRET,
+    process.env.NEXT_PUBLIC_PLATFORM_TICKETS_BRIDGE_SECRET,
+  ];
+
+  for (const candidate of candidates) {
+    const secret = candidate?.trim();
+    if (secret && secret.length >= 16) {
+      return secret;
+    }
   }
 
-  return secret;
+  return null;
 }
 
 function decodePart(part: string) {
