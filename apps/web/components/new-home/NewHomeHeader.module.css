@@ -1,0 +1,130 @@
+﻿.logoContainer {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.subtitle {
+  font-size: 0.55rem;
+  letter-spacing: 2px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.atomLogo {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform-style: preserve-3d;
+}
+
+.nucleus {
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.electron {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: spin 3s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.electron:nth-child(1) {
+  transform: rotateX(70deg) rotateZ(0deg) !important;
+}
+
+.electron:nth-child(2) {
+  transform: rotateX(70deg) rotateZ(60deg) !important;
+  animation-delay: -1s;
+}
+
+.electron:nth-child(3) {
+  transform: rotateX(70deg) rotateZ(120deg) !important;
+  animation-delay: -2s;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotateX(70deg) rotateZ(360deg) !important;
+  }
+}
+
+.mainNav {
+  display: flex;
+  gap: 2rem;
+}
+
+.mainNav a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+  position: relative;
+  transition: color 0.3s;
+}
+
+.mainNav a:hover,
+.mainNav a.active,
+.active {
+  color: var(--primary-cyan);
+}
+
+.mainNav a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: var(--primary-cyan);
+  transition: width 0.3s ease;
+}
+
+.mainNav a:hover::after,
+.mainNav a.active::after,
+.active::after {
+  width: 100%;
+}
+
+.authActions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loginBtn {
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: color 0.3s;
+}
+
+.loginBtn:hover {
+  color: #ffffff;
+}
+
