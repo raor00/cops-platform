@@ -1,3 +1,4 @@
+import NewHomeClient from "../components/new-home/NewHomeClient";
 import HomeHero from "../components/home/HomeHero";
 import HomeTrajectory from "../components/home/HomeTrajectory";
 import HomeClients from "../components/home/HomeClients";
@@ -12,29 +13,34 @@ import HomeCTA from "../components/home/HomeCta";
 const CLIENTES = [
   { src: "/clientes/bancamiga.png", alt: "Bancamiga" },
   { src: "/clientes/bancaribe.png", alt: "Bancaribe" },
-  { src: "/clientes/fvf.png",       alt: "FVF" },
-  { src: "/clientes/bigott.png",    alt: "Cigarrera Bigott" },
-  { src: "/clientes/plaza.png",     alt: "Plaza" },
-  { src: "/clientes/bfc.png",       alt: "BFC" },
+  { src: "/clientes/fvf.png", alt: "FVF" },
+  { src: "/clientes/bigott.png", alt: "Cigarrera Bigott" },
+  { src: "/clientes/plaza.png", alt: "Plaza" },
+  { src: "/clientes/bfc.png", alt: "BFC" },
 ];
 
 const PARTNER_LOGOS = [
-  { src: "/partners/milestone.png",      alt: "Milestone" },
-  { src: "/partners/winsted.png",        alt: "Winsted" },
-  { src: "/partners/invenzi.png",        alt: "Invenzi" },
-  { src: "/partners/altronix.png",       alt: "Altronix" },
+  { src: "/partners/milestone.png", alt: "Milestone" },
+  { src: "/partners/winsted.png", alt: "Winsted" },
+  { src: "/partners/invenzi.png", alt: "Invenzi" },
+  { src: "/partners/altronix.png", alt: "Altronix" },
   { src: "/partners/automated-logic.png", alt: "Automated Logic" },
-  { src: "/partners/velasea.png",        alt: "Velasea" },
-  { src: "/partners/magos.png",          alt: "Magos" },
-  { src: "/partners/digital.png",        alt: "Digital Watchdog" },
+  { src: "/partners/velasea.png", alt: "Velasea" },
+  { src: "/partners/magos.png", alt: "Magos" },
+  { src: "/partners/digital.png", alt: "Digital Watchdog" },
 ];
 
-export default function Home() {
+function LegacyHome() {
   return (
     <div>
       <HomeHero />
       <HomeTrajectory />
-      <HomeClients title="HAN CONFIADO EN COP'S" subtitle="Organizaciones que han trabajado con COP'S Electronics a lo largo de 28 años de trayectoria." logos={CLIENTES} featuredCount={12} />
+      <HomeClients
+        title="HAN CONFIADO EN COP'S"
+        subtitle="Organizaciones que han trabajado con COP'S Electronics a lo largo de 28 años de trayectoria."
+        logos={CLIENTES}
+        featuredCount={12}
+      />
       <HomePartnersMarquee logos={PARTNER_LOGOS} />
       <HomeSolutions />
       <HomeSectors />
@@ -44,4 +50,9 @@ export default function Home() {
       <HomeCTA />
     </div>
   );
+}
+
+export default function Home() {
+  const useNewHome = process.env.NEXT_PUBLIC_NEW_HOME !== "0";
+  return useNewHome ? <NewHomeClient /> : <LegacyHome />;
 }
