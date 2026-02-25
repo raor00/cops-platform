@@ -1,22 +1,21 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
-import SiteHeader from "../components/SiteHeader";
-import SiteFooter from "../components/SiteFooter";
 import RevealProvider from "../components/RevealProvider";
 import GlassProvider from "../components/GlassProvider";
+import LayoutChrome from "../components/LayoutChrome";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cops-electronics-web.vercel.app"),
   title: {
-    default: "COP'S Electronics | Soluciones tecnológicas enterprise",
+    default: "COP'S Electronics | Soluciones tecnolÃ³gicas enterprise",
     template: "%s | COP'S Electronics",
   },
   description:
-    "Automatización, seguridad electrónica y energía para operación crítica. Proyectos enterprise para banca, industria y comercio.",
+    "AutomatizaciÃ³n, seguridad electrÃ³nica y energÃ­a para operaciÃ³n crÃ­tica. Proyectos enterprise para banca, industria y comercio.",
   openGraph: {
     title: "COP'S Electronics",
     description:
-      "Automatización, seguridad electrónica y energía para operación crítica.",
+      "AutomatizaciÃ³n, seguridad electrÃ³nica y energÃ­a para operaciÃ³n crÃ­tica.",
     url: "https://cops-electronics-web.vercel.app",
     siteName: "COP'S Electronics",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
@@ -39,12 +38,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#050a18] text-slate-200">
         <GlassProvider />
         <RevealProvider />
-        <SiteHeader />
-        <div className="pt-[68px] md:pt-[76px]">
-        {children}
-        </div>
-        <SiteFooter />
+        <LayoutChrome>{children}</LayoutChrome>
       </body>
     </html>
   );
 }
+
