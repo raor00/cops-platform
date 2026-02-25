@@ -28,7 +28,7 @@ export default function ParticleNetwork() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<Phase>("fusion");
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   const currentPhaseRef = useRef<Phase>("fusion");
   const fusionProgressRef = useRef(0);
@@ -37,7 +37,8 @@ export default function ParticleNetwork() {
   const shockwaveOpacityRef = useRef(1);
 
   useEffect(() => {
-    if (hasInitialized) return;
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -248,7 +249,6 @@ export default function ParticleNetwork() {
       dispatchPhaseChange("fusion");
       fusionProgressRef.current = 0;
       fusionRadiusRef.current = 5;
-      setHasInitialized(true);
     }
 
     const animate = () => {
@@ -394,7 +394,7 @@ export default function ParticleNetwork() {
       window.removeEventListener("touchend", handleTouchEnd);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [hasInitialized]);
+  }, []);
 
   return (
     <>
