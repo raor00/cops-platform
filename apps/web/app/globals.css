@@ -629,3 +629,9 @@ html { scroll-behavior: smooth; }
 
 
 
+
+/* Force hide system scrollbar */
+::-webkit-scrollbar { display: none !important; width: 0 !important; }
+::-webkit-scrollbar-track { display: none !important; }
+::-webkit-scrollbar-thumb { display: none !important; }
+html { scrollbar-width: none !important; -ms-overflow-style: none !important; }
