@@ -1,6 +1,8 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Home } from "lucide-react";
 import styles from "./NewHomeHeader.module.css";
 
 export default function NewHomeHeader() {
@@ -21,11 +23,10 @@ export default function NewHomeHeader() {
   return (
     <header className="fixed left-0 right-0 top-0 z-[100] flex w-full justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
       <div
-        className={`pointer-events-auto flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isAtTop
-            ? "mt-0 w-full max-w-7xl rounded-none border-b border-transparent bg-transparent px-4 py-5 sm:px-6 lg:px-8 lg:py-8"
-            : "mt-4 mx-auto w-[95%] max-w-4xl rounded-full border border-white/10 bg-[#0b1426]/70 px-6 py-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl lg:px-8"
-        }`}
+        className={`pointer-events-auto relative flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isAtTop
+          ? "mt-0 w-full max-w-7xl rounded-none border-b border-transparent bg-transparent px-4 py-5 sm:px-6 lg:px-8 lg:py-8"
+          : "mt-4 mx-auto w-[98%] max-w-5xl rounded-full border border-white/10 bg-[#0b1426]/80 px-5 py-2.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl lg:px-8"
+          }`}
       >
         <div className={`${styles.logoContainer} scale-90 md:scale-100 origin-left whitespace-nowrap flex-shrink-0`}>
           <div className={styles.atomLogo}>
@@ -40,20 +41,29 @@ export default function NewHomeHeader() {
           </div>
         </div>
 
-        <nav className={`${styles.mainNav} hidden md:flex`}>
-          <a href="#homepage" className={styles.active}>Homepage</a>
-          <a href="#soluciones">Soluciones</a>
-          <a href="#sectores">Sectores</a>
-          <a href="#contacto">Contacto</a>
+        <nav className={`${styles.mainNav} hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 items-center`}>
+          <Link href="/" aria-label="Inicio" className="flex items-center text-slate-400 hover:text-cyan-400 transition-colors">
+            <Home className="h-4 w-4" />
+          </Link>
+          <Link href="/soluciones">Soluciones</Link>
+          <Link href="/proyectos">Proyectos</Link>
+          <Link href="/partners">Partners</Link>
+          <Link href="/nosotros">Nosotros</Link>
+          <Link href="/contacto">Contacto</Link>
         </nav>
 
         <div className={`${styles.authActions} hidden md:flex`}>
-          <a href="/login" className={styles.loginBtn}>Log in</a>
           <a
             href="/contacto"
-            className="rounded-full bg-white px-6 py-2.5 text-sm font-bold text-[#070f1e] shadow-[0_4px_14px_rgba(255,255,255,0.2)] transition-all hover:-translate-y-[1px] hover:bg-slate-200 hover:shadow-[0_6px_20px_rgba(255,255,255,0.3)]"
+            className="flex items-center justify-center whitespace-nowrap rounded-full border border-blue-500/50 bg-blue-600/30 px-5 py-2 text-xs font-bold text-white shadow-[0_4px_14px_rgba(37,99,235,0.2)] transition-all hover:-translate-y-[1px] hover:bg-blue-600/50 hover:shadow-[0_6px_20px_rgba(37,99,235,0.3)]"
           >
-            Agendar reunion
+            Solicitar asesoria
+          </a>
+          <a
+            href="/login"
+            className="flex items-center justify-center whitespace-nowrap rounded-full border border-white/20 bg-white/5 px-5 py-2 text-xs font-bold text-white shadow-[0_4px_14px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-[1px] hover:bg-white/10"
+          >
+            Iniciar sesion
           </a>
         </div>
       </div>

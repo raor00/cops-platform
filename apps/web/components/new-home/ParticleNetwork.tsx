@@ -244,43 +244,60 @@ export default function ParticleNetwork() {
         atomsArray.push(new AtomCls());
       }
 
-      currentPhaseRef.current = "fusion";
-      setPhase("fusion");
-      dispatchPhaseChange("fusion");
-      fusionProgressRef.current = 0;
-      fusionRadiusRef.current = 5;
+      const skipIntro = sessionStorage.getItem('cops-intro-seen') === 'true';
+
+      if (skipIntro) {
+        currentPhaseRef.current = "normal";
+        setPhase("normal");
+        dispatchPhaseChange("normal");
+      } else {
+        currentPhaseRef.current = "fusion";
+        setPhase("fusion");
+        dispatchPhaseChange("fusion");
+        fusionProgressRef.current = 0;
+        fusionRadiusRef.current = 5;
+      }
     }
 
-    const animate = () => {
+    let lastTime = performance.now();
+    const animate = (time?: number) => {
+      const currentTime = time || performance.now();
+      const deltaTime = currentTime - lastTime;
+      lastTime = currentTime;
+      const timeScale = Math.min(Math.max(deltaTime / 16.666, 0.1), 3);
+
       context.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
       const centerX = canvasEl.width / 2;
       const centerY = canvasEl.height / 2;
 
       if (currentPhaseRef.current === "fusion") {
-        fusionProgressRef.current += 1.2;
+        const targetSpeed = fusionProgressRef.current < 20 ? 0.8 : (fusionProgressRef.current > 80 ? 2.5 : 1.5);
+        fusionProgressRef.current += targetSpeed * timeScale;
 
         if (textRef.current) {
           textRef.current.innerText = `${Math.min(Math.floor(fusionProgressRef.current), 100)}%`;
         }
 
-        fusionRadiusRef.current =
-          (fusionProgressRef.current / 100) * 40 +
-          Math.sin(fusionProgressRef.current * 0.2) * 5;
+        fusionRadiusRef.current = Math.max(
+          0.1,
+          (fusionProgressRef.current / 100) * 40 + Math.sin(currentTime * 0.006) * 6
+        );
 
         context.save();
         context.translate(centerX, centerY);
 
         context.beginPath();
         context.arc(0, 0, fusionRadiusRef.current, 0, Math.PI * 2);
-        context.fillStyle = `rgba(255, 220, 150, ${0.8 + (fusionProgressRef.current / 100) * 0.2})`;
-        context.shadowBlur = 50 + fusionProgressRef.current;
+        const glowPulse = Math.sin(currentTime * 0.008) * 0.1;
+        context.fillStyle = `rgba(255, 220, 150, ${0.8 + (fusionProgressRef.current / 100) * 0.2 + glowPulse})`;
+        context.shadowBlur = 50 + fusionProgressRef.current + (glowPulse * 50);
         context.shadowColor = "rgba(255, 200, 100, 1)";
         context.fill();
         context.shadowBlur = 0;
 
         const ringRadius = fusionRadiusRef.current * 2 + (100 - fusionProgressRef.current) * 0.8;
-        context.rotate(fusionProgressRef.current * 0.05);
+        context.rotate(currentTime * 0.003);
         context.strokeStyle = `rgba(255, 220, 150, ${fusionProgressRef.current / 100})`;
         context.lineWidth = 2;
         context.beginPath();
@@ -323,8 +340,8 @@ export default function ParticleNetwork() {
           shockwaveOpacityRef.current = 1;
         }
       } else if (currentPhaseRef.current === "explosion") {
-        shockwaveRadiusRef.current += 35;
-        shockwaveOpacityRef.current -= 0.02;
+        shockwaveRadiusRef.current += 45 * timeScale;
+        shockwaveOpacityRef.current -= 0.03 * timeScale;
 
         context.save();
         context.translate(centerX, centerY);
@@ -344,6 +361,7 @@ export default function ParticleNetwork() {
           currentPhaseRef.current = "normal";
           setPhase("normal");
           dispatchPhaseChange("normal");
+          sessionStorage.setItem("cops-intro-seen", "true");
         }
       }
 
