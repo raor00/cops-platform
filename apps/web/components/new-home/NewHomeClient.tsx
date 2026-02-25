@@ -7,6 +7,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  type Variants,
 } from "framer-motion";
 import {
   ArrowRight,
@@ -683,7 +684,7 @@ function SolutionGraphic({ type }: { type: SolutionItem["graphicType"] }) {
 }
 
 function Solutions() {
-  const cardContainerVariants = {
+  const cardContainerVariants: Variants = {
     hidden: { opacity: 1 },
     visible: {
       opacity: 1,
@@ -694,14 +695,14 @@ function Solutions() {
     },
   };
 
-  const cardItemVariants = {
-    hidden: { opacity: 0, y: 36, scale: 0.95, filter: "blur(6px)" },
+  const cardItemVariants: Variants = {
+    hidden: { opacity: 0, y: 70, scale: 0.9, filter: "blur(10px)" },
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
       filter: "blur(0px)",
-      transition: { type: "spring", stiffness: 90, damping: 16, mass: 0.9 },
+      transition: { type: "spring", stiffness: 70, damping: 14, mass: 1 },
     },
   };
 
@@ -717,7 +718,7 @@ function Solutions() {
           variants={cardContainerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-80px" }}
+          viewport={{ once: true, amount: 0.15 }}
         >
           {SOLUTIONS.map((solution, idx) => (
             <motion.div
