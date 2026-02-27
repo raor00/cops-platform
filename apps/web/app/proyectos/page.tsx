@@ -48,6 +48,22 @@ export default function Proyectos() {
   const [filter, setFilter] = useState<"Todos" | Sector>("Todos");
   const filtered = useMemo(() => filter === "Todos" ? PROJECTS : PROJECTS.filter((p) => p.sector === filter), [filter]);
 
+  const sectorColor: Record<Sector, string> = {
+    Banca: "border-l-blue-500",
+    Industrial: "border-l-amber-500",
+    Gubernamental: "border-l-purple-500",
+    Comercial: "border-l-teal-500",
+    Mixto: "border-l-rose-500",
+  };
+
+  const sectorBg: Record<Sector, string> = {
+    Banca: "from-blue-50/40",
+    Industrial: "from-amber-50/40",
+    Gubernamental: "from-purple-50/40",
+    Comercial: "from-teal-50/40",
+    Mixto: "from-rose-50/40",
+  };
+
   return (
     <div className="bg-[#f3f4f6] min-h-screen pt-24 font-sans text-slate-950 relative overflow-hidden">
 
@@ -82,7 +98,7 @@ export default function Proyectos() {
 
             <div className="flex flex-wrap justify-center gap-3 mb-12 relative z-20">
               {["Banca nacional", "Partners internacionales", "+1500 obras", "28 años trayectoria"].map((t) => (
-                <span key={t} className="px-4 py-1.5 bg-white/80 text-slate-950 text-xs font-semibold rounded-full border border-slate-400/30 shadow-[0_2px_10px_rgba(0,0,0,0.05)] backdrop-blur-md">
+                <span key={t} className="px-4 py-1.5 bg-white/80 text-slate-950 text-xs font-medium rounded-full border border-slate-400/30 shadow-[0_2px_10px_rgba(0,0,0,0.05)] backdrop-blur-md">
                   {t}
                 </span>
               ))}
@@ -118,7 +134,7 @@ export default function Proyectos() {
             variants={staggerContainer}
             initial="hidden"
             animate="show"
-            className="grid gap-8 md:grid-cols-2 lg:grid-cols-2"
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
           >
             <AnimatePresence mode="popLayout">
               {filtered.map((p) => (
@@ -126,35 +142,35 @@ export default function Proyectos() {
                   key={p.title}
                   variants={staggerItem}
                   layout
-                  className="group relative bg-white rounded-2xl border border-slate-300/60 p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden"
+                  className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 ${sectorColor[p.sector]} p-5 md:p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all duration-500 flex flex-col overflow-hidden`}
                 >
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-blue-100/30 to-transparent rounded-bl-full opacity-60 group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${sectorBg[p.sector]} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl`} />
 
-                  <div className="flex items-start gap-5 mb-8 relative z-10">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 border border-blue-100 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                  <div className="flex items-start gap-3 mb-5 relative z-10">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 border border-blue-100 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                       {p.icon}
                     </div>
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-slate-950 leading-tight mb-2 group-hover:text-blue-700 transition-colors">{p.title}</h2>
+                      <h2 className="text-base md:text-lg font-bold text-slate-950 leading-tight mb-1.5 group-hover:text-blue-700 transition-colors">{p.title}</h2>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-[0.15em]">SECTOR</span>
-                        <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-semibold rounded-md border border-blue-200/50 shadow-sm">{p.sector}</span>
+                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-[0.15em]">SECTOR</span>
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-medium rounded-md border border-blue-200/50">{p.sector}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mb-10 relative z-10">
+                  <div className="flex flex-wrap gap-1.5 mb-6 relative z-10">
                     {p.scope.map((s) => (
-                      <span key={s} className="px-3 py-1 bg-slate-200/70 text-slate-900 text-[11px] font-semibold uppercase tracking-wider rounded-lg border border-slate-300 shadow-sm group-hover:bg-slate-200 group-hover:border-slate-400 transition-colors">
+                      <span key={s} className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-medium uppercase tracking-wider rounded border border-slate-200 group-hover:bg-slate-200 group-hover:border-slate-300 transition-colors">
                         {s}
                       </span>
                     ))}
                   </div>
 
-                  <div className="grid gap-6 sm:grid-cols-3 mt-auto pt-8 border-t border-slate-200 relative z-10">
+                  <div className="grid gap-4 sm:grid-cols-3 mt-auto pt-5 border-t border-slate-200 relative z-10">
                     <div>
-                      <p className="text-[10px] font-bold tracking-[0.2em] text-blue-600 mb-3 bg-blue-50 inline-block px-2 py-0.5 rounded">ALCANCE</p>
-                      <ul className="space-y-3 text-sm text-slate-700 font-medium">
+                      <p className="text-[10px] font-medium tracking-[0.2em] text-blue-600 mb-2 bg-blue-50 inline-block px-2 py-0.5 rounded">ALCANCE</p>
+                      <ul className="space-y-2 text-xs text-slate-700 font-normal">
                         {p.scope.slice(0, 3).map((x) => (
                           <li key={x} className="flex items-start gap-2.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
@@ -164,8 +180,8 @@ export default function Proyectos() {
                       </ul>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-[0.2em] text-indigo-600 mb-3 bg-indigo-50 inline-block px-2 py-0.5 rounded">SOLUCION</p>
-                      <ul className="space-y-3 text-sm text-slate-700 font-medium">
+                      <p className="text-[10px] font-medium tracking-[0.2em] text-indigo-600 mb-2 bg-indigo-50 inline-block px-2 py-0.5 rounded">SOLUCION</p>
+                      <ul className="space-y-2 text-xs text-slate-700 font-normal">
                         {p.solution.map((x) => (
                           <li key={x} className="flex items-start gap-2.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
@@ -175,8 +191,8 @@ export default function Proyectos() {
                       </ul>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-700 mb-3 bg-emerald-100 inline-block px-2 py-0.5 rounded shadow-sm border border-emerald-200/50">RESULTADO</p>
-                      <ul className="space-y-3 text-sm text-slate-900 font-bold">
+                      <p className="text-[10px] font-medium tracking-[0.2em] text-emerald-700 mb-2 bg-emerald-100 inline-block px-2 py-0.5 rounded shadow-sm border border-emerald-200/50">RESULTADO</p>
+                      <ul className="space-y-2 text-xs text-slate-900 font-semibold">
                         {p.result.map((x) => (
                           <li key={x} className="flex items-start gap-2.5">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
@@ -221,9 +237,9 @@ export default function Proyectos() {
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className="px-2.5 py-1 bg-gradient-to-r from-blue-700 to-indigo-700 text-white text-[10px] font-semibold uppercase tracking-wider rounded shadow-md">Reciente</span>
-                      <span className="px-2.5 py-1 bg-slate-200 text-slate-900 border border-slate-400/40 text-[10px] font-semibold uppercase tracking-wider rounded">{p.sector}</span>
-                      {p.client && <span className="px-2.5 py-1 bg-slate-950 text-white text-[10px] font-semibold tracking-wider rounded shadow-md">{p.client}</span>}
+                      <span className="px-2.5 py-1 bg-gradient-to-r from-blue-700 to-indigo-700 text-white text-[10px] font-medium uppercase tracking-wider rounded shadow-md">Reciente</span>
+                      <span className="px-2.5 py-1 bg-slate-200 text-slate-900 border border-slate-400/40 text-[10px] font-medium uppercase tracking-wider rounded">{p.sector}</span>
+                      {p.client && <span className="px-2.5 py-1 bg-slate-950 text-white text-[10px] font-medium tracking-wider rounded shadow-md">{p.client}</span>}
                     </div>
                     <h3 className="text-xl font-bold text-slate-950 leading-snug">{p.title}</h3>
                   </div>
@@ -231,7 +247,7 @@ export default function Proyectos() {
 
                 <div className="flex flex-wrap gap-2 mb-8">
                   {p.tech.map((t) => (
-                    <span key={t} className="px-3 py-1 bg-slate-200/50 text-slate-950 text-xs font-semibold rounded-lg border border-slate-400/30">
+                    <span key={t} className="px-3 py-1 bg-slate-200/50 text-slate-950 text-xs font-medium rounded-lg border border-slate-400/30">
                       {t}
                     </span>
                   ))}

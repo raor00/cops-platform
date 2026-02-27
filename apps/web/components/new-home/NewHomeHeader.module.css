@@ -89,7 +89,7 @@
 .mainNav a:hover,
 .mainNav a.active,
 .active {
-  color: var(--primary-cyan);
+  color: #ffffff;
 }
 
 .mainNav a::after {
@@ -99,7 +99,7 @@
   left: 0;
   width: 0%;
   height: 2px;
-  background: var(--primary-cyan);
+  background: #ffffff;
   transition: width 0.3s ease;
 }
 
