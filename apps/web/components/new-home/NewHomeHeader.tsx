@@ -1,11 +1,13 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Home } from "lucide-react";
 import styles from "./NewHomeHeader.module.css";
 
 export default function NewHomeHeader() {
+  const pathname = usePathname();
   const [isAtTop, setIsAtTop] = useState(true);
   const lastScrollRef = useRef(0);
 
@@ -42,14 +44,14 @@ export default function NewHomeHeader() {
         </div>
 
         <nav className={`${styles.mainNav} hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 items-center`}>
-          <Link href="/" aria-label="Inicio" className="flex items-center text-slate-400 hover:text-cyan-400 transition-colors">
+          <Link href="/" aria-label="Inicio" className={`flex items-center transition-colors ${pathname === "/" ? styles.active : ""}`}>
             <Home className="h-4 w-4" />
           </Link>
-          <Link href="/soluciones">Soluciones</Link>
-          <Link href="/proyectos">Proyectos</Link>
-          <Link href="/partners">Partners</Link>
-          <Link href="/nosotros">Nosotros</Link>
-          <Link href="/contacto">Contacto</Link>
+          <Link href="/soluciones" className={pathname === "/soluciones" ? styles.active : ""}>Soluciones</Link>
+          <Link href="/proyectos" className={pathname === "/proyectos" ? styles.active : ""}>Proyectos</Link>
+          <Link href="/partners" className={pathname === "/partners" ? styles.active : ""}>Partners</Link>
+          <Link href="/nosotros" className={pathname === "/nosotros" ? styles.active : ""}>Nosotros</Link>
+          <Link href="/contacto" className={pathname === "/contacto" ? styles.active : ""}>Contacto</Link>
         </nav>
 
         <div className={`${styles.authActions} hidden md:flex`}>

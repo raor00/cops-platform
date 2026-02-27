@@ -3,8 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Building2, Factory, Landmark, Shield, Camera, KeyRound, Zap, Network } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Building2, Factory, Landmark, Shield, Camera, KeyRound, Zap, Network, ArrowRight } from "lucide-react";
 
 type Sector = "Banca" | "Industrial" | "Comercial" | "Gubernamental" | "Mixto";
 type Project = { title: string; sector: Sector; scope: string[]; solution: string[]; result: string[]; icon: ReactNode };
@@ -28,98 +28,250 @@ const FILTERS: { key: "Todos" | Sector; label: string; icon: React.ReactNode }[]
   { key: "Todos", label: "Todos", icon: <Factory className="h-4 w-4" /> }, { key: "Banca", label: "Banca", icon: <Landmark className="h-4 w-4" /> }, { key: "Industrial", label: "Industrial", icon: <Factory className="h-4 w-4" /> }, { key: "Comercial", label: "Comercial", icon: <Building2 className="h-4 w-4" /> }, { key: "Gubernamental", label: "Gubernamental", icon: <Shield className="h-4 w-4" /> }, { key: "Mixto", label: "Mixto", icon: <Network className="h-4 w-4" /> },
 ];
 
-const fadeUp = { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.12 as const }, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const } };
+const fadeUp = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.1 }, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } };
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
+};
 
 export default function Proyectos() {
   const [filter, setFilter] = useState<"Todos" | Sector>("Todos");
   const filtered = useMemo(() => filter === "Todos" ? PROJECTS : PROJECTS.filter((p) => p.sector === filter), [filter]);
 
   return (
-    <div>
-      {/* HERO */}
-      <section className="dark-section noise relative border-b border-white/[0.06]">
-        <div className="relative mx-auto max-w-6xl px-4 py-16">
-          <motion.div {...fadeUp}>
-            <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">PROYECTOS Y EXPERIENCIA</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Implementaciones para entornos enterprise</h1>
-            <p className="mt-4 max-w-3xl text-white/55">Casos tipo (sin datos sensibles) en automatización, seguridad electrónica y energía.</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/contacto" className="btn-glass-primary">Agendar reunión técnica</Link>
-              <Link href="/soluciones" className="btn-glass">Ver soluciones</Link>
+    <div className="bg-[#f3f4f6] min-h-screen pt-24 font-sans text-slate-950 relative overflow-hidden">
+
+      {/* Animated Background Elements - intensified for more depth */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full">
+        <motion.div
+          animate={{ x: ["0%", "-10%", "0%"], y: ["0%", "8%", "0%"], scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 25, ease: "easeInOut" }}
+          className="absolute top-[-15%] left-[-15%] w-[60vw] h-[60vw] rounded-full bg-blue-500/15 blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: ["0%", "10%", "0%"], y: ["0%", "-8%", "0%"], scale: [1, 1.05, 1] }}
+          transition={{ repeat: Infinity, duration: 20, ease: "easeInOut" }}
+          className="absolute top-[15%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/15 blur-[120px]"
+        />
+      </div>
+
+      {/* HEADER SECTION */}
+      <section className="relative bg-white/60 backdrop-blur-xl border-b border-slate-300 pt-20 pb-16 z-10 shadow-sm">
+        <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...fadeUp} className="text-center max-w-3xl mx-auto">
+            <span className="inline-block py-1.5 px-4 rounded-full bg-blue-100 border border-blue-200 text-blue-700 text-[11px] font-black tracking-[0.2em] mb-6 shadow-sm">
+              PROYECTOS Y EXPERIENCIA
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 mb-6 drop-shadow-sm">
+              Despliegues para <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">entornos enterprise</span>
+            </h1>
+            <p className="text-lg md:text-xl text-slate-600 mb-10 leading-relaxed font-medium">
+              Casos tipo en automatización, seguridad electrónica y energía. Garantizando continuidad operativa ininterrumpida.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-3 mb-12 relative z-20">
+              {["Banca nacional", "Partners internacionales", "+1500 obras", "28 años trayectoria"].map((t) => (
+                <span key={t} className="px-4 py-1.5 bg-white/80 text-slate-950 text-xs font-semibold rounded-full border border-slate-400/30 shadow-[0_2px_10px_rgba(0,0,0,0.05)] backdrop-blur-md">
+                  {t}
+                </span>
+              ))}
             </div>
-            <div className="mt-8 flex flex-wrap gap-2">{["Banca nacional", "Partners internacionales", "Proyectos enterprise", "+1500 obras", "28 años"].map((t) => <span key={t} className="tag-glass">{t}</span>)}</div>
-            <div className="mt-10 flex flex-wrap gap-2">{FILTERS.map((f) => { const active = filter === f.key; return (<button key={f.key} onClick={() => setFilter(f.key)} className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${active ? "border-brand-400 bg-brand-600 text-white shadow-md shadow-brand-600/25" : "border-white/10 bg-white/[0.04] text-white/65 hover:bg-white/[0.08] hover:text-white"}`}>{f.icon}{f.label}</button>); })}</div>
+
+            {/* FILTERS */}
+            <div className="flex flex-wrap justify-center gap-3">
+              {FILTERS.map((f) => {
+                const active = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${active
+                      ? "border-blue-700 bg-blue-700 text-white shadow-[0_8px_20px_-4px_rgba(29,78,216,0.5)] scale-105"
+                      : "border-slate-400/40 bg-white/90 text-slate-800 hover:bg-white hover:text-slate-950 hover:border-slate-500 hover:shadow-md"
+                      }`}
+                  >
+                    {f.icon}
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* GRID */}
-      <section className="relative border-t border-white/[0.06]">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <motion.div layout className="grid gap-5 md:grid-cols-2" {...fadeUp}>
-            {filtered.map((p) => (
-              <motion.article key={p.title} layout className="lg-card p-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-xl border border-brand-400/20 bg-brand-500/10 p-2 text-brand-300">{p.icon}</div>
-                    <div><h2 className="text-lg font-semibold text-white">{p.title}</h2><p className="mt-1 text-sm text-white/55">Sector: <span className="font-medium text-brand-300">{p.sector}</span></p></div>
+      {/* GRID SECTION */}
+      <section className="relative py-24 z-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="grid gap-8 md:grid-cols-2 lg:grid-cols-2"
+          >
+            <AnimatePresence mode="popLayout">
+              {filtered.map((p) => (
+                <motion.article
+                  key={p.title}
+                  variants={staggerItem}
+                  layout
+                  className="group relative bg-white rounded-2xl border border-slate-300/60 p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-500 flex flex-col overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-blue-100/30 to-transparent rounded-bl-full opacity-60 group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
+
+                  <div className="flex items-start gap-5 mb-8 relative z-10">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 border border-blue-100 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                      {p.icon}
+                    </div>
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-bold text-slate-950 leading-tight mb-2 group-hover:text-blue-700 transition-colors">{p.title}</h2>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-[0.15em]">SECTOR</span>
+                        <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 text-[11px] font-semibold rounded-md border border-blue-200/50 shadow-sm">{p.sector}</span>
+                      </div>
+                    </div>
                   </div>
-                  <Link href="/contacto" className="btn-glass hidden text-sm !px-4 !py-2 md:inline-flex">Solicitar propuesta</Link>
+
+                  <div className="flex flex-wrap gap-2 mb-10 relative z-10">
+                    {p.scope.map((s) => (
+                      <span key={s} className="px-3 py-1 bg-slate-200/70 text-slate-900 text-[11px] font-semibold uppercase tracking-wider rounded-lg border border-slate-300 shadow-sm group-hover:bg-slate-200 group-hover:border-slate-400 transition-colors">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="grid gap-6 sm:grid-cols-3 mt-auto pt-8 border-t border-slate-200 relative z-10">
+                    <div>
+                      <p className="text-[10px] font-bold tracking-[0.2em] text-blue-600 mb-3 bg-blue-50 inline-block px-2 py-0.5 rounded">ALCANCE</p>
+                      <ul className="space-y-3 text-sm text-slate-700 font-medium">
+                        {p.scope.slice(0, 3).map((x) => (
+                          <li key={x} className="flex items-start gap-2.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                            <span className="leading-snug">{x}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-[0.2em] text-indigo-600 mb-3 bg-indigo-50 inline-block px-2 py-0.5 rounded">SOLUCION</p>
+                      <ul className="space-y-3 text-sm text-slate-700 font-medium">
+                        {p.solution.map((x) => (
+                          <li key={x} className="flex items-start gap-2.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
+                            <span className="leading-snug">{x}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-[0.2em] text-emerald-700 mb-3 bg-emerald-100 inline-block px-2 py-0.5 rounded shadow-sm border border-emerald-200/50">RESULTADO</p>
+                      <ul className="space-y-3 text-sm text-slate-900 font-bold">
+                        {p.result.map((x) => (
+                          <li key={x} className="flex items-start gap-2.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                            <span className="leading-snug">{x}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </motion.article>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FEATURED / RECENT */}
+      <section className="bg-slate-200/50 border-y border-slate-300 py-28 relative z-10 shadow-inner">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <motion.div {...fadeUp} className="text-center mb-20">
+            <span className="inline-block py-1.5 px-4 rounded-full bg-indigo-100 text-indigo-800 text-[11px] font-semibold tracking-[0.2em] mb-4 border border-indigo-200 shadow-sm">
+              ULTIMAS IMPLEMENTACIONES
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-950 md:text-5xl">
+              Despliegues recientes
+            </h2>
+            <p className="mt-6 text-slate-700 max-w-2xl mx-auto text-lg font-medium">
+              Resumen operativo de proyectos recien entregados destacando topología y tecnologías implementadas.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-8 md:grid-cols-2">
+            {RECENT_PROJECTS.map((p) => (
+              <motion.article
+                key={p.title + p.sector}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-2xl border border-slate-300 p-6 md:p-8 shadow-lg shadow-slate-200/50"
+              >
+                <div className="flex items-start gap-5 mb-8">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-950 border border-slate-300 shadow-sm transition-transform group-hover:scale-110">
+                    {p.icon}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="px-2.5 py-1 bg-gradient-to-r from-blue-700 to-indigo-700 text-white text-[10px] font-semibold uppercase tracking-wider rounded shadow-md">Reciente</span>
+                      <span className="px-2.5 py-1 bg-slate-200 text-slate-900 border border-slate-400/40 text-[10px] font-semibold uppercase tracking-wider rounded">{p.sector}</span>
+                      {p.client && <span className="px-2.5 py-1 bg-slate-950 text-white text-[10px] font-semibold tracking-wider rounded shadow-md">{p.client}</span>}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-950 leading-snug">{p.title}</h3>
+                  </div>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">{p.scope.map((s) => <span key={s} className="tag-glass">{s}</span>)}</div>
-                <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  <div><p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">ALCANCE</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-white/55">{p.scope.slice(0,4).map((x) => <li key={x}>{x}</li>)}</ul></div>
-                  <div><p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">SOLUCIÓN</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-white/55">{p.solution.map((x) => <li key={x}>{x}</li>)}</ul></div>
-                  <div><p className="text-[10px] font-bold tracking-[0.25em] text-brand-400">RESULTADO</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-white/55">{p.result.map((x) => <li key={x}>{x}</li>)}</ul></div>
+
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {p.tech.map((t) => (
+                    <span key={t} className="px-3 py-1 bg-slate-200/50 text-slate-950 text-xs font-semibold rounded-lg border border-slate-400/30">
+                      {t}
+                    </span>
+                  ))}
                 </div>
-                <div className="mt-6 md:hidden"><Link href="/contacto" className="btn-glass w-full text-center text-sm">Solicitar propuesta</Link></div>
+
+                <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                  <p className="text-[11px] font-bold tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2">
+                    <ArrowRight className="w-3 h-3" />
+                    HIGHLIGHTS
+                  </p>
+                  <ul className="space-y-4 text-sm text-slate-800 font-medium">
+                    {p.highlights.map((x) => (
+                      <li key={x} className="flex gap-3 items-start">
+                        <span className="mt-[6px] h-2 w-2 shrink-0 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)]" />
+                        <span className="leading-relaxed">{x}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </motion.article>
             ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* FEATURED */}
-      <section className="dark-section noise relative overflow-hidden border-t border-white/[0.06]">
-        <div className="liquid-orb liquid-orb-1 -top-24 left-1/2 h-72 w-[700px] -translate-x-1/2 bg-brand-500/8" />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 text-white">
-          <motion.div {...fadeUp} className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div><p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">ÚLTIMAS IMPLEMENTACIONES</p><h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Despliegues recientes en entornos enterprise</h2><p className="mt-4 max-w-3xl text-white/55">Resumen operativo (sin datos sensibles).</p></div>
-            <Link href="/contacto" className="btn-glass-primary">Solicitar consultoría</Link>
-          </motion.div>
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {RECENT_PROJECTS.map((p) => (
-              <article key={p.title + p.sector} className="lg-card p-7">
-                <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-brand-400/30 to-transparent" />
-                <div className="flex items-start gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3 text-white">{p.icon}</div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="tag-glass !border-brand-400/25 !bg-brand-500/12 !text-brand-200">Reciente</span>
-                      <span className="tag-glass">{p.sector}</span>
-                      {p.client && <span className="tag-glass">{p.client}</span>}
-                    </div>
-                    <h3 className="mt-3 text-xl font-semibold leading-snug">{p.title}</h3>
-                  </div>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2">{p.tech.map((t) => <span key={t} className="tag-glass">{t}</span>)}</div>
-                <div className="mt-6"><p className="text-[10px] font-bold tracking-[0.2em] text-white/40">RESUMEN</p><ul className="mt-3 space-y-2 text-sm text-white/60">{p.highlights.map((x) => <li key={x} className="flex gap-2"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400/50" /><span>{x}</span></li>)}</ul></div>
-              </article>
-            ))}
           </div>
-          <p className="mt-8 text-xs text-white/30">*Algunos detalles se omiten para proteger información sensible.</p>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="dark-section noise relative border-t border-white/[0.06]">
-        <div className="relative mx-auto max-w-6xl px-4 py-20 text-white">
-          <motion.div {...fadeUp} className="grid gap-8 md:grid-cols-12 md:items-center">
-            <div className="md:col-span-8"><h2 className="text-3xl font-bold tracking-tight">Conversemos sobre tu proyecto</h2><p className="mt-3 text-white/55">Coordinamos una reunión técnica para levantar requerimientos.</p></div>
-            <div className="md:col-span-4 md:text-right">
-              <Link href="/contacto" className="btn-glass-primary w-full md:w-auto">Agendar reunión técnica</Link>
-              <p className="mt-3 text-xs text-white/35">Enfoque enterprise &bull; Documentación &bull; Puesta en marcha</p>
-            </div>
+      <section className="bg-white py-24 relative z-10 h-[50vh] flex flex-col justify-center items-center">
+        <div className="relative mx-auto max-w-4xl px-4 text-center">
+          <motion.div {...fadeUp}>
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter text-slate-950 mb-8 drop-shadow-sm">Conversemos sobre tu proyecto</h2>
+            <p className="text-slate-700 mb-12 text-xl md:text-2xl font-bold max-w-3xl mx-auto leading-relaxed">
+              Coordinamos una reunión técnica para levantar los requerimientos de tu instalación a medida con enfoque enterprise.
+            </p>
+            <Link href="/contacto" className="inline-flex items-center justify-center rounded-full bg-blue-700 px-12 py-5 text-lg font-black text-white shadow-[0_20px_50px_-10px_rgba(29,78,216,0.5)] transition-all duration-300 hover:bg-blue-800 hover:shadow-[0_25px_60px_-10px_rgba(29,78,216,0.6)] hover:-translate-y-1.5 active:scale-95">
+              Agendar reunión técnica
+              <ArrowRight className="ml-3 w-6 h-6" />
+            </Link>
+            <p className="mt-12 text-[10px] font-black text-slate-500 tracking-[0.25em] uppercase">
+              Ingeniería &bull; Documentación QA &bull; Mantenimiento
+            </p>
           </motion.div>
         </div>
       </section>

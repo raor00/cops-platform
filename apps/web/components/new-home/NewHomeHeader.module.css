@@ -73,7 +73,6 @@
 }
 
 .mainNav {
-  display: flex;
   gap: 1.25rem;
 }
 
@@ -111,8 +110,6 @@
 }
 
 .authActions {
-  display: flex;
-  align-items: center;
   gap: 1.25rem;
 }
 

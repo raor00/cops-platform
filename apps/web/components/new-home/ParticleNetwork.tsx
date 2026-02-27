@@ -230,6 +230,8 @@ export default function ParticleNetwork() {
       mouse.y = -1000;
     };
 
+    let hasInitializedPhase = false;
+
     function init() {
       particlesArray = [];
       atomsArray = [];
@@ -246,16 +248,19 @@ export default function ParticleNetwork() {
 
       const skipIntro = sessionStorage.getItem('cops-intro-seen') === 'true';
 
-      if (skipIntro) {
-        currentPhaseRef.current = "normal";
-        setPhase("normal");
-        dispatchPhaseChange("normal");
-      } else {
-        currentPhaseRef.current = "fusion";
-        setPhase("fusion");
-        dispatchPhaseChange("fusion");
-        fusionProgressRef.current = 0;
-        fusionRadiusRef.current = 5;
+      if (!hasInitializedPhase) {
+        if (skipIntro) {
+          currentPhaseRef.current = "normal";
+          setPhase("normal");
+          dispatchPhaseChange("normal");
+        } else {
+          currentPhaseRef.current = "fusion";
+          setPhase("fusion");
+          dispatchPhaseChange("fusion");
+          fusionProgressRef.current = 0;
+          fusionRadiusRef.current = 5;
+        }
+        hasInitializedPhase = true;
       }
     }
 

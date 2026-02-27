@@ -115,15 +115,19 @@ function StorySection() {
   const statsOpacity = useTransform(smoothProgress, [0, 0.15], [1, 0]);
   const statsY = useTransform(smoothProgress, [0, 0.15], [0, -50]);
   const numberScale = useTransform(smoothProgress, [0, 0.35, 0.7], [1, 2.0, 2.0]);
-  const numberY = useTransform(smoothProgress, [0, 0.35, 0.6, 1], ["0vh", "15vh", "15vh", "-40vh"]);
-  const numberX = useTransform(smoothProgress, [0, 0.35, 0.7], ["0%", "15%", "15%"]);
+
+  // Mueve exactamente 150% a la derecha para centrar desde la 1era columna
+  const numberX = useTransform(smoothProgress, [0, 0.35, 0.7], ["0%", "150%", "150%"]);
+  // Lo ancla más arriba (8vh) y luego lo vuela hacia arriba para que no choque
+  const numberY = useTransform(smoothProgress, [0, 0.35, 0.6, 1], ["0vh", "8vh", "8vh", "-150vh"]);
   const numberGlow = useTransform(smoothProgress, [0.3, 0.5], ["0px 0px 0px rgba(34,211,238,0)", "0px 0px 40px rgba(34,211,238,0.8)"]);
 
   const bentoOpacity = useTransform(smoothProgress, [0.3, 0.45, 0.9, 1], [0, 1, 1, 1]);
-  const bentoY = useTransform(smoothProgress, [0.35, 0.55, 1], ["30vh", "0vh", "-100vh"]);
+  // Baja lo suficiente (-150vh) para que el final del contenedor (tarjeta #3) pase antes del section blanco
+  const bentoY = useTransform(smoothProgress, [0.35, 0.55, 1], ["30vh", "0vh", "-150vh"]);
 
   return (
-    <section ref={containerRef} className="relative z-30 -mt-16 h-[280vh] w-full bg-transparent md:-mt-24">
+    <section ref={containerRef} className="relative z-30 -mt-16 h-[380vh] w-full bg-transparent md:-mt-24 md:h-[280vh]">
       <div className="sticky top-0 flex h-[100dvh] w-full max-w-5xl mx-auto flex-col items-center justify-start overflow-visible px-4 sm:px-6 lg:px-8">
         <motion.div
           style={{ opacity: statsOpacity, y: statsY }}
@@ -184,14 +188,14 @@ function StorySection() {
           style={{ opacity: bentoOpacity, y: bentoY }}
           className="absolute top-[15vh] flex h-full w-full flex-col justify-start px-4 pointer-events-none md:top-[18vh]"
         >
-          <div className="relative z-10 mt-[15vh] grid grid-cols-1 gap-6 pointer-events-auto md:mt-[18vh] md:grid-cols-3 mb-12 md:mb-24">
+          <div className="relative z-10 mt-[15vh] grid grid-cols-1 gap-6 pointer-events-auto md:mt-[18vh] md:grid-cols-3 mb-28 md:mb-24">
             <div className="mb-6 flex w-full flex-col items-start md:col-span-3 md:flex-row md:items-end">
               <div className="hidden w-[45%] flex-shrink-0 md:block" />
-              <div className="mt-24 w-full border-t border-white/10 px-2 pt-8 text-center md:-mt-8 md:w-[55%] lg:-mt-20 md:border-l md:border-t-0 md:pl-10 md:pt-0">
-                <h2 className="text-3xl font-black leading-tight tracking-tight text-white md:text-5xl">
+              <div className="mt-28 w-full border-t border-white/10 px-2 pt-10 text-center md:-mt-8 md:w-[55%] lg:-mt-20 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+                <h2 className="text-4xl font-black leading-tight tracking-tight text-white md:text-5xl drop-shadow-lg">
                   Respaldando operacion critica en Venezuela
                 </h2>
-                <p className="mx-auto mt-6 max-w-[20rem] text-left text-sm font-medium leading-relaxed tracking-wide text-slate-200 opacity-100 sm:max-w-lg md:mx-0 md:max-w-none md:text-justify md:text-base lg:text-lg">
+                <p className="mx-auto mt-6 max-w-[20rem] text-left text-sm font-medium leading-relaxed tracking-wide text-slate-300 opacity-100 sm:max-w-lg md:mx-0 md:max-w-none md:text-justify md:text-base lg:text-lg">
                   Somos una empresa privada con trayectoria ininterrumpida dedicada a la asesoria e implementacion de proyectos tecnologicos de alta gama en automatizacion, seguridad y energia, con enfoque enterprise para banca, industria, comercio e instituciones gubernamentales.
                 </p>
               </div>
@@ -977,14 +981,6 @@ export default function NewHomeClient() {
       <AnimatePresence>
         {appReady && (
           <>
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.5, ease: "easeOut" }}
-              className="fixed left-0 right-0 top-0 z-[100] w-full pointer-events-none"
-            >
-              <NewHomeHeader />
-            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, filter: "blur(10px)" }}
