@@ -27,10 +27,15 @@ type Atom = {
 export default function ParticleNetwork() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<Phase>("fusion");
+  const [phase, setPhase] = useState<Phase>(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("cops-intro-seen") === "true" ? "normal" : "fusion";
+    }
+    return "fusion";
+  });
   const hasInitializedRef = useRef(false);
 
-  const currentPhaseRef = useRef<Phase>("fusion");
+  const currentPhaseRef = useRef<Phase>(phase);
   const fusionProgressRef = useRef(0);
   const fusionRadiusRef = useRef(5);
   const shockwaveRadiusRef = useRef(0);

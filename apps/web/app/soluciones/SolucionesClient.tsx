@@ -23,7 +23,7 @@ const ICONS: Record<string, any> = {
   Video, Fingerprint, Bell, BrainCircuit, Building2, Zap
 };
 
-const PROCESS = [{ n: "01", t: "Levantamiento", d: "Requerimientos, riesgos, alcance." }, { n: "02", t: "Arquitectura", d: "Diseño, dimensionamiento, integración." }, { n: "03", t: "Implementación", d: "Instalación, integración, hardening." }, { n: "04", t: "Puesta en marcha", d: "Pruebas, QA, actas, capacitación." }, { n: "05", t: "Soporte", d: "Mantenimiento, mejoras, continuidad." }];
+
 
 const DELIVERABLES = ["Levantamiento y alcance (matriz de requerimientos)", "Arquitectura (diagramas, zonificación, criterios de retención)", "Documentación técnica y operativa (runbooks, procedimientos)", "Plan de pruebas (QA) + actas de entrega", "Capacitación y acompañamiento post-implementación"];
 
@@ -36,28 +36,30 @@ export default function SolucionesClient() {
   return (
     <main className="bg-slate-50 min-h-screen">
       {/* HERO */}
-      <section className="relative px-6 py-20 lg:px-12 bg-slate-50 pt-32 lg:pt-40 pb-32">
-        <div className="mx-auto max-w-7xl">
-          <motion.div {...fadeUp} className="max-w-4xl">
-            <p className="text-[11px] font-black tracking-[0.2em] text-blue-600 uppercase mb-5">SOLUCIONES</p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.1] mb-6">
+      <section className="relative pt-20 pb-20 md:pt-28 md:pb-28 px-4 bg-white/60 backdrop-blur-3xl border-b border-slate-200 z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
+        <div className="mx-auto max-w-6xl text-center">
+          <motion.div {...fadeUp} className="flex flex-col items-center">
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600 ring-1 ring-inset ring-blue-600/20 mb-6 uppercase tracking-widest shadow-sm">
+              SOLUCIONES
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 drop-shadow-sm leading-[1.1]">
               Arquitectura, integración y <br className="hidden lg:block" /> operación para entornos <br className="hidden lg:block" /> críticos
             </h1>
-            <p className="mt-4 text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
+            <p className="max-w-3xl text-lg font-medium text-slate-600 leading-relaxed mx-auto mb-10">
               Soluciones enterprise en VMS/CCTV, control de acceso, alarmas, analíticas con IA, BMS y energía.
             </p>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Link href="/contacto" className="inline-flex justify-center items-center gap-2 rounded-lg bg-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-blue-600/20 hover:bg-blue-800 transition-colors">
-                Agendar reunión técnica <Calendar className="w-4 h-4" />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto mb-12">
+              <Link href="/contacto" className="inline-flex justify-center items-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all hover:-translate-y-0.5 hover:shadow-xl">
+                Agendar reunión técnica <Calendar className="w-4 h-4 ml-1" />
               </Link>
-              <Link href="/proyectos" className="inline-flex justify-center items-center gap-2 rounded-lg bg-white border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-colors">
+              <Link href="/proyectos" className="inline-flex justify-center items-center gap-2 rounded-full bg-white border border-slate-200 px-8 py-3.5 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition-all hover:text-slate-900">
                 Ver proyectos
               </Link>
             </div>
-            <div className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-3 text-[11px] font-semibold text-slate-400">
+            <div className="flex flex-wrap justify-center gap-2 relative z-20">
               {["Banca nacional", "Proyectos enterprise", "Partners internacionales", "Documentación y QA", "Operación multi-sede"].map((t) => (
-                <span key={t} className="flex items-center gap-2">
-                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                <span key={t} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-[11px] font-bold uppercase tracking-wider rounded-md shadow-sm">
                   {t}
                 </span>
               ))}
@@ -162,58 +164,6 @@ export default function SolucionesClient() {
               </div>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Metodología */}
-      <section id="metodologia" className="relative bg-white border-t border-slate-200">
-        <div className="mx-auto max-w-7xl px-6 py-24 lg:px-12">
-          <motion.div {...fadeUp} className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Metodología</h2>
-            <p className="mt-4 text-lg text-slate-500 font-medium">Estructura clara para resultados consistentes.</p>
-          </motion.div>
-          <div className="relative isolate">
-            {/* Animated path connecting steps (Vertical on Mobile, Horizontal on Desktop) */}
-            <motion.div
-              initial={{ height: 0, width: 2 }}
-              whileInView={{ height: "100%", width: 2 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              className="absolute left-6 top-0 -z-10 block rounded-full bg-gradient-to-b from-blue-100 via-blue-400 to-blue-100 lg:hidden"
-            />
-            <motion.div
-              initial={{ width: 0, height: 2 }}
-              whileInView={{ width: "100%", height: 2 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              className="absolute left-0 top-1/2 -z-10 hidden rounded-full bg-gradient-to-r from-blue-100 via-blue-400 to-blue-100 lg:block"
-            />
-
-            <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:gap-6">
-              {PROCESS.map((p, i) => (
-                <motion.div
-                  key={p.n}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.5, delay: i * 0.15 }}
-                  className="relative group flex items-start lg:block"
-                >
-                  {/* Glowing Node on the line */}
-                  <div className="absolute left-6 lg:left-1/2 top-8 lg:top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 h-4 w-4 rounded-full border-4 border-white bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-300 group-hover:scale-150" />
-
-                  {/* Card Container mobile offset to align with node */}
-                  <div className="ml-16 w-full lg:ml-0 lg:mt-8 min-h-[160px] bg-white rounded-2xl p-6 border border-slate-200/60 transition-all hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="absolute -top-4 -right-3 text-7xl font-black text-slate-100 pointer-events-none select-none transition-transform group-hover:scale-110">{p.n}</span>
-                    <p className="text-[11px] font-black tracking-wider uppercase text-blue-600 mb-4 relative z-10">Etapa {p.n}</p>
-                    <h3 className="font-bold text-slate-900 text-[17px] mb-2 relative z-10">{p.t}</h3>
-                    <p className="text-sm text-slate-600 font-medium leading-relaxed relative z-10">{p.d}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 

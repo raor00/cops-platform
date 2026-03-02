@@ -31,7 +31,7 @@ function Hero() {
   return (
     <section
       id="homepage"
-      className="relative flex min-h-[90vh] items-center overflow-hidden bg-transparent pb-32 pt-32 lg:pb-40 lg:pt-48"
+      className="relative flex min-h-[70vh] items-center overflow-hidden bg-transparent pb-20 pt-32 lg:pb-24 lg:pt-40"
     >
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-r from-[#070f1e]/70 via-[#070f1e]/10 to-[#070f1e]/70" />
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-[#070f1e]/80 via-transparent to-transparent" />
@@ -127,7 +127,7 @@ function StorySection() {
   const bentoY = useTransform(smoothProgress, [0.35, 0.55, 1], ["30vh", "0vh", "-150vh"]);
 
   return (
-    <section ref={containerRef} className="relative z-30 -mt-16 h-[380vh] w-full bg-transparent md:-mt-24 md:h-[280vh]">
+    <section ref={containerRef} className="relative z-30 -mt-16 h-[250vh] w-full bg-transparent md:-mt-24 md:h-[200vh]">
       <div className="sticky top-0 flex h-[100dvh] w-full max-w-5xl mx-auto flex-col items-center justify-start overflow-visible px-4 sm:px-6 lg:px-8">
         <motion.div
           style={{ opacity: statsOpacity, y: statsY }}
@@ -783,12 +783,12 @@ function Sectors() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {(
             [
-              { Icon: Landmark, title: "Bancario" },
-              { Icon: Factory, title: "Industrial" },
-              { Icon: Store, title: "Comercial" },
-              { Icon: Building2, title: "Gubernamental" },
-            ] as { Icon: LucideIcon; title: string }[]
-          ).map(({ Icon, title }) => (
+              { Icon: Landmark, title: "Bancario", desc: "Cumplimiento de normativas SUDEBAN y máxima operabilidad para sedes y agencias comerciales." },
+              { Icon: Factory, title: "Industrial", desc: "Supervisión de perímetros extensos, control de activos y automatización de procesos." },
+              { Icon: Store, title: "Comercial", desc: "Protección de retail, control de mermas y auditoría de eventos en puntos de venta." },
+              { Icon: Building2, title: "Gubernamental", desc: "Infraestructuras críticas con altos estándares de seguridad y monitoreo centralizado." },
+            ] as { Icon: LucideIcon; title: string; desc: string }[]
+          ).map(({ Icon, title, desc }) => (
             <motion.div
               key={title}
               whileHover={{ scale: 1.02, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)" }}
@@ -799,7 +799,7 @@ function Sectors() {
                 <h3 className="text-lg font-bold text-slate-900">{title}</h3>
               </div>
               <p className="text-sm leading-relaxed text-slate-500">
-                Focuses on matters included in implementing electronic security on {title}.
+                {desc}
               </p>
             </motion.div>
           ))}
@@ -905,7 +905,9 @@ function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
           <div>
-            <h4 className="mb-6 text-xs font-bold tracking-widest text-white">EMPRESA</h4>
+            <Link href="/nosotros">
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">EMPRESA</h4>
+            </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
               <li><Link href="/nosotros" className="transition-colors hover:text-cyan-400">Nosotros</Link></li>
               <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">Trayectoria</Link></li>
@@ -914,7 +916,9 @@ function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-6 text-xs font-bold tracking-widest text-white">SOLUCIONES</h4>
+            <Link href="/soluciones">
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">SOLUCIONES</h4>
+            </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
               <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Seguridad electronica</Link></li>
               <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Gestion de video</Link></li>
@@ -924,7 +928,9 @@ function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-6 text-xs font-bold tracking-widest text-white">SECTORES</h4>
+            <Link href="/sectores">
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">SECTORES</h4>
+            </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
               <li>Banca</li>
               <li>Industrial</li>
@@ -933,7 +939,9 @@ function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-6 text-xs font-bold tracking-widest text-white">CONTACTO</h4>
+            <Link href="/contacto">
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">CONTACTO</h4>
+            </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
               <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">Solicitar consultoria</Link></li>
               <li>Atencion por correo</li>

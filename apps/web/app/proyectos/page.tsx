@@ -65,7 +65,7 @@ export default function Proyectos() {
   };
 
   return (
-    <div className="bg-[#f3f4f6] min-h-screen pt-24 font-sans text-slate-950 relative overflow-hidden">
+    <div className="bg-white min-h-screen font-sans text-slate-950 relative overflow-hidden">
 
       {/* Animated Background Elements - intensified for more depth */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full">
@@ -82,7 +82,7 @@ export default function Proyectos() {
       </div>
 
       {/* HEADER SECTION */}
-      <section className="relative bg-white/60 backdrop-blur-xl border-b border-slate-300 pt-20 pb-16 z-10 shadow-sm">
+      <section className="relative bg-white/60 backdrop-blur-xl border-b border-slate-200 pt-20 pb-20 md:pt-28 md:pb-28 z-10 shadow-sm">
         <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none"></div>
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <motion.div {...fadeUp} className="text-center max-w-3xl mx-auto">
@@ -130,19 +130,17 @@ export default function Proyectos() {
       {/* GRID SECTION */}
       <section className="relative py-24 z-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          >
-            <AnimatePresence mode="popLayout">
-              {filtered.map((p) => (
+          <motion.div layout="position" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {filtered.map((p, i) => (
                 <motion.article
-                  key={p.title}
-                  variants={staggerItem}
+                  key={p.title + p.sector}
                   layout
-                  className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 ${sectorColor[p.sector]} p-5 md:p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all duration-500 flex flex-col overflow-hidden`}
+                  initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                  className={`group relative bg-white rounded-xl border border-slate-200 border-l-4 ${sectorColor[p.sector]} p-5 md:p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex flex-col overflow-hidden`}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${sectorBg[p.sector]} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl`} />
 

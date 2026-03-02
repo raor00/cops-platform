@@ -1,8 +1,15 @@
 ﻿import type { Metadata } from "next";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import RevealProvider from "../components/RevealProvider";
 import GlassProvider from "../components/GlassProvider";
 import LayoutChrome from "../components/LayoutChrome";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://cops-electronics-web.vercel.app"),
@@ -34,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="antialiased">
+    <html lang="es" className={`antialiased ${outfit.className}`}>
       <body className="min-h-screen bg-[#050a18] text-slate-200">
         <GlassProvider />
         <RevealProvider />
