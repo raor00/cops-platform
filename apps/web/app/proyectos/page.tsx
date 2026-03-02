@@ -28,7 +28,7 @@ const FILTERS: { key: "Todos" | Sector; label: string; icon: React.ReactNode }[]
   { key: "Todos", label: "Todos", icon: <Factory className="h-4 w-4" /> }, { key: "Banca", label: "Banca", icon: <Landmark className="h-4 w-4" /> }, { key: "Industrial", label: "Industrial", icon: <Factory className="h-4 w-4" /> }, { key: "Comercial", label: "Comercial", icon: <Building2 className="h-4 w-4" /> }, { key: "Gubernamental", label: "Gubernamental", icon: <Shield className="h-4 w-4" /> }, { key: "Mixto", label: "Mixto", icon: <Network className="h-4 w-4" /> },
 ];
 
-const fadeUp = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.1 }, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } };
+const fadeUp = { initial: { opacity: 0, y: 20 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.1 as const }, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as const } };
 const staggerContainer = {
   hidden: { opacity: 0 },
   show: {
@@ -40,7 +40,7 @@ const staggerContainer = {
 };
 const staggerItem = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
   exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
 
