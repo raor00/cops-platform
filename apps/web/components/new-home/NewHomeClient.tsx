@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import {
@@ -26,8 +26,11 @@ import {
 import { useEffect, useRef, useState } from "react";
 import NewHomeHeader from "./NewHomeHeader";
 import ParticleNetwork from "./ParticleNetwork";
+import { useLanguage } from "@/lib/i18n/context";
 
 function Hero() {
+  const { t } = useLanguage();
+  const h = t.home.hero;
   return (
     <section
       id="homepage"
@@ -55,11 +58,11 @@ function Hero() {
             className="mb-8 text-4xl font-black leading-[1.05] tracking-[-0.03em] md:text-5xl lg:text-7xl xl:text-[5rem]"
           >
             <span className="bg-gradient-to-br from-white via-slate-200 to-slate-400 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(0,163,196,0.15)]">
-              ARQUITECTURA E INTEGRACION
+              {h.line1}
             </span>
             <br className="hidden md:block" />
             <span className="bg-gradient-to-br from-slate-300 via-slate-400 to-slate-600 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(0,163,196,0.15)]">
-              PARA OPERACION CRITICA
+              {h.line2}
             </span>
           </motion.h1>
 
@@ -69,9 +72,7 @@ function Hero() {
             transition={{ duration: 1, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className="mb-8 max-w-2xl text-base font-light leading-relaxed tracking-wide text-slate-400 md:text-lg"
           >
-            Disenamos y ejecutamos plataformas resilientes de Videovigilancia,
-            Control de Acceso y Energia para corporaciones donde cada evento
-            debe ser auditable y la continuidad es innegociable.
+            {h.desc}
           </motion.p>
 
           <motion.div
@@ -89,7 +90,7 @@ function Hero() {
               href="/contacto"
               className="relative inline-block overflow-hidden rounded-[2.5rem] border border-slate-700/50 bg-[#0a1428]/90 px-12 py-5 text-sm font-bold uppercase tracking-[0.2em] text-white shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-500 hover:border-cyan-500 hover:bg-[#0f1b2e] hover:shadow-[0_8px_30px_rgba(0,163,196,0.3)]"
             >
-              <span className="relative z-10">Saber mas</span>
+              <span className="relative z-10">{h.cta}</span>
               <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-cyan-600/0 via-cyan-500/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
             </Link>
           </motion.div>
@@ -100,6 +101,10 @@ function Hero() {
 }
 
 function StorySection() {
+  const { t } = useLanguage();
+  const st = t.home.stats;
+  const sy = t.home.story;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -114,17 +119,22 @@ function StorySection() {
 
   const statsOpacity = useTransform(smoothProgress, [0, 0.15], [1, 0]);
   const statsY = useTransform(smoothProgress, [0, 0.15], [0, -50]);
-  const numberScale = useTransform(smoothProgress, [0, 0.35, 0.7], [1, 2.0, 2.0]);
+  const numberScale = useTransform(smoothProgress, [0, 0.35, 0.7], [1, 1.8, 1.8]);
 
-  // Mueve exactamente 150% a la derecha para centrar desde la 1era columna
-  const numberX = useTransform(smoothProgress, [0, 0.35, 0.7], ["0%", "150%", "150%"]);
-  // Lo ancla más arriba (8vh) y luego lo vuela hacia arriba para que no choque
-  const numberY = useTransform(smoothProgress, [0, 0.35, 0.6, 1], ["0vh", "8vh", "8vh", "-150vh"]);
+  // Sin movimiento horizontal: el 28+ permanece en la columna izquierda del grid
+  const numberX = useTransform(smoothProgress, [0, 0.35, 0.7], ["0%", "0%", "0%"]);
+  // Baja lo suficiente para quedar alineado con la primera fila del bento
+  const numberY = useTransform(smoothProgress, [0, 0.35, 0.6, 1], ["0vh", "14vh", "14vh", "-150vh"]);
   const numberGlow = useTransform(smoothProgress, [0.3, 0.5], ["0px 0px 0px rgba(34,211,238,0)", "0px 0px 40px rgba(34,211,238,0.8)"]);
 
   const bentoOpacity = useTransform(smoothProgress, [0.3, 0.45, 0.9, 1], [0, 1, 1, 1]);
-  // Baja lo suficiente (-150vh) para que el final del contenedor (tarjeta #3) pase antes del section blanco
   const bentoY = useTransform(smoothProgress, [0.35, 0.55, 1], ["30vh", "0vh", "-150vh"]);
+
+  const cards = [
+    { Icon: ShieldCheck, title: sy.card1Title, desc: sy.card1Desc },
+    { Icon: Building2, title: sy.card2Title, desc: sy.card2Desc },
+    { Icon: Settings, title: sy.card3Title, desc: sy.card3Desc },
+  ] as { Icon: LucideIcon; title: string; desc: string }[];
 
   return (
     <section ref={containerRef} className="relative z-30 -mt-16 h-[250vh] w-full bg-transparent md:-mt-24 md:h-[200vh]">
@@ -136,25 +146,25 @@ function StorySection() {
           <div className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border border-white/5 bg-[#0b1426]/60 px-4 py-4 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl md:px-8 md:py-6">
             <div className="absolute left-0 top-0 h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
             <div className="relative z-10 grid w-full grid-cols-4 divide-x divide-white/5 gap-0">
-              {/* Primer slot es invisible, servirá para que el 28+ flotante tome su lugar exacto abajo */}
+              {/* Invisible placeholder for the floating 28+ */}
               <div className="invisible pointer-events-none flex w-full flex-col items-center justify-center px-1 text-center md:px-4">
                 <div className="mb-2 text-3xl font-black tracking-tight md:text-5xl">28+</div>
-                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed md:text-[10px]">AÑOS DE<br className="md:hidden" />TRAYECTORIA</div>
+                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed md:text-[10px]">{st.yearsLabel}</div>
               </div>
 
               <div className="flex w-full flex-col items-center justify-center px-1 text-center md:px-4">
                 <div className="mb-2 text-2xl font-black tracking-tight text-white md:text-4xl">1500+</div>
-                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-slate-400 md:text-[10px]">Proyectos<br />ejecutados</div>
+                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-slate-400 md:text-[10px]">{st.projectsLabel}</div>
               </div>
 
               <div className="flex w-full flex-col items-center justify-center px-1 text-center md:px-4">
                 <div className="mb-2 text-2xl font-black tracking-tight text-white md:text-4xl">+12</div>
-                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-slate-400 md:text-[10px]">Inst.<br />financieras</div>
+                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-slate-400 md:text-[10px]">{st.financialLabel}</div>
               </div>
 
               <div className="flex w-full flex-col items-center justify-center px-1 text-center md:px-4">
                 <div className="mb-2 text-xl font-black tracking-tight text-cyan-400 md:text-4xl">M-Sede</div>
-                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-slate-400 md:text-[10px]">Operacion<br />Nacional</div>
+                <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-slate-400 md:text-[10px]">{st.nationalLabel}</div>
               </div>
             </div>
           </div>
@@ -163,7 +173,6 @@ function StorySection() {
         <div className="absolute left-0 right-0 top-[15vh] z-50 w-full px-4 md:top-[18vh] pointer-events-none">
           <div className="relative mx-auto h-full max-w-4xl px-4 py-4 md:px-8 md:py-6">
             <div className="relative w-full">
-              {/* Usa el grid identico al de stats para emular el cajon de 28+ */}
               <div className="grid w-full grid-cols-4 gap-0">
                 <motion.div
                   style={{ x: numberX, y: numberY, scale: numberScale, originX: 0.5, originY: 0.5 }}
@@ -176,7 +185,7 @@ function StorySection() {
                     28+
                   </motion.div>
                   <div className="text-[7px] font-bold uppercase tracking-widest leading-relaxed text-cyan-400 drop-shadow-md md:text-[10px]">
-                    AÑOS DE<br className="md:hidden" />TRAYECTORIA
+                    {st.yearsLabel}
                   </div>
                 </motion.div>
               </div>
@@ -193,33 +202,15 @@ function StorySection() {
               <div className="hidden w-[45%] flex-shrink-0 md:block" />
               <div className="mt-28 w-full border-t border-white/10 px-2 pt-10 text-center md:-mt-8 md:w-[55%] lg:-mt-20 md:border-l md:border-t-0 md:pl-10 md:pt-0">
                 <h2 className="text-4xl font-black leading-tight tracking-tight text-white md:text-5xl drop-shadow-lg">
-                  Respaldando operacion critica en Venezuela
+                  {sy.h2}
                 </h2>
                 <p className="mx-auto mt-6 max-w-[20rem] text-left text-sm font-medium leading-relaxed tracking-wide text-slate-300 opacity-100 sm:max-w-lg md:mx-0 md:max-w-none md:text-justify md:text-base lg:text-lg">
-                  Somos una empresa privada con trayectoria ininterrumpida dedicada a la asesoria e implementacion de proyectos tecnologicos de alta gama en automatizacion, seguridad y energia, con enfoque enterprise para banca, industria, comercio e instituciones gubernamentales.
+                  {sy.desc}
                 </p>
               </div>
             </div>
 
-            {(
-              [
-                {
-                  Icon: ShieldCheck,
-                  title: "Integracion multi-marca",
-                  desc: "Arquitecturas abiertas sin depender de un solo fabricante, enlazando VMS, control de acceso y BMS bajo un mismo nucleo de comando.",
-                },
-                {
-                  Icon: Building2,
-                  title: "Escalabilidad enterprise",
-                  desc: "Disenos listos para operacion multi-sede. Estandarizacion de modelos piloto orientados a despliegues a nivel nacional.",
-                },
-                {
-                  Icon: Settings,
-                  title: "Soporte y continuidad",
-                  desc: "Planificacion, documentacion exhaustiva (QA) y acompanamiento post-implementacion para asegurar la estabilidad operativa.",
-                },
-              ] as { Icon: LucideIcon; title: string; desc: string }[]
-            ).map(({ Icon, title, desc }) => (
+            {cards.map(({ Icon, title, desc }) => (
               <div key={title} className="flex flex-col items-start rounded-[2rem] border border-white/10 bg-[#0b1426]/90 p-8 shadow-[0_20px_40px_-5px_rgba(0,0,0,0.8)] transition-colors hover:border-cyan-500/50">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-950/80">
                   <Icon className="h-7 w-7 text-cyan-400" />
@@ -290,6 +281,8 @@ function MarqueeLogo({ logo }: { logo: LogoItem }) {
 }
 
 function Partners() {
+  const { t } = useLanguage();
+  const p = t.home.partners;
   return (
     <section id="partners" className="relative z-40 mt-[-5vh] overflow-hidden bg-white pb-24 pt-20 border-b border-slate-200">
 
@@ -314,7 +307,7 @@ function Partners() {
       <div className="relative z-10 mx-auto max-w-7xl">
         <div className="mb-12 text-center">
           <h3 className="inline-block border-b-2 border-cyan-400 pb-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-900 md:text-base">
-            Han confiado en COP&apos;S
+            {p.trusted}
           </h3>
         </div>
 
@@ -340,7 +333,7 @@ function Partners() {
 
         <div className="mb-12 text-center">
           <h3 className="inline-block border-b-2 border-cyan-400 pb-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-900 md:text-base">
-            Partners tecnologicos
+            {p.techPartners}
           </h3>
         </div>
 
@@ -368,46 +361,15 @@ function Partners() {
   );
 }
 
-type SolutionItem = {
-  id: string;
-  title: string;
-  summary: string;
-  stats: string[];
-  graphicType: "security" | "video" | "automation";
-  accentClass: string;
-};
-
-const SOLUTIONS: SolutionItem[] = [
-  {
-    id: "seguridad-electronica",
-    title: "Seguridad electronica enterprise",
-    summary:
-      "Arquitectura integral de CCTV, control de acceso, alarmas y analitica para operacion continua y trazabilidad de eventos.",
-    stats: ["SLA 24/7", "Integracion multi-sede", "Auditoria centralizada"],
-    graphicType: "security",
-    accentClass: "from-cyan-400 to-blue-500",
-  },
-  {
-    id: "gestion-de-video-vms",
-    title: "Gestion de video (VMS)",
-    summary:
-      "Monitoreo inteligente con reglas, busqueda forense y orquestacion de incidentes para centros de control de alta demanda.",
-    stats: ["Busqueda acelerada", "Alertas por eventos", "Roles y permisos"],
-    graphicType: "video",
-    accentClass: "from-fuchsia-400 to-cyan-400",
-  },
-  {
-    id: "automatizacion-y-bms",
-    title: "Automatizacion y BMS",
-    summary:
-      "Control unificado de infraestructura critica: energia, climatizacion y subsistemas con tableros operativos en tiempo real.",
-    stats: ["Telemetria en vivo", "Optimización energetica", "Operacion predictiva"],
-    graphicType: "automation",
-    accentClass: "from-emerald-400 to-cyan-400",
-  },
+type SolutionGraphicType = "security" | "video" | "automation";
+const SOLUTION_GRAPHIC_TYPES: SolutionGraphicType[] = ["security", "video", "automation"];
+const SOLUTION_ACCENT_CLASSES = [
+  "from-cyan-400 to-blue-500",
+  "from-fuchsia-400 to-cyan-400",
+  "from-emerald-400 to-cyan-400",
 ];
 
-function SolutionGraphic({ type }: { type: SolutionItem["graphicType"] }) {
+function SolutionGraphic({ type }: { type: SolutionGraphicType }) {
   if (type === "security") {
     return (
       <div className="relative h-24 w-full overflow-hidden rounded-xl border border-cyan-500/20 bg-[#0d1a31]/70">
@@ -554,14 +516,7 @@ function SolutionGraphic({ type }: { type: SolutionItem["graphicType"] }) {
           <path d="M12 52 V34 L24 28 L34 34 L44 28 L54 34 L64 28 L74 34 V52 Z" stroke="#6ee7b7" strokeOpacity="0.7" strokeWidth="1.2" fill="none" />
           <path d="M78 52 V20 H88 V52" stroke="#6ee7b7" strokeOpacity="0.7" strokeWidth="1.2" fill="none" />
           <path d="M92 52 V24 H100 V52" stroke="#6ee7b7" strokeOpacity="0.7" strokeWidth="1.2" fill="none" />
-          <motion.circle
-            cx="84"
-            cy="18"
-            r="2"
-            fill="#a7f3d0"
-            animate={{ opacity: [0.25, 1, 0.25], y: [0, -2, 0] }}
-            transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }}
-          />
+          <motion.circle cx="84" cy="18" r="2" fill="#a7f3d0" animate={{ opacity: [0.25, 1, 0.25], y: [0, -2, 0] }} transition={{ repeat: Infinity, duration: 1.4, ease: "easeInOut" }} />
         </svg>
       </div>
 
@@ -576,14 +531,7 @@ function SolutionGraphic({ type }: { type: SolutionItem["graphicType"] }) {
           {[24, 32, 40, 66, 74, 82].map((x) => (
             <rect key={`w-${x}`} x={x} y={26} width="4" height="4" fill="#67e8f9" fillOpacity="0.5" />
           ))}
-          <motion.circle
-            cx="94"
-            cy="12"
-            r="2"
-            fill="#a5f3fc"
-            animate={{ opacity: [0.25, 1, 0.25] }}
-            transition={{ repeat: Infinity, duration: 1.3, ease: "easeInOut" }}
-          />
+          <motion.circle cx="94" cy="12" r="2" fill="#a5f3fc" animate={{ opacity: [0.25, 1, 0.25] }} transition={{ repeat: Infinity, duration: 1.3, ease: "easeInOut" }} />
         </svg>
       </div>
 
@@ -593,88 +541,35 @@ function SolutionGraphic({ type }: { type: SolutionItem["graphicType"] }) {
         </div>
         <div className="mt-1 space-y-0.5">
           <div className="flex items-center justify-center gap-1">
-            <motion.span
-              className="h-1.5 w-1.5 rounded-full bg-emerald-300"
-              animate={{ opacity: [0.25, 1, 0.25] }}
-              transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
-            />
+            <motion.span className="h-1.5 w-1.5 rounded-full bg-emerald-300" animate={{ opacity: [0.25, 1, 0.25] }} transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }} />
             <span className="text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-300">Auto</span>
           </div>
           <div className="flex items-center justify-center gap-1">
-            <motion.span
-              className="h-1.5 w-1.5 rounded-full bg-cyan-300"
-              animate={{ opacity: [0.2, 1, 0.2] }}
-              transition={{ repeat: Infinity, duration: 1.3, ease: "easeInOut", delay: 0.2 }}
-            />
+            <motion.span className="h-1.5 w-1.5 rounded-full bg-cyan-300" animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 1.3, ease: "easeInOut", delay: 0.2 }} />
             <span className="text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-300">HVAC</span>
             <span className="text-[8px] leading-none text-cyan-200">❄</span>
           </div>
           <div className="flex items-center justify-center gap-1">
-            <motion.span
-              className="h-1.5 w-1.5 rounded-full bg-amber-300"
-              animate={{ opacity: [0.2, 1, 0.2] }}
-              transition={{ repeat: Infinity, duration: 1.25, ease: "easeInOut", delay: 0.35 }}
-            />
+            <motion.span className="h-1.5 w-1.5 rounded-full bg-amber-300" animate={{ opacity: [0.2, 1, 0.2] }} transition={{ repeat: Infinity, duration: 1.25, ease: "easeInOut", delay: 0.35 }} />
             <span className="text-[7px] font-semibold uppercase tracking-[0.14em] text-slate-300">Energy</span>
             <span className="text-[8px] leading-none text-amber-200">⚡</span>
           </div>
         </div>
       </div>
 
-      {/* Left connectors (ALC -> Industry) */}
       <div className="absolute left-[28%] top-[43%] h-px w-[11%] bg-emerald-300/45" />
       <div className="absolute left-[28%] top-[51%] h-px w-[11%] bg-cyan-300/45" />
       <div className="absolute left-[28%] top-[59%] h-px w-[11%] bg-amber-300/45" />
-
-      {/* Right connectors (ALC -> Building) */}
       <div className="absolute left-[61%] top-[43%] h-px w-[11%] bg-emerald-300/45" />
       <div className="absolute left-[61%] top-[51%] h-px w-[11%] bg-cyan-300/45" />
       <div className="absolute left-[61%] top-[59%] h-px w-[11%] bg-amber-300/45" />
 
-      {/* Data pulses */}
-      <motion.span
-        className="absolute left-[39%] top-[43%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-emerald-200"
-        animate={{ x: ["0%", "-620%"], opacity: [0, 1, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 2.1, ease: "linear" }}
-      >
-        ⟳
-      </motion.span>
-      <motion.span
-        className="absolute left-[39%] top-[51%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-cyan-200"
-        animate={{ x: ["0%", "-620%"], opacity: [0, 1, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 2.3, ease: "linear", delay: 0.12 }}
-      >
-        ❄
-      </motion.span>
-      <motion.span
-        className="absolute left-[39%] top-[59%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-amber-200"
-        animate={{ x: ["0%", "-620%"], opacity: [0, 1, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 2.5, ease: "linear", delay: 0.22 }}
-      >
-        ⚡
-      </motion.span>
-
-      <motion.span
-        className="absolute left-[61%] top-[43%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-emerald-200"
-        animate={{ x: ["0%", "620%"], opacity: [0, 1, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 2.2, ease: "linear", delay: 0.18 }}
-      >
-        ⟳
-      </motion.span>
-      <motion.span
-        className="absolute left-[61%] top-[51%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-cyan-200"
-        animate={{ x: ["0%", "620%"], opacity: [0, 1, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 2.4, ease: "linear", delay: 0.3 }}
-      >
-        ❄
-      </motion.span>
-      <motion.span
-        className="absolute left-[61%] top-[59%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-amber-200"
-        animate={{ x: ["0%", "620%"], opacity: [0, 1, 1, 0] }}
-        transition={{ repeat: Infinity, duration: 2.6, ease: "linear", delay: 0.42 }}
-      >
-        ⚡
-      </motion.span>
+      <motion.span className="absolute left-[39%] top-[43%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-emerald-200" animate={{ x: ["0%", "-620%"], opacity: [0, 1, 1, 0] }} transition={{ repeat: Infinity, duration: 2.1, ease: "linear" }}>⟳</motion.span>
+      <motion.span className="absolute left-[39%] top-[51%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-cyan-200" animate={{ x: ["0%", "-620%"], opacity: [0, 1, 1, 0] }} transition={{ repeat: Infinity, duration: 2.3, ease: "linear", delay: 0.12 }}>❄</motion.span>
+      <motion.span className="absolute left-[39%] top-[59%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-amber-200" animate={{ x: ["0%", "-620%"], opacity: [0, 1, 1, 0] }} transition={{ repeat: Infinity, duration: 2.5, ease: "linear", delay: 0.22 }}>⚡</motion.span>
+      <motion.span className="absolute left-[61%] top-[43%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-emerald-200" animate={{ x: ["0%", "620%"], opacity: [0, 1, 1, 0] }} transition={{ repeat: Infinity, duration: 2.2, ease: "linear", delay: 0.18 }}>⟳</motion.span>
+      <motion.span className="absolute left-[61%] top-[51%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-cyan-200" animate={{ x: ["0%", "620%"], opacity: [0, 1, 1, 0] }} transition={{ repeat: Infinity, duration: 2.4, ease: "linear", delay: 0.3 }}>❄</motion.span>
+      <motion.span className="absolute left-[61%] top-[59%] -translate-x-1/2 -translate-y-1/2 text-[8px] leading-none text-amber-200" animate={{ x: ["0%", "620%"], opacity: [0, 1, 1, 0] }} transition={{ repeat: Infinity, duration: 2.6, ease: "linear", delay: 0.42 }}>⚡</motion.span>
 
       <motion.div
         className="absolute left-2 top-2 rounded-md border border-emerald-300/45 bg-emerald-400/10 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.16em] text-emerald-200"
@@ -688,24 +583,21 @@ function SolutionGraphic({ type }: { type: SolutionItem["graphicType"] }) {
 }
 
 function Solutions() {
+  const { t } = useLanguage();
+  const sol = t.home.solutions;
+
   const cardContainerVariants: Variants = {
     hidden: { opacity: 1 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.14,
-        delayChildren: 0.08,
-      },
+      transition: { staggerChildren: 0.14, delayChildren: 0.08 },
     },
   };
 
   const cardItemVariants: Variants = {
     hidden: { opacity: 0, y: 70, scale: 0.9, filter: "blur(10px)" },
     visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      filter: "blur(0px)",
+      opacity: 1, y: 0, scale: 1, filter: "blur(0px)",
       transition: { type: "spring", stiffness: 70, damping: 14, mass: 1 },
     },
   };
@@ -713,9 +605,9 @@ function Solutions() {
   return (
     <section id="soluciones" className="relative z-10 border-t border-slate-200 bg-slate-50 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Soluciones</h2>
+        <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">{sol.heading}</h2>
         <p className="mx-auto mb-12 max-w-3xl text-center text-sm font-medium text-slate-500 md:text-base">
-          Plataformas modulares para seguridad, monitoreo y automatizacion orientadas a continuidad operativa real.
+          {sol.subtext}
         </p>
         <motion.div
           className="grid grid-cols-1 gap-8 md:grid-cols-3"
@@ -724,16 +616,13 @@ function Solutions() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.15 }}
         >
-          {SOLUTIONS.map((solution, idx) => (
-            <motion.div
-              key={solution.id}
-              variants={cardItemVariants}
-            >
+          {sol.items.map((solution, idx) => (
+            <motion.div key={solution.id} variants={cardItemVariants}>
               <motion.div
                 whileHover={{ y: -6, boxShadow: "0 22px 45px -12px rgba(0,163,196,0.28)" }}
                 className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-[#0a1428] p-6 shadow-sm transition-all duration-500 hover:border-cyan-500 md:p-7"
               >
-                <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${solution.accentClass}`} />
+                <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${SOLUTION_ACCENT_CLASSES[idx]}`} />
 
                 <div className="mb-5 flex items-center justify-between">
                   <h3 className="text-lg font-black text-white md:text-xl">{solution.title}</h3>
@@ -743,7 +632,7 @@ function Solutions() {
                 </div>
 
                 <div className="mb-5">
-                  <SolutionGraphic type={solution.graphicType} />
+                  <SolutionGraphic type={SOLUTION_GRAPHIC_TYPES[idx]} />
                 </div>
 
                 <p className="mb-5 text-sm leading-relaxed text-slate-300">{solution.summary}</p>
@@ -763,7 +652,7 @@ function Solutions() {
                   href={`/soluciones#${solution.id}`}
                   className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-cyan-300 transition-all hover:bg-cyan-500/20 hover:text-cyan-100"
                 >
-                  Ver detalle
+                  {sol.viewDetail}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </motion.div>
@@ -775,41 +664,45 @@ function Solutions() {
   );
 }
 
+const SECTOR_ICONS: LucideIcon[] = [Landmark, Factory, Store, Building2];
+
 function Sectors() {
+  const { t } = useLanguage();
+  const sec = t.home.sectors;
+
   return (
     <section id="sectores" className="relative z-10 border-t border-slate-200 bg-slate-100 py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">Sectores</h2>
+        <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">{sec.heading}</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {(
-            [
-              { Icon: Landmark, title: "Bancario", desc: "Cumplimiento de normativas SUDEBAN y máxima operabilidad para sedes y agencias comerciales." },
-              { Icon: Factory, title: "Industrial", desc: "Supervisión de perímetros extensos, control de activos y automatización de procesos." },
-              { Icon: Store, title: "Comercial", desc: "Protección de retail, control de mermas y auditoría de eventos en puntos de venta." },
-              { Icon: Building2, title: "Gubernamental", desc: "Infraestructuras críticas con altos estándares de seguridad y monitoreo centralizado." },
-            ] as { Icon: LucideIcon; title: string; desc: string }[]
-          ).map(({ Icon, title, desc }) => (
-            <motion.div
-              key={title}
-              whileHover={{ scale: 1.02, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)" }}
-              className="group cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 transition-all duration-300 hover:border-cyan-300"
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <Icon className="h-6 w-6 text-cyan-500 transition-transform group-hover:scale-110" />
-                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-              </div>
-              <p className="text-sm leading-relaxed text-slate-500">
-                {desc}
-              </p>
-            </motion.div>
-          ))}
+          {sec.items.map(({ title, desc }, i) => {
+            const Icon = SECTOR_ICONS[i];
+            return (
+              <motion.div
+                key={title}
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)" }}
+                className="group cursor-pointer rounded-2xl border border-gray-100 bg-white p-6 transition-all duration-300 hover:border-cyan-300"
+              >
+                <div className="mb-4 flex items-center gap-3">
+                  <Icon className="h-6 w-6 text-cyan-500 transition-transform group-hover:scale-110" />
+                  <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-slate-500">{desc}</p>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
 
+const METHODOLOGY_ICONS: LucideIcon[] = [Search, Share2, MonitorSmartphone];
+
 function Methodology() {
+  const { t } = useLanguage();
+  const m = t.home.methodology;
+
   return (
     <section
       id="metodologia"
@@ -823,7 +716,7 @@ function Methodology() {
           viewport={{ once: true }}
           className="mx-auto mb-20 max-w-3xl text-center text-2xl font-bold leading-tight md:text-3xl"
         >
-          Metodologia disenada para operacion estable y auditable
+          {m.heading}
         </motion.h2>
 
         <div className="relative mx-auto max-w-5xl">
@@ -843,29 +736,30 @@ function Methodology() {
           </motion.div>
 
           <div className="relative z-10 grid grid-cols-1 gap-12 md:grid-cols-3">
-            {(
-              [
-                { step: "1", title: "LEVANTAMIENTO", desc: "Analisis exhaustivo de requerimientos y entorno.", Icon: Search, delay: 0.2 },
-                { step: "2", title: "ARQUITECTURA", desc: "Diseno de soluciones robustas y escalables.", Icon: Share2, delay: 0.6 },
-                { step: "3", title: "IMPLEMENTACION", desc: "Despliegue estructurado y puesta en marcha.", Icon: MonitorSmartphone, delay: 1.0 },
-              ] as { step: string; title: string; desc: string; Icon: LucideIcon; delay: number }[]
-            ).map(({ step, title, desc, Icon, delay }) => (
-              <motion.div
-                key={step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay }}
-                className="group text-center"
-              >
-                <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-cyan-400/50 bg-[#112440] transition-all duration-300 group-hover:border-cyan-400 group-hover:shadow-[0_0_20px_rgba(0,210,255,0.5)]">
-                  <div className="absolute -top-3 rounded bg-cyan-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-[0_2px_5px_rgba(0,0,0,0.5)]">Paso {step}</div>
-                  <Icon className="h-5 w-5 text-cyan-400" />
-                </div>
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-white transition-colors group-hover:text-cyan-400">{title}</h3>
-                <p className="mx-auto max-w-[250px] text-sm leading-relaxed text-slate-400">{desc}</p>
-              </motion.div>
-            ))}
+            {m.steps.map(({ title, desc }, idx) => {
+              const Icon = METHODOLOGY_ICONS[idx];
+              const step = String(idx + 1);
+              const delay = idx * 0.4;
+              return (
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay }}
+                  className="group text-center"
+                >
+                  <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-cyan-400/50 bg-[#112440] transition-all duration-300 group-hover:border-cyan-400 group-hover:shadow-[0_0_20px_rgba(0,210,255,0.5)]">
+                    <div className="absolute -top-3 rounded bg-cyan-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-[0_2px_5px_rgba(0,0,0,0.5)]">
+                      {m.stepPrefix} {step}
+                    </div>
+                    <Icon className="h-5 w-5 text-cyan-400" />
+                  </div>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-white transition-colors group-hover:text-cyan-400">{title}</h3>
+                  <p className="mx-auto max-w-[250px] text-sm leading-relaxed text-slate-400">{desc}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -874,6 +768,8 @@ function Methodology() {
 }
 
 function CTASection() {
+  const { t } = useLanguage();
+  const c = t.home.cta;
   return (
     <section id="contacto" className="relative z-10 bg-white pb-20 pt-8">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -881,15 +777,15 @@ function CTASection() {
           <div className="pointer-events-none absolute left-1/2 top-0 h-full w-full -translate-x-1/2 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-50/60 via-transparent to-transparent opacity-80 transition-opacity duration-700 group-hover:opacity-100" />
           <div className="relative z-10 max-w-2xl">
             <h3 className="mb-5 text-3xl font-black leading-tight text-slate-900 md:text-4xl">
-              Listo para evaluar tu operacion y disenar una solucion robusta?
+              {c.heading}
             </h3>
             <p className="text-lg text-slate-500">
-              Nuestros especialistas estan listos para analizar su infraestructura actual y proponer la arquitectura que asegurara su futuro.
+              {c.desc}
             </p>
           </div>
           <div className="relative z-10 mt-2">
             <Link href="/contacto" className="flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-cyan-600 to-blue-700 px-10 py-4 text-lg font-bold text-white transition-all duration-300 shadow-[0_15px_30px_rgba(6,182,212,0.3)] hover:-translate-y-1 hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_20px_40px_rgba(6,182,212,0.5)] sm:w-auto">
-              Solicitar Consultoria Gratuita
+              {c.button}
               <ArrowRight className="h-6 w-6" />
             </Link>
           </div>
@@ -900,59 +796,60 @@ function CTASection() {
 }
 
 function Footer() {
+  const { t } = useLanguage();
+  const f = t.home.footer;
+  const year = new Date().getFullYear();
   return (
     <footer className="relative z-10 bg-slate-900 pb-10 pt-20 text-sm text-slate-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
           <div>
             <Link href="/nosotros">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">EMPRESA</h4>
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">{f.empresa}</h4>
             </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
-              <li><Link href="/nosotros" className="transition-colors hover:text-cyan-400">Nosotros</Link></li>
-              <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">Trayectoria</Link></li>
-              <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">Casos de exito</Link></li>
-              <li><Link href="/partners" className="transition-colors hover:text-cyan-400">Partners</Link></li>
+              <li><Link href="/nosotros" className="transition-colors hover:text-cyan-400">{f.nosotros}</Link></li>
+              <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">{f.trayectoria}</Link></li>
+              <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">{f.casosExito}</Link></li>
+              <li><Link href="/partners" className="transition-colors hover:text-cyan-400">{f.partners}</Link></li>
             </ul>
           </div>
           <div>
             <Link href="/soluciones">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">SOLUCIONES</h4>
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">{f.soluciones}</h4>
             </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
-              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Seguridad electronica</Link></li>
-              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Gestion de video</Link></li>
-              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Control de acceso</Link></li>
-              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Automatizacion y BMS</Link></li>
-              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">Energia y respaldo</Link></li>
+              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.seguridadElectronica}</Link></li>
+              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.gestionVideo}</Link></li>
+              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.controlAcceso}</Link></li>
+              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.automatizacion}</Link></li>
+              <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.energia}</Link></li>
             </ul>
           </div>
           <div>
-            <Link href="/sectores">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">SECTORES</h4>
-            </Link>
+            <h4 className="mb-6 text-xs font-bold tracking-widest text-white">{f.sectores}</h4>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
-              <li>Banca</li>
-              <li>Industrial</li>
-              <li>Comercial</li>
-              <li>Gubernamental</li>
+              <li>{f.banca}</li>
+              <li>{f.industrial}</li>
+              <li>{f.comercial}</li>
+              <li>{f.gubernamental}</li>
             </ul>
           </div>
           <div>
             <Link href="/contacto">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">CONTACTO</h4>
+              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">{f.contacto}</h4>
             </Link>
             <ul className="space-y-4 text-xs font-medium text-slate-400">
-              <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">Solicitar consultoria</Link></li>
-              <li>Atencion por correo</li>
+              <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">{f.solicitar}</Link></li>
+              <li>{f.atencion}</li>
               <li><span className="text-slate-500">Caracas, Venezuela</span></li>
-              <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">Soporte tecnico</Link></li>
+              <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">{f.soporte}</Link></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-white/5 pt-8 text-center">
           <p className="text-[10px] uppercase tracking-widest text-slate-500">
-            © 2026 COP&apos;S Electronics, S.A. Todos los derechos reservados. Automatizacion - Seguridad - Energia
+            &copy; {year} COP&apos;S Electronics, S.A. {f.copyright}
           </p>
         </div>
       </div>
@@ -989,7 +886,6 @@ export default function NewHomeClient() {
       <AnimatePresence>
         {appReady && (
           <>
-
             <motion.div
               initial={{ opacity: 0, filter: "blur(10px)" }}
               animate={{ opacity: 1, filter: "blur(0px)" }}

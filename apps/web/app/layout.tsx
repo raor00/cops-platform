@@ -4,6 +4,7 @@ import "./globals.css";
 import RevealProvider from "../components/RevealProvider";
 import GlassProvider from "../components/GlassProvider";
 import LayoutChrome from "../components/LayoutChrome";
+import { LanguageProvider } from "../lib/i18n/context";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -43,9 +44,11 @@ export default function RootLayout({
   return (
     <html lang="es" className={`antialiased ${outfit.className}`}>
       <body className="min-h-screen bg-[#050a18] text-slate-200">
-        <GlassProvider />
-        <RevealProvider />
-        <LayoutChrome>{children}</LayoutChrome>
+        <LanguageProvider>
+          <GlassProvider />
+          <RevealProvider />
+          <LayoutChrome>{children}</LayoutChrome>
+        </LanguageProvider>
       </body>
     </html>
   );

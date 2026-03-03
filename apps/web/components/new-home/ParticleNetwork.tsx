@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 type Phase = "fusion" | "explosion" | "normal";
 
-type Particle = {
+class ParticleCls {
   x: number;
   y: number;
   vx: number;
@@ -12,9 +12,60 @@ type Particle = {
   radius: number;
   baseRadius: number;
   color: string;
-};
 
-type Atom = {
+  constructor(canvasWidth: number, canvasHeight: number) {
+    this.x = Math.random() * canvasWidth;
+    this.y = Math.random() * canvasHeight;
+    this.vx = (Math.random() - 0.5) * 2.5;
+    this.vy = (Math.random() - 0.5) * 2.5;
+    this.baseRadius = Math.random() * 3.5 + 1.5;
+    this.radius = this.baseRadius;
+
+    const colorType = Math.random();
+    if (colorType > 0.7) {
+      this.color = `rgba(255, 255, 255, ${Math.random() * 0.2 + 0.8})`;
+    } else {
+      const g = 160 + Math.random() * 60;
+      const b = 80 + Math.random() * 60;
+      this.color = `rgba(255, ${g}, ${b}, ${Math.random() * 0.3 + 0.7})`;
+    }
+  }
+
+  update(canvasWidth: number, canvasHeight: number, mouse: { x: number, y: number, radius: number }) {
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if (this.x < 0 || this.x > canvasWidth) this.vx = -this.vx;
+    if (this.y < 0 || this.y > canvasHeight) this.vy = -this.vy;
+
+    const dx = mouse.x - this.x;
+    const dy = mouse.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < mouse.radius && distance > 0) {
+      const forceDirectionX = dx / distance;
+      const forceDirectionY = dy / distance;
+      const force = (mouse.radius - distance) / mouse.radius;
+      this.x -= forceDirectionX * force * 7;
+      this.y -= forceDirectionY * force * 7;
+      this.radius = this.baseRadius + force * 3;
+    } else {
+      this.radius = this.baseRadius;
+    }
+  }
+
+  draw(context: CanvasRenderingContext2D) {
+    context.beginPath();
+    context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    context.fillStyle = this.color;
+    context.shadowBlur = 10;
+    context.shadowColor = this.color;
+    context.fill();
+    context.shadowBlur = 0;
+  }
+}
+
+class AtomCls {
   x: number;
   y: number;
   vx: number;
@@ -22,7 +73,79 @@ type Atom = {
   radius: number;
   angle: number;
   color: string;
-};
+
+  constructor(canvasWidth: number, canvasHeight: number) {
+    this.x = Math.random() * canvasWidth;
+    this.y = Math.random() * canvasHeight;
+    this.vx = (Math.random() - 0.5) * 1.5;
+    this.vy = (Math.random() - 0.5) * 1.5;
+    this.radius = Math.random() * 2 + 2.5;
+    this.angle = Math.random() * Math.PI * 2;
+    const g = 140 + Math.random() * 60;
+    const b = 50 + Math.random() * 60;
+    this.color = `rgba(255, ${g}, ${b}, ${Math.random() * 0.4 + 0.6})`;
+  }
+
+  update(canvasWidth: number, canvasHeight: number, mouse: { x: number, y: number, radius: number }) {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0 || this.x > canvasWidth) this.vx = -this.vx;
+    if (this.y < 0 || this.y > canvasHeight) this.vy = -this.vy;
+
+    const dx = mouse.x - this.x;
+    const dy = mouse.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < mouse.radius && distance > 0) {
+      const forceDirectionX = dx / distance;
+      const forceDirectionY = dy / distance;
+      const force = (mouse.radius - distance) / mouse.radius;
+      this.x -= forceDirectionX * force * 5;
+      this.y -= forceDirectionY * force * 5;
+    }
+
+    this.angle += 0.02;
+  }
+
+  draw(context: CanvasRenderingContext2D) {
+    context.save();
+    context.translate(this.x, this.y);
+    context.rotate(this.angle);
+
+    context.beginPath();
+    context.arc(0, 0, this.radius, 0, Math.PI * 2);
+    context.fillStyle = this.color;
+    context.shadowBlur = 20;
+    context.shadowColor = this.color;
+    context.fill();
+    context.shadowBlur = 0;
+
+    const orbitRadius = this.radius * 4;
+    context.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    context.lineWidth = 1;
+
+    for (let i = 0; i < 3; i += 1) {
+      context.beginPath();
+      context.rotate(Math.PI / 3);
+      context.ellipse(0, 0, orbitRadius, orbitRadius / 2.5, 0, 0, Math.PI * 2);
+      context.stroke();
+
+      const electronAngle = this.angle * 3 + (i * Math.PI * 2) / 3;
+      const ex = Math.cos(electronAngle) * orbitRadius;
+      const ey = Math.sin(electronAngle) * (orbitRadius / 2.5);
+
+      context.beginPath();
+      context.arc(ex, ey, 1.5, 0, Math.PI * 2);
+      context.fillStyle = "#fff";
+      context.shadowBlur = 8;
+      context.shadowColor = "#fff";
+      context.fill();
+      context.shadowBlur = 0;
+    }
+
+    context.restore();
+  }
+}
 
 export default function ParticleNetwork() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,8 +175,8 @@ export default function ParticleNetwork() {
     if (!ctx) return;
     const context = ctx;
 
-    let particlesArray: any[] = [];
-    let atomsArray: any[] = [];
+    let particlesArray: ParticleCls[] = [];
+    let atomsArray: AtomCls[] = [];
     let animationFrameId = 0;
     const mouse = { x: -1000, y: -1000, radius: 250 };
 
@@ -63,149 +186,6 @@ export default function ParticleNetwork() {
       });
       window.dispatchEvent(event);
     };
-
-    class ParticleCls {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      radius: number;
-      baseRadius: number;
-      color: string;
-
-      constructor() {
-        this.x = Math.random() * canvasEl.width;
-        this.y = Math.random() * canvasEl.height;
-        this.vx = (Math.random() - 0.5) * 2.5;
-        this.vy = (Math.random() - 0.5) * 2.5;
-        this.baseRadius = Math.random() * 3.5 + 1.5;
-        this.radius = this.baseRadius;
-
-        const colorType = Math.random();
-        if (colorType > 0.7) {
-          this.color = `rgba(255, 255, 255, ${Math.random() * 0.2 + 0.8})`;
-        } else {
-          const g = 160 + Math.random() * 60;
-          const b = 80 + Math.random() * 60;
-          this.color = `rgba(255, ${g}, ${b}, ${Math.random() * 0.3 + 0.7})`;
-        }
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x < 0 || this.x > canvasEl.width) this.vx = -this.vx;
-        if (this.y < 0 || this.y > canvasEl.height) this.vy = -this.vy;
-
-        const dx = mouse.x - this.x;
-        const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < mouse.radius && distance > 0) {
-          const forceDirectionX = dx / distance;
-          const forceDirectionY = dy / distance;
-          const force = (mouse.radius - distance) / mouse.radius;
-          this.x -= forceDirectionX * force * 7;
-          this.y -= forceDirectionY * force * 7;
-          this.radius = this.baseRadius + force * 3;
-        } else {
-          this.radius = this.baseRadius;
-        }
-      }
-
-      draw() {
-        context.beginPath();
-        context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        context.fillStyle = this.color;
-        context.shadowBlur = 10;
-        context.shadowColor = this.color;
-        context.fill();
-        context.shadowBlur = 0;
-      }
-    }
-
-    class AtomCls {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      radius: number;
-      angle: number;
-      color: string;
-
-      constructor() {
-        this.x = Math.random() * canvasEl.width;
-        this.y = Math.random() * canvasEl.height;
-        this.vx = (Math.random() - 0.5) * 1.5;
-        this.vy = (Math.random() - 0.5) * 1.5;
-        this.radius = Math.random() * 2 + 2.5;
-        this.angle = Math.random() * Math.PI * 2;
-        const g = 140 + Math.random() * 60;
-        const b = 50 + Math.random() * 60;
-        this.color = `rgba(255, ${g}, ${b}, ${Math.random() * 0.4 + 0.6})`;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        if (this.x < 0 || this.x > canvasEl.width) this.vx = -this.vx;
-        if (this.y < 0 || this.y > canvasEl.height) this.vy = -this.vy;
-
-        const dx = mouse.x - this.x;
-        const dy = mouse.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < mouse.radius && distance > 0) {
-          const forceDirectionX = dx / distance;
-          const forceDirectionY = dy / distance;
-          const force = (mouse.radius - distance) / mouse.radius;
-          this.x -= forceDirectionX * force * 5;
-          this.y -= forceDirectionY * force * 5;
-        }
-
-        this.angle += 0.02;
-      }
-
-      draw() {
-        context.save();
-        context.translate(this.x, this.y);
-        context.rotate(this.angle);
-
-        context.beginPath();
-        context.arc(0, 0, this.radius, 0, Math.PI * 2);
-        context.fillStyle = this.color;
-        context.shadowBlur = 20;
-        context.shadowColor = this.color;
-        context.fill();
-        context.shadowBlur = 0;
-
-        const orbitRadius = this.radius * 4;
-        context.strokeStyle = "rgba(255, 255, 255, 0.2)";
-        context.lineWidth = 1;
-
-        for (let i = 0; i < 3; i += 1) {
-          context.beginPath();
-          context.rotate(Math.PI / 3);
-          context.ellipse(0, 0, orbitRadius, orbitRadius / 2.5, 0, 0, Math.PI * 2);
-          context.stroke();
-
-          const electronAngle = this.angle * 3 + (i * Math.PI * 2) / 3;
-          const ex = Math.cos(electronAngle) * orbitRadius;
-          const ey = Math.sin(electronAngle) * (orbitRadius / 2.5);
-
-          context.beginPath();
-          context.arc(ex, ey, 1.5, 0, Math.PI * 2);
-          context.fillStyle = "#fff";
-          context.shadowBlur = 8;
-          context.shadowColor = "#fff";
-          context.fill();
-          context.shadowBlur = 0;
-        }
-
-        context.restore();
-      }
-    }
 
     const resize = () => {
       canvasEl.width = window.innerWidth;
@@ -243,12 +223,12 @@ export default function ParticleNetwork() {
 
       const numberOfNodes = Math.floor((canvasEl.width * canvasEl.height) / 7000);
       for (let i = 0; i < numberOfNodes; i += 1) {
-        particlesArray.push(new ParticleCls());
+        particlesArray.push(new ParticleCls(canvasEl.width, canvasEl.height));
       }
 
       const numberOfAtoms = Math.floor((canvasEl.width * canvasEl.height) / 80000) + 3;
       for (let i = 0; i < numberOfAtoms; i += 1) {
-        atomsArray.push(new AtomCls());
+        atomsArray.push(new AtomCls(canvasEl.width, canvasEl.height));
       }
 
       const skipIntro = sessionStorage.getItem('cops-intro-seen') === 'true';
@@ -377,8 +357,8 @@ export default function ParticleNetwork() {
 
       if (currentPhaseRef.current === "normal" || currentPhaseRef.current === "explosion") {
         for (let i = 0; i < particlesArray.length; i += 1) {
-          particlesArray[i].update();
-          particlesArray[i].draw();
+          particlesArray[i].update(canvasEl.width, canvasEl.height, mouse);
+          particlesArray[i].draw(context);
 
           for (let j = i; j < particlesArray.length; j += 1) {
             const dx = particlesArray[i].x - particlesArray[j].x;
@@ -397,8 +377,8 @@ export default function ParticleNetwork() {
         }
 
         for (let i = 0; i < atomsArray.length; i += 1) {
-          atomsArray[i].update();
-          atomsArray[i].draw();
+          atomsArray[i].update(canvasEl.width, canvasEl.height, mouse);
+          atomsArray[i].draw(context);
         }
       }
 

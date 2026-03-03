@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { cookies } from "next/headers";
-import { Headset, ShieldCheck, FileSpreadsheet } from "lucide-react";
+import CircuitNetwork from "../../components/new-home/CircuitNetwork";
+import ModuleCardClient from "./ModuleCardClient";
 import {
   MASTER_ROLE_COOKIE,
   MASTER_USER_COOKIE,
@@ -9,16 +9,10 @@ import {
 } from "../../lib/masterAuth";
 import { getCotizacionesAppUrl } from "../../lib/moduleLinks";
 
-const iconByModule: Record<ModuleId, typeof Headset> = {
-  tickets: Headset,
-  cotizaciones: FileSpreadsheet,
-  administracion: ShieldCheck,
-};
-
 export default async function PanelHomePage() {
   const cookieStore = await cookies();
   const role = cookieStore.get(MASTER_ROLE_COOKIE)?.value;
-  const username = cookieStore.get(MASTER_USER_COOKIE)?.value ?? "usuario";
+  const username = cookieStore.get(MASTER_USER_COOKIE)?.value ?? "Operador";
   const cotizacionesHref = getCotizacionesAppUrl();
   const ticketsHref = "/panel/tickets";
   const modules = getVisibleModules(role).map((module) => {
@@ -28,48 +22,36 @@ export default async function PanelHomePage() {
   });
 
   return (
-    <section className="relative py-6">
-      <div className="pointer-events-none absolute left-0 top-0 h-64 w-64 rounded-full bg-brand-600/20 blur-[90px]" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-indigo-500/20 blur-[100px]" />
+    <div className="relative w-full flex min-h-[calc(100vh-80px)] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0a192f] to-[#112240]">
+      {/* Background Graphic Engine (Cyber Circuit) */}
+      <div className="fixed inset-0 z-0">
+        <CircuitNetwork />
+      </div>
 
-      <div className="relative">
-        <span className="tag-glass">Portal interno</span>
-        <h1 className="mt-3 text-3xl font-semibold text-white">Selecciona un modulo</h1>
-        <p className="mt-2 max-w-3xl text-white/55">
-          Sesion activa como <span className="font-semibold text-white/80">{username}</span>. El acceso visible depende de tu perfil.
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(14,165,233,0.15),transparent_80%)]" />
+
+      {/* Main Content */}
+      <section className="relative z-10 w-full max-w-5xl px-4 py-12 text-center flex flex-col items-center justify-center">
+
+        <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500"></span>
+          </span>
+          Sesión Activa: {username}
+        </span>
+
+        <h1 className="text-3xl font-black text-white drop-shadow-md sm:text-4xl">Centro de Operaciones</h1>
+        <p className="mt-3 max-w-xl text-sm font-medium text-slate-400">
+          Selecciona el módulo correspondiente para gestionar servicios, tickets o componentes administrativos de la plataforma.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid w-full gap-5 sm:px-10 md:grid-cols-3 max-w-4xl mx-auto">
           {modules.map((module) => {
-            const Icon = iconByModule[module.id];
-
-            return (
-              <Link
-                key={module.id}
-                href={module.href}
-                prefetch={false}
-                className="lg-card card-lift group relative overflow-hidden p-5"
-              >
-                <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-brand-500/10 blur-2xl transition group-hover:bg-brand-400/20" />
-
-                <div className="relative flex items-start justify-between">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
-                    <Icon className="h-6 w-6 text-brand-200" />
-                  </span>
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">Modulo</span>
-                </div>
-
-                <h2 className="relative mt-5 text-xl font-semibold text-white">{module.title}</h2>
-                <p className="relative mt-2 text-sm leading-relaxed text-white/55">{module.description}</p>
-
-                <span className="relative mt-6 inline-flex items-center text-sm font-semibold text-brand-200 transition group-hover:text-brand-100">
-                  Entrar
-                </span>
-              </Link>
-            );
+            return <ModuleCardClient key={module.id} module={module} />;
           })}
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

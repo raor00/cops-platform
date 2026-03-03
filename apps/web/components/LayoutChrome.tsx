@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import SiteFooter from "./SiteFooter";
 import NewHomeHeader from "./new-home/NewHomeHeader";
+import AppHeader from "./AppHeader";
 import ScrollProgressBar from "./ScrollProgressBar";
 
 export default function LayoutChrome({ children }: { children: React.ReactNode }) {
@@ -10,13 +11,19 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   const useNewHome = process.env.NEXT_PUBLIC_NEW_HOME !== "0";
   const isNewHomeRoute = useNewHome && pathname === "/";
 
+  const isInternalPortal = pathname.startsWith("/login") || pathname.startsWith("/panel");
+
   return (
     <>
-      <NewHomeHeader />
-      <ScrollProgressBar />
-      <div className={isNewHomeRoute ? "" : "pt-[68px] md:pt-[76px]"}>{children}</div>
-      {/* We only render SiteFooter if it's not the new home, or if we want it everywhere we can just render it */}
-      {!isNewHomeRoute && <SiteFooter />}
+      {isInternalPortal ? <AppHeader /> : <NewHomeHeader />}
+      {!isInternalPortal && <ScrollProgressBar />}
+
+      <div className={isNewHomeRoute ? "" : isInternalPortal ? "pt-[80px]" : "pt-[68px] md:pt-[76px]"}>
+        {children}
+      </div>
+
+      {/* Remove footer from the portal paths as well as the new home */}
+      {!(isNewHomeRoute || isInternalPortal) && <SiteFooter />}
     </>
   );
 }

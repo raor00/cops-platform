@@ -1,15 +1,18 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Home } from "lucide-react";
 import styles from "./NewHomeHeader.module.css";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n/context";
 
 export default function NewHomeHeader() {
   const pathname = usePathname();
   const [isAtTop, setIsAtTop] = useState(true);
   const lastScrollRef = useRef(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,26 +52,27 @@ export default function NewHomeHeader() {
           <Link href="/" aria-label="Inicio" className={`flex items-center transition-colors ${pathname === "/" ? styles.active : ""}`}>
             <Home className="h-4 w-4" />
           </Link>
-          <Link href="/soluciones" className={pathname === "/soluciones" ? styles.active : ""}>Soluciones</Link>
-          <Link href="/proyectos" className={pathname === "/proyectos" ? styles.active : ""}>Proyectos</Link>
-          <Link href="/partners" className={pathname === "/partners" ? styles.active : ""}>Partners</Link>
-          <Link href="/nosotros" className={pathname === "/nosotros" ? styles.active : ""}>Nosotros</Link>
-          <Link href="/contacto" className={pathname === "/contacto" ? styles.active : ""}>Contacto</Link>
+          <Link href="/soluciones" className={pathname === "/soluciones" ? styles.active : ""}>{t.nav.solutions}</Link>
+          <Link href="/proyectos" className={pathname === "/proyectos" ? styles.active : ""}>{t.nav.projects}</Link>
+          <Link href="/partners" className={pathname === "/partners" ? styles.active : ""}>{t.nav.partners}</Link>
+          <Link href="/nosotros" className={pathname === "/nosotros" ? styles.active : ""}>{t.nav.about}</Link>
+          <Link href="/contacto" className={pathname === "/contacto" ? styles.active : ""}>{t.nav.contact}</Link>
         </nav>
 
-        {/* Auth actions - fixed width, no overlap */}
+        {/* Auth actions + language switcher */}
         <div className={`${styles.authActions} hidden lg:flex items-center gap-2.5 flex-shrink-0`}>
+          <LanguageSwitcher />
           <a
             href="/contacto"
             className="flex items-center justify-center whitespace-nowrap rounded-full border border-blue-500/50 bg-blue-600/30 px-4 py-1.5 text-[11px] font-semibold text-white shadow-[0_4px_14px_rgba(37,99,235,0.2)] transition-all hover:-translate-y-[1px] hover:bg-blue-600/50 hover:shadow-[0_6px_20px_rgba(37,99,235,0.3)]"
           >
-            Solicitar asesoría
+            {t.nav.cta}
           </a>
           <a
             href="/login"
             className="flex items-center justify-center whitespace-nowrap rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-[11px] font-semibold text-white transition-all hover:-translate-y-[1px] hover:bg-white/10"
           >
-            Iniciar sesión
+            {t.nav.login}
           </a>
         </div>
       </div>
