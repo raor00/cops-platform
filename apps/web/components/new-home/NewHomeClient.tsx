@@ -199,8 +199,8 @@ function StorySection() {
         >
           <div className="relative z-10 mt-[15vh] grid grid-cols-1 gap-6 pointer-events-auto md:mt-[18vh] md:grid-cols-3 mb-28 md:mb-24">
             <div className="mb-6 flex w-full flex-col items-start md:col-span-3 md:flex-row md:items-end">
-              <div className="hidden w-[45%] flex-shrink-0 md:block" />
-              <div className="mt-28 w-full border-t border-white/10 px-2 pt-10 text-center md:-mt-8 md:w-[55%] lg:-mt-20 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+              <div className="hidden w-[30%] flex-shrink-0 md:block" />
+              <div className="mt-28 w-full border-t border-white/10 px-2 pt-10 text-center md:-mt-8 md:w-[70%] lg:-mt-20 md:border-l md:border-t-0 md:pl-10 md:pt-0">
                 <h2 className="text-4xl font-black leading-tight tracking-tight text-white md:text-5xl drop-shadow-lg">
                   {sy.h2}
                 </h2>

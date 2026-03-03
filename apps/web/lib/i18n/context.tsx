@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 import { translations, type Locale, type Translations } from "./translations";
@@ -42,16 +43,30 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   function setLocale(newLocale: Locale) {
-    setLocaleState(newLocale);
-    try {
-      localStorage.setItem(STORAGE_KEY, newLocale);
-    } catch {
-      // storage not available
-    }
-    document.documentElement.lang = newLocale;
+    // Brief opacity fade to mask the re-render (100ms out + locale update + 120ms back in)
+    const html = document.documentElement;
+    html.style.transition = "opacity 100ms ease";
+    html.style.opacity = "0";
+
+    setTimeout(() => {
+      setLocaleState(newLocale);
+      html.lang = newLocale;
+      try {
+        localStorage.setItem(STORAGE_KEY, newLocale);
+      } catch {
+        // storage not available
+      }
+      html.style.opacity = "1";
+      // Clean up inline style after fade completes
+      setTimeout(() => {
+        html.style.transition = "";
+        html.style.opacity = "";
+      }, 120);
+    }, 100);
   }
 
-  const t = translations[locale];
+  // Memoized so `t` reference only changes when locale changes, not on every provider render
+  const t = useMemo(() => translations[locale], [locale]);
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t }}>
