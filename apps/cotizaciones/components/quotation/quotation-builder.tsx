@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -8,9 +8,12 @@ import { ItemsSection } from "./items-table"
 import { LaborSection } from "./labor-section"
 import { SummaryPanel } from "./summary-panel"
 import { PDFPreview } from "./pdf-preview"
+import { QuotationAIAssistant } from "./quotation-ai-assistant"
 import { downloadPDF } from "@/lib/generate-pdf"
 import { saveQuotation, getCatalog, getCatalogDiscountConfig } from "@/lib/quotation-storage"
 import type { ClientInfo, QuotationItem, QuotationType, QuotationData, LaborItem, DiscountMode } from "@/lib/quotation-types"
+import type { AIDraftResponse } from "@/lib/quotation-ai-types"
+import { toLaborItems, toQuotationItems } from "@/lib/quotation-ai-mapper"
 import { generateQuotationCode, PAYMENT_CONDITIONS, DEFAULT_TERMS, PAYMENT_CONDITIONS_LLC, DEFAULT_TERMS_LLC } from "@/lib/quotation-types"
 import { FileDown, Eye, PenLine, RotateCcw, Save, Package, Cable } from "lucide-react"
 import { toast } from "sonner"
@@ -91,6 +94,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
       : PAYMENT_CONDITIONS_LLC[0]
   )
   const [activeTab, setActiveTab] = useState("editor")
+  const [catalogSnapshot, setCatalogSnapshot] = useState(() => getCatalog())
 
   const taxRate = companyFormat === "llc" ? llcTaxRate : 16
 
@@ -112,6 +116,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   useEffect(() => {
     const applyCatalogDiscounts = () => {
       const catalog = getCatalog()
+      setCatalogSnapshot(catalog)
       const config = getCatalogDiscountConfig()
 
       const catalogMap = new Map(
@@ -157,6 +162,95 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     window.addEventListener("catalog-updated", applyCatalogDiscounts)
     return () => window.removeEventListener("catalog-updated", applyCatalogDiscounts)
   }, [])
+
+  const handleApplyAIDraft = useCallback((result: AIDraftResponse) => {
+    const patch = result.draftPatch
+    let appliedCount = 0
+    if (patch.clientInfo) {
+      setClientInfo((prev) => {
+        const merged = { ...prev, ...patch.clientInfo }
+        if (merged.billToName) {
+          merged.name = merged.billToName
+        }
+        return merged
+      })
+      appliedCount += 1
+    }
+
+    if (patch.subject !== undefined) setSubject(patch.subject)
+    if (patch.issueDate !== undefined) setIssueDate(patch.issueDate)
+    if (patch.validUntil !== undefined) setValidUntil(patch.validUntil)
+    if (patch.paymentCondition !== undefined) {
+      setPaymentCondition(patch.paymentCondition)
+      if (companyFormat === "llc") {
+        setLlcPayment(patch.paymentCondition)
+      } else {
+        setSaPayment(patch.paymentCondition)
+      }
+    }
+    if (patch.discountMode !== undefined) setDiscountMode(patch.discountMode)
+    if (patch.discountValue !== undefined) setDiscountValue(patch.discountValue)
+    if (patch.subject !== undefined || patch.issueDate !== undefined || patch.validUntil !== undefined || patch.paymentCondition !== undefined) {
+      appliedCount += 1
+    }
+
+    if (patch.equipmentItems) {
+      if (patch.equipmentItems.length > 0) {
+        setEquipmentItems(toQuotationItems(patch.equipmentItems))
+        appliedCount += 1
+      }
+    }
+
+    if (patch.materialItems) {
+      if (patch.materialItems.length > 0) {
+        setMaterialItems(toQuotationItems(patch.materialItems))
+        appliedCount += 1
+      }
+    }
+
+    if (patch.laborItems) {
+      if (patch.laborItems.length > 0) {
+        setLaborItems(toLaborItems(patch.laborItems))
+        appliedCount += 1
+      }
+    }
+
+    if (patch.notes !== undefined) setNotes(patch.notes)
+    if (patch.termsAndConditions !== undefined) {
+      setTermsAndConditions(patch.termsAndConditions)
+      if (companyFormat === "llc") {
+        setLlcTerms(patch.termsAndConditions)
+      } else {
+        setSaTerms(patch.termsAndConditions)
+      }
+    }
+    if (patch.notes !== undefined || patch.termsAndConditions !== undefined) {
+      appliedCount += 1
+    }
+
+    if (result.suggestedItemsOutsideCatalog.length > 0) {
+      toast.info(
+        companyFormat === "llc"
+          ? `${result.suggestedItemsOutsideCatalog.length} item suggestions remain outside catalog`
+          : `${result.suggestedItemsOutsideCatalog.length} sugerencias quedaron fuera del catalogo`,
+      )
+    }
+
+    if (appliedCount === 0) {
+      toast.warning(
+        companyFormat === "llc"
+          ? "Draft had no applicable changes. Check suggestions/warnings."
+          : "El borrador no incluyo cambios aplicables. Revisa sugerencias/advertencias.",
+      )
+      return
+    }
+
+    toast.success(
+      companyFormat === "llc"
+        ? `Draft applied (${appliedCount} sections updated)`
+        : `Borrador aplicado (${appliedCount} secciones actualizadas)`,
+    )
+  }, [companyFormat])
 
   const handleTypeChange = useCallback((type: QuotationType) => {
     setQuotationType(type)
@@ -364,6 +458,24 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
         </TabsList>
 
         <TabsContent value="editor" className="mt-6 space-y-4">
+          <QuotationAIAssistant
+            companyFormat={companyFormat}
+            quotationType={quotationType}
+            currentDraft={{
+              subject,
+              issueDate,
+              validUntil,
+              paymentCondition,
+              notes,
+              termsAndConditions,
+              companyFormat,
+              type: quotationType,
+              clientInfo,
+            }}
+            catalog={catalogSnapshot}
+            onApplyDraft={handleApplyAIDraft}
+          />
+
           <ClientInfoForm
             clientInfo={clientInfo}
             quotationCode={quotationCode}

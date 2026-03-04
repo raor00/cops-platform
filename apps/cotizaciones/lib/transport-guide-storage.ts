@@ -1,4 +1,4 @@
-﻿import type { TransportGuideData } from "./transport-guide-types"
+import type { TransportGuideData } from "./transport-guide-types"
 
 const TRANSPORT_GUIDES_KEY = "cops_transport_guides"
 

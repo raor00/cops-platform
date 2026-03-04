@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -198,7 +198,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
       setCotizacionVinculada(data.code)
       setSelectedCliente(null)
       if (data.subject) setValue("asunto", data.subject)
-      setValue("descripcion", `Proyecto basado en cotizaciÃ³n ${data.code}.${data.notes ? " " + data.notes : ""}`)
+      setValue("descripcion", `Proyecto basado en cotización ${data.code}.${data.notes ? " " + data.notes : ""}`)
       setValue("monto_servicio", data.total)
       const clienteNombre = data.clientInfo?.attention || data.clientInfo?.billToAttention
       const clienteEmpresa = data.clientInfo?.name || data.clientInfo?.billToName
@@ -222,7 +222,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
           }))
         )
       }
-      toast.success(`CotizaciÃ³n ${data.code} vinculada`, {
+      toast.success(`Cotización ${data.code} vinculada`, {
         description: `${allItems.length} materiales importados`,
       })
     }
@@ -315,7 +315,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         toast.error("Error", { description: result.error || "No se pudo crear el ticket" })
       }
     } catch {
-      toast.error("Error", { description: "OcurriÃ³ un error inesperado" })
+      toast.error("Error", { description: "Ocurrió un error inesperado" })
     } finally {
       setIsSubmitting(false)
     }
@@ -340,7 +340,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               <SelectContent>
                 <SelectItem value="servicio">Servicio ($40 fijo)</SelectItem>
                 <SelectItem value="proyecto">Proyecto (monto variable)</SelectItem>
-                <SelectItem value="inspeccion">InspecciÃ³n ($20 fijo)</SelectItem>
+                <SelectItem value="inspeccion">Inspección ($20 fijo)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -355,21 +355,21 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="email">Correo electrÃ³nico</SelectItem>
-                <SelectItem value="telefono">Llamada telefÃ³nica</SelectItem>
-                <SelectItem value="carta_aceptacion">Carta de aceptaciÃ³n</SelectItem>
+                <SelectItem value="email">Correo electrónico</SelectItem>
+                <SelectItem value="telefono">Llamada telefónica</SelectItem>
+                <SelectItem value="carta_aceptacion">Carta de aceptación</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        {/* NÃºmero de carta condicional */}
+        {/* Número de carta condicional */}
         <div
           className="overflow-hidden transition-all duration-200"
           style={{ maxHeight: origenTicket === "carta_aceptacion" ? "80px" : "0px", opacity: origenTicket === "carta_aceptacion" ? 1 : 0 }}
         >
           <div className="form-group pt-1">
-            <Label>NÃºmero de Carta</Label>
+            <Label>Número de Carta</Label>
             <Input
               placeholder="Ej: CA-2024-001"
               error={errors.numero_carta?.message}
@@ -430,21 +430,21 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
           )}
         </div>
 
-        {/* Info badge para inspecciÃ³n */}
+        {/* Info badge para inspección */}
         {tipoTicket === "inspeccion" && (
           <div className="flex items-start gap-2.5 rounded-xl bg-sky-500/8 border border-sky-500/20 px-3 py-2.5 text-sm mt-1">
             <Info className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
             <p className="text-sky-300/80">
-              Costo fijo: <span className="font-semibold text-sky-300">$20</span> â€” Al finalizar la inspecciÃ³n podrÃ¡s convertirla en un servicio correctivo o proyecto.
+              Costo fijo: <span className="font-semibold text-sky-300">$20</span> â€” Al finalizar la inspección podrás convertirla en un servicio correctivo o proyecto.
             </p>
           </div>
         )}
 
-        {/* CotizaciÃ³n vinculada (solo proyecto) â€” compacta */}
+        {/* Cotización vinculada (solo proyecto) â€” compacta */}
         {tipoTicket === "proyecto" && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/8">
             <Link2 className="h-3.5 w-3.5 text-white/40 shrink-0" />
-            <span className="text-xs text-white/50">CotizaciÃ³n vinculada:</span>
+            <span className="text-xs text-white/50">Cotización vinculada:</span>
             {cotizacionVinculada ? (
               <>
                 <span className="flex items-center gap-1 text-xs font-medium text-green-400">
@@ -560,7 +560,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
         <div className="form-row">
           <div className="form-group">
-            <Label>Correo ElectrÃ³nico</Label>
+            <Label>Correo Electrónico</Label>
             <Input
               type="email"
               placeholder="correo@ejemplo.com"
@@ -569,7 +569,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             />
           </div>
           <div className="form-group">
-            <Label>TelÃ©fono *</Label>
+            <Label>Teléfono *</Label>
             <Input
               type="tel"
               placeholder="+58 412 123 4567"
@@ -580,27 +580,27 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         </div>
 
         <div className="form-group">
-          <Label>DirecciÃ³n *</Label>
+          <Label>Dirección *</Label>
           <Textarea
-            placeholder="DirecciÃ³n completa del cliente"
+            placeholder="Dirección completa del cliente"
             error={errors.cliente_direccion?.message}
             {...register("cliente_direccion")}
           />
         </div>
       </div>
 
-      {/* â”€â”€ DescripciÃ³n del Trabajo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â”€â”€ Descripción del Trabajo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
         <h3 className="form-section-title">
-          {tipoTicket === "inspeccion" ? "Motivo de la InspecciÃ³n" : "DescripciÃ³n del Trabajo"}
+          {tipoTicket === "inspeccion" ? "Motivo de la Inspección" : "Descripción del Trabajo"}
         </h3>
         <div className="form-group">
           <Label>Asunto *</Label>
           <Input
             placeholder={
               tipoTicket === "inspeccion"
-                ? "Breve descripciÃ³n del motivo de la inspecciÃ³n"
-                : "Breve descripciÃ³n del servicio"
+                ? "Breve descripción del motivo de la inspección"
+                : "Breve descripción del servicio"
             }
             error={errors.asunto?.message}
             {...register("asunto")}
@@ -609,7 +609,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
         <div className="form-group">
           <Label>
-            {tipoTicket === "inspeccion" ? "DescripciÃ³n de la InspecciÃ³n *" : "DescripciÃ³n Detallada *"}
+            {tipoTicket === "inspeccion" ? "Descripción de la Inspección *" : "Descripción Detallada *"}
           </Label>
           <Textarea
             placeholder={
@@ -624,7 +624,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         </div>
 
         <div className="form-group">
-          <Label>Notas para el TÃ©cnico</Label>
+          <Label>Notas para el Técnico</Label>
           <Textarea
             placeholder="Indica condiciones del lugar, equipos, accesos necesarios..."
             className="min-h-[100px]"
@@ -632,7 +632,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             {...register("requerimientos")}
           />
           <p className="text-xs text-white/40 mt-1">
-            InformaciÃ³n que el tÃ©cnico necesita saber antes de la visita
+            Información que el técnico necesita saber antes de la visita
           </p>
         </div>
       </div>
@@ -650,7 +650,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               className={showCatalogSearch ? "border-sky-500/40 text-sky-400" : ""}
             >
               <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-              Del catÃ¡logo
+              Del catálogo
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={addMaterial}>
               <Plus className="h-4 w-4 mr-1" />
@@ -685,7 +685,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                 type="text"
                 value={catalogQuery}
                 onChange={(e) => setCatalogQuery(e.target.value)}
-                placeholder="Buscar por nombre, cÃ³digo o categorÃ­a..."
+                placeholder="Buscar por nombre, código o categoría..."
                 autoFocus
                 className="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-sky-500/50 transition-colors"
               />
@@ -725,7 +725,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
         {materials.length === 0 && !showCatalogSearch ? (
           <p className="text-sm text-white/50 text-center py-4">
-            Sin materiales. Usa &quot;Del catÃ¡logo&quot; para buscar o &quot;Manual&quot; para agregar libremente.
+            Sin materiales. Usa &quot;Del catálogo&quot; para buscar o &quot;Manual&quot; para agregar libremente.
           </p>
         ) : materials.length > 0 ? (
           <div className="space-y-3">
@@ -769,19 +769,19 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         ) : null}
       </div>
 
-      {/* â”€â”€ AsignaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â”€â”€ Asignación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="form-section">
-        <h3 className="form-section-title">AsignaciÃ³n</h3>
+        <h3 className="form-section-title">Asignación</h3>
         <div className="form-group">
-          <Label>TÃ©cnico Asignado</Label>
+          <Label>Técnico Asignado</Label>
           <Select onValueChange={(value) => setValue("tecnico_id", value)}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccionar tÃ©cnico (opcional)" />
+              <SelectValue placeholder="Seleccionar técnico (opcional)" />
             </SelectTrigger>
             <SelectContent>
               {technicians.length === 0 ? (
                 <SelectItem value="" disabled>
-                  No hay tÃ©cnicos disponibles
+                  No hay técnicos disponibles
                 </SelectItem>
               ) : (
                 technicians.map((tech) => (
@@ -793,7 +793,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             </SelectContent>
           </Select>
           <p className="text-xs text-white/50 mt-1">
-            Puedes asignar el tÃ©cnico ahora o hacerlo despuÃ©s
+            Puedes asignar el técnico ahora o hacerlo después
           </p>
         </div>
       </div>
@@ -815,7 +815,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               Creando...
             </>
           ) : (
-            tipoTicket === "inspeccion" ? "Crear InspecciÃ³n" : "Crear Ticket"
+            tipoTicket === "inspeccion" ? "Crear Inspección" : "Crear Ticket"
           )}
         </Button>
       </div>

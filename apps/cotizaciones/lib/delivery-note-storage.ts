@@ -1,4 +1,4 @@
-﻿import type { DeliveryNoteData } from "./delivery-note-types"
+import type { DeliveryNoteData } from "./delivery-note-types"
 
 const DELIVERY_NOTES_KEY = "cops_delivery_notes"
 

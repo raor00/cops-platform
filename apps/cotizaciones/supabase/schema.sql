@@ -1,6 +1,9 @@
 -- Enable UUID generation
 create extension if not exists "pgcrypto";
 
+-- Enable vector embeddings (pgvector)
+create extension if not exists vector;
+
 create table if not exists public.quotations (
   id uuid primary key default gen_random_uuid(),
   code text not null,
@@ -62,6 +65,50 @@ create table if not exists public.catalog_discount_config (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- AI Knowledge Base (RAG)
+create table if not exists public.ai_knowledge_documents (
+  id uuid primary key default gen_random_uuid(),
+  source_type text not null,
+  source_name text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- NOTE: embedding dimension is set to 768 (default for nomic-embed-text).
+create table if not exists public.ai_knowledge_chunks (
+  id uuid primary key default gen_random_uuid(),
+  document_id uuid not null references public.ai_knowledge_documents(id) on delete cascade,
+  chunk_text text not null,
+  embedding vector(768) not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_ai_knowledge_documents_created_at on public.ai_knowledge_documents(created_at desc);
+create index if not exists idx_ai_knowledge_chunks_document_id on public.ai_knowledge_chunks(document_id);
+
+-- Vector index (use ivfflat for broader compatibility).
+create index if not exists idx_ai_knowledge_chunks_embedding on public.ai_knowledge_chunks using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+
+-- RPC for similarity search
+create or replace function public.match_ai_knowledge_chunks(
+  query_embedding vector(768),
+  match_count int,
+  min_similarity float
+)
+returns table (
+  chunk_text text,
+  similarity float
+)
+language sql stable as $$
+  select
+    c.chunk_text,
+    (1 - (c.embedding <=> query_embedding))::float as similarity
+  from public.ai_knowledge_chunks c
+  where (1 - (c.embedding <=> query_embedding)) > min_similarity
+  order by c.embedding <=> query_embedding
+  limit match_count;
+$$;
 
 create index if not exists idx_quotations_code on public.quotations(code);
 create index if not exists idx_delivery_notes_code on public.delivery_notes(code);

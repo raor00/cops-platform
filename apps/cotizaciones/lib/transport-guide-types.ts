@@ -1,4 +1,4 @@
-﻿export interface TransportGuideItem {
+export interface TransportGuideItem {
   id: string
   description: string
   quantity: number

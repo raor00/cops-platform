@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { downloadHtmlAsPdf } from "./download-html-pdf"
 import type { TransportGuideData } from "./transport-guide-types"

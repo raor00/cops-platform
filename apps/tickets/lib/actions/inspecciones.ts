@@ -1,4 +1,4 @@
-﻿"use server"
+"use server"
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
@@ -8,7 +8,7 @@ import { getCurrentUser } from "./auth"
 import { isLocalMode } from "@/lib/local-mode"
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// OBTENER INSPECCIÃ“N POR TICKET
+// OBTENER INSPECCIÓN POR TICKET
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getInspeccionByTicket(
@@ -42,7 +42,7 @@ export async function getInspeccionByTicket(
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// CREAR INSPECCIÃ“N
+// CREAR INSPECCIÓN
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createInspeccion(
@@ -58,7 +58,7 @@ export async function createInspeccion(
   if (isLocalMode()) {
     return {
       success: false,
-      error: "Modo local no soporta creaciÃ³n de inspecciones"
+      error: "Modo local no soporta creación de inspecciones"
     }
   }
 
@@ -91,7 +91,7 @@ export async function createInspeccion(
   if (existing) {
     return {
       success: false,
-      error: "Ya existe una inspecciÃ³n para este ticket"
+      error: "Ya existe una inspección para este ticket"
     }
   }
 
@@ -120,19 +120,19 @@ export async function createInspeccion(
     ticket_id: ticketId,
     usuario_id: currentUser.id,
     tipo_cambio: "inspeccion",
-    descripcion: "InspecciÃ³n tÃ©cnica creada",
+    descripcion: "Inspección técnica creada",
   })
 
   revalidatePath(`/dashboard/tickets/${ticketId}`)
   return {
     success: true,
     data: data as Inspeccion,
-    message: "InspecciÃ³n creada exitosamente"
+    message: "Inspección creada exitosamente"
   }
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ACTUALIZAR INSPECCIÃ“N
+// ACTUALIZAR INSPECCIÓN
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateInspeccion(
@@ -148,7 +148,7 @@ export async function updateInspeccion(
   if (isLocalMode()) {
     return {
       success: false,
-      error: "Modo local no soporta actualizaciÃ³n de inspecciones"
+      error: "Modo local no soporta actualización de inspecciones"
     }
   }
 
@@ -187,12 +187,12 @@ export async function updateInspeccion(
   return {
     success: true,
     data: data as Inspeccion,
-    message: "InspecciÃ³n actualizada exitosamente"
+    message: "Inspección actualizada exitosamente"
   }
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// COMPLETAR INSPECCIÃ“N
+// COMPLETAR INSPECCIÓN
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function completarInspeccion(
@@ -231,7 +231,7 @@ export async function completarInspeccion(
   if (!data) {
     return {
       success: false,
-      error: "InspecciÃ³n no encontrada o ya completada"
+      error: "Inspección no encontrada o ya completada"
     }
   }
 
@@ -240,19 +240,19 @@ export async function completarInspeccion(
     ticket_id: data.ticket_id,
     usuario_id: currentUser.id,
     tipo_cambio: "inspeccion",
-    descripcion: "InspecciÃ³n tÃ©cnica completada",
+    descripcion: "Inspección técnica completada",
   })
 
   revalidatePath(`/dashboard/tickets/${data.ticket_id}`)
   return {
     success: true,
     data: data as Inspeccion,
-    message: "InspecciÃ³n completada exitosamente"
+    message: "Inspección completada exitosamente"
   }
 }
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ELIMINAR INSPECCIÃ“N
+// ELIMINAR INSPECCIÓN
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function deleteInspeccion(
@@ -281,7 +281,7 @@ export async function deleteInspeccion(
     .single()
 
   if (!inspeccion) {
-    return { success: false, error: "InspecciÃ³n no encontrada" }
+    return { success: false, error: "Inspección no encontrada" }
   }
 
   const { error } = await supabase
@@ -292,7 +292,7 @@ export async function deleteInspeccion(
   if (error) return { success: false, error: error.message }
 
   revalidatePath(`/dashboard/tickets/${inspeccion.ticket_id}`)
-  return { success: true, message: "InspecciÃ³n eliminada exitosamente" }
+  return { success: true, message: "Inspección eliminada exitosamente" }
 }
 
 

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import React from "react"
 import { Bell, Search, Menu, LayoutGrid } from "lucide-react"

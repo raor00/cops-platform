@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import type { QuotationData } from "./quotation-types"
 import { formatCurrency } from "./quotation-types"

@@ -1,4 +1,4 @@
-﻿import { ABLEREX_CATALOG } from "./ablerex-catalog"
+import { ABLEREX_CATALOG } from "./ablerex-catalog"
 
 export type QuotationType = "proyecto" | "servicio" | "mantenimiento"
 

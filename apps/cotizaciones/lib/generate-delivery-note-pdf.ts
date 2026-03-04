@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import type { DeliveryNoteData } from "./delivery-note-types"
 import { downloadHtmlAsPdf } from "./download-html-pdf"

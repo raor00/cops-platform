@@ -1,4 +1,4 @@
-﻿import type { QuotationData, CatalogItem, CatalogDiscountConfig } from "./quotation-types"
+import type { QuotationData, CatalogItem, CatalogDiscountConfig } from "./quotation-types"
 import { DEFAULT_CATALOG } from "./quotation-types"
 
 const QUOTATIONS_KEY = "cops_quotations"

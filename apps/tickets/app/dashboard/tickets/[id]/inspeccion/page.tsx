@@ -1,4 +1,4 @@
-﻿import { redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -37,7 +37,7 @@ export default async function InspeccionPage({ params }: PageProps) {
     redirect(`/dashboard/tickets/${ticket.id}`)
   }
 
-  // Obtener la inspecciÃ³n si existe
+  // Obtener la inspección si existe
   const inspeccionResult = await getInspeccionByTicket(id)
   const inspeccion = inspeccionResult.success ? inspeccionResult.data : null
 
@@ -55,7 +55,7 @@ export default async function InspeccionPage({ params }: PageProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="page-title">InspecciÃ³n TÃ©cnica</h1>
+            <h1 className="page-title">Inspección Técnica</h1>
             <p className="page-description">
               {ticket.numero_ticket} â€” {ticket.asunto}
             </p>

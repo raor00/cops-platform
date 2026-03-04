@@ -1,4 +1,4 @@
-﻿export interface DeliveryNoteItem {
+export interface DeliveryNoteItem {
   id: string
   code: string
   description: string

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -409,7 +409,7 @@ export function CatalogManager() {
         ))}
       </div>
 
-      {/* Category chips â€” wrapping grid instead of horizontal scroll */}
+      {/* Category chips -- wrapping grid instead of horizontal scroll */}
       <div className="flex flex-wrap gap-1.5">
         <button
           onClick={() => { setSelectedCategory("all"); setFilterSubcategory("all"); setPage(1); setAnimKey((k) => k + 1) }}

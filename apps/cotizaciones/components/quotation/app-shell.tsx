@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import React from "react"
 import Image from "next/image"
@@ -10,6 +10,7 @@ import { CatalogManager } from "./catalog-manager"
 import { QuotationHistory } from "./quotation-history"
 import { DeliveryNoteBuilder } from "./delivery-note-builder"
 import { TransportGuideBuilder } from "./transport-guide-builder"
+import { KnowledgeManager } from "./knowledge-manager"
 import type { QuotationData } from "@/lib/quotation-types"
 import {
   FilePlus,
@@ -17,6 +18,7 @@ import {
   Clock,
   ClipboardList,
   Truck,
+  Database,
   Menu,
   X,
   ChevronRight,
@@ -25,12 +27,13 @@ import {
   MoreVertical,
 } from "lucide-react"
 
-type View = "new" | "delivery" | "transport" | "catalog" | "history"
+type View = "new" | "delivery" | "transport" | "catalog" | "history" | "knowledge"
 
 const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "new", label: "Nueva Cotizacion", icon: <FilePlus className="h-4 w-4" /> },
   { id: "delivery", label: "Nota de Entrega", icon: <ClipboardList className="h-4 w-4" /> },
   { id: "transport", label: "Guia de Transporte", icon: <Truck className="h-4 w-4" /> },
+  { id: "knowledge", label: "Base de Conocimiento", icon: <Database className="h-4 w-4" /> },
   { id: "catalog", label: "Catalogo", icon: <Package className="h-4 w-4" /> },
   { id: "history", label: "Historial", icon: <Clock className="h-4 w-4" /> },
 ]
@@ -275,6 +278,7 @@ export function AppShell() {
             )}
             {activeView === "delivery" && <DeliveryNoteBuilder />}
             {activeView === "transport" && <TransportGuideBuilder />}
+            {activeView === "knowledge" && <KnowledgeManager />}
             {activeView === "catalog" && <CatalogManager />}
             {activeView === "history" && (
               <QuotationHistory
@@ -289,6 +293,5 @@ export function AppShell() {
     </div>
   )
 }
-
 
 
