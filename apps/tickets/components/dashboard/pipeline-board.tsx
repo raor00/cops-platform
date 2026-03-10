@@ -33,23 +33,23 @@ interface TicketCardProps {
 function TicketCard({ ticket }: TicketCardProps) {
   return (
     <Link href={`/dashboard/tickets/${ticket.id}`}>
-      <div className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200 p-3 group">
+      <div className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 p-3 group">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="text-xs font-mono text-blue-400/80 shrink-0">{ticket.numero_ticket}</span>
+          <span className="text-xs font-mono text-blue-600/80 shrink-0">{ticket.numero_ticket}</span>
           <Badge className={`text-[10px] px-1.5 py-0.5 ${PRIORITY_COLORS[ticket.prioridad]}`}>
             {ticket.prioridad}
           </Badge>
         </div>
-        <p className="text-sm font-medium text-white leading-snug mb-2 line-clamp-2 group-hover:text-blue-200 transition-colors">
+        <p className="text-sm font-medium text-slate-800 leading-snug mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
           {ticket.asunto}
         </p>
-        <div className="flex items-center justify-between text-xs text-white/40">
+        <div className="flex items-center justify-between text-xs text-slate-500">
           <span className="truncate max-w-[100px]">{ticket.cliente_nombre}</span>
           <span>{formatRelativeTime(ticket.created_at)}</span>
         </div>
         {ticket.tecnico && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-white/40">
-            <div className="h-4 w-4 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold text-white/60">
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="h-4 w-4 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-600">
               {ticket.tecnico.nombre.charAt(0)}
             </div>
             <span className="truncate">{ticket.tecnico.nombre} {ticket.tecnico.apellido}</span>
@@ -69,13 +69,13 @@ export function PipelineBoard({ tickets }: PipelineBoardProps) {
           <div key={status} className="shrink-0 w-[240px] sm:w-[260px]">
             {/* Column header */}
             <div
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 mb-3 ${COLUMN_HEADER_COLORS[status]}`}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 mb-3 bg-white/50 backdrop-blur-sm shadow-sm ${COLUMN_HEADER_COLORS[status]}`}
             >
               <span className={`h-2 w-2 rounded-full ${COLUMN_DOT_COLORS[status]}`} />
-              <span className="text-sm font-semibold text-white/80">
+              <span className="text-sm font-semibold text-slate-700">
                 {STATUS_LABELS[status]}
               </span>
-              <span className="ml-auto text-xs text-white/40 font-medium">
+              <span className="ml-auto text-xs text-slate-400 font-medium">
                 {columnTickets.length}
               </span>
             </div>
@@ -83,7 +83,7 @@ export function PipelineBoard({ tickets }: PipelineBoardProps) {
             {/* Column tickets */}
             <div className="space-y-2">
               {columnTickets.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-white/10 p-4 text-center text-xs text-white/30">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-xs text-slate-400">
                   Sin tickets
                 </div>
               ) : (

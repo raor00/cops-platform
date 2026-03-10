@@ -45,7 +45,7 @@ export function FullPageSpinner({ label }: { label?: string }) {
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a1628]/80 backdrop-blur-sm">
       <Spinner size="lg" />
       {label && (
-        <p className="mt-4 text-sm text-white/50">{label}</p>
+        <p className="mt-4 text-sm text-slate-500">{label}</p>
       )}
     </div>
   )
@@ -55,7 +55,7 @@ export function PageLoadingSpinner() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
       <Spinner size="lg" />
-      <p className="text-sm text-white/40 animate-pulse">Cargando...</p>
+      <p className="text-sm text-slate-400 animate-pulse">Cargando...</p>
     </div>
   )
 }

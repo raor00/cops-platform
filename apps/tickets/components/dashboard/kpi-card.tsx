@@ -71,9 +71,9 @@ export function KpiCard({
     <div
       className={cn(
         "group relative overflow-hidden rounded-2xl p-6 border",
-        "bg-white/5 backdrop-blur-sm cursor-default",
+        "bg-white backdrop-blur-sm cursor-default",
         "transition-all duration-150 ease-out",
-        "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(14,47,111,0.25)]",
+        "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(14,47,111,0.08)]",
         borderColorClass,
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       )}
@@ -109,12 +109,12 @@ export function KpiCard({
       </div>
 
       <div className="relative pr-14">
-        <p className="text-sm font-medium text-white/60 truncate">{title}</p>
-        <p className="mt-2 text-2xl font-bold text-white tracking-tight tabular-nums">
+        <p className="text-sm font-medium text-slate-500 truncate">{title}</p>
+        <p className="mt-2 text-2xl font-bold text-slate-800 tracking-tight tabular-nums">
           {displayValue}
         </p>
         {subtitle && (
-          <p className="mt-1 text-xs text-white/50 truncate">{subtitle}</p>
+          <p className="mt-1 text-xs text-slate-400 truncate">{subtitle}</p>
         )}
         {trend !== undefined && (
           <div

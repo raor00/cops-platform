@@ -39,13 +39,13 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
           <tr
             key={ticket.id}
             onClick={() => router.push(`/dashboard/tickets/${ticket.id}`)}
-            className="group/row transition-colors hover:bg-white/[0.04] cursor-pointer"
+            className="group/row ticket-row-hover cursor-pointer"
           >
             <td>
-              <div className="font-medium text-sky-400 group-hover/row:text-sky-300 transition-colors">
+              <div className="font-medium text-sky-600 group-hover/row:text-sky-700 transition-colors">
                 {ticket.numero_ticket}
               </div>
-              <div className="text-xs text-white/50 mt-0.5 flex items-center gap-1">
+              <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
                 {ticket.tipo === "proyecto" ? (
                   <><FolderKanban className="h-3 w-3" /> Proyecto</>
                 ) : (
@@ -54,9 +54,9 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
               </div>
             </td>
             <td>
-              <div className="font-medium text-white">{ticket.cliente_nombre}</div>
+              <div className="font-medium text-slate-900">{ticket.cliente_nombre}</div>
               {ticket.cliente_empresa && (
-                <div className="text-xs text-white/50">{ticket.cliente_empresa}</div>
+                <div className="text-xs text-slate-500">{ticket.cliente_empresa}</div>
               )}
             </td>
             <td>
@@ -74,15 +74,15 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
             </td>
             <td>
               {ticket.tecnico ? (
-                <div className="text-sm">
+                <div className="text-sm text-slate-700">
                   {ticket.tecnico.nombre} {ticket.tecnico.apellido}
                 </div>
               ) : (
-                <span className="text-white/40 text-sm">Sin asignar</span>
+                <span className="text-slate-400 text-sm">Sin asignar</span>
               )}
             </td>
             <td>
-              <div className="text-sm">{formatDate(ticket.created_at)}</div>
+              <div className="text-sm text-slate-700">{formatDate(ticket.created_at)}</div>
             </td>
             <td className="text-right" onClick={(e) => e.stopPropagation()}>
               <DropdownMenu>
@@ -123,8 +123,8 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
         <tfoot>
           <tr>
             <td colSpan={8} className="px-0 py-0">
-              <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
-                <div className="text-sm text-white/50">
+              <div className="flex items-center justify-between border-t border-slate-200 px-6 py-4">
+                <div className="text-sm text-slate-500">
                   Mostrando {(page - 1) * 10 + 1} a {Math.min(page * 10, total)} de {total} tickets
                 </div>
                 <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
                       <><ChevronLeft className="h-4 w-4 mr-1" />Anterior</>
                     )}
                   </Button>
-                  <span className="text-sm text-white/60 px-2">
+                  <span className="text-sm text-slate-600 px-2">
                     Página {page} de {totalPages}
                   </span>
                   <Button variant="outline" size="sm" disabled={page >= totalPages} asChild={page < totalPages}>

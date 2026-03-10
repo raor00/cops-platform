@@ -45,7 +45,7 @@ interface ActivityFeedProps {
 export function ActivityFeed({ items }: ActivityFeedProps) {
   if (items.length === 0) {
     return (
-      <div className="flex h-[200px] items-center justify-center text-white/40 text-sm">
+      <div className="flex h-[200px] items-center justify-center text-slate-500 text-sm">
         Sin actividad reciente
       </div>
     )
@@ -58,15 +58,15 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
         const color = COLOR_MAP[item.tipo] || COLOR_MAP.modificacion
 
         const content = (
-          <div className="flex items-start gap-3 rounded-xl p-3 border border-white/5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors">
+          <div className="flex items-start gap-3 rounded-xl p-3 border border-slate-100 bg-slate-50/50 hover:bg-slate-100/80 transition-colors">
             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${color}`}>
               <Icon className="h-3.5 w-3.5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white leading-snug truncate">{item.descripcion}</p>
-              <div className="mt-1 flex items-center gap-2 text-xs text-white/40">
+              <p className="text-sm text-slate-800 leading-snug truncate">{item.descripcion}</p>
+              <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                 {item.ticket_numero && (
-                  <span className="font-mono text-blue-400/70">{item.ticket_numero}</span>
+                  <span className="font-mono text-blue-600/70">{item.ticket_numero}</span>
                 )}
                 <span>·</span>
                 <span>{item.usuario}</span>

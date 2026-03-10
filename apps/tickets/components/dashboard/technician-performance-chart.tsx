@@ -20,12 +20,12 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-xl border border-white/20 bg-[#0e2f6f]/95 backdrop-blur-xl p-3 shadow-xl min-w-[160px]">
-      <p className="mb-2 text-xs font-semibold text-white/70 truncate">{label}</p>
+      <p className="mb-2 text-xs font-semibold text-slate-600 truncate">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 text-sm">
           <span className="h-2 w-2 rounded-full" style={{ background: entry.color }} />
-          <span className="text-white/70">{entry.name}:</span>
-          <span className="font-semibold text-white">{entry.value}</span>
+          <span className="text-slate-600">{entry.name}:</span>
+          <span className="font-semibold text-slate-800">{entry.value}</span>
         </div>
       ))}
     </div>
@@ -41,7 +41,7 @@ export function TechnicianPerformanceChart({ data }: TechnicianPerformanceChartP
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-[220px] items-center justify-center text-white/40 text-sm">
+      <div className="flex h-[220px] items-center justify-center text-slate-500 text-sm">
         Sin técnicos asignados
       </div>
     )

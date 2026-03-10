@@ -39,14 +39,14 @@ import { ROLE_HIERARCHY } from "@/types"
 
 function KpiSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 animate-pulse">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 animate-pulse">
       <div className="flex items-start justify-between">
         <div className="space-y-3">
-          <div className="h-3.5 w-24 bg-white/10 rounded-full" />
-          <div className="h-8 w-20 bg-white/10 rounded-lg" />
-          <div className="h-3 w-32 bg-white/10 rounded-full" />
+          <div className="h-3.5 w-24 bg-slate-100 shadow-sm rounded-full" />
+          <div className="h-8 w-20 bg-slate-100 shadow-sm rounded-lg" />
+          <div className="h-3 w-32 bg-slate-100 shadow-sm rounded-full" />
         </div>
-        <div className="h-12 w-12 bg-white/10 rounded-xl" />
+        <div className="h-12 w-12 bg-slate-100 shadow-sm rounded-xl" />
       </div>
     </div>
   )
@@ -55,7 +55,7 @@ function KpiSkeleton() {
 function ChartSkeleton({ height = "h-[220px]" }: { height?: string }) {
   return (
     <div className={`${height} flex items-center justify-center animate-pulse`}>
-      <div className="text-white/20 text-sm">Cargando...</div>
+      <div className="text-slate-400 text-sm">Cargando...</div>
     </div>
   )
 }
@@ -102,10 +102,10 @@ async function DashboardContent() {
       {/* ─── Header ────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">
-            {greeting()}, {user.nombre} <Hand className="inline h-5 w-5 ml-1 text-white/50 align-middle" />
+          <h1 className="text-2xl font-bold text-slate-800">
+            {greeting()}, {user.nombre} <Hand className="inline h-5 w-5 ml-1 text-slate-500 align-middle" />
           </h1>
-          <p className="mt-1 text-sm text-white/50 capitalize">{today}</p>
+          <p className="mt-1 text-sm text-slate-500 capitalize">{today}</p>
         </div>
         {ROLE_HIERARCHY[user.rol] >= 2 && (
           <Button asChild size="sm" className="bg-sky-600 hover:bg-sky-500 border-0 shadow-lg shadow-sky-500/25">
@@ -120,26 +120,26 @@ async function DashboardContent() {
       {/* ─── Quick Actions ─────────────────────────────────────────────────── */}
       {ROLE_HIERARCHY[user.rol] >= 2 && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+          <Button variant="ghost" size="sm" asChild className="border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:bg-slate-100 shadow-sm gap-1.5">
             <Link href="/dashboard/tickets?tipo=proyecto">
               <FolderKanban className="h-3.5 w-3.5" />
               Nuevo Proyecto
             </Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+          <Button variant="ghost" size="sm" asChild className="border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:bg-slate-100 shadow-sm gap-1.5">
             <Link href="/dashboard/pipeline">
               <Kanban className="h-3.5 w-3.5" />
               Ver Pipeline
             </Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+          <Button variant="ghost" size="sm" asChild className="border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:bg-slate-100 shadow-sm gap-1.5">
             <Link href="/dashboard/clientes">
               <Building2 className="h-3.5 w-3.5" />
               Clientes
             </Link>
           </Button>
           {canViewPayments && (
-            <Button variant="ghost" size="sm" asChild className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5">
+            <Button variant="ghost" size="sm" asChild className="border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:bg-slate-100 shadow-sm gap-1.5">
               <Link href="/dashboard/pagos/cuadro">
                 <TableProperties className="h-3.5 w-3.5" />
                 Cuadro de Pagos
@@ -220,7 +220,7 @@ async function DashboardContent() {
               <TrendingUp className="h-4 w-4 text-blue-400" />
               <CardTitle className="text-base">Tickets por Mes</CardTitle>
             </div>
-            <p className="text-xs text-white/40">Últimos 6 meses</p>
+            <p className="text-xs text-slate-500">Últimos 6 meses</p>
           </CardHeader>
           <CardContent>
             {stats.ticketsPorMes.length > 0 ? (
@@ -237,7 +237,7 @@ async function DashboardContent() {
               <Activity className="h-4 w-4 text-purple-400" />
               <CardTitle className="text-base">Distribución por Estado</CardTitle>
             </div>
-            <p className="text-xs text-white/40">Todos los tickets</p>
+            <p className="text-xs text-slate-500">Todos los tickets</p>
           </CardHeader>
           <CardContent>
             <StatusDistributionChart data={stats.ticketsPorEstado} />
@@ -254,7 +254,7 @@ async function DashboardContent() {
                 <Users className="h-4 w-4 text-green-400" />
                 <CardTitle className="text-base">Rendimiento de Técnicos</CardTitle>
               </div>
-              <p className="text-xs text-white/40">Completados vs activos</p>
+              <p className="text-xs text-slate-500">Completados vs activos</p>
             </CardHeader>
             <CardContent>
               <TechnicianPerformanceChart data={stats.technicianKPIs} />
@@ -268,23 +268,23 @@ async function DashboardContent() {
             <CardContent className="space-y-3">
               {canViewPayments ? (
                 <>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200">
                     <div>
-                      <p className="text-xs text-white/50">Ingreso Total</p>
-                      <p className="text-lg font-bold text-white">{formatCurrency(stats.ingresoTotal)}</p>
+                      <p className="text-xs text-slate-500">Ingreso Total</p>
+                      <p className="text-lg font-bold text-slate-800">{formatCurrency(stats.ingresoTotal)}</p>
                     </div>
                     <DollarSign className="h-8 w-8 text-green-400/50" />
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200">
                     <div>
-                      <p className="text-xs text-white/50">Comisiones Pendientes</p>
+                      <p className="text-xs text-slate-500">Comisiones Pendientes</p>
                       <p className="text-lg font-bold text-yellow-400">{formatCurrency(stats.ingresoPendiente)}</p>
                     </div>
                     <Clock className="h-8 w-8 text-yellow-400/50" />
                   </div>
                 </>
               ) : (
-                <div className="flex h-[200px] items-center justify-center text-white/30 text-sm text-center px-4">
+                <div className="flex h-[200px] items-center justify-center text-slate-400 text-sm text-center px-4">
                   Métricas de rendimiento disponibles para coordinadores y superiores
                 </div>
               )}
@@ -311,16 +311,16 @@ async function DashboardContent() {
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base">Pipeline de Tickets</CardTitle>
-              <p className="text-xs text-white/40 mt-0.5">Vista de flujo por estado</p>
+              <p className="text-xs text-slate-500 mt-0.5">Vista de flujo por estado</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" asChild className="text-white/50 hover:text-white text-xs border border-white/10">
+              <Button variant="ghost" size="sm" asChild className="text-slate-500 hover:text-slate-800 text-xs border border-slate-200">
                 <Link href="/dashboard/pipeline">
                   <Kanban className="h-3.5 w-3.5 mr-1.5" />
                   Pipeline completo
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" asChild className="text-white/50 hover:text-white text-xs border border-white/10">
+              <Button variant="ghost" size="sm" asChild className="text-slate-500 hover:text-slate-800 text-xs border border-slate-200">
                 <Link href="/dashboard/tickets">Ver lista</Link>
               </Button>
             </div>
@@ -340,13 +340,13 @@ export default async function DashboardPage() {
       <Suspense
         fallback={
           <div className="space-y-6">
-            <div className="h-16 w-64 bg-white/5 rounded-2xl animate-pulse" />
+            <div className="h-16 w-64 bg-white rounded-2xl animate-pulse" />
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
               {[...Array(4)].map((_, i) => <KpiSkeleton key={i} />)}
             </div>
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 h-[320px] animate-pulse" />
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-6 h-[320px] animate-pulse" />
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 h-[320px] animate-pulse" />
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 h-[320px] animate-pulse" />
             </div>
           </div>
         }

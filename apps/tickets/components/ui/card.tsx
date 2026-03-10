@@ -10,25 +10,24 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-2xl transition-all duration-300",
+      "rounded-[1.25rem] transition-all duration-300",
       variant === "glass" && [
-        "border border-white/[0.18]",
-        "bg-gradient-to-br from-white/[0.19] to-white/[0.10]",
-        "backdrop-blur-[20px] saturate-[1.4]",
-        "shadow-[0_8px_32px_rgba(21,57,120,0.12)]",
-        "hover:translate-y-[-4px]",
-        "hover:shadow-[0_20px_60px_rgba(21,57,120,0.24),0_0_0_1px_rgba(158,190,255,0.20)]",
-        "hover:border-[rgba(107,147,247,0.15)]",
-        "hover:bg-gradient-to-br hover:from-white/[0.06] hover:to-white/[0.02]",
+        "border border-white/40",
+        "bg-white/70 backdrop-blur-xl",
+        "shadow-[0_2px_10px_rgba(0,0,0,0.03)]",
+        "hover:shadow-[0_8px_30px_rgba(14,47,111,0.06)]",
+        "hover:-translate-y-0.5",
+        "hover:bg-white/90 focus-within:bg-white/90",
       ],
       variant === "dark" && [
-        "border border-white/[0.18]",
-        "bg-gradient-to-br from-white/[0.19] to-white/[0.10]",
-        "backdrop-blur-[28px] saturate-[1.7]",
+        "border border-slate-800",
+        "bg-gradient-to-br from-slate-900 to-slate-950",
+        "backdrop-blur-[28px]",
+        "text-white"
       ],
       variant === "default" && [
-        "border border-white/10",
-        "bg-white/5",
+        "border border-slate-200",
+        "bg-white shadow-sm",
       ],
       className
     )}
@@ -56,7 +55,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "font-heading text-xl font-semibold leading-none tracking-tight text-white",
+      "font-heading text-xl font-semibold leading-none tracking-tight text-slate-800",
       className
     )}
     {...props}
@@ -70,7 +69,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-white/60", className)}
+    className={cn("text-sm text-slate-500", className)}
     {...props}
   />
 ))

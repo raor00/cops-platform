@@ -503,3 +503,130 @@ CREATE POLICY "Technicians manage own inspections" ON public.inspecciones
 -- Política de Storage recomendada:
 -- ticket-fotos: autenticados pueden subir, solo dueño o gerente+ puede eliminar
 -- ─────────────────────────────────────────────────────────────────────────────
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- EXTENSIONES v3 - MÓDULO DE PROGRAMAR MANTENIMIENTO
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLA: agencias (Agencias del banco BFC)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.agencias (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  region VARCHAR(100) NOT NULL CHECK (region IN ('Metropolitana centro oeste', 'Metropolitana sur', 'Metropolitana este', 'Region los llanos', 'Oriente', 'Occidente', 'Centro los llanos', 'Centro occidente', 'Region centro')),
+  direccion TEXT,
+  contacto VARCHAR(255),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLA: rutinas_mantenimiento (Ciclos trimestrales de mantenimiento)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.rutinas_mantenimiento (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  titulo VARCHAR(255) NOT NULL,
+  trimestre SMALLINT NOT NULL CHECK (trimestre BETWEEN 1 AND 4),
+  anio SMALLINT NOT NULL,
+  estado VARCHAR(20) NOT NULL DEFAULT 'borrador' CHECK (estado IN ('borrador', 'programada', 'en_curso', 'finalizada')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLA: visitas_mantenimiento (Visitas planificadas por agencia)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.visitas_mantenimiento (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  rutina_id UUID NOT NULL REFERENCES public.rutinas_mantenimiento(id) ON DELETE CASCADE,
+  agencia_id INTEGER NOT NULL REFERENCES public.agencias(id),
+  tecnico_id UUID REFERENCES public.users(id),
+  fecha_programada DATE,
+  fecha_realizada TIMESTAMPTZ,
+  estado VARCHAR(20) NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_camino', 'en_proceso', 'completada', 'cancelada')),
+  equipos_asignados JSONB DEFAULT '[]',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_visitas_rutina ON public.visitas_mantenimiento(rutina_id);
+CREATE INDEX IF NOT EXISTS idx_visitas_tecnico ON public.visitas_mantenimiento(tecnico_id);
+CREATE INDEX IF NOT EXISTS idx_visitas_agencia ON public.visitas_mantenimiento(agencia_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLA: bitacora_visita (Registro de ejecución del mantenimiento)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.bitacora_visita (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  visita_id UUID NOT NULL REFERENCES public.visitas_mantenimiento(id) ON DELETE CASCADE,
+  log TEXT NOT NULL,
+  fotos JSONB DEFAULT '[]',
+  repuestos_usados JSONB DEFAULT '[]',
+  repuestos_devueltos JSONB DEFAULT '[]',
+  repuestos_pendientes JSONB DEFAULT '[]',
+  creado_por UUID REFERENCES public.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_bitacora_visita ON public.bitacora_visita(visita_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TABLA: viaticos (Gestión de viáticos de visitas)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.viaticos (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  visita_id UUID REFERENCES public.visitas_mantenimiento(id) ON DELETE CASCADE,
+  tecnico_id UUID NOT NULL REFERENCES public.users(id),
+  rutina_id UUID REFERENCES public.rutinas_mantenimiento(id),
+  monto DECIMAL(10,2) NOT NULL,
+  detalle TEXT,
+  estado VARCHAR(20) NOT NULL DEFAULT 'planeado' CHECK (estado IN ('planeado', 'enviado', 'aprobado', 'rechazado')),
+  fecha_envio TIMESTAMPTZ,
+  fecha_aprobacion TIMESTAMPTZ,
+  aprobado_por UUID REFERENCES public.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_viaticos_rutina ON public.viaticos(rutina_id);
+CREATE INDEX IF NOT EXISTS idx_viaticos_tecnico ON public.viaticos(tecnico_id);
+
+-- Triggers for updated_at
+DROP TRIGGER IF EXISTS update_agencias_updated_at ON public.agencias;
+CREATE TRIGGER update_agencias_updated_at BEFORE UPDATE ON public.agencias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_rutinas_updated_at ON public.rutinas_mantenimiento;
+CREATE TRIGGER update_rutinas_updated_at BEFORE UPDATE ON public.rutinas_mantenimiento FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_visitas_updated_at ON public.visitas_mantenimiento;
+CREATE TRIGGER update_visitas_updated_at BEFORE UPDATE ON public.visitas_mantenimiento FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_bitacora_updated_at ON public.bitacora_visita;
+CREATE TRIGGER update_bitacora_updated_at BEFORE UPDATE ON public.bitacora_visita FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_viaticos_updated_at ON public.viaticos;
+CREATE TRIGGER update_viaticos_updated_at BEFORE UPDATE ON public.viaticos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS Mantenimiento
+ALTER TABLE public.agencias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rutinas_mantenimiento ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.visitas_mantenimiento ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bitacora_visita ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.viaticos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Agencias viewable by all users" ON public.agencias FOR SELECT USING (true);
+CREATE POLICY "Managers manage agencias" ON public.agencias FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND nivel_jerarquico >= 3));
+
+CREATE POLICY "Rutinas viewable by all users" ON public.rutinas_mantenimiento FOR SELECT USING (true);
+CREATE POLICY "Coordinators manage rutinas" ON public.rutinas_mantenimiento FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND nivel_jerarquico >= 2));
+
+CREATE POLICY "Visitas viewable by all users" ON public.visitas_mantenimiento FOR SELECT USING (true);
+CREATE POLICY "Coordinators manage visitas" ON public.visitas_mantenimiento FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND nivel_jerarquico >= 2));
+CREATE POLICY "Technicians update own visitas" ON public.visitas_mantenimiento FOR UPDATE USING (tecnico_id = auth.uid());
+
+CREATE POLICY "Bitacora viewable by related users" ON public.bitacora_visita FOR SELECT USING (true);
+CREATE POLICY "Technicians create bitacoras" ON public.bitacora_visita FOR INSERT WITH CHECK (creado_por = auth.uid());
+CREATE POLICY "Technicians update own bitacoras" ON public.bitacora_visita FOR UPDATE USING (creado_por = auth.uid());
+CREATE POLICY "Coordinators manage bitacoras" ON public.bitacora_visita FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND nivel_jerarquico >= 2));
+
+CREATE POLICY "Viaticos viewable by coordinators and own technician" ON public.viaticos FOR SELECT USING (tecnico_id = auth.uid() OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND nivel_jerarquico >= 2));
+CREATE POLICY "Coordinators manage viaticos" ON public.viaticos FOR ALL USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND nivel_jerarquico >= 2));

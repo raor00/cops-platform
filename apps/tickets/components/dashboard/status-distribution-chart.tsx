@@ -31,8 +31,8 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
     <div className="rounded-xl border border-white/20 bg-[#0e2f6f]/95 backdrop-blur-xl p-3 shadow-xl">
       <div className="flex items-center gap-2 text-sm">
         <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.payload.fill }} />
-        <span className="text-white/70">{item.name}:</span>
-        <span className="font-semibold text-white">{item.value}</span>
+        <span className="text-slate-600">{item.name}:</span>
+        <span className="font-semibold text-slate-800">{item.value}</span>
       </div>
     </div>
   )
@@ -51,7 +51,7 @@ export function StatusDistributionChart({ data }: StatusDistributionChartProps) 
 
   if (total === 0) {
     return (
-      <div className="flex h-[220px] items-center justify-center text-white/40 text-sm">
+      <div className="flex h-[220px] items-center justify-center text-slate-500 text-sm">
         Sin datos para mostrar
       </div>
     )
@@ -87,8 +87,8 @@ export function StatusDistributionChart({ data }: StatusDistributionChartProps) 
       {/* Center label */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="text-center">
-          <p className="text-2xl font-bold text-white">{total}</p>
-          <p className="text-xs text-white/50">total</p>
+          <p className="text-2xl font-bold text-slate-800">{total}</p>
+          <p className="text-xs text-slate-500">total</p>
         </div>
       </div>
     </div>

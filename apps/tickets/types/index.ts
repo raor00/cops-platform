@@ -500,7 +500,7 @@ export function canChangeTicketStatus(
   if (!validTransitions.includes(newStatus)) {
     return false
   }
-  
+
   // Técnico solo puede cambiar estado de sus propios tickets
   // Gerente+ puede cambiar cualquier estado
   return role === 'tecnico' || hasMinimumLevel(role, 3)
@@ -917,6 +917,83 @@ export interface PaymentScheduleReport {
   tecnicos: TechnicianPaymentSchedule[]
   total_servicio: number
   total_comision: number
-  total_pagado: number
   total_pendiente: number
+}
+
+// ─── Mantenimiento (Sprint 8) ────────────────────────────────────────────────
+
+export type Region = 'Metropolitana centro oeste' | 'Metropolitana sur' | 'Metropolitana este' | 'Region los llanos' | 'Oriente' | 'Occidente' | 'Centro los llanos' | 'Centro occidente' | 'Region centro'
+
+export interface Agencia {
+  id: number
+  nombre: string
+  region: Region
+  direccion: string | null
+  contacto: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type RutinaEstado = 'borrador' | 'programada' | 'en_curso' | 'finalizada'
+
+export interface RutinaMantenimiento {
+  id: string
+  titulo: string
+  trimestre: number
+  anio: number
+  estado: RutinaEstado
+  created_at: string
+  updated_at: string
+}
+
+export type VisitaEstado = 'pendiente' | 'en_camino' | 'en_proceso' | 'completada' | 'cancelada'
+
+export interface VisitaMantenimiento {
+  id: string
+  rutina_id: string
+  agencia_id: number
+  tecnico_id: string | null
+  fecha_programada: string | null
+  fecha_realizada: string | null
+  estado: VisitaEstado
+  equipos_asignados: string[]
+  created_at: string
+  updated_at: string
+  agencia?: Agencia
+  tecnico?: User
+  rutina?: RutinaMantenimiento
+}
+
+export interface BitacoraVisita {
+  id: string
+  visita_id: string
+  log: string
+  fotos: string[]
+  repuestos_usados: string[]
+  repuestos_devueltos: string[]
+  repuestos_pendientes: string[]
+  creado_por: string | null
+  created_at: string
+  updated_at: string
+  creador?: User
+}
+
+export type ViaticoEstado = 'planeado' | 'enviado' | 'aprobado' | 'rechazado'
+
+export interface Viatico {
+  id: string
+  visita_id: string | null
+  tecnico_id: string
+  rutina_id: string | null
+  monto: number
+  detalle: string | null
+  estado: ViaticoEstado
+  fecha_envio: string | null
+  fecha_aprobacion: string | null
+  aprobado_por: string | null
+  created_at: string
+  updated_at: string
+  visita?: VisitaMantenimiento
+  tecnico?: User
+  aprobador?: User
 }

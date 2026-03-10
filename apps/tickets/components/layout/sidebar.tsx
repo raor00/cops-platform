@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  CalendarDays,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -54,6 +55,13 @@ const PRIMARY_NAV = [
     href: "/dashboard/tickets?tipo=proyecto",
     matchHref: "/dashboard/tickets",
     icon: FolderKanban,
+    permission: null,
+  },
+  {
+    name: "Mantenimientos",
+    href: "/dashboard/mantenimiento",
+    matchHref: "/dashboard/mantenimiento",
+    icon: CalendarDays,
     permission: null,
   },
   {
@@ -132,8 +140,8 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
         className={cn(
           "sidebar-nav-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
           active
-            ? "active bg-sky-500/15 text-white border border-sky-500/30 shadow-[0_0_20px_rgba(14,165,233,0.12)]"
-            : "text-white/60 hover:bg-white/10 hover:text-white"
+            ? "active bg-sky-500/15 text-white border border-sky-500/30"
+            : "text-white/60 hover:bg-white/5 hover:text-white"
         )}
       >
         <item.icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-sky-400" : "")} />
@@ -150,7 +158,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
       <div className="flex items-center gap-2">
         <div className="h-px flex-1 bg-white/10" />
         {!collapsed && label && (
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/25 px-1 shrink-0">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-white/50 px-1 shrink-0">
             {label}
           </span>
         )}
@@ -171,7 +179,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
       )}
     >
       {/* Glass background */}
-      <div className="absolute inset-0 border-r border-white/8 bg-gradient-to-b from-[#0d1117]/98 to-[#111827]/99 backdrop-blur-2xl" />
+      <div className="absolute inset-0 border-r border-white/10 bg-[#0e1726]" />
 
       {/* Content */}
       <div className="relative flex h-full flex-col">
@@ -180,7 +188,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
         <div className="flex h-16 items-center justify-between px-4 border-b border-white/10">
           {!collapsed ? (
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/15 group-hover:border-sky-400/30 transition-colors">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/10 group-hover:border-sky-400/30 transition-colors">
                 <Zap className="h-5 w-5 text-sky-400" />
               </div>
               <div>
@@ -189,14 +197,14 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
               </div>
             </Link>
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/15 mx-auto">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/20 mx-auto">
               <Zap className="h-5 w-5 text-sky-400" />
             </div>
           )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto">
+        <nav className="flex-1 space-y-0.5 px-3 py-4 overflow-y-auto sidebar-scroll-hide">
           {/* Primary nav */}
           {PRIMARY_NAV.map((item) => (
             <NavLink key={item.href} item={item} />
@@ -239,7 +247,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
                 <p className="text-sm font-semibold text-white truncate">
                   {user.nombre} {user.apellido}
                 </p>
-                <p className="text-xs text-white/40 truncate">{ROLE_LABELS[user.rol]}</p>
+                <p className="text-xs text-white/50 truncate">{ROLE_LABELS[user.rol]}</p>
               </div>
             )}
           </div>

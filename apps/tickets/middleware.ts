@@ -40,7 +40,23 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // Sin sesión → redirigir al panel web
+  // Verificar si estamos en modo local (variables de entorno no de Vercel)
+  const isLocalDev = process.env.NODE_ENV === 'development'
+
+  if (isLocalDev) {
+    // Si estamos local, vamos al dashboard si no tiene sesion (simulando una cuenta demo)
+    const response = NextResponse.redirect(new URL("/dashboard", request.url))
+    response.cookies.set(DEMO_SESSION_COOKIE, "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 12,
+    })
+    return response
+  }
+
+  // Sin sesión web app → redirigir al panel web de produccion
   return NextResponse.redirect(WEB_APP_URL + "/panel")
 }
 
