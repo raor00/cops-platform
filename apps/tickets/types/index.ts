@@ -923,13 +923,16 @@ export interface PaymentScheduleReport {
 // ─── Mantenimiento (Sprint 8) ────────────────────────────────────────────────
 
 export type Region = 'Metropolitana centro oeste' | 'Metropolitana sur' | 'Metropolitana este' | 'Region los llanos' | 'Oriente' | 'Occidente' | 'Centro los llanos' | 'Centro occidente' | 'Region centro'
+export type EstadoOperativoAgencia = 'activa' | 'mantenimiento' | 'inactiva'
 
 export interface Agencia {
   id: number
   nombre: string
   region: Region
+  ciudad: string
   direccion: string | null
   contacto: string | null
+  estado_operativo: EstadoOperativoAgencia
   created_at: string
   updated_at: string
 }
@@ -941,9 +944,16 @@ export interface RutinaMantenimiento {
   titulo: string
   trimestre: number
   anio: number
+  fecha_inicio: string | null
+  fecha_fin: string | null
+  regiones: Region[]
+  equipos_objetivo: string[]
+  presupuesto_viaticos: number | null
+  creado_por: string | null
   estado: RutinaEstado
   created_at: string
   updated_at: string
+  creador?: User
 }
 
 export type VisitaEstado = 'pendiente' | 'en_camino' | 'en_proceso' | 'completada' | 'cancelada'
@@ -957,6 +967,7 @@ export interface VisitaMantenimiento {
   fecha_realizada: string | null
   estado: VisitaEstado
   equipos_asignados: string[]
+  observaciones_programacion: string | null
   created_at: string
   updated_at: string
   agencia?: Agencia
@@ -968,6 +979,11 @@ export interface BitacoraVisita {
   id: string
   visita_id: string
   log: string
+  checklist: Array<{
+    item: string
+    estado: 'pendiente' | 'ok' | 'observacion'
+    observacion?: string | null
+  }>
   fotos: string[]
   repuestos_usados: string[]
   repuestos_devueltos: string[]
@@ -985,8 +1001,10 @@ export interface Viatico {
   visita_id: string | null
   tecnico_id: string
   rutina_id: string | null
+  ruta: string | null
   monto: number
   detalle: string | null
+  observaciones: string | null
   estado: ViaticoEstado
   fecha_envio: string | null
   fecha_aprobacion: string | null
@@ -996,4 +1014,110 @@ export interface Viatico {
   visita?: VisitaMantenimiento
   tecnico?: User
   aprobador?: User
+}
+
+export interface AgenciaCreateInput {
+  nombre: string
+  region: Region
+  ciudad: string
+  direccion?: string
+  contacto?: string
+  estado_operativo?: EstadoOperativoAgencia
+}
+
+export interface AgenciaUpdateInput extends Partial<AgenciaCreateInput> {}
+
+export interface RutinaCreateInput {
+  titulo: string
+  trimestre: number
+  anio: number
+  fecha_inicio: string
+  fecha_fin: string
+  regiones: Region[]
+  agencia_ids?: number[]
+  equipos_objetivo: string[]
+  presupuesto_viaticos?: number
+  estado?: RutinaEstado
+}
+
+export interface RutinaUpdateEstadoInput {
+  estado: RutinaEstado
+}
+
+export interface AssignVisitaInput {
+  visita_ids: string[]
+  tecnico_id: string
+  fecha_programada: string
+  observaciones_programacion?: string
+}
+
+export interface VisitaEstadoUpdateInput {
+  estado: VisitaEstado
+}
+
+export interface BitacoraVisitaInput {
+  visita_id: string
+  log: string
+  checklist: BitacoraVisita['checklist']
+  fotos?: string[]
+  repuestos_usados?: string[]
+  repuestos_devueltos?: string[]
+  repuestos_pendientes?: string[]
+}
+
+export interface ViaticoCreateInput {
+  visita_id?: string
+  tecnico_id?: string
+  rutina_id?: string
+  ruta: string
+  monto: number
+  detalle?: string
+  observaciones?: string
+}
+
+export interface ViaticoEstadoUpdateInput {
+  estado: ViaticoEstado
+}
+
+export interface MantenimientoReportes {
+  resumen: {
+    total_rutinas: number
+    total_visitas: number
+    visitas_completadas: number
+    visitas_pendientes: number
+    agencias_atendidas: number
+    viaticos_aprobados_monto: number
+    viaticos_pendientes_monto: number
+  }
+  progreso_por_rutina: Array<{
+    rutina_id: string
+    titulo: string
+    estado: RutinaEstado
+    total_visitas: number
+    completadas: number
+    pendientes: number
+    porcentaje_avance: number
+  }>
+  visitas_por_tecnico: Array<{
+    tecnico_id: string
+    tecnico_nombre: string
+    total: number
+    completadas: number
+    en_proceso: number
+  }>
+  viaticos_por_rutina: Array<{
+    rutina_id: string
+    titulo: string
+    presupuesto: number
+    aprobado: number
+    pendiente: number
+  }>
+  ultimas_bitacoras: Array<{
+    bitacora_id: string
+    visita_id: string
+    agencia_nombre: string
+    tecnico_nombre: string
+    created_at: string
+    log: string
+  }>
 }

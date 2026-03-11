@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarDays, MapPin, ClipboardList, Wallet, Wrench } from "lucide-react"
+import type { Agencia, MantenimientoReportes, RutinaMantenimiento, Viatico, VisitaMantenimiento } from "@/types"
 
 // Subcomponents
 import { CalendarioMantenimiento } from "./components/calendario-mantenimiento"
@@ -10,13 +11,31 @@ import { MisVisitas } from "./components/mis-visitas"
 import { RutinasAdmin } from "./components/rutinas-admin"
 import { DirectorioAgencias } from "./components/directorio-agencias"
 import { ViaticosManager } from "./components/viaticos-manager"
+import { ReportesMantenimiento } from "./components/reportes-mantenimiento"
 
 interface MantenimientoTabsProps {
     userId: string
     isCoordinatorOrHigher: boolean
+    initialAgencias: Agencia[]
+    initialRutinas: RutinaMantenimiento[]
+    initialViaticos: Viatico[]
+    initialMisVisitas: VisitaMantenimiento[]
+    initialVisitas: VisitaMantenimiento[]
+    initialReportes?: MantenimientoReportes
+    initialTechnicians: Array<{ id: string; nombre: string; apellido: string }>
 }
 
-export function MantenimientoTabs({ userId, isCoordinatorOrHigher }: MantenimientoTabsProps) {
+export function MantenimientoTabs({
+    userId,
+    isCoordinatorOrHigher,
+    initialAgencias,
+    initialRutinas,
+    initialViaticos,
+    initialMisVisitas,
+    initialVisitas,
+    initialReportes,
+    initialTechnicians,
+}: MantenimientoTabsProps) {
     const [activeTab, setActiveTab] = useState(isCoordinatorOrHigher ? "calendario" : "mis-visitas")
 
     return (
@@ -45,6 +64,10 @@ export function MantenimientoTabs({ userId, isCoordinatorOrHigher }: Mantenimien
                             <ClipboardList className="mr-2 h-4 w-4" />
                             Gestión de Rutinas
                         </TabsTrigger>
+                        <TabsTrigger value="reportes" className="data-[state=active]:bg-sky-50 data-[state=active]:text-sky-700 data-[state=active]:shadow-none">
+                            <ClipboardList className="mr-2 h-4 w-4" />
+                            Informes y Reportes
+                        </TabsTrigger>
                         <TabsTrigger value="agencias" className="data-[state=active]:bg-sky-50 data-[state=active]:text-sky-700 data-[state=active]:shadow-none">
                             <MapPin className="mr-2 h-4 w-4" />
                             Agencias BFC
@@ -56,26 +79,39 @@ export function MantenimientoTabs({ userId, isCoordinatorOrHigher }: Mantenimien
             <div className="flex-1 mt-4 overflow-y-auto pb-6">
                 {isCoordinatorOrHigher && (
                     <TabsContent value="calendario" className="h-full m-0">
-                        <CalendarioMantenimiento />
+                        <CalendarioMantenimiento
+                            initialVisitas={initialVisitas}
+                            rutinas={initialRutinas}
+                            technicians={initialTechnicians}
+                        />
                     </TabsContent>
                 )}
 
                 <TabsContent value="mis-visitas" className="h-full m-0">
-                    <MisVisitas userId={userId} />
+                    <MisVisitas userId={userId} initialVisitas={initialMisVisitas} />
                 </TabsContent>
 
                 <TabsContent value="viaticos" className="h-full m-0">
-                    <ViaticosManager userId={userId} isCoordinator={isCoordinatorOrHigher} />
+                    <ViaticosManager
+                        userId={userId}
+                        isCoordinator={isCoordinatorOrHigher}
+                        initialViaticos={initialViaticos}
+                        initialVisitas={isCoordinatorOrHigher ? initialVisitas : initialMisVisitas}
+                    />
                 </TabsContent>
 
                 {isCoordinatorOrHigher && (
                     <>
                         <TabsContent value="rutinas" className="h-full m-0">
-                            <RutinasAdmin />
+                            <RutinasAdmin initialRutinas={initialRutinas} initialAgencias={initialAgencias} />
+                        </TabsContent>
+
+                        <TabsContent value="reportes" className="h-full m-0">
+                            <ReportesMantenimiento initialReportes={initialReportes} />
                         </TabsContent>
 
                         <TabsContent value="agencias" className="h-full m-0">
-                            <DirectorioAgencias />
+                            <DirectorioAgencias initialAgencias={initialAgencias} />
                         </TabsContent>
                     </>
                 )}

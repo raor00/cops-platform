@@ -8,9 +8,11 @@ import { ConfigEditDialog } from "./config-edit-dialog"
 import type { SystemConfig } from "@/types"
 import type { LucideIcon } from "lucide-react"
 
+import type { ReactNode } from "react"
+
 interface ConfigSectionProps {
   title: string
-  icon: LucideIcon
+  icon: ReactNode
   items: SystemConfig[]
   canEdit: boolean
 }
@@ -18,44 +20,44 @@ interface ConfigSectionProps {
 function formatValue(config: SystemConfig): React.ReactNode {
   if (config.tipo_dato === "boolean") {
     return config.valor === "true" ? (
-      <span className="flex items-center gap-1.5 text-green-400 text-sm">
+      <span className="flex items-center gap-1.5 text-green-600 text-sm">
         <ToggleRight className="h-4 w-4" />
         Activado
       </span>
     ) : (
-      <span className="flex items-center gap-1.5 text-white/40 text-sm">
+      <span className="flex items-center gap-1.5 text-slate-400 text-sm">
         <ToggleLeft className="h-4 w-4" />
         Desactivado
       </span>
     )
   }
   if (!config.valor) {
-    return <span className="text-white/30 text-sm italic">Sin configurar</span>
+    return <span className="text-slate-400 text-sm italic">Sin configurar</span>
   }
-  return <span className="text-white/80 text-sm font-mono">{config.valor}</span>
+  return <span className="text-slate-700 text-sm font-mono">{config.valor}</span>
 }
 
-export function ConfigSection({ title, icon: Icon, items, canEdit }: ConfigSectionProps) {
+export function ConfigSection({ title, icon, items, canEdit }: ConfigSectionProps) {
   const [editingConfig, setEditingConfig] = useState<SystemConfig | null>(null)
 
   return (
     <>
       <Card variant="glass" className="overflow-hidden">
-        <CardHeader className="pb-0 px-6 pt-5 border-b border-white/10">
-          <CardTitle className="text-base flex items-center gap-2.5 pb-4">
-            <Icon className="h-4 w-4 text-blue-400" />
+        <CardHeader className="pb-0 px-6 pt-5 border-b border-slate-200">
+          <CardTitle className="text-base text-slate-800 flex items-center gap-2.5 pb-4">
+            {icon}
             {title}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-slate-100">
             {items.map((item) => (
-              <div key={item.clave} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-white/[0.02] transition-colors">
+              <div key={item.clave} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-white/90 truncate">
+                  <p className="text-sm font-medium text-slate-800 truncate">
                     {item.descripcion ?? item.clave}
                   </p>
-                  <p className="text-xs text-white/30 font-mono mt-0.5">{item.clave}</p>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">{item.clave}</p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">{formatValue(item)}</div>
@@ -63,7 +65,7 @@ export function ConfigSection({ title, icon: Icon, items, canEdit }: ConfigSecti
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-8 w-8 p-0 text-white/40 hover:text-white hover:bg-white/10"
+                      className="h-8 w-8 p-0 text-slate-400 hover:text-slate-800 hover:bg-slate-200"
                       onClick={() => setEditingConfig(item)}
                     >
                       <Pencil className="h-3.5 w-3.5" />

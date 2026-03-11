@@ -3,6 +3,15 @@ import { redirect } from "next/navigation"
 import { ROLE_HIERARCHY } from "@/types"
 import { MantenimientoTabs } from "./mantenimiento-tabs"
 import { getCurrentUser } from "@/lib/actions/auth"
+import {
+    getAgencias,
+    getMaintenanceTechnicians,
+    getMantenimientoReportes,
+    getMisVisitas,
+    getRutinas,
+    getViaticos,
+    getVisitasMantenimiento,
+} from "@/lib/actions/mantenimiento"
 
 export const metadata = {
     title: "Mantenimientos | COPS Tickets",
@@ -17,6 +26,15 @@ export default async function MantenimientoPage() {
     }
 
     const isCoordinatorOrHigher = ROLE_HIERARCHY[user.rol] >= 2
+    const [agenciasResult, rutinasResult, viaticosResult, misVisitasResult, visitasResult, reportesResult, techniciansResult] = await Promise.all([
+        isCoordinatorOrHigher ? getAgencias() : Promise.resolve({ success: true, data: [] }),
+        isCoordinatorOrHigher ? getRutinas() : Promise.resolve({ success: true, data: [] }),
+        getViaticos(),
+        getMisVisitas(),
+        isCoordinatorOrHigher ? getVisitasMantenimiento() : Promise.resolve({ success: true, data: [] }),
+        isCoordinatorOrHigher ? getMantenimientoReportes() : Promise.resolve({ success: true, data: undefined }),
+        isCoordinatorOrHigher ? getMaintenanceTechnicians() : Promise.resolve({ success: true, data: [] }),
+    ])
 
     return (
         <div className="flex h-[calc(100vh-4rem)] flex-col gap-6 p-4 md:p-6 lg:p-8">
@@ -36,6 +54,13 @@ export default async function MantenimientoPage() {
                     <MantenimientoTabs
                         userId={user.id}
                         isCoordinatorOrHigher={isCoordinatorOrHigher}
+                        initialAgencias={agenciasResult.data ?? []}
+                        initialRutinas={rutinasResult.data ?? []}
+                        initialViaticos={viaticosResult.data ?? []}
+                        initialMisVisitas={misVisitasResult.data ?? []}
+                        initialVisitas={visitasResult.data ?? []}
+                        initialReportes={reportesResult.data}
+                        initialTechnicians={techniciansResult.data ?? []}
                     />
                 </Suspense>
             </div>

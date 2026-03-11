@@ -17,25 +17,25 @@ const CONFIG_GROUPS: {
   icon: LucideIcon
   prefixes: string[]
 }[] = [
-  {
-    key: "empresa",
-    title: "Información de la Empresa",
-    icon: Building2,
-    prefixes: ["empresa_", "logo_"],
-  },
-  {
-    key: "ticket",
-    title: "Parámetros de Tickets y SLA",
-    icon: Clock,
-    prefixes: ["ticket_", "comision_", "inspeccion_"],
-  },
-  {
-    key: "notif",
-    title: "Notificaciones",
-    icon: Bell,
-    prefixes: ["notif_"],
-  },
-]
+    {
+      key: "empresa",
+      title: "Información de la Empresa",
+      icon: Building2,
+      prefixes: ["empresa_", "logo_"],
+    },
+    {
+      key: "ticket",
+      title: "Parámetros de Tickets y SLA",
+      icon: Clock,
+      prefixes: ["ticket_", "comision_", "inspeccion_"],
+    },
+    {
+      key: "notif",
+      title: "Notificaciones",
+      icon: Bell,
+      prefixes: ["notif_"],
+    },
+  ]
 
 export default async function ConfiguracionPage() {
   const user = await getCurrentUser()
@@ -79,7 +79,7 @@ export default async function ConfiguracionPage() {
             <ConfigSection
               key={group.key}
               title={group.title}
-              icon={group.icon}
+              icon={<group.icon className="h-4 w-4 text-blue-400" />}
               items={groupItems}
               canEdit={canEdit}
             />

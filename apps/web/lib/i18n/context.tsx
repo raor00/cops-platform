@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  startTransition,
   type ReactNode,
 } from "react";
 import { translations, type Locale, type Translations } from "./translations";
@@ -43,26 +44,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   function setLocale(newLocale: Locale) {
-    // Brief opacity fade to mask the re-render (100ms out + locale update + 120ms back in)
-    const html = document.documentElement;
-    html.style.transition = "opacity 100ms ease";
-    html.style.opacity = "0";
+    if (newLocale === locale) return;
 
-    setTimeout(() => {
+    document.documentElement.lang = newLocale;
+
+    startTransition(() => {
       setLocaleState(newLocale);
-      html.lang = newLocale;
-      try {
-        localStorage.setItem(STORAGE_KEY, newLocale);
-      } catch {
-        // storage not available
-      }
-      html.style.opacity = "1";
-      // Clean up inline style after fade completes
-      setTimeout(() => {
-        html.style.transition = "";
-        html.style.opacity = "";
-      }, 120);
-    }, 100);
+    });
+
+    try {
+      localStorage.setItem(STORAGE_KEY, newLocale);
+    } catch {
+      // storage not available
+    }
   }
 
   // Memoized so `t` reference only changes when locale changes, not on every provider render

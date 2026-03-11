@@ -6,7 +6,13 @@ import {
   generateTicketNumber,
 } from "@/types"
 import type {
+  Agencia,
+  AgenciaCreateInput,
+  AgenciaUpdateInput,
   ActivityFeedItem,
+  AssignVisitaInput,
+  BitacoraVisita,
+  BitacoraVisitaInput,
   ChangeType,
   Cliente,
   ClienteCreateInput,
@@ -16,8 +22,13 @@ import type {
   FaseEstado,
   Inspeccion,
   InspeccionCreateInput,
+  MantenimientoReportes,
   PaginatedResponse,
   PaymentMethod,
+  Region,
+  RutinaCreateInput,
+  RutinaEstado,
+  RutinaMantenimiento,
   SesionTrabajo,
   SystemConfig,
   TechnicianKPI,
@@ -33,6 +44,12 @@ import type {
   UpdateLog,
   User,
   UserRole,
+  Viatico,
+  ViaticoCreateInput,
+  ViaticoEstado,
+  VisitaEstado,
+  VisitaEstadoUpdateInput,
+  VisitaMantenimiento,
 } from "@/types"
 
 const now = Date.now()
@@ -1292,4 +1309,618 @@ export function searchDemoClientes(query: string): Cliente[] {
       )
       .slice(0, 10)
   )
+}
+
+// ─── Mantenimiento DB (Sprint 8) ───────────────────────────────────────────────
+
+const DEFAULT_EQUIPOS_OBJETIVO = [
+  "CCTV / DVRs",
+  "Sistemas de Alarma",
+  "Bóvedas y Esclusas",
+  "Cercos Eléctricos",
+]
+
+let demoAgencias: Agencia[] = [
+  {
+    id: 1,
+    nombre: "Agencia Principal Torre BFC",
+    region: "Metropolitana este",
+    ciudad: "Caracas",
+    direccion: "Torre BFC, Av. Francisco de Miranda, Caracas",
+    contacto: "0212-5550001",
+    estado_operativo: "activa",
+    created_at: new Date(now - 120 * hour).toISOString(),
+    updated_at: new Date(now - 120 * hour).toISOString(),
+  },
+  {
+    id: 2,
+    nombre: "Agencia Chacao",
+    region: "Metropolitana este",
+    ciudad: "Caracas",
+    direccion: "Av. Libertador, Chacao",
+    contacto: "0212-5550002",
+    estado_operativo: "activa",
+    created_at: new Date(now - 118 * hour).toISOString(),
+    updated_at: new Date(now - 118 * hour).toISOString(),
+  },
+  {
+    id: 3,
+    nombre: "Agencia Coche",
+    region: "Metropolitana sur",
+    ciudad: "Caracas",
+    direccion: "Coche, Caracas",
+    contacto: "0212-5550003",
+    estado_operativo: "mantenimiento",
+    created_at: new Date(now - 116 * hour).toISOString(),
+    updated_at: new Date(now - 116 * hour).toISOString(),
+  },
+  {
+    id: 4,
+    nombre: "Agencia Valencia Centro",
+    region: "Centro occidente",
+    ciudad: "Valencia",
+    direccion: "Av. Bolívar Norte, Valencia",
+    contacto: "0241-5550004",
+    estado_operativo: "activa",
+    created_at: new Date(now - 114 * hour).toISOString(),
+    updated_at: new Date(now - 114 * hour).toISOString(),
+  },
+  {
+    id: 5,
+    nombre: "Agencia Maracay",
+    region: "Region centro",
+    ciudad: "Maracay",
+    direccion: "Centro, Maracay",
+    contacto: "0243-5550005",
+    estado_operativo: "activa",
+    created_at: new Date(now - 112 * hour).toISOString(),
+    updated_at: new Date(now - 112 * hour).toISOString(),
+  },
+  {
+    id: 6,
+    nombre: "Agencia Barcelona",
+    region: "Oriente",
+    ciudad: "Barcelona",
+    direccion: "Av. Cajigal, Barcelona",
+    contacto: "0281-5550006",
+    estado_operativo: "inactiva",
+    created_at: new Date(now - 110 * hour).toISOString(),
+    updated_at: new Date(now - 110 * hour).toISOString(),
+  },
+]
+
+let demoRutinasMantenimiento: RutinaMantenimiento[] = [
+  {
+    id: "rutina-1111-1111-1111-111111111111",
+    titulo: "Mantenimiento Trimestral Q1 2026",
+    trimestre: 1,
+    anio: 2026,
+    fecha_inicio: "2026-01-15",
+    fecha_fin: "2026-03-31",
+    regiones: ["Metropolitana este", "Centro occidente"],
+    equipos_objetivo: DEFAULT_EQUIPOS_OBJETIVO.slice(0, 3),
+    presupuesto_viaticos: 1800,
+    creado_por: "22222222-2222-2222-2222-222222222222",
+    estado: "en_curso",
+    created_at: new Date(now - 100 * hour).toISOString(),
+    updated_at: new Date(now - 10 * hour).toISOString(),
+    creador: findUser("22222222-2222-2222-2222-222222222222"),
+  },
+  {
+    id: "rutina-2222-2222-2222-222222222222",
+    titulo: "Mantenimiento Trimestral Q2 2026",
+    trimestre: 2,
+    anio: 2026,
+    fecha_inicio: "2026-04-01",
+    fecha_fin: "2026-06-30",
+    regiones: ["Metropolitana sur", "Region centro"],
+    equipos_objetivo: DEFAULT_EQUIPOS_OBJETIVO,
+    presupuesto_viaticos: 2200,
+    creado_por: "22222222-2222-2222-2222-222222222222",
+    estado: "programada",
+    created_at: new Date(now - 50 * hour).toISOString(),
+    updated_at: new Date(now - 40 * hour).toISOString(),
+    creador: findUser("22222222-2222-2222-2222-222222222222"),
+  },
+]
+
+let demoVisitasMantenimiento: VisitaMantenimiento[] = [
+  {
+    id: "visita-1111-1111-1111-111111111111",
+    rutina_id: "rutina-1111-1111-1111-111111111111",
+    agencia_id: 1,
+    tecnico_id: "33333333-3333-3333-3333-333333333333",
+    fecha_programada: "2026-03-12",
+    fecha_realizada: null,
+    estado: "en_proceso",
+    equipos_asignados: DEFAULT_EQUIPOS_OBJETIVO.slice(0, 3),
+    observaciones_programacion: "Revisión prioritaria por incidencias previas de DVR.",
+    created_at: new Date(now - 80 * hour).toISOString(),
+    updated_at: new Date(now - 3 * hour).toISOString(),
+  },
+  {
+    id: "visita-2222-2222-2222-222222222222",
+    rutina_id: "rutina-1111-1111-1111-111111111111",
+    agencia_id: 2,
+    tecnico_id: "44444444-4444-4444-4444-444444444444",
+    fecha_programada: "2026-03-14",
+    fecha_realizada: "2026-03-14T17:00:00.000Z",
+    estado: "completada",
+    equipos_asignados: DEFAULT_EQUIPOS_OBJETIVO.slice(0, 3),
+    observaciones_programacion: null,
+    created_at: new Date(now - 78 * hour).toISOString(),
+    updated_at: new Date(now - 30 * hour).toISOString(),
+  },
+  {
+    id: "visita-3333-3333-3333-333333333333",
+    rutina_id: "rutina-1111-1111-1111-111111111111",
+    agencia_id: 4,
+    tecnico_id: null,
+    fecha_programada: null,
+    fecha_realizada: null,
+    estado: "pendiente",
+    equipos_asignados: DEFAULT_EQUIPOS_OBJETIVO.slice(0, 2),
+    observaciones_programacion: null,
+    created_at: new Date(now - 76 * hour).toISOString(),
+    updated_at: new Date(now - 76 * hour).toISOString(),
+  },
+  {
+    id: "visita-4444-4444-4444-444444444444",
+    rutina_id: "rutina-2222-2222-2222-222222222222",
+    agencia_id: 3,
+    tecnico_id: null,
+    fecha_programada: null,
+    fecha_realizada: null,
+    estado: "pendiente",
+    equipos_asignados: DEFAULT_EQUIPOS_OBJETIVO,
+    observaciones_programacion: null,
+    created_at: new Date(now - 32 * hour).toISOString(),
+    updated_at: new Date(now - 32 * hour).toISOString(),
+  },
+  {
+    id: "visita-5555-5555-5555-555555555555",
+    rutina_id: "rutina-2222-2222-2222-222222222222",
+    agencia_id: 5,
+    tecnico_id: null,
+    fecha_programada: null,
+    fecha_realizada: null,
+    estado: "pendiente",
+    equipos_asignados: DEFAULT_EQUIPOS_OBJETIVO,
+    observaciones_programacion: null,
+    created_at: new Date(now - 31 * hour).toISOString(),
+    updated_at: new Date(now - 31 * hour).toISOString(),
+  },
+]
+
+let demoBitacorasVisita: BitacoraVisita[] = [
+  {
+    id: "bitacora-1111-1111-1111-111111111111",
+    visita_id: "visita-2222-2222-2222-222222222222",
+    log: "Se realizó mantenimiento preventivo completo. Se limpiaron cámaras, se validó grabación y se sustituyó batería de respaldo.",
+    checklist: [
+      { item: "CCTV / DVRs", estado: "ok", observacion: "" },
+      { item: "Sistemas de Alarma", estado: "ok", observacion: "" },
+      { item: "Bóvedas y Esclusas", estado: "observacion", observacion: "Sensor de esclusa requiere ajuste menor." },
+    ],
+    fotos: ["https://placehold.co/800x600/1e3a5f/4a90d9?text=Bitacora+Mantenimiento"],
+    repuestos_usados: ["1x Batería 12V"],
+    repuestos_devueltos: [],
+    repuestos_pendientes: ["Sensor de esclusa"],
+    creado_por: "44444444-4444-4444-4444-444444444444",
+    created_at: new Date(now - 30 * hour).toISOString(),
+    updated_at: new Date(now - 30 * hour).toISOString(),
+    creador: findUser("44444444-4444-4444-4444-444444444444"),
+  },
+]
+
+let demoViaticos: Viatico[] = [
+  {
+    id: "viatico-1111-1111-1111-111111111111",
+    visita_id: "visita-2222-2222-2222-222222222222",
+    tecnico_id: "44444444-4444-4444-4444-444444444444",
+    rutina_id: "rutina-1111-1111-1111-111111111111",
+    ruta: "Caracas - Chacao",
+    monto: 35,
+    detalle: "Traslado urbano y refrigerio",
+    observaciones: "Visita realizada en jornada extendida.",
+    estado: "aprobado",
+    fecha_envio: new Date(now - 35 * hour).toISOString(),
+    fecha_aprobacion: new Date(now - 34 * hour).toISOString(),
+    aprobado_por: "22222222-2222-2222-2222-222222222222",
+    created_at: new Date(now - 36 * hour).toISOString(),
+    updated_at: new Date(now - 34 * hour).toISOString(),
+  },
+]
+
+function enrichRutina(rutina: RutinaMantenimiento): RutinaMantenimiento {
+  return {
+    ...rutina,
+    creador: rutina.creado_por ? findUser(rutina.creado_por) : undefined,
+  }
+}
+
+function enrichVisita(visita: VisitaMantenimiento): VisitaMantenimiento {
+  return {
+    ...visita,
+    agencia: demoAgencias.find((agencia) => agencia.id === visita.agencia_id),
+    tecnico: visita.tecnico_id ? findUser(visita.tecnico_id) : undefined,
+    rutina: demoRutinasMantenimiento.find((rutina) => rutina.id === visita.rutina_id),
+  }
+}
+
+function enrichViatico(viatico: Viatico): Viatico {
+  const visita = viatico.visita_id
+    ? demoVisitasMantenimiento.find((item) => item.id === viatico.visita_id)
+    : undefined
+
+  return {
+    ...viatico,
+    visita: visita ? enrichVisita(visita) : undefined,
+    tecnico: findUser(viatico.tecnico_id),
+    aprobador: viatico.aprobado_por ? findUser(viatico.aprobado_por) : undefined,
+  }
+}
+
+function nextAgenciaId(): number {
+  return demoAgencias.reduce((max, agencia) => Math.max(max, agencia.id), 0) + 1
+}
+
+export function getDemoAgencias(search = ""): Agencia[] {
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? demoAgencias.filter((agencia) =>
+        `${agencia.nombre} ${agencia.ciudad} ${agencia.region}`.toLowerCase().includes(q)
+      )
+    : demoAgencias
+
+  return deepClone(filtered.sort((a, b) => a.nombre.localeCompare(b.nombre)))
+}
+
+export function createDemoAgencia(input: AgenciaCreateInput): Agencia {
+  const nowIso = new Date().toISOString()
+  const agencia: Agencia = {
+    id: nextAgenciaId(),
+    nombre: input.nombre,
+    region: input.region,
+    ciudad: input.ciudad,
+    direccion: input.direccion || null,
+    contacto: input.contacto || null,
+    estado_operativo: input.estado_operativo || "activa",
+    created_at: nowIso,
+    updated_at: nowIso,
+  }
+  demoAgencias = [agencia, ...demoAgencias]
+  return deepClone(agencia)
+}
+
+export function updateDemoAgencia(id: number, input: AgenciaUpdateInput): Agencia | null {
+  const index = demoAgencias.findIndex((agencia) => agencia.id === id)
+  if (index === -1) return null
+  demoAgencias[index] = {
+    ...demoAgencias[index]!,
+    ...input,
+    direccion: input.direccion !== undefined ? input.direccion || null : demoAgencias[index]!.direccion,
+    contacto: input.contacto !== undefined ? input.contacto || null : demoAgencias[index]!.contacto,
+    updated_at: new Date().toISOString(),
+  }
+  return deepClone(demoAgencias[index]!)
+}
+
+export function deleteDemoAgencia(id: number): boolean {
+  if (demoVisitasMantenimiento.some((visita) => visita.agencia_id === id)) return false
+  const initial = demoAgencias.length
+  demoAgencias = demoAgencias.filter((agencia) => agencia.id !== id)
+  return demoAgencias.length < initial
+}
+
+export function getDemoRutinas(): RutinaMantenimiento[] {
+  return deepClone(
+    demoRutinasMantenimiento
+      .map((rutina) => enrichRutina(rutina))
+      .sort((a, b) => {
+        if (b.anio !== a.anio) return b.anio - a.anio
+        return b.trimestre - a.trimestre
+      })
+  )
+}
+
+export function createDemoRutinaConVisitas(input: RutinaCreateInput, currentUser: User): { rutina: RutinaMantenimiento; visitas: VisitaMantenimiento[] } {
+  const nowIso = new Date().toISOString()
+  const selectedAgencias = (input.agencia_ids && input.agencia_ids.length > 0
+    ? demoAgencias.filter((agencia) => input.agencia_ids!.includes(agencia.id))
+    : demoAgencias.filter((agencia) => input.regiones.includes(agencia.region))
+  ).filter((agencia) => agencia.estado_operativo !== "inactiva")
+
+  const rutina: RutinaMantenimiento = {
+    id: crypto.randomUUID(),
+    titulo: input.titulo,
+    trimestre: input.trimestre,
+    anio: input.anio,
+    fecha_inicio: input.fecha_inicio,
+    fecha_fin: input.fecha_fin,
+    regiones: input.regiones,
+    equipos_objetivo: input.equipos_objetivo,
+    presupuesto_viaticos: input.presupuesto_viaticos ?? null,
+    creado_por: currentUser.id,
+    estado: input.estado || "programada",
+    created_at: nowIso,
+    updated_at: nowIso,
+    creador: currentUser,
+  }
+
+  const visitas = selectedAgencias.map<VisitaMantenimiento>((agencia) => ({
+    id: crypto.randomUUID(),
+    rutina_id: rutina.id,
+    agencia_id: agencia.id,
+    tecnico_id: null,
+    fecha_programada: null,
+    fecha_realizada: null,
+    estado: "pendiente",
+    equipos_asignados: input.equipos_objetivo,
+    observaciones_programacion: null,
+    created_at: nowIso,
+    updated_at: nowIso,
+  }))
+
+  demoRutinasMantenimiento = [rutina, ...demoRutinasMantenimiento]
+  demoVisitasMantenimiento = [...visitas, ...demoVisitasMantenimiento]
+
+  return {
+    rutina: deepClone(enrichRutina(rutina)),
+    visitas: deepClone(visitas.map((visita) => enrichVisita(visita))),
+  }
+}
+
+export function updateDemoRutinaEstado(id: string, estado: RutinaEstado): RutinaMantenimiento | null {
+  const index = demoRutinasMantenimiento.findIndex((rutina) => rutina.id === id)
+  if (index === -1) return null
+  demoRutinasMantenimiento[index] = {
+    ...demoRutinasMantenimiento[index]!,
+    estado,
+    updated_at: new Date().toISOString(),
+  }
+  return deepClone(enrichRutina(demoRutinasMantenimiento[index]!))
+}
+
+export function getDemoRutinaDetalle(id: string): {
+  rutina: RutinaMantenimiento
+  visitas: VisitaMantenimiento[]
+  resumen: { total: number; completadas: number; pendientes: number; asignadas: number }
+} | null {
+  const rutina = demoRutinasMantenimiento.find((item) => item.id === id)
+  if (!rutina) return null
+  const visitas = demoVisitasMantenimiento.filter((visita) => visita.rutina_id === id).map((visita) => enrichVisita(visita))
+  return {
+    rutina: deepClone(enrichRutina(rutina)),
+    visitas: deepClone(visitas),
+    resumen: {
+      total: visitas.length,
+      completadas: visitas.filter((visita) => visita.estado === "completada").length,
+      pendientes: visitas.filter((visita) => visita.estado === "pendiente").length,
+      asignadas: visitas.filter((visita) => visita.tecnico_id && visita.fecha_programada).length,
+    },
+  }
+}
+
+export function getDemoVisitasMantenimiento(filters: {
+  rutinaId?: string
+  region?: Region
+  tecnicoId?: string
+  estado?: VisitaEstado
+} = {}): VisitaMantenimiento[] {
+  let filtered = demoVisitasMantenimiento
+  if (filters.rutinaId) filtered = filtered.filter((visita) => visita.rutina_id === filters.rutinaId)
+  if (filters.tecnicoId) filtered = filtered.filter((visita) => visita.tecnico_id === filters.tecnicoId)
+  if (filters.estado) filtered = filtered.filter((visita) => visita.estado === filters.estado)
+  if (filters.region) {
+    filtered = filtered.filter((visita) => demoAgencias.find((agencia) => agencia.id === visita.agencia_id)?.region === filters.region)
+  }
+
+  return deepClone(
+    filtered
+      .map((visita) => enrichVisita(visita))
+      .sort((a, b) => {
+        const left = a.fecha_programada ? new Date(a.fecha_programada).getTime() : Number.MAX_SAFE_INTEGER
+        const right = b.fecha_programada ? new Date(b.fecha_programada).getTime() : Number.MAX_SAFE_INTEGER
+        return left - right
+      })
+  )
+}
+
+export function assignDemoVisita(input: AssignVisitaInput): VisitaMantenimiento[] {
+  const updatedAt = new Date().toISOString()
+  const updated: VisitaMantenimiento[] = []
+
+  demoVisitasMantenimiento = demoVisitasMantenimiento.map((visita) => {
+    if (!input.visita_ids.includes(visita.id)) return visita
+    const next: VisitaMantenimiento = {
+      ...visita,
+      tecnico_id: input.tecnico_id,
+      fecha_programada: input.fecha_programada,
+      observaciones_programacion: input.observaciones_programacion || null,
+      updated_at: updatedAt,
+    }
+    updated.push(next)
+    return next
+  })
+
+  return deepClone(updated.map((visita) => enrichVisita(visita)))
+}
+
+export function getDemoMisVisitas(userId: string): VisitaMantenimiento[] {
+  return getDemoVisitasMantenimiento({ tecnicoId: userId })
+}
+
+export function updateDemoVisitaEstado(visitaId: string, input: VisitaEstadoUpdateInput): VisitaMantenimiento | null {
+  const index = demoVisitasMantenimiento.findIndex((visita) => visita.id === visitaId)
+  if (index === -1) return null
+  const next: VisitaMantenimiento = {
+    ...demoVisitasMantenimiento[index]!,
+    estado: input.estado,
+    fecha_realizada: input.estado === "completada" ? new Date().toISOString() : demoVisitasMantenimiento[index]!.fecha_realizada,
+    updated_at: new Date().toISOString(),
+  }
+  demoVisitasMantenimiento[index] = next
+  return deepClone(enrichVisita(next))
+}
+
+export function getDemoBitacoraByVisita(visitaId: string): BitacoraVisita | null {
+  const bitacora = demoBitacorasVisita.find((item) => item.visita_id === visitaId)
+  return bitacora ? deepClone(bitacora) : null
+}
+
+export function saveDemoBitacoraVisita(input: BitacoraVisitaInput, currentUser: User): BitacoraVisita {
+  const index = demoBitacorasVisita.findIndex((item) => item.visita_id === input.visita_id)
+  const nowIso = new Date().toISOString()
+
+  if (index >= 0) {
+    demoBitacorasVisita[index] = {
+      ...demoBitacorasVisita[index]!,
+      log: input.log,
+      checklist: input.checklist,
+      fotos: input.fotos || [],
+      repuestos_usados: input.repuestos_usados || [],
+      repuestos_devueltos: input.repuestos_devueltos || [],
+      repuestos_pendientes: input.repuestos_pendientes || [],
+      updated_at: nowIso,
+      creador: currentUser,
+    }
+    return deepClone(demoBitacorasVisita[index]!)
+  }
+
+  const bitacora: BitacoraVisita = {
+    id: crypto.randomUUID(),
+    visita_id: input.visita_id,
+    log: input.log,
+    checklist: input.checklist,
+    fotos: input.fotos || [],
+    repuestos_usados: input.repuestos_usados || [],
+    repuestos_devueltos: input.repuestos_devueltos || [],
+    repuestos_pendientes: input.repuestos_pendientes || [],
+    creado_por: currentUser.id,
+    created_at: nowIso,
+    updated_at: nowIso,
+    creador: currentUser,
+  }
+  demoBitacorasVisita = [bitacora, ...demoBitacorasVisita]
+  return deepClone(bitacora)
+}
+
+export function getDemoViaticos(user: User): Viatico[] {
+  const visible = ROLE_HIERARCHY[user.rol] >= 2
+    ? demoViaticos
+    : demoViaticos.filter((viatico) => viatico.tecnico_id === user.id)
+  return deepClone(visible.map((viatico) => enrichViatico(viatico)).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
+}
+
+export function createDemoViatico(input: ViaticoCreateInput, currentUser: User): Viatico | null {
+  const visita = input.visita_id
+    ? demoVisitasMantenimiento.find((item) => item.id === input.visita_id)
+    : undefined
+  const tecnicoId = visita?.tecnico_id || input.tecnico_id || currentUser.id
+  if (!tecnicoId) return null
+
+  const viatico: Viatico = {
+    id: crypto.randomUUID(),
+    visita_id: input.visita_id || null,
+    tecnico_id: tecnicoId,
+    rutina_id: visita?.rutina_id || input.rutina_id || null,
+    ruta: input.ruta,
+    monto: input.monto,
+    detalle: input.detalle || null,
+    observaciones: input.observaciones || null,
+    estado: "enviado",
+    fecha_envio: new Date().toISOString(),
+    fecha_aprobacion: null,
+    aprobado_por: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  demoViaticos = [viatico, ...demoViaticos]
+  return deepClone(enrichViatico(viatico))
+}
+
+export function updateDemoViaticoEstado(id: string, estado: ViaticoEstado, approver?: User): Viatico | null {
+  const index = demoViaticos.findIndex((viatico) => viatico.id === id)
+  if (index === -1) return null
+  demoViaticos[index] = {
+    ...demoViaticos[index]!,
+    estado,
+    fecha_aprobacion: estado === "aprobado" || estado === "rechazado" ? new Date().toISOString() : demoViaticos[index]!.fecha_aprobacion,
+    aprobado_por: approver?.id || demoViaticos[index]!.aprobado_por,
+    updated_at: new Date().toISOString(),
+  }
+  return deepClone(enrichViatico(demoViaticos[index]!))
+}
+
+export function getDemoMantenimientoReportes(): MantenimientoReportes {
+  const visitas = demoVisitasMantenimiento.map((visita) => enrichVisita(visita))
+  const bitacoras = demoBitacorasVisita
+  const viaticos = demoViaticos
+
+  const agenciasAtendidas = new Set(visitas.filter((visita) => visita.estado === "completada").map((visita) => visita.agencia_id)).size
+  const viaticosAprobadosMonto = viaticos.filter((viatico) => viatico.estado === "aprobado").reduce((sum, viatico) => sum + viatico.monto, 0)
+  const viaticosPendientesMonto = viaticos.filter((viatico) => viatico.estado === "enviado" || viatico.estado === "planeado").reduce((sum, viatico) => sum + viatico.monto, 0)
+
+  return {
+    resumen: {
+      total_rutinas: demoRutinasMantenimiento.length,
+      total_visitas: visitas.length,
+      visitas_completadas: visitas.filter((visita) => visita.estado === "completada").length,
+      visitas_pendientes: visitas.filter((visita) => visita.estado !== "completada" && visita.estado !== "cancelada").length,
+      agencias_atendidas: agenciasAtendidas,
+      viaticos_aprobados_monto: viaticosAprobadosMonto,
+      viaticos_pendientes_monto: viaticosPendientesMonto,
+    },
+    progreso_por_rutina: demoRutinasMantenimiento.map((rutina) => {
+      const items = visitas.filter((visita) => visita.rutina_id === rutina.id)
+      const completadas = items.filter((visita) => visita.estado === "completada").length
+      const pendientes = items.filter((visita) => visita.estado !== "completada" && visita.estado !== "cancelada").length
+      return {
+        rutina_id: rutina.id,
+        titulo: rutina.titulo,
+        estado: rutina.estado,
+        total_visitas: items.length,
+        completadas,
+        pendientes,
+        porcentaje_avance: items.length > 0 ? Math.round((completadas / items.length) * 100) : 0,
+      }
+    }),
+    visitas_por_tecnico: DEMO_USERS.filter((user) => user.rol === "tecnico").map((tecnico) => {
+      const items = visitas.filter((visita) => visita.tecnico_id === tecnico.id)
+      return {
+        tecnico_id: tecnico.id,
+        tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`,
+        total: items.length,
+        completadas: items.filter((visita) => visita.estado === "completada").length,
+        en_proceso: items.filter((visita) => visita.estado === "en_proceso").length,
+      }
+    }),
+    viaticos_por_rutina: demoRutinasMantenimiento.map((rutina) => {
+      const items = viaticos.filter((viatico) => viatico.rutina_id === rutina.id)
+      return {
+        rutina_id: rutina.id,
+        titulo: rutina.titulo,
+        presupuesto: rutina.presupuesto_viaticos || 0,
+        aprobado: items.filter((viatico) => viatico.estado === "aprobado").reduce((sum, viatico) => sum + viatico.monto, 0),
+        pendiente: items.filter((viatico) => viatico.estado === "enviado" || viatico.estado === "planeado").reduce((sum, viatico) => sum + viatico.monto, 0),
+      }
+    }),
+    ultimas_bitacoras: bitacoras
+      .slice()
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 10)
+      .map((bitacora) => {
+        const visita = visitas.find((item) => item.id === bitacora.visita_id)
+        const tecnico = bitacora.creado_por ? findUser(bitacora.creado_por) : undefined
+        return {
+          bitacora_id: bitacora.id,
+          visita_id: bitacora.visita_id,
+          agencia_nombre: visita?.agencia?.nombre || "Agencia",
+          tecnico_nombre: tecnico ? `${tecnico.nombre} ${tecnico.apellido}` : "Sin técnico",
+          created_at: bitacora.created_at,
+          log: bitacora.log,
+        }
+      }),
+  }
 }

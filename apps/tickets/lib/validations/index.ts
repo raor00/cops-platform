@@ -236,6 +236,99 @@ export const paymentProcessSchema = z.object({
     .or(z.literal('')),
 })
 
+const regionValues = [
+  'Metropolitana centro oeste',
+  'Metropolitana sur',
+  'Metropolitana este',
+  'Region los llanos',
+  'Oriente',
+  'Occidente',
+  'Centro los llanos',
+  'Centro occidente',
+  'Region centro',
+] as const
+
+const rutinaEstadoValues = ['borrador', 'programada', 'en_curso', 'finalizada'] as const
+const visitaEstadoValues = ['pendiente', 'en_camino', 'en_proceso', 'completada', 'cancelada'] as const
+const viaticoEstadoValues = ['planeado', 'enviado', 'aprobado', 'rechazado'] as const
+const agenciaEstadoValues = ['activa', 'mantenimiento', 'inactiva'] as const
+
+export const agenciaCreateSchema = z.object({
+  nombre: z.string().min(2, 'El nombre es requerido').max(255, 'El nombre no puede exceder 255 caracteres'),
+  region: z.enum(regionValues, { errorMap: () => ({ message: 'Región inválida' }) }),
+  ciudad: z.string().min(2, 'La ciudad es requerida').max(120, 'La ciudad no puede exceder 120 caracteres'),
+  direccion: z.string().max(500, 'La dirección no puede exceder 500 caracteres').optional().or(z.literal('')),
+  contacto: z.string().max(255, 'El contacto no puede exceder 255 caracteres').optional().or(z.literal('')),
+  estado_operativo: z.enum(agenciaEstadoValues).optional(),
+})
+
+export const agenciaUpdateSchema = agenciaCreateSchema.partial()
+
+export const rutinaCreateSchema = z.object({
+  titulo: z.string().min(3, 'El título es requerido').max(255, 'El título no puede exceder 255 caracteres'),
+  trimestre: z.number().int().min(1, 'Trimestre inválido').max(4, 'Trimestre inválido'),
+  anio: z.number().int().min(2020, 'Año inválido').max(2050, 'Año inválido'),
+  fecha_inicio: z.string().min(1, 'La fecha de inicio es requerida'),
+  fecha_fin: z.string().min(1, 'La fecha de fin es requerida'),
+  regiones: z.array(z.enum(regionValues)).min(1, 'Debes seleccionar al menos una región'),
+  agencia_ids: z.array(z.number().int().positive()).optional(),
+  equipos_objetivo: z.array(z.string().min(1, 'Equipo inválido')).min(1, 'Debes seleccionar al menos un equipo'),
+  presupuesto_viaticos: z.number().min(0, 'El presupuesto debe ser positivo').optional(),
+  estado: z.enum(rutinaEstadoValues).optional(),
+})
+
+export const rutinaEstadoSchema = z.object({
+  estado: z.enum(rutinaEstadoValues),
+})
+
+export const assignVisitaSchema = z.object({
+  visita_ids: z.array(z.string().uuid('Visita inválida')).min(1, 'Debes seleccionar al menos una visita'),
+  tecnico_id: z.string().uuid('Técnico inválido'),
+  fecha_programada: z.string().min(1, 'La fecha programada es requerida'),
+  observaciones_programacion: z.string().max(1000, 'Las observaciones no pueden exceder 1000 caracteres').optional().or(z.literal('')),
+})
+
+export const visitaEstadoSchema = z.object({
+  estado: z.enum(visitaEstadoValues),
+})
+
+export const bitacoraItemSchema = z.object({
+  item: z.string().min(1, 'El ítem es requerido'),
+  estado: z.enum(['pendiente', 'ok', 'observacion']),
+  observacion: z.string().max(500, 'La observación no puede exceder 500 caracteres').optional().or(z.literal('')),
+})
+
+export const bitacoraVisitaSchema = z.object({
+  visita_id: z.string().uuid('Visita inválida'),
+  log: z.string().max(5000, 'El resumen no puede exceder 5000 caracteres'),
+  checklist: z.array(bitacoraItemSchema),
+  fotos: z.array(z.string()).optional(),
+  repuestos_usados: z.array(z.string()).optional(),
+  repuestos_devueltos: z.array(z.string()).optional(),
+  repuestos_pendientes: z.array(z.string()).optional(),
+}).refine((data) => {
+  const hasLog = data.log.trim().length > 0
+  const hasChecklist = data.checklist.some((item) => item.estado !== 'pendiente' || (item.observacion?.trim().length ?? 0) > 0)
+  return hasLog || hasChecklist
+}, {
+  message: 'Debes registrar al menos una observación o checklist',
+  path: ['log'],
+})
+
+export const viaticoCreateSchema = z.object({
+  visita_id: z.string().uuid('Visita inválida').optional().or(z.literal('')),
+  tecnico_id: z.string().uuid('Técnico inválido').optional().or(z.literal('')),
+  rutina_id: z.string().uuid('Rutina inválida').optional().or(z.literal('')),
+  ruta: z.string().min(3, 'La ruta es requerida').max(255, 'La ruta no puede exceder 255 caracteres'),
+  monto: z.number().min(0, 'El monto debe ser positivo'),
+  detalle: z.string().max(1000, 'El detalle no puede exceder 1000 caracteres').optional().or(z.literal('')),
+  observaciones: z.string().max(1000, 'Las observaciones no pueden exceder 1000 caracteres').optional().or(z.literal('')),
+})
+
+export const viaticoEstadoSchema = z.object({
+  estado: z.enum(viaticoEstadoValues),
+})
+
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // TIPOS INFERIDOS
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -247,4 +340,10 @@ export type TicketCreateInput = z.infer<typeof ticketCreateSchema>
 export type TicketUpdateInput = z.infer<typeof ticketUpdateSchema>
 export type TicketTechnicianInput = z.infer<typeof ticketTechnicianSchema>
 export type PaymentProcessInput = z.infer<typeof paymentProcessSchema>
+export type AgenciaCreateValidationInput = z.infer<typeof agenciaCreateSchema>
+export type AgenciaUpdateValidationInput = z.infer<typeof agenciaUpdateSchema>
+export type RutinaCreateValidationInput = z.infer<typeof rutinaCreateSchema>
+export type AssignVisitaValidationInput = z.infer<typeof assignVisitaSchema>
+export type BitacoraVisitaValidationInput = z.infer<typeof bitacoraVisitaSchema>
+export type ViaticoCreateValidationInput = z.infer<typeof viaticoCreateSchema>
 
