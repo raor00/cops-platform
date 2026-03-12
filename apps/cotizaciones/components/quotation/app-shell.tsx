@@ -49,6 +49,15 @@ export function AppShell() {
   const lastScrollRef = useRef(0)
   const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
 
+  // Sync desde Firestore al montar (hidrata localStorage con datos persistidos)
+  useEffect(() => {
+    import("@/lib/quotation-storage").then(({ syncCotizacionesFromFirestore }) => {
+      syncCotizacionesFromFirestore().then(() => {
+        setRefreshKey((k) => k + 1)
+      })
+    })
+  }, [])
+
   // Detect ?select=true to activate select mode (Feature 3)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Wallet, Car, FileText, CheckCircle2 } from "lucide-react"
+import type { Viatico, VisitaMantenimiento } from "@/types"
 
 const MOCK_VIATICOS = [
     { id: 1, tecnico: "Omar Lopez", ruta: "Caracas - Valencia", monto: "$120.00", estado: "Pendiente Aprobación", fecha: "20 Oct 2023" },
@@ -11,7 +12,17 @@ const MOCK_VIATICOS = [
     { id: 3, tecnico: "Jose Gil", ruta: "Ruta Urbana (CCS)", monto: "$25.00", estado: "Pagado", fecha: "15 Oct 2023" },
 ]
 
-export function ViaticosManager({ userId, isCoordinator }: { userId: string, isCoordinator: boolean }) {
+export function ViaticosManager({
+    userId,
+    isCoordinator,
+    initialViaticos,
+    initialVisitas,
+}: {
+    userId: string
+    isCoordinator: boolean
+    initialViaticos: Viatico[]
+    initialVisitas: VisitaMantenimiento[]
+}) {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

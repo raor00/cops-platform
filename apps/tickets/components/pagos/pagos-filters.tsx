@@ -126,7 +126,7 @@ export function PagosFiltersBar({
         <PopoverContent className="w-80" align="start">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-white">Filtros Avanzados</h4>
+              <h4 className="font-medium text-slate-900">Filtros Avanzados</h4>
               {activeFiltersCount > 0 && (
                 <Button
                   variant="ghost"
@@ -302,7 +302,7 @@ export function ActiveFiltersDisplay({ filters, onRemoveFilter }: {
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-sm text-white/50">Filtros activos:</span>
+      <span className="text-sm text-slate-500">Filtros activos:</span>
       {activeFilters.map((filter) => (
         <button
           key={filter.key}

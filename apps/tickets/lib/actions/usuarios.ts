@@ -5,404 +5,215 @@ import { revalidatePath } from "next/cache"
 import type { ActionResponse, UserProfile, UserUpdateInput } from "@/types"
 import { getCurrentUser } from "./auth"
 import { ROLE_HIERARCHY } from "@/types"
+import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
+import { getAdminFirestore, getAdminStorage, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+import { getDemoCurrentUser } from "@/lib/mock-data"
 
 const BUCKET_NAME = "user-profiles"
 
-/**
- * Obtener todos los usuarios con sus perfiles
- */
+async function fbGetUserWithPhoto(uid: string): Promise<UserProfile | null> {
+  const db = getAdminFirestore()
+  const doc = await db.collection("users").doc(uid).get()
+  if (!doc.exists) return null
+  const user = fromFirestoreDoc<UserProfile>(uid, doc.data()!)
+  if (user.foto_perfil_path) {
+    try {
+      const bucket = getAdminStorage().bucket()
+      const [url] = await bucket.file(user.foto_perfil_path).getSignedUrl({ action: "read", expires: Date.now() + 3600 * 1000 })
+      user.foto_perfil_url = url
+    } catch { user.foto_perfil_url = null }
+  } else {
+    user.foto_perfil_url = null
+  }
+  return user
+}
+
 export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return { success: false, error: "No autenticado" }
+    if (!user) return { success: false, error: "No autenticado" }
+    if (ROLE_HIERARCHY[user.rol] < 3) return { success: false, error: "No tienes permisos para ver usuarios" }
+
+    if (isLocalMode()) {
+      const demo = getDemoCurrentUser()
+      return { success: true, data: [{ ...demo, foto_perfil_url: null }] as UserProfile[] }
     }
 
-    // Solo gerente o superior puede ver todos los usuarios
-    if (ROLE_HIERARCHY[user.rol] < 3) {
-      return { success: false, error: "No tienes permisos para ver usuarios" }
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const snap = await db.collection("users").orderBy("nombre").get()
+      const visibleDocs = snap.docs.filter((d) => d.data().hidden !== true)
+      const users = await Promise.all(visibleDocs.map((d) => fbGetUserWithPhoto(d.id)))
+      return { success: true, data: users.filter(Boolean) as UserProfile[] }
     }
 
     const supabase = await createClient()
-
-    const { data: users, error } = await supabase
-      .from("users")
-      .select("*")
-      .order("nombre", { ascending: true })
-
-    if (error) {
-      return {
-        success: false,
-        error: `Error al obtener usuarios: ${error.message}`,
-      }
-    }
-
-    // Generar URLs firmadas para fotos de perfil
+    const { data: users, error } = await supabase.from("users").select("*").order("nombre", { ascending: true })
+    if (error) return { success: false, error: `Error al obtener usuarios: ${error.message}` }
     const usersWithUrls = await Promise.all(
       (users || []).map(async (u) => {
         if (u.foto_perfil_path) {
-          const { data: signedUrl } = await supabase.storage
-            .from(BUCKET_NAME)
-            .createSignedUrl(u.foto_perfil_path, 3600)
-
-          return {
-            ...u,
-            foto_perfil_url: signedUrl?.signedUrl || null,
-          } as UserProfile
+          const { data: signedUrl } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(u.foto_perfil_path, 3600)
+          return { ...u, foto_perfil_url: signedUrl?.signedUrl || null } as UserProfile
         }
         return { ...u, foto_perfil_url: null } as UserProfile
       })
     )
-
-    return {
-      success: true,
-      data: usersWithUrls,
-    }
+    return { success: true, data: usersWithUrls }
   } catch (error) {
-    console.error("[v0] Get users exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al obtener usuarios",
-    }
+    return { success: false, error: "Error inesperado al obtener usuarios" }
   }
 }
 
-/**
- * Obtener un usuario por ID con foto de perfil
- */
-export async function getUserById(
-  userId: string
-): Promise<ActionResponse<UserProfile>> {
+export async function getUserById(userId: string): Promise<ActionResponse<UserProfile>> {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return { success: false, error: "No autenticado" }
+    if (!user) return { success: false, error: "No autenticado" }
+
+    if (isLocalMode()) {
+      const demo = getDemoCurrentUser()
+      return { success: true, data: { ...demo, foto_perfil_url: null } as UserProfile }
+    }
+
+    if (isFirebaseMode()) {
+      const profile = await fbGetUserWithPhoto(userId)
+      if (!profile) return { success: false, error: "Usuario no encontrado" }
+      return { success: true, data: profile }
     }
 
     const supabase = await createClient()
-
-    const { data: targetUser, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single()
-
-    if (error || !targetUser) {
-      return { success: false, error: "Usuario no encontrado" }
-    }
-
-    // Generar URL firmada para foto de perfil
+    const { data: targetUser, error } = await supabase.from("users").select("*").eq("id", userId).single()
+    if (error || !targetUser) return { success: false, error: "Usuario no encontrado" }
     let fotoPerfilUrl = null
     if (targetUser.foto_perfil_path) {
-      const { data: signedUrl } = await supabase.storage
-        .from(BUCKET_NAME)
-        .createSignedUrl(targetUser.foto_perfil_path, 3600)
+      const { data: signedUrl } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(targetUser.foto_perfil_path, 3600)
       fotoPerfilUrl = signedUrl?.signedUrl || null
     }
-
-    return {
-      success: true,
-      data: {
-        ...targetUser,
-        foto_perfil_url: fotoPerfilUrl,
-      } as UserProfile,
-    }
+    return { success: true, data: { ...targetUser, foto_perfil_url: fotoPerfilUrl } as UserProfile }
   } catch (error) {
-    console.error("[v0] Get user exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al obtener usuario",
-    }
+    return { success: false, error: "Error inesperado al obtener usuario" }
   }
 }
 
-/**
- * Actualizar perfil de usuario (incluye foto de perfil)
- */
-export async function updateUserProfile(
-  userId: string,
-  updates: UserUpdateInput
-): Promise<ActionResponse> {
+export async function updateUserProfile(userId: string, updates: UserUpdateInput): Promise<ActionResponse> {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return { success: false, error: "No autenticado" }
-    }
-
-    // Verificar permisos: solo puede editar su propio perfil o gerente+
+    if (!user) return { success: false, error: "No autenticado" }
     const canUpdate = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
+    if (!canUpdate) return { success: false, error: "No tienes permisos para editar este usuario" }
 
-    if (!canUpdate) {
-      return { success: false, error: "No tienes permisos para editar este usuario" }
+    if (isLocalMode()) return { success: true, message: "Perfil actualizado (modo local)" }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      await db.collection("users").doc(userId).update(cleanForFirestore({ ...updates, updated_at: new Date().toISOString() }))
+      revalidatePath("/dashboard/usuarios")
+      revalidatePath(`/dashboard/usuarios/${userId}`)
+      return { success: true, message: "Perfil actualizado exitosamente" }
     }
 
     const supabase = await createClient()
-
-    const { error } = await supabase
-      .from("users")
-      .update(updates)
-      .eq("id", userId)
-
-    if (error) {
-      return {
-        success: false,
-        error: `Error al actualizar perfil: ${error.message}`,
-      }
-    }
-
+    const { error } = await supabase.from("users").update(updates).eq("id", userId)
+    if (error) return { success: false, error: `Error al actualizar perfil: ${error.message}` }
     revalidatePath("/dashboard/usuarios")
     revalidatePath(`/dashboard/usuarios/${userId}`)
-
-    return {
-      success: true,
-      message: "Perfil actualizado exitosamente",
-    }
+    return { success: true, message: "Perfil actualizado exitosamente" }
   } catch (error) {
-    console.error("[v0] Update profile exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al actualizar perfil",
-    }
+    return { success: false, error: "Error inesperado al actualizar perfil" }
   }
 }
 
-/**
- * Subir foto de perfil
- */
-export async function uploadProfilePhoto(
-  userId: string,
-  file: File
-): Promise<ActionResponse<string>> {
+export async function uploadProfilePhoto(userId: string, file: File): Promise<ActionResponse<string>> {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return { success: false, error: "No autenticado" }
-    }
-
-    // Solo puede subir su propia foto o gerente+
+    if (!user) return { success: false, error: "No autenticado" }
     const canUpload = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
+    if (!canUpload) return { success: false, error: "No tienes permisos para subir foto" }
 
-    if (!canUpload) {
-      return { success: false, error: "No tienes permisos para subir foto" }
-    }
-
-    // Validar tipo de archivo
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
-    if (!allowedTypes.includes(file.type)) {
-      return {
-        success: false,
-        error: "Tipo de archivo no permitido. Solo JPEG, PNG o WEBP",
-      }
-    }
-
-    // Validar tamaño (5 MB máximo para fotos de perfil)
+    if (!allowedTypes.includes(file.type)) return { success: false, error: "Tipo de archivo no permitido. Solo JPEG, PNG o WEBP" }
     const maxSize = 5 * 1024 * 1024
-    if (file.size > maxSize) {
-      return {
-        success: false,
-        error: "El archivo es demasiado grande. Máximo 5 MB",
+    if (file.size > maxSize) return { success: false, error: "El archivo es demasiado grande. Maximo 5 MB" }
+
+    if (isLocalMode()) return { success: false, error: "Subida de fotos no disponible en modo local" }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const bucket = getAdminStorage().bucket()
+      const timestamp = Date.now()
+      const extension = file.name.split(".").pop()
+      const filePath = `profile-photos/${userId}/profile-${timestamp}.${extension}`
+
+      const userDoc = await db.collection("users").doc(userId).get()
+      if (userDoc.exists) {
+        const oldPath = userDoc.data()!.foto_perfil_path as string | null
+        if (oldPath) {
+          try { await bucket.file(oldPath).delete() } catch {}
+        }
       }
+
+      const buffer = Buffer.from(await file.arrayBuffer())
+      await bucket.file(filePath).save(buffer, { metadata: { contentType: file.type } })
+      await db.collection("users").doc(userId).update({ foto_perfil_path: filePath, updated_at: new Date().toISOString() })
+
+      revalidatePath("/dashboard/usuarios")
+      revalidatePath(`/dashboard/usuarios/${userId}`)
+      return { success: true, data: filePath, message: "Foto de perfil subida exitosamente" }
     }
 
     const supabase = await createClient()
-
-    // Obtener usuario actual para eliminar foto anterior si existe
-    const { data: targetUser } = await supabase
-      .from("users")
-      .select("foto_perfil_path")
-      .eq("id", userId)
-      .single()
-
-    // Eliminar foto anterior si existe
-    if (targetUser?.foto_perfil_path) {
-      await supabase.storage
-        .from(BUCKET_NAME)
-        .remove([targetUser.foto_perfil_path])
-    }
-
-    // Generar nombre único para el archivo
+    const { data: targetUser } = await supabase.from("users").select("foto_perfil_path").eq("id", userId).single()
+    if (targetUser?.foto_perfil_path) await supabase.storage.from(BUCKET_NAME).remove([targetUser.foto_perfil_path])
     const timestamp = Date.now()
     const extension = file.name.split(".").pop()
     const fileName = `${userId}/profile-${timestamp}.${extension}`
-
-    // Subir archivo a Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: true,
-      })
-
-    if (uploadError) {
-      console.error("[v0] Error uploading profile photo:", uploadError)
-      return {
-        success: false,
-        error: `Error al subir foto: ${uploadError.message}`,
-      }
-    }
-
-    // Actualizar referencia en la base de datos
-    const { error: dbError } = await supabase
-      .from("users")
-      .update({ foto_perfil_path: uploadData.path })
-      .eq("id", userId)
-
+    const { data: uploadData, error: uploadError } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, { cacheControl: "3600", upsert: true })
+    if (uploadError) return { success: false, error: `Error al subir foto: ${uploadError.message}` }
+    const { error: dbError } = await supabase.from("users").update({ foto_perfil_path: uploadData.path }).eq("id", userId)
     if (dbError) {
-      console.error("[v0] Error updating user record:", dbError)
-      // Intentar eliminar el archivo subido si falla la actualización
       await supabase.storage.from(BUCKET_NAME).remove([uploadData.path])
-      return {
-        success: false,
-        error: `Error al actualizar perfil: ${dbError.message}`,
-      }
+      return { success: false, error: `Error al actualizar perfil: ${dbError.message}` }
     }
-
     revalidatePath("/dashboard/usuarios")
     revalidatePath(`/dashboard/usuarios/${userId}`)
-
-    return {
-      success: true,
-      data: uploadData.path,
-      message: "Foto de perfil subida exitosamente",
-    }
+    return { success: true, data: uploadData.path, message: "Foto de perfil subida exitosamente" }
   } catch (error) {
-    console.error("[v0] Upload profile photo exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al subir foto de perfil",
-    }
+    return { success: false, error: "Error inesperado al subir foto de perfil" }
   }
 }
 
-/**
- * Eliminar foto de perfil
- */
-export async function deleteProfilePhoto(
-  userId: string
-): Promise<ActionResponse> {
+export async function deleteProfilePhoto(userId: string): Promise<ActionResponse> {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return { success: false, error: "No autenticado" }
-    }
-
-    // Solo puede eliminar su propia foto o gerente+
+    if (!user) return { success: false, error: "No autenticado" }
     const canDelete = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
+    if (!canDelete) return { success: false, error: "No tienes permisos para eliminar esta foto" }
 
-    if (!canDelete) {
-      return { success: false, error: "No tienes permisos para eliminar esta foto" }
+    if (isLocalMode()) return { success: false, error: "No disponible en modo local" }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const doc = await db.collection("users").doc(userId).get()
+      if (!doc.exists) return { success: false, error: "Usuario no encontrado" }
+      const oldPath = doc.data()!.foto_perfil_path as string | null
+      if (oldPath) {
+        try { await getAdminStorage().bucket().file(oldPath).delete() } catch {}
+      }
+      await db.collection("users").doc(userId).update({ foto_perfil_path: null, updated_at: new Date().toISOString() })
+      revalidatePath("/dashboard/usuarios")
+      revalidatePath(`/dashboard/usuarios/${userId}`)
+      return { success: true, message: "Foto de perfil eliminada" }
     }
 
     const supabase = await createClient()
-
-    // Obtener usuario para saber qué archivo eliminar
-    const { data: targetUser } = await supabase
-      .from("users")
-      .select("foto_perfil_path")
-      .eq("id", userId)
-      .single()
-
-    if (!targetUser?.foto_perfil_path) {
-      return { success: false, error: "No hay foto de perfil para eliminar" }
-    }
-
-    // Eliminar archivo de Storage
-    const { error: storageError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .remove([targetUser.foto_perfil_path])
-
-    if (storageError) {
-      console.error("[v0] Error deleting from storage:", storageError)
-    }
-
-    // Actualizar registro en la base de datos
-    const { error: dbError } = await supabase
-      .from("users")
-      .update({ foto_perfil_path: null })
-      .eq("id", userId)
-
-    if (dbError) {
-      return {
-        success: false,
-        error: `Error al eliminar foto: ${dbError.message}`,
-      }
-    }
-
+    const { data: targetUser } = await supabase.from("users").select("foto_perfil_path").eq("id", userId).single()
+    if (!targetUser?.foto_perfil_path) return { success: false, error: "No hay foto de perfil para eliminar" }
+    await supabase.storage.from(BUCKET_NAME).remove([targetUser.foto_perfil_path])
+    await supabase.from("users").update({ foto_perfil_path: null }).eq("id", userId)
     revalidatePath("/dashboard/usuarios")
     revalidatePath(`/dashboard/usuarios/${userId}`)
-
-    return {
-      success: true,
-      message: "Foto de perfil eliminada exitosamente",
-    }
+    return { success: true, message: "Foto de perfil eliminada" }
   } catch (error) {
-    console.error("[v0] Delete profile photo exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al eliminar foto de perfil",
-    }
-  }
-}
-
-/**
- * Cambiar estado de usuario (activo/inactivo)
- */
-export async function toggleUserStatus(
-  userId: string
-): Promise<ActionResponse> {
-  try {
-    const user = await getCurrentUser()
-    if (!user) {
-      return { success: false, error: "No autenticado" }
-    }
-
-    // Solo gerente o superior puede cambiar estados
-    if (ROLE_HIERARCHY[user.rol] < 3) {
-      return {
-        success: false,
-        error: "No tienes permisos para cambiar el estado de usuarios",
-      }
-    }
-
-    const supabase = await createClient()
-
-    // Obtener estado actual
-    const { data: targetUser } = await supabase
-      .from("users")
-      .select("estado")
-      .eq("id", userId)
-      .single()
-
-    if (!targetUser) {
-      return { success: false, error: "Usuario no encontrado" }
-    }
-
-    const nuevoEstado = targetUser.estado === "activo" ? "inactivo" : "activo"
-
-    // Actualizar estado
-    const { error } = await supabase
-      .from("users")
-      .update({ estado: nuevoEstado })
-      .eq("id", userId)
-
-    if (error) {
-      return {
-        success: false,
-        error: `Error al cambiar estado: ${error.message}`,
-      }
-    }
-
-    revalidatePath("/dashboard/usuarios")
-
-    return {
-      success: true,
-      message: `Usuario ${nuevoEstado === "activo" ? "activado" : "desactivado"} exitosamente`,
-    }
-  } catch (error) {
-    console.error("[v0] Toggle user status exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al cambiar estado del usuario",
-    }
+    return { success: false, error: "Error inesperado al eliminar foto" }
   }
 }

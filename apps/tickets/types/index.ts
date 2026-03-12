@@ -917,6 +917,7 @@ export interface PaymentScheduleReport {
   tecnicos: TechnicianPaymentSchedule[]
   total_servicio: number
   total_comision: number
+  total_pagado: number
   total_pendiente: number
 }
 

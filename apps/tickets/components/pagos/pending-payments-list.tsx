@@ -28,7 +28,7 @@ export function PendingPaymentsList({ payments }: PendingPaymentsListProps) {
 
   if (payments.length === 0) {
     return (
-      <div className="text-center py-8 text-white/50">
+      <div className="py-8 text-center text-slate-500">
         No hay pagos pendientes
       </div>
     )
@@ -40,7 +40,7 @@ export function PendingPaymentsList({ payments }: PendingPaymentsListProps) {
         {payments.map((payment) => (
           <div
             key={payment.id}
-            className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10"
+            className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4"
           >
             <div className="flex items-center gap-4 min-w-0">
               <Avatar>
@@ -49,13 +49,13 @@ export function PendingPaymentsList({ payments }: PendingPaymentsListProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <p className="font-medium text-white">
+                <p className="font-medium text-slate-900">
                   {payment.tecnico.nombre} {payment.tecnico.apellido}
                 </p>
-                <p className="text-sm text-white/60 truncate">
+                <p className="truncate text-sm text-slate-600">
                   {payment.ticket.numero_ticket} — {payment.ticket.asunto}
                 </p>
-                <p className="text-xs text-white/40 mt-1">
+                <p className="mt-1 text-xs text-slate-400">
                   {formatDate(payment.fecha_habilitacion)}
                 </p>
               </div>
@@ -63,7 +63,7 @@ export function PendingPaymentsList({ payments }: PendingPaymentsListProps) {
 
             <div className="flex items-center gap-4 shrink-0 ml-4">
               <div className="text-right">
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-slate-900">
                   {formatCurrency(payment.monto_a_pagar)}
                 </p>
                 <Badge variant="warning">Pendiente</Badge>

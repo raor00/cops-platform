@@ -87,9 +87,9 @@ export default async function ConfiguracionPage() {
         })}
 
         {configs.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
-            <Settings className="h-10 w-10 text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 text-sm">No hay configuraciones disponibles</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm">
+            <Settings className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm">No hay configuraciones disponibles</p>
           </div>
         )}
       </div>

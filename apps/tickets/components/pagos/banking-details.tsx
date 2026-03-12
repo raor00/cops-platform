@@ -37,15 +37,15 @@ function CopyChip({ label, value }: { label: string; value: string }) {
       onClick={handleCopy}
       className={cn(
         "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all duration-100",
-        "bg-white/[0.04] border border-white/10 hover:bg-white/10 hover:border-white/20",
-        "text-white/70 hover:text-white group"
+        "border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+        "text-slate-700 hover:text-slate-900 group"
       )}
     >
-      <span className="text-white/40 shrink-0">{label}:</span>
+      <span className="shrink-0 text-slate-400">{label}:</span>
       <span className="font-mono font-medium truncate max-w-[120px]">{value}</span>
       {copied
         ? <Check className="h-3 w-3 text-green-400 shrink-0" />
-        : <Copy className="h-3 w-3 text-white/25 group-hover:text-white/60 shrink-0" />}
+        : <Copy className="h-3 w-3 text-slate-300 group-hover:text-slate-500 shrink-0" />}
     </button>
   )
 }

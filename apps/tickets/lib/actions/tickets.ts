@@ -23,7 +23,7 @@ import {
   DEFAULT_COMMISSION_PERCENTAGE,
 } from "@/types"
 import { getCurrentUser } from "./auth"
-import { isLocalMode } from "@/lib/local-mode"
+import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import {
   assignDemoTechnician,
   changeDemoTicketStatus as changeDemoTicketStatusMock,
@@ -38,6 +38,69 @@ import {
   getDemoUpdateLogs,
   addDemoUpdateLog,
 } from "@/lib/mock-data"
+import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+
+// ─── Firebase helpers ─────────────────────────────────────────────────────────
+
+async function fbGetAllTickets(): Promise<Ticket[]> {
+  const db = getAdminFirestore()
+  const snap = await db.collection("tickets").orderBy("created_at", "desc").get()
+  return snap.docs.map((d) => fromFirestoreDoc<Ticket>(d.id, d.data()))
+}
+
+async function fbGetTicketById(id: string): Promise<Ticket | null> {
+  const db = getAdminFirestore()
+  const doc = await db.collection("tickets").doc(id).get()
+  if (!doc.exists) return null
+  return fromFirestoreDoc<Ticket>(doc.id, doc.data()!)
+}
+
+async function fbGetUserMini(id: string): Promise<{ id: string; nombre: string; apellido: string; email?: string; rol?: string; telefono?: string } | null> {
+  const db = getAdminFirestore()
+  const doc = await db.collection("users").doc(id).get()
+  if (!doc.exists) return null
+  const d = doc.data()!
+  return { id: doc.id, nombre: d.nombre, apellido: d.apellido, email: d.email, rol: d.rol, telefono: d.telefono }
+}
+
+async function fbEnrichTicket(ticket: Ticket): Promise<Ticket> {
+  const [creador, tecnico] = await Promise.all([
+    ticket.creado_por ? fbGetUserMini(ticket.creado_por) : null,
+    ticket.tecnico_id ? fbGetUserMini(ticket.tecnico_id) : null,
+  ])
+  return { ...ticket, creador: creador ?? undefined, tecnico: tecnico ?? undefined } as Ticket
+}
+
+function fbFilterTickets(
+  tickets: Ticket[],
+  currentUser: { id: string; rol: string },
+  options?: { status?: TicketStatus; priority?: string; tecnicoId?: string; search?: string }
+): Ticket[] {
+  let result = tickets
+
+  if (currentUser.rol === "tecnico") {
+    result = result.filter((t) => t.tecnico_id === currentUser.id)
+  }
+  if (options?.status) {
+    result = result.filter((t) => t.estado === options.status)
+  }
+  if (options?.priority) {
+    result = result.filter((t) => t.prioridad === options.priority)
+  }
+  if (options?.tecnicoId) {
+    result = result.filter((t) => t.tecnico_id === options.tecnicoId)
+  }
+  if (options?.search) {
+    const q = options.search.toLowerCase()
+    result = result.filter(
+      (t) =>
+        t.numero_ticket?.toLowerCase().includes(q) ||
+        t.cliente_nombre?.toLowerCase().includes(q) ||
+        t.asunto?.toLowerCase().includes(q)
+    )
+  }
+  return result
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OBTENER TICKETS
@@ -52,62 +115,64 @@ export async function getTickets(options?: {
   search?: string
 }): Promise<ActionResponse<PaginatedResponse<Ticket>>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
 
   if (isLocalMode()) {
-    return {
-      success: true,
-      data: getDemoTicketsPage(options, currentUser),
+    return { success: true, data: getDemoTicketsPage(options, currentUser) }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const all = await fbGetAllTickets()
+      const filtered = fbFilterTickets(all, currentUser, options)
+      const page = options?.page || 1
+      const pageSize = options?.pageSize || 10
+      const start = (page - 1) * pageSize
+      const paged = filtered.slice(start, start + pageSize)
+
+      return {
+        success: true,
+        data: {
+          data: paged,
+          total: filtered.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(filtered.length / pageSize),
+        },
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
+  // Supabase
   const supabase = await createClient()
-
   const page = options?.page || 1
   const pageSize = options?.pageSize || 10
   const offset = (page - 1) * pageSize
 
   let query = supabase
     .from("tickets")
-    .select(`
-      *,
-      creador:users!tickets_creado_por_fkey(id, nombre, apellido, email),
-      tecnico:users!tickets_tecnico_id_fkey(id, nombre, apellido, email),
-      modificador:users!tickets_modificado_por_fkey(id, nombre, apellido)
-    `, { count: "exact" })
+    .select(
+      `*, creador:users!tickets_creado_por_fkey(id, nombre, apellido, email),
+       tecnico:users!tickets_tecnico_id_fkey(id, nombre, apellido, email),
+       modificador:users!tickets_modificado_por_fkey(id, nombre, apellido)`,
+      { count: "exact" }
+    )
 
-  // Filtrar por rol - técnicos solo ven sus tickets
-  if (currentUser.rol === "tecnico") {
-    query = query.eq("tecnico_id", currentUser.id)
-  }
+  if (currentUser.rol === "tecnico") query = query.eq("tecnico_id", currentUser.id)
+  if (options?.status) query = query.eq("estado", options.status)
+  if (options?.priority) query = query.eq("prioridad", options.priority)
+  if (options?.tecnicoId) query = query.eq("tecnico_id", options.tecnicoId)
+  if (options?.search)
+    query = query.or(
+      `numero_ticket.ilike.%${options.search}%,cliente_nombre.ilike.%${options.search}%,asunto.ilike.%${options.search}%`
+    )
 
-  // Filtros opcionales
-  if (options?.status) {
-    query = query.eq("estado", options.status)
-  }
-  if (options?.priority) {
-    query = query.eq("prioridad", options.priority)
-  }
-  if (options?.tecnicoId) {
-    query = query.eq("tecnico_id", options.tecnicoId)
-  }
-  if (options?.search) {
-    query = query.or(`numero_ticket.ilike.%${options.search}%,cliente_nombre.ilike.%${options.search}%,asunto.ilike.%${options.search}%`)
-  }
-
-  // Ordenar y paginar
-  query = query
-    .order("created_at", { ascending: false })
-    .range(offset, offset + pageSize - 1)
+  query = query.order("created_at", { ascending: false }).range(offset, offset + pageSize - 1)
 
   const { data, error, count } = await query
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  if (error) return { success: false, error: error.message }
 
   return {
     success: true,
@@ -123,41 +188,40 @@ export async function getTickets(options?: {
 
 export async function getTicketById(id: string): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
 
   if (isLocalMode()) {
     const ticket = getDemoTicketById(id, currentUser)
-    if (!ticket) {
-      return { success: false, error: "Ticket no encontrado" }
-    }
-
+    if (!ticket) return { success: false, error: "Ticket no encontrado" }
     return { success: true, data: ticket }
   }
 
-  const supabase = await createClient()
+  if (isFirebaseMode()) {
+    try {
+      const ticket = await fbGetTicketById(id)
+      if (!ticket) return { success: false, error: "Ticket no encontrado" }
+      if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
+        return { success: false, error: "No tienes permiso para ver este ticket" }
+      return { success: true, data: await fbEnrichTicket(ticket) }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("tickets")
-    .select(`
-      *,
-      creador:users!tickets_creado_por_fkey(id, nombre, apellido, email, rol),
-      tecnico:users!tickets_tecnico_id_fkey(id, nombre, apellido, email, telefono),
-      modificador:users!tickets_modificado_por_fkey(id, nombre, apellido)
-    `)
+    .select(
+      `*, creador:users!tickets_creado_por_fkey(id, nombre, apellido, email, rol),
+       tecnico:users!tickets_tecnico_id_fkey(id, nombre, apellido, email, telefono),
+       modificador:users!tickets_modificado_por_fkey(id, nombre, apellido)`
+    )
     .eq("id", id)
     .single()
 
-  if (error) {
-    return { success: false, error: error.message }
-  }
-
-  // Verificar permisos - técnico solo puede ver sus tickets
-  if (currentUser.rol === "tecnico" && data.tecnico_id !== currentUser.id) {
+  if (error) return { success: false, error: error.message }
+  if (currentUser.rol === "tecnico" && data.tecnico_id !== currentUser.id)
     return { success: false, error: "No tienes permiso para ver este ticket" }
-  }
 
   return { success: true, data: data as Ticket }
 }
@@ -170,32 +234,79 @@ export async function createTicket(
   input: TicketCreateInput
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
-
-  // Verificar permisos - Coordinador o superior puede crear
-  if (ROLE_HIERARCHY[currentUser.rol] < 2) {
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 2)
     return { success: false, error: "No tienes permisos para crear tickets" }
-  }
 
   if (isLocalMode()) {
     const ticket = createDemoTicket(input, currentUser)
-
     revalidatePath("/dashboard/tickets")
     revalidatePath("/dashboard")
+    return { success: true, data: ticket, message: `Ticket ${ticket.numero_ticket} creado exitosamente` }
+  }
 
-    return {
-      success: true,
-      data: ticket,
-      message: `Ticket ${ticket.numero_ticket} creado exitosamente`,
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+
+      // Get next sequence for this ticket type
+      const existing = await fbGetAllTickets()
+      const ofType = existing.filter((t) => t.tipo === input.tipo)
+      let sequence = 1
+      if (ofType.length > 0) {
+        const nums = ofType
+          .map((t) => {
+            const m = t.numero_ticket?.match(/(\d{4})$/)
+            return m ? parseInt(m[1]) : 0
+          })
+          .filter(Boolean)
+        if (nums.length > 0) sequence = Math.max(...nums) + 1
+      }
+
+      const numeroTicket = generateTicketNumber(input.tipo, sequence)
+      const now = new Date().toISOString()
+      const newDoc = db.collection("tickets").doc()
+
+      const ticketData = cleanForFirestore({
+        numero_ticket: numeroTicket,
+        tipo: input.tipo,
+        cliente_nombre: input.cliente_nombre,
+        cliente_empresa: input.cliente_empresa || null,
+        cliente_email: input.cliente_email || null,
+        cliente_telefono: input.cliente_telefono,
+        cliente_direccion: input.cliente_direccion,
+        asunto: input.asunto,
+        descripcion: input.descripcion,
+        requerimientos: input.requerimientos || null,
+        materiales_planificados: input.materiales_planificados || null,
+        prioridad: input.prioridad,
+        origen: input.origen,
+        creado_por: currentUser.id,
+        tecnico_id: input.tecnico_id || null,
+        estado: "asignado",
+        fecha_asignacion: now,
+        monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
+        ticket_origen_id: null,
+        ticket_derivado_id: null,
+        created_at: now,
+        updated_at: now,
+      })
+
+      await newDoc.set(ticketData)
+
+      const ticket: Ticket = { id: newDoc.id, ...ticketData } as Ticket
+
+      revalidatePath("/dashboard/tickets")
+      revalidatePath("/dashboard")
+
+      return { success: true, data: ticket, message: `Ticket ${numeroTicket} creado exitosamente` }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
+  // Supabase
   const supabase = await createClient()
-
-  // Obtener el siguiente número de secuencia
   const { data: lastTicket } = await supabase
     .from("tickets")
     .select("numero_ticket")
@@ -207,14 +318,11 @@ export async function createTicket(
   let sequence = 1
   if (lastTicket) {
     const match = lastTicket.numero_ticket.match(/\d{4}$/)
-    if (match) {
-      sequence = parseInt(match[0]) + 1
-    }
+    if (match) sequence = parseInt(match[0]) + 1
   }
 
   const numeroTicket = generateTicketNumber(input.tipo, sequence)
 
-  // Crear el ticket
   const { data, error } = await supabase
     .from("tickets")
     .insert({
@@ -240,11 +348,8 @@ export async function createTicket(
     .select()
     .single()
 
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  if (error) return { success: false, error: error.message }
 
-  // Registrar en historial
   await supabase.from("historial_cambios").insert({
     ticket_id: data.id,
     usuario_id: currentUser.id,
@@ -256,15 +361,11 @@ export async function createTicket(
   revalidatePath("/dashboard/tickets")
   revalidatePath("/dashboard")
 
-  return {
-    success: true,
-    data: data as Ticket,
-    message: `Ticket ${numeroTicket} creado exitosamente`,
-  }
+  return { success: true, data: data as Ticket, message: `Ticket ${numeroTicket} creado exitosamente` }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ACTUALIZAR TICKET (Solo Gerente+)
+// ACTUALIZAR TICKET
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function updateTicket(
@@ -272,69 +373,62 @@ export async function updateTicket(
   input: TicketUpdateInput
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
-
-  // REGLA CRÍTICA: Solo nivel 3+ puede modificar tickets
-  if (ROLE_HIERARCHY[currentUser.rol] < 3) {
-    return { 
-      success: false, 
-      error: "Solo Gerente, Vicepresidente o Presidente pueden modificar tickets" 
-    }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 3)
+    return { success: false, error: "Solo Gerente, Vicepresidente o Presidente pueden modificar tickets" }
 
   if (isLocalMode()) {
     const updatedTicket = updateDemoTicket(id, input, currentUser)
-    if (!updatedTicket) {
-      return { success: false, error: "Ticket no encontrado" }
-    }
-
+    if (!updatedTicket) return { success: false, error: "Ticket no encontrado" }
     revalidatePath("/dashboard/tickets")
     revalidatePath(`/dashboard/tickets/${id}`)
+    return { success: true, data: updatedTicket, message: "Ticket actualizado exitosamente" }
+  }
 
-    return {
-      success: true,
-      data: updatedTicket,
-      message: "Ticket actualizado exitosamente",
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("tickets").doc(id)
+      const existing = await ref.get()
+      if (!existing.exists) return { success: false, error: "Ticket no encontrado" }
+
+      const updateData = cleanForFirestore({
+        ...input,
+        modificado_por: currentUser.id,
+        fecha_ultima_modificacion: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+
+      await ref.update(updateData)
+      const updated = fromFirestoreDoc<Ticket>(id, { ...existing.data()!, ...updateData })
+
+      revalidatePath("/dashboard/tickets")
+      revalidatePath(`/dashboard/tickets/${id}`)
+
+      return { success: true, data: updated, message: "Ticket actualizado exitosamente" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
+  // Supabase
   const supabase = await createClient()
-
-  // Obtener ticket actual para comparar cambios
   const { data: currentTicket, error: fetchError } = await supabase
-    .from("tickets")
-    .select("*")
-    .eq("id", id)
-    .single()
+    .from("tickets").select("*").eq("id", id).single()
+  if (fetchError || !currentTicket) return { success: false, error: "Ticket no encontrado" }
 
-  if (fetchError || !currentTicket) {
-    return { success: false, error: "Ticket no encontrado" }
-  }
-
-  // Actualizar ticket
   const { data, error } = await supabase
     .from("tickets")
-    .update({
-      ...input,
-      modificado_por: currentUser.id,
-      fecha_ultima_modificacion: new Date().toISOString(),
-    })
+    .update({ ...input, modificado_por: currentUser.id, fecha_ultima_modificacion: new Date().toISOString() })
     .eq("id", id)
     .select()
     .single()
 
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  if (error) return { success: false, error: error.message }
 
-  // Registrar cambios en historial
   const changedFields = Object.keys(input).filter(
     (key) => input[key as keyof TicketUpdateInput] !== currentTicket[key as keyof typeof currentTicket]
   )
-
   for (const field of changedFields) {
     await supabase.from("historial_cambios").insert({
       ticket_id: id,
@@ -349,15 +443,11 @@ export async function updateTicket(
   revalidatePath("/dashboard/tickets")
   revalidatePath(`/dashboard/tickets/${id}`)
 
-  return {
-    success: true,
-    data: data as Ticket,
-    message: "Ticket actualizado exitosamente",
-  }
+  return { success: true, data: data as Ticket, message: "Ticket actualizado exitosamente" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CAMBIAR ESTADO (Máquina de Estados)
+// CAMBIAR ESTADO
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function changeTicketStatus(
@@ -371,143 +461,128 @@ export async function changeTicketStatus(
   }
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
 
   if (isLocalMode()) {
     const currentTicket = getDemoTicketById(id, currentUser)
-    if (!currentTicket) {
-      return { success: false, error: "Ticket no encontrado" }
-    }
-
-    if (currentUser.rol === "tecnico" && currentTicket.tecnico_id !== currentUser.id) {
+    if (!currentTicket) return { success: false, error: "Ticket no encontrado" }
+    if (currentUser.rol === "tecnico" && currentTicket.tecnico_id !== currentUser.id)
       return { success: false, error: "No tienes permiso para modificar este ticket" }
-    }
 
     const result = changeDemoTicketStatusMock(id, newStatus, additionalData, currentUser.rol)
-
-    if (result.error || !result.ticket) {
+    if (result.error || !result.ticket)
       return { success: false, error: result.error || "No se pudo actualizar el ticket" }
-    }
 
     revalidatePath("/dashboard/tickets")
     revalidatePath(`/dashboard/tickets/${id}`)
     revalidatePath("/dashboard/pagos")
+    return { success: true, data: result.ticket, message: `Estado cambiado a ${newStatus}` }
+  }
 
-    return {
-      success: true,
-      data: result.ticket,
-      message: `Estado cambiado a ${newStatus}`,
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("tickets").doc(id)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Ticket no encontrado" }
+
+      const ticket = fromFirestoreDoc<Ticket>(id, snap.data()!)
+
+      if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
+        return { success: false, error: "No tienes permiso para modificar este ticket" }
+
+      const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
+      const forwardOk = VALID_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
+      const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
+
+      if (!forwardOk && !reverseOk)
+        return { success: false, error: `No se puede cambiar de ${ticket.estado} a ${newStatus}` }
+
+      const now = new Date().toISOString()
+      const updateData: Record<string, unknown> = { estado: newStatus, updated_at: now }
+
+      if (newStatus === "iniciado" && !ticket.fecha_inicio) updateData.fecha_inicio = now
+      if (newStatus === "finalizado") updateData.fecha_finalizacion = now
+
+      if (additionalData?.materiales_usados) updateData.materiales_usados = additionalData.materiales_usados
+      if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
+      if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
+      if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
+
+      await ref.update(updateData)
+
+      // Create payment record when finalized
+      if (newStatus === "finalizado" && ticket.tecnico_id) {
+        const montoAPagar = (ticket.monto_servicio || DEFAULT_SERVICE_AMOUNT) * (DEFAULT_COMMISSION_PERCENTAGE / 100)
+        await db.collection("pagos").add(cleanForFirestore({
+          ticket_id: id,
+          tecnico_id: ticket.tecnico_id,
+          monto_ticket: ticket.monto_servicio || DEFAULT_SERVICE_AMOUNT,
+          porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE,
+          monto_a_pagar: montoAPagar,
+          estado_pago: "pendiente",
+          fecha_habilitacion: now,
+          created_at: now,
+          updated_at: now,
+        }))
+      }
+
+      const updated = fromFirestoreDoc<Ticket>(id, { ...snap.data()!, ...updateData })
+
+      revalidatePath("/dashboard/tickets")
+      revalidatePath(`/dashboard/tickets/${id}`)
+      revalidatePath("/dashboard/pagos")
+
+      return { success: true, data: updated, message: `Estado cambiado a ${newStatus}` }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
+  // Supabase
   const supabase = await createClient()
+  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", id).single()
+  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
 
-  // Obtener ticket actual
-  const { data: ticket, error: fetchError } = await supabase
-    .from("tickets")
-    .select("*")
-    .eq("id", id)
-    .single()
-
-  if (fetchError || !ticket) {
-    return { success: false, error: "Ticket no encontrado" }
-  }
-
-  // Verificar permisos - técnico solo puede cambiar sus propios tickets
-  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) {
+  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
     return { success: false, error: "No tienes permiso para modificar este ticket" }
-  }
 
-  // Validar transición de estado (bidireccional para admin)
   const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
   const forwardOk = VALID_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
   const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
-  if (!forwardOk && !reverseOk) {
-    return {
-      success: false,
-      error: `No se puede cambiar de ${ticket.estado} a ${newStatus}`
-    }
-  }
+  if (!forwardOk && !reverseOk)
+    return { success: false, error: `No se puede cambiar de ${ticket.estado} a ${newStatus}` }
 
-  // Preparar datos de actualización
-  const updateData: Record<string, unknown> = {
-    estado: newStatus,
-  }
+  const updateData: Record<string, unknown> = { estado: newStatus }
+  if (newStatus === "iniciado" && !ticket.fecha_inicio) updateData.fecha_inicio = new Date().toISOString()
+  if (newStatus === "finalizado") updateData.fecha_finalizacion = new Date().toISOString()
+  if (additionalData?.materiales_usados) updateData.materiales_usados = additionalData.materiales_usados
+  if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
+  if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
+  if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
 
-  // Agregar fechas según el estado
-  if (newStatus === "iniciado" && !ticket.fecha_inicio) {
-    updateData.fecha_inicio = new Date().toISOString()
-  }
-  if (newStatus === "finalizado") {
-    updateData.fecha_finalizacion = new Date().toISOString()
-  }
+  const { data, error } = await supabase.from("tickets").update(updateData).eq("id", id).select().single()
+  if (error) return { success: false, error: error.message }
 
-  // Agregar datos adicionales del técnico
-  if (additionalData) {
-    if (additionalData.materiales_usados) {
-      updateData.materiales_usados = additionalData.materiales_usados
-    }
-    if (additionalData.tiempo_trabajado !== undefined) {
-      updateData.tiempo_trabajado = additionalData.tiempo_trabajado
-    }
-    if (additionalData.observaciones_tecnico) {
-      updateData.observaciones_tecnico = additionalData.observaciones_tecnico
-    }
-    if (additionalData.solucion_aplicada) {
-      updateData.solucion_aplicada = additionalData.solucion_aplicada
-    }
-  }
-
-  // Actualizar ticket
-  const { data, error } = await supabase
-    .from("tickets")
-    .update(updateData)
-    .eq("id", id)
-    .select()
-    .single()
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
-
-  // Registrar cambio de estado en historial
   await supabase.from("historial_cambios").insert({
-    ticket_id: id,
-    usuario_id: currentUser.id,
-    tipo_cambio: "cambio_estado",
-    campo_modificado: "estado",
-    valor_anterior: ticket.estado,
-    valor_nuevo: newStatus,
+    ticket_id: id, usuario_id: currentUser.id, tipo_cambio: "cambio_estado",
+    campo_modificado: "estado", valor_anterior: ticket.estado, valor_nuevo: newStatus,
     observacion: additionalData?.observaciones_tecnico || null,
   })
 
-  // Si el ticket se finaliza, crear registro de pago pendiente
   if (newStatus === "finalizado" && ticket.tecnico_id) {
     const montoAPagar = ticket.monto_servicio * (DEFAULT_COMMISSION_PERCENTAGE / 100)
-    
     await supabase.from("pagos_tecnicos").insert({
-      ticket_id: id,
-      tecnico_id: ticket.tecnico_id,
-      monto_ticket: ticket.monto_servicio,
-      porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE,
-      monto_a_pagar: montoAPagar,
-      estado_pago: "pendiente",
-      fecha_habilitacion: new Date().toISOString(),
+      ticket_id: id, tecnico_id: ticket.tecnico_id, monto_ticket: ticket.monto_servicio,
+      porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE, monto_a_pagar: montoAPagar,
+      estado_pago: "pendiente", fecha_habilitacion: new Date().toISOString(),
     })
   }
 
   revalidatePath("/dashboard/tickets")
   revalidatePath(`/dashboard/tickets/${id}`)
   revalidatePath("/dashboard/pagos")
-
-  return {
-    success: true,
-    data: data as Ticket,
-    message: `Estado cambiado a ${newStatus}`,
-  }
+  return { success: true, data: data as Ticket, message: `Estado cambiado a ${newStatus}` }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -519,100 +594,83 @@ export async function assignTechnician(
   tecnicoId: string
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
 
   if (isLocalMode()) {
     const ticket = getDemoTicketById(ticketId, currentUser)
-    if (!ticket) {
-      return { success: false, error: "Ticket no encontrado" }
-    }
-
+    if (!ticket) return { success: false, error: "Ticket no encontrado" }
     const isReassignment = ticket.tecnico_id !== null
-
-    if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3) {
-      return {
-        success: false,
-        error: "Solo Gerente o superior puede reasignar tecnicos",
-      }
-    }
-
-    if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2) {
-      return {
-        success: false,
-        error: "No tienes permisos para asignar tecnicos",
-      }
-    }
-
+    if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3)
+      return { success: false, error: "Solo Gerente o superior puede reasignar tecnicos" }
+    if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2)
+      return { success: false, error: "No tienes permisos para asignar tecnicos" }
     const updatedTicket = assignDemoTechnician(ticketId, tecnicoId)
-    if (!updatedTicket) {
-      return { success: false, error: "Tecnico no encontrado" }
-    }
-
+    if (!updatedTicket) return { success: false, error: "Tecnico no encontrado" }
     revalidatePath("/dashboard/tickets")
     revalidatePath(`/dashboard/tickets/${ticketId}`)
+    return { success: true, data: updatedTicket, message: isReassignment ? "Tecnico reasignado" : "Tecnico asignado" }
+  }
 
-    return {
-      success: true,
-      data: updatedTicket,
-      message: isReassignment ? "Tecnico reasignado" : "Tecnico asignado",
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("tickets").doc(ticketId)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Ticket no encontrado" }
+
+      const ticket = fromFirestoreDoc<Ticket>(ticketId, snap.data()!)
+      const isReassignment = Boolean(ticket.tecnico_id)
+
+      if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3)
+        return { success: false, error: "Solo Gerente o superior puede reasignar técnicos" }
+      if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2)
+        return { success: false, error: "No tienes permisos para asignar técnicos" }
+
+      const now = new Date().toISOString()
+      await ref.update({ tecnico_id: tecnicoId, fecha_asignacion: now, updated_at: now })
+
+      const updated = fromFirestoreDoc<Ticket>(ticketId, {
+        ...snap.data()!, tecnico_id: tecnicoId, fecha_asignacion: now, updated_at: now,
+      })
+
+      revalidatePath("/dashboard/tickets")
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+
+      return {
+        success: true,
+        data: updated,
+        message: isReassignment ? "Técnico reasignado" : "Técnico asignado",
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
+  // Supabase
   const supabase = await createClient()
-
-  // Coordinador puede asignar, pero no reasignar
-  // Gerente+ puede reasignar
   const { data: ticket, error: fetchError } = await supabase
-    .from("tickets")
-    .select("tecnico_id, estado")
-    .eq("id", ticketId)
-    .single()
-
-  if (fetchError || !ticket) {
-    return { success: false, error: "Ticket no encontrado" }
-  }
+    .from("tickets").select("tecnico_id, estado").eq("id", ticketId).single()
+  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
 
   const isReassignment = ticket.tecnico_id !== null
-  
-  if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3) {
-    return { 
-      success: false, 
-      error: "Solo Gerente o superior puede reasignar técnicos" 
-    }
-  }
-
-  if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2) {
-    return { 
-      success: false, 
-      error: "No tienes permisos para asignar técnicos" 
-    }
-  }
+  if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3)
+    return { success: false, error: "Solo Gerente o superior puede reasignar técnicos" }
+  if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2)
+    return { success: false, error: "No tienes permisos para asignar técnicos" }
 
   const { data, error } = await supabase
     .from("tickets")
-    .update({
-      tecnico_id: tecnicoId,
-      fecha_asignacion: new Date().toISOString(),
-    })
+    .update({ tecnico_id: tecnicoId, fecha_asignacion: new Date().toISOString() })
     .eq("id", ticketId)
     .select()
     .single()
 
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  if (error) return { success: false, error: error.message }
 
-  // Registrar en historial
   await supabase.from("historial_cambios").insert({
-    ticket_id: ticketId,
-    usuario_id: currentUser.id,
-    tipo_cambio: "asignacion",
+    ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "asignacion",
     campo_modificado: "tecnico_id",
-    valor_anterior: ticket.tecnico_id || "Sin asignar",
-    valor_nuevo: tecnicoId,
+    valor_anterior: ticket.tecnico_id || "Sin asignar", valor_nuevo: tecnicoId,
   })
 
   revalidatePath("/dashboard/tickets")
@@ -626,53 +684,41 @@ export async function assignTechnician(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ELIMINAR TICKET (Solo Gerente+)
+// ELIMINAR TICKET
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function deleteTicket(id: string): Promise<ActionResponse> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
-
-  if (ROLE_HIERARCHY[currentUser.rol] < 3) {
-    return { success: false, error: "No tienes permisos para eliminar tickets" }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "No tienes permisos para eliminar tickets" }
 
   if (isLocalMode()) {
     const deleted = deleteDemoTicket(id)
-    if (!deleted) {
-      return { success: false, error: "Ticket no encontrado" }
-    }
-
+    if (!deleted) return { success: false, error: "Ticket no encontrado" }
     revalidatePath("/dashboard/tickets")
     revalidatePath("/dashboard")
+    return { success: true, message: "Ticket eliminado exitosamente" }
+  }
 
-    return {
-      success: true,
-      message: "Ticket eliminado exitosamente",
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      await db.collection("tickets").doc(id).delete()
+      revalidatePath("/dashboard/tickets")
+      revalidatePath("/dashboard")
+      return { success: true, message: "Ticket eliminado exitosamente" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
   const supabase = await createClient()
-
-  const { error } = await supabase
-    .from("tickets")
-    .delete()
-    .eq("id", id)
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
+  const { error } = await supabase.from("tickets").delete().eq("id", id)
+  if (error) return { success: false, error: error.message }
 
   revalidatePath("/dashboard/tickets")
   revalidatePath("/dashboard")
-
-  return {
-    success: true,
-    message: "Ticket eliminado exitosamente",
-  }
+  return { success: true, message: "Ticket eliminado exitosamente" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -681,67 +727,94 @@ export async function deleteTicket(id: string): Promise<ActionResponse> {
 
 export async function getDashboardStats(): Promise<ActionResponse<DashboardStats>> {
   const currentUser = await getCurrentUser()
-
-  if (!currentUser) {
-    return { success: false, error: "No autenticado" }
-  }
+  if (!currentUser) return { success: false, error: "No autenticado" }
 
   if (isLocalMode()) {
-    return {
-      success: true,
-      data: getDemoDashboardStats(currentUser),
+    return { success: true, data: getDemoDashboardStats(currentUser) }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const all = await fbGetAllTickets()
+      let tickets = all
+      if (currentUser.rol === "tecnico") tickets = all.filter((t) => t.tecnico_id === currentUser.id)
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const stats: DashboardStats = {
+        ticketsTotal: tickets.length,
+        ticketsHoy: tickets.filter((t) => new Date(t.created_at) >= today).length,
+        ticketsPendientes: tickets.filter((t) => !["finalizado", "cancelado"].includes(t.estado)).length,
+        ticketsFinalizados: tickets.filter((t) => t.estado === "finalizado").length,
+        pagosPendientes: 0,
+        montosPendientes: 0,
+        ticketsPorEstado: {
+          asignado: tickets.filter((t) => t.estado === "asignado").length,
+          iniciado: tickets.filter((t) => t.estado === "iniciado").length,
+          en_progreso: tickets.filter((t) => t.estado === "en_progreso").length,
+          finalizado: tickets.filter((t) => t.estado === "finalizado").length,
+          cancelado: tickets.filter((t) => t.estado === "cancelado").length,
+        },
+        ticketsPorPrioridad: {
+          baja: tickets.filter((t) => t.prioridad === "baja").length,
+          media: tickets.filter((t) => t.prioridad === "media").length,
+          alta: tickets.filter((t) => t.prioridad === "alta").length,
+          urgente: tickets.filter((t) => t.prioridad === "urgente").length,
+        },
+      }
+
+      if (ROLE_HIERARCHY[currentUser.rol] >= 3) {
+        const db = getAdminFirestore()
+        const pagosSnap = await db.collection("pagos").where("estado_pago", "==", "pendiente").get()
+        stats.pagosPendientes = pagosSnap.size
+        stats.montosPendientes = pagosSnap.docs.reduce(
+          (sum, d) => sum + (d.data().monto_a_pagar || 0),
+          0
+        )
+      }
+
+      return { success: true, data: stats }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
+  // Supabase
   const supabase = await createClient()
-
-  // Query base
   let ticketsQuery = supabase.from("tickets").select("estado, prioridad, created_at")
-  
-  // Si es técnico, solo sus tickets
-  if (currentUser.rol === "tecnico") {
-    ticketsQuery = ticketsQuery.eq("tecnico_id", currentUser.id)
-  }
-
+  if (currentUser.rol === "tecnico") ticketsQuery = ticketsQuery.eq("tecnico_id", currentUser.id)
   const { data: tickets, error } = await ticketsQuery
+  if (error) return { success: false, error: error.message }
 
-  if (error) {
-    return { success: false, error: error.message }
-  }
-
-  // Calcular estadísticas
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   const stats: DashboardStats = {
     ticketsTotal: tickets?.length || 0,
-    ticketsHoy: tickets?.filter(t => new Date(t.created_at) >= today).length || 0,
-    ticketsPendientes: tickets?.filter(t => !["finalizado", "cancelado"].includes(t.estado)).length || 0,
-    ticketsFinalizados: tickets?.filter(t => t.estado === "finalizado").length || 0,
+    ticketsHoy: tickets?.filter((t) => new Date(t.created_at) >= today).length || 0,
+    ticketsPendientes: tickets?.filter((t) => !["finalizado", "cancelado"].includes(t.estado)).length || 0,
+    ticketsFinalizados: tickets?.filter((t) => t.estado === "finalizado").length || 0,
     pagosPendientes: 0,
     montosPendientes: 0,
     ticketsPorEstado: {
-      asignado: tickets?.filter(t => t.estado === "asignado").length || 0,
-      iniciado: tickets?.filter(t => t.estado === "iniciado").length || 0,
-      en_progreso: tickets?.filter(t => t.estado === "en_progreso").length || 0,
-      finalizado: tickets?.filter(t => t.estado === "finalizado").length || 0,
-      cancelado: tickets?.filter(t => t.estado === "cancelado").length || 0,
+      asignado: tickets?.filter((t) => t.estado === "asignado").length || 0,
+      iniciado: tickets?.filter((t) => t.estado === "iniciado").length || 0,
+      en_progreso: tickets?.filter((t) => t.estado === "en_progreso").length || 0,
+      finalizado: tickets?.filter((t) => t.estado === "finalizado").length || 0,
+      cancelado: tickets?.filter((t) => t.estado === "cancelado").length || 0,
     },
     ticketsPorPrioridad: {
-      baja: tickets?.filter(t => t.prioridad === "baja").length || 0,
-      media: tickets?.filter(t => t.prioridad === "media").length || 0,
-      alta: tickets?.filter(t => t.prioridad === "alta").length || 0,
-      urgente: tickets?.filter(t => t.prioridad === "urgente").length || 0,
+      baja: tickets?.filter((t) => t.prioridad === "baja").length || 0,
+      media: tickets?.filter((t) => t.prioridad === "media").length || 0,
+      alta: tickets?.filter((t) => t.prioridad === "alta").length || 0,
+      urgente: tickets?.filter((t) => t.prioridad === "urgente").length || 0,
     },
   }
 
-  // Si puede ver pagos, obtener estadísticas de pagos
   if (ROLE_HIERARCHY[currentUser.rol] >= 3) {
     const { data: pagos } = await supabase
-      .from("pagos_tecnicos")
-      .select("monto_a_pagar")
-      .eq("estado_pago", "pendiente")
-
+      .from("pagos_tecnicos").select("monto_a_pagar").eq("estado_pago", "pendiente")
     stats.pagosPendientes = pagos?.length || 0
     stats.montosPendientes = pagos?.reduce((sum, p) => sum + p.monto_a_pagar, 0) || 0
   }
@@ -754,50 +827,56 @@ export async function getDashboardStats(): Promise<ActionResponse<DashboardStats
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getTechnicians(): Promise<ActionResponse<Array<{ id: string; nombre: string; apellido: string }>>> {
-  if (isLocalMode()) {
-    return {
-      success: true,
-      data: getDemoTechnicians(),
+  if (isLocalMode()) return { success: true, data: getDemoTechnicians() }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const snap = await db.collection("users")
+        .where("rol", "==", "tecnico")
+        .where("estado", "==", "activo")
+        .get()
+      const data = snap.docs.map((d) => ({
+        id: d.id,
+        nombre: d.data().nombre as string,
+        apellido: d.data().apellido as string,
+      }))
+      return { success: true, data }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
     }
   }
 
   const supabase = await createClient()
-
   const { data, error } = await supabase
-    .from("users")
-    .select("id, nombre, apellido")
-    .eq("rol", "tecnico")
-    .eq("estado", "activo")
-    .order("nombre")
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
-
+    .from("users").select("id, nombre, apellido")
+    .eq("rol", "tecnico").eq("estado", "activo").order("nombre")
+  if (error) return { success: false, error: error.message }
   return { success: true, data: data || [] }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HISTORIAL DE CAMBIOS DE UN TICKET
+// HISTORIAL DE CAMBIOS
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getTicketHistory(ticketId: string): Promise<ActionResponse<ChangeHistory[]>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
 
-  if (isLocalMode()) {
+  if (isLocalMode()) return { success: true, data: [] }
+
+  if (isFirebaseMode()) {
+    // Historial is stored as an update-logs subcollection in Firebase
     return { success: true, data: [] }
   }
 
   const supabase = await createClient()
-
   const { data, error } = await supabase
     .from("historial_cambios")
     .select("*, usuario:users(nombre, apellido)")
     .eq("ticket_id", ticketId)
     .order("created_at", { ascending: false })
     .limit(50)
-
   if (error) return { success: false, error: error.message }
   return { success: true, data: (data ?? []) as ChangeHistory[] }
 }
@@ -810,8 +889,23 @@ export async function getTicketUpdateLogs(ticketId: string): Promise<ActionRespo
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
 
-  if (isLocalMode()) {
-    return { success: true, data: getDemoUpdateLogs(ticketId) }
+  if (isLocalMode()) return { success: true, data: getDemoUpdateLogs(ticketId) }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const snap = await db
+        .collection("update-logs")
+        .where("ticket_id", "==", ticketId)
+        .orderBy("created_at", "desc")
+        .limit(100)
+        .get()
+
+      const logs: UpdateLog[] = snap.docs.map((d) => fromFirestoreDoc<UpdateLog>(d.id, d.data()))
+      return { success: true, data: logs }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
   }
 
   const supabase = await createClient()
@@ -830,7 +924,7 @@ export async function getTicketUpdateLogs(ticketId: string): Promise<ActionRespo
     ticket_id: row.ticket_id as string,
     autor_id: row.usuario_id as string,
     contenido: (row.observacion as string) || (row.tipo_cambio === "cambio_estado" ? "Cambio de estado" : "Actualización"),
-    tipo: row.tipo_cambio === "cambio_estado" ? "cambio_estado" : "nota" as "nota" | "cambio_estado",
+    tipo: row.tipo_cambio === "cambio_estado" ? "cambio_estado" : ("nota" as "nota" | "cambio_estado"),
     created_at: row.created_at as string,
     autor: row.usuario as UpdateLog["autor"],
   }))
@@ -844,71 +938,75 @@ export async function addTicketUpdateLog(
 ): Promise<ActionResponse<UpdateLog>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-
-  if (!contenido.trim()) {
-    return { success: false, error: "El contenido no puede estar vacío" }
-  }
+  if (!contenido.trim()) return { success: false, error: "El contenido no puede estar vacío" }
 
   if (isLocalMode()) {
     const ticket = getDemoTicketById(ticketId, currentUser)
     if (!ticket) return { success: false, error: "Ticket no encontrado" }
-
-    const canAdd =
-      currentUser.rol === "tecnico"
-        ? ticket.tecnico_id === currentUser.id
-        : ROLE_HIERARCHY[currentUser.rol] >= 2
-
+    const canAdd = currentUser.rol === "tecnico"
+      ? ticket.tecnico_id === currentUser.id
+      : ROLE_HIERARCHY[currentUser.rol] >= 2
     if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
-
     const log = addDemoUpdateLog({
-      ticket_id: ticketId,
-      autor_id: currentUser.id,
-      contenido: contenido.trim(),
-      tipo: "nota",
+      ticket_id: ticketId, autor_id: currentUser.id, contenido: contenido.trim(), tipo: "nota",
       autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
     })
-
     revalidatePath(`/dashboard/tickets/${ticketId}`)
     return { success: true, data: log, message: "Actualización agregada" }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ticketSnap = await db.collection("tickets").doc(ticketId).get()
+      if (!ticketSnap.exists) return { success: false, error: "Ticket no encontrado" }
+
+      const ticket = fromFirestoreDoc<Ticket>(ticketId, ticketSnap.data()!)
+      const canAdd = currentUser.rol === "tecnico"
+        ? ticket.tecnico_id === currentUser.id
+        : ROLE_HIERARCHY[currentUser.rol] >= 2
+      if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
+
+      const now = new Date().toISOString()
+      const logRef = db.collection("update-logs").doc()
+      const logData = cleanForFirestore({
+        ticket_id: ticketId,
+        autor_id: currentUser.id,
+        contenido: contenido.trim(),
+        tipo: "nota" as const,
+        created_at: now,
+        autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
+      })
+      await logRef.set(logData)
+
+      const log: UpdateLog = { id: logRef.id, ...logData }
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return { success: true, data: log, message: "Actualización agregada" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
   const supabase = await createClient()
-
-  const { data: ticket, error: fetchError } = await supabase
-    .from("tickets")
-    .select("tecnico_id")
-    .eq("id", ticketId)
-    .single()
-
+  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("tecnico_id").eq("id", ticketId).single()
   if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
 
-  const canAdd =
-    currentUser.rol === "tecnico"
-      ? ticket.tecnico_id === currentUser.id
-      : ROLE_HIERARCHY[currentUser.rol] >= 2
-
+  const canAdd = currentUser.rol === "tecnico"
+    ? ticket.tecnico_id === currentUser.id
+    : ROLE_HIERARCHY[currentUser.rol] >= 2
   if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
 
   const { data, error } = await supabase
     .from("historial_cambios")
-    .insert({
-      ticket_id: ticketId,
-      usuario_id: currentUser.id,
-      tipo_cambio: "sesion_trabajo",
-      observacion: contenido.trim(),
-    })
+    .insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: contenido.trim() })
     .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at")
     .single()
 
   if (error) return { success: false, error: error.message }
 
   const log: UpdateLog = {
-    id: data.id,
-    ticket_id: data.ticket_id,
-    autor_id: data.usuario_id,
-    contenido: data.observacion ?? "",
-    tipo: "nota",
-    created_at: data.created_at,
+    id: data.id, ticket_id: data.ticket_id, autor_id: data.usuario_id,
+    contenido: data.observacion ?? "", tipo: "nota", created_at: data.created_at,
     autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
   }
 
@@ -917,7 +1015,7 @@ export async function addTicketUpdateLog(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONVERTIR INSPECCIÓN → SERVICIO O PROYECTO
+// CONVERTIR INSPECCIÓN → SERVICIO / PROYECTO
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function convertirInspeccion(
@@ -926,15 +1024,12 @@ export async function convertirInspeccion(
 ): Promise<ActionResponse<{ ticketId: string; numero: string }>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (ROLE_HIERARCHY[currentUser.rol] < 2) {
+  if (ROLE_HIERARCHY[currentUser.rol] < 2)
     return { success: false, error: "Sin permiso para convertir inspecciones" }
-  }
 
   if (isLocalMode()) {
     const result = createDemoConvertirInspeccion(ticketId, tipo, currentUser)
-    if (!result) {
-      return { success: false, error: "Ticket de inspección no encontrado o ya fue convertido" }
-    }
+    if (!result) return { success: false, error: "Ticket de inspección no encontrado o ya fue convertido" }
     revalidatePath("/dashboard/tickets")
     revalidatePath(`/dashboard/tickets/${ticketId}`)
     return {
@@ -944,9 +1039,72 @@ export async function convertirInspeccion(
     }
   }
 
-  const supabase = await createClient()
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const origSnap = await db.collection("tickets").doc(ticketId).get()
+      if (!origSnap.exists) return { success: false, error: "Ticket no encontrado" }
 
-  // Fetch inspection ticket
+      const inspeccion = fromFirestoreDoc<Ticket>(ticketId, origSnap.data()!)
+      if (inspeccion.tipo !== "inspeccion") return { success: false, error: "El ticket no es una inspección" }
+      if (inspeccion.ticket_derivado_id) return { success: false, error: "Esta inspección ya fue convertida" }
+
+      // Get next sequence
+      const all = await fbGetAllTickets()
+      const ofType = all.filter((t) => t.tipo === tipo)
+      const nums = ofType.map((t) => {
+        const m = t.numero_ticket?.match(/(\d{4})$/)
+        return m ? parseInt(m[1]) : 0
+      })
+      const nextSeq = nums.length > 0 ? Math.max(...nums) + 1 : 1
+      const nuevoNumero = generateTicketNumber(tipo, nextSeq)
+
+      const now = new Date().toISOString()
+      const newRef = db.collection("tickets").doc()
+      const newTicketData = cleanForFirestore({
+        numero_ticket: nuevoNumero,
+        tipo,
+        cliente_nombre: inspeccion.cliente_nombre,
+        cliente_empresa: inspeccion.cliente_empresa || null,
+        cliente_email: inspeccion.cliente_email || null,
+        cliente_telefono: inspeccion.cliente_telefono,
+        cliente_direccion: inspeccion.cliente_direccion,
+        asunto: tipo === "servicio" ? "Servicio derivado de inspección" : "Proyecto derivado de inspección",
+        descripcion: inspeccion.descripcion,
+        requerimientos: inspeccion.requerimientos || null,
+        prioridad: inspeccion.prioridad,
+        origen: inspeccion.origen,
+        tecnico_id: inspeccion.tecnico_id || null,
+        creado_por: currentUser.id,
+        estado: "asignado",
+        monto_servicio: tipo === "servicio" ? DEFAULT_SERVICE_AMOUNT : 0,
+        ticket_origen_id: ticketId,
+        ticket_derivado_id: null,
+        created_at: now,
+        updated_at: now,
+      })
+      await newRef.set(newTicketData)
+
+      await db.collection("tickets").doc(ticketId).update({
+        ticket_derivado_id: newRef.id,
+        updated_at: now,
+      })
+
+      revalidatePath("/dashboard/tickets")
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+
+      return {
+        success: true,
+        data: { ticketId: newRef.id, numero: nuevoNumero },
+        message: `Inspección convertida a ${tipo}: ${nuevoNumero}`,
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  // Supabase
+  const supabase = await createClient()
   const { data: inspeccion, error: fetchError } = await supabase
     .from("tickets")
     .select("id, tipo, estado, ticket_derivado_id, cliente_nombre, cliente_empresa, cliente_email, cliente_telefono, cliente_direccion, prioridad, origen, tecnico_id, descripcion, requerimientos, asunto")
@@ -958,12 +1116,7 @@ export async function convertirInspeccion(
   if (inspeccion.ticket_derivado_id) return { success: false, error: "Esta inspección ya fue convertida" }
 
   const { data: countData } = await supabase
-    .from("tickets")
-    .select("numero_ticket")
-    .eq("tipo", tipo)
-    .order("created_at", { ascending: false })
-    .limit(1)
-
+    .from("tickets").select("numero_ticket").eq("tipo", tipo).order("created_at", { ascending: false }).limit(1)
   const lastNum = countData?.[0]?.numero_ticket?.match(/(\d{4})$/)
   const nextSeq = lastNum ? Number(lastNum[1]) + 1 : 1
   const nuevoNumero = generateTicketNumber(tipo, nextSeq)
@@ -971,23 +1124,14 @@ export async function convertirInspeccion(
   const { data: nuevoTicket, error: insertError } = await supabase
     .from("tickets")
     .insert({
-      tipo,
-      numero_ticket: nuevoNumero,
-      cliente_nombre: inspeccion.cliente_nombre,
-      cliente_empresa: inspeccion.cliente_empresa,
-      cliente_email: inspeccion.cliente_email,
-      cliente_telefono: inspeccion.cliente_telefono,
+      tipo, numero_ticket: nuevoNumero,
+      cliente_nombre: inspeccion.cliente_nombre, cliente_empresa: inspeccion.cliente_empresa,
+      cliente_email: inspeccion.cliente_email, cliente_telefono: inspeccion.cliente_telefono,
       cliente_direccion: inspeccion.cliente_direccion,
-      asunto: tipo === "servicio"
-        ? `Servicio derivado de inspección`
-        : `Proyecto derivado de inspección`,
-      descripcion: inspeccion.descripcion,
-      requerimientos: inspeccion.requerimientos,
-      prioridad: inspeccion.prioridad,
-      origen: inspeccion.origen,
-      tecnico_id: inspeccion.tecnico_id,
-      creado_por: currentUser.id,
-      estado: "asignado",
+      asunto: tipo === "servicio" ? "Servicio derivado de inspección" : "Proyecto derivado de inspección",
+      descripcion: inspeccion.descripcion, requerimientos: inspeccion.requerimientos,
+      prioridad: inspeccion.prioridad, origen: inspeccion.origen, tecnico_id: inspeccion.tecnico_id,
+      creado_por: currentUser.id, estado: "asignado",
       monto_servicio: tipo === "servicio" ? DEFAULT_SERVICE_AMOUNT : 0,
       ticket_origen_id: ticketId,
     })
@@ -996,13 +1140,13 @@ export async function convertirInspeccion(
 
   if (insertError || !nuevoTicket) return { success: false, error: insertError?.message ?? "Error al crear ticket" }
 
-  await supabase
-    .from("tickets")
+  await supabase.from("tickets")
     .update({ ticket_derivado_id: nuevoTicket.id, updated_at: new Date().toISOString() })
     .eq("id", ticketId)
 
   revalidatePath("/dashboard/tickets")
   revalidatePath(`/dashboard/tickets/${ticketId}`)
+
   return {
     success: true,
     data: { ticketId: nuevoTicket.id, numero: nuevoTicket.numero_ticket },

@@ -3,8 +3,9 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FileBarChart2, Download, Filter, TrendingUp, Calendar as CalIcon, MapPin } from "lucide-react"
+import type { MantenimientoReportes } from "@/types"
 
-export function ReportesMantenimiento() {
+export function ReportesMantenimiento({ initialReportes }: { initialReportes?: MantenimientoReportes }) {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

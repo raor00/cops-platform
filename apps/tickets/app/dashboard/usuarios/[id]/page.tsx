@@ -99,9 +99,9 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
       </Button>
 
       {/* ─── Profile Header ─── */}
-      <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 mb-6 stagger-1 animate-slide-up">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 mb-6 shadow-sm stagger-1 animate-slide-up">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          <Avatar className="h-20 w-20 ring-2 ring-white/20 shrink-0">
+          <Avatar className="h-20 w-20 ring-2 ring-slate-200 shrink-0">
             {targetUser.foto_perfil_url && (
               <AvatarImage
                 src={targetUser.foto_perfil_url}
@@ -115,7 +115,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-white font-heading">
+              <h1 className="text-2xl font-bold text-slate-900 font-heading">
                 {targetUser.nombre} {targetUser.apellido}
               </h1>
               <Badge variant={targetUser.estado === 'activo' ? 'success' : 'secondary'}>
@@ -123,7 +123,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
               </Badge>
             </div>
             <p className="text-blue-400 font-medium text-sm mb-2">{ROLE_LABELS[targetUser.rol]}</p>
-            <div className="flex flex-wrap items-center gap-4 text-sm text-white/50">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
               <span className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5" />
                 {targetUser.email}
@@ -176,7 +176,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <Card variant="glass" className="stagger-2 animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+                <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
                   Información Personal
                 </CardTitle>
               </CardHeader>
@@ -192,7 +192,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
             <Card variant="glass" className="stagger-3 animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold text-white/60 uppercase tracking-wider">
+                <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
                   Acceso y Rol
                 </CardTitle>
               </CardHeader>
@@ -217,23 +217,23 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
           <TabsContent value="tickets">
             <Card variant="glass" className="animate-fade-in">
               <CardHeader>
-                <CardTitle className="text-base font-semibold text-white">
+                <CardTitle className="text-base font-semibold text-slate-900">
                   Tickets Asignados
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {tickets.length === 0 ? (
-                  <div className="p-8 text-center text-white/40">
+                  <div className="p-8 text-center text-slate-400">
                     <Ticket className="h-10 w-10 mx-auto mb-3 opacity-30" />
                     <p>Sin tickets asignados</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-slate-100">
                     {tickets.map((t) => (
                       <Link
                         key={t.id}
                         href={`/dashboard/tickets/${t.id}`}
-                        className="flex items-start gap-3 px-5 py-3 hover:bg-white/5 transition-colors"
+                        className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 transition-colors"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
@@ -247,10 +247,10 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                               {PRIORITY_LABELS[t.prioridad]}
                             </Badge>
                           </div>
-                          <p className="text-sm text-white/80 truncate">{t.asunto}</p>
-                          <p className="text-xs text-white/40 mt-0.5">{t.cliente_nombre}</p>
+                          <p className="text-sm text-slate-800 truncate">{t.asunto}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{t.cliente_nombre}</p>
                         </div>
-                        <span className="text-xs text-white/30 shrink-0 mt-1">
+                        <span className="text-xs text-slate-400 shrink-0 mt-1">
                           {new Date(t.created_at).toLocaleDateString('es-VE')}
                         </span>
                       </Link>
@@ -299,23 +299,23 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
             {stats && stats.ticketsAsignados > 0 && (
               <Card variant="glass" className="mt-4 animate-slide-up stagger-2">
                 <CardHeader>
-                  <CardTitle className="text-base font-semibold text-white">
+                  <CardTitle className="text-base font-semibold text-slate-900">
                     Tasa de Resolución
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-white/60">
+                    <span className="text-sm text-slate-600">
                       {stats.ticketsCompletados} de {stats.ticketsAsignados} tickets completados
                     </span>
-                    <span className="text-lg font-bold text-white">
+                    <span className="text-lg font-bold text-slate-900">
                       {Math.round(
                         (stats.ticketsCompletados / stats.ticketsAsignados) * 100
                       )}
                       %
                     </span>
                   </div>
-                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-blue-500 to-green-500 progress-fill"
                       style={{
@@ -326,7 +326,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                     />
                   </div>
                   {stats.tiempoPromedioMinutos > 0 && (
-                    <p className="text-xs text-white/40 mt-3 flex items-center gap-1.5">
+                    <p className="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" />
                       Tiempo promedio: {Math.floor(stats.tiempoPromedioMinutos / 60)}h{' '}
                       {stats.tiempoPromedioMinutos % 60}min por ticket
@@ -347,8 +347,8 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-start gap-2">
-      <span className="text-xs text-white/40 shrink-0">{label}</span>
-      <span className="text-sm text-white text-right">{value}</span>
+      <span className="text-xs text-slate-400 shrink-0">{label}</span>
+      <span className="text-sm text-slate-900 text-right">{value}</span>
     </div>
   )
 }
@@ -377,10 +377,10 @@ function StatCard({
       className={`rounded-2xl border bg-gradient-to-br p-5 ${colorMap[color]} ${className ?? ''}`}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-white/50 font-medium uppercase tracking-wider">{label}</span>
+        <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{label}</span>
         {icon}
       </div>
-      <div className="text-3xl font-bold text-white">{value}</div>
+      <div className="text-3xl font-bold text-slate-900">{value}</div>
     </div>
   )
 }

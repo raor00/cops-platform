@@ -36,32 +36,26 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
     estado: "all",
   })
 
-  // Filtrar pagos según los filtros activos
   const filteredPayments = useMemo(() => {
     return allPayments.filter((payment) => {
-      // Filtro de estado
-      if (filters.estado && filters.estado !== "all") {
-        if (payment.estado_pago !== filters.estado) return false
+      if (filters.estado && filters.estado !== "all" && payment.estado_pago !== filters.estado) {
+        return false
       }
 
-      // Filtro de técnico
-      if (filters.tecnico) {
-        if (payment.tecnico.id !== filters.tecnico) return false
+      if (filters.tecnico && payment.tecnico.id !== filters.tecnico) {
+        return false
       }
 
-      // Filtro de método de pago
-      if (filters.metodo_pago) {
-        if (payment.metodo_pago !== filters.metodo_pago) return false
+      if (filters.metodo_pago && payment.metodo_pago !== filters.metodo_pago) {
+        return false
       }
 
-      // Filtro de fecha desde
       if (filters.fecha_desde) {
         const paymentDate = new Date(payment.fecha_habilitacion)
         const filterDate = new Date(filters.fecha_desde)
         if (paymentDate < filterDate) return false
       }
 
-      // Filtro de fecha hasta
       if (filters.fecha_hasta) {
         const paymentDate = new Date(payment.fecha_habilitacion)
         const filterDate = new Date(filters.fecha_hasta)
@@ -69,14 +63,18 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         if (paymentDate > filterDate) return false
       }
 
-      // Filtro de monto mínimo
-      if (filters.monto_min !== undefined) {
-        if (payment.monto_a_pagar < filters.monto_min) return false
+      if (
+        filters.monto_min !== undefined &&
+        payment.monto_a_pagar < filters.monto_min
+      ) {
+        return false
       }
 
-      // Filtro de monto máximo
-      if (filters.monto_max !== undefined) {
-        if (payment.monto_a_pagar > filters.monto_max) return false
+      if (
+        filters.monto_max !== undefined &&
+        payment.monto_a_pagar > filters.monto_max
+      ) {
+        return false
       }
 
       return true
@@ -87,7 +85,6 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
   const completed = filteredPayments.filter((p) => p.estado_pago === "pagado")
   const totalPending = pending.reduce((sum, p) => sum + p.monto_a_pagar, 0)
 
-  // Preparar datos para export
   const paymentsForExport: PaymentExportData[] = filteredPayments.map((payment) => ({
     numero_ticket: payment.ticket.numero_ticket,
     asunto: payment.ticket.asunto,
@@ -106,7 +103,6 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
 
   return (
     <>
-      {/* Filtros */}
       <div className="mb-6 space-y-3">
         <PagosFiltersBar
           filters={filters}
@@ -117,16 +113,15 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         <ActiveFiltersDisplay filters={filters} onRemoveFilter={handleRemoveFilter} />
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-3 mb-6">
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="stat-card stat-card-yellow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white/60">Pendientes</p>
-              <p className="text-3xl font-bold text-white mt-1">{pending.length}</p>
+              <p className="text-sm text-slate-500">Pendientes</p>
+              <p className="mt-1 text-3xl font-bold text-slate-900">{pending.length}</p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500/20 border border-yellow-500/30">
-              <Clock className="h-6 w-6 text-yellow-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-yellow-500/30 bg-yellow-500/20">
+              <Clock className="h-6 w-6 text-yellow-500" />
             </div>
           </div>
         </div>
@@ -134,11 +129,13 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         <div className="stat-card stat-card-blue">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white/60">Monto Pendiente</p>
-              <p className="text-3xl font-bold text-white mt-1">{formatCurrency(totalPending)}</p>
+              <p className="text-sm text-slate-500">Monto Pendiente</p>
+              <p className="mt-1 text-3xl font-bold text-slate-900">
+                {formatCurrency(totalPending)}
+              </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/20 border border-blue-500/30">
-              <DollarSign className="h-6 w-6 text-blue-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/20">
+              <DollarSign className="h-6 w-6 text-blue-500" />
             </div>
           </div>
         </div>
@@ -146,21 +143,22 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         <div className="stat-card stat-card-green">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white/60">Completados</p>
-              <p className="text-3xl font-bold text-white mt-1">{completed.length}</p>
+              <p className="text-sm text-slate-500">Completados</p>
+              <p className="mt-1 text-3xl font-bold text-slate-900">
+                {completed.length}
+              </p>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/20 border border-green-500/30">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-green-500/30 bg-green-500/20">
+              <CheckCircle className="h-6 w-6 text-green-500" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Pending Payments */}
       <Card variant="glass" className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-yellow-400" />
+            <Clock className="h-5 w-5 text-yellow-500" />
             Solicitudes de Pago Pendientes ({pending.length})
           </CardTitle>
         </CardHeader>
@@ -169,12 +167,11 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         </CardContent>
       </Card>
 
-      {/* Completed Payments */}
       {completed.length > 0 && (
         <Card variant="glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-400" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               Solicitudes Pagadas ({completed.length})
             </CardTitle>
           </CardHeader>
@@ -183,19 +180,21 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
               {completed.slice(0, 20).map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex min-w-0 items-center gap-4">
                     <Avatar className="shrink-0">
                       <AvatarFallback>
                         {getInitials(payment.tecnico.nombre, payment.tecnico.apellido)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-slate-900">
                         {payment.tecnico.nombre} {payment.tecnico.apellido}
                       </p>
-                      <p className="text-sm text-white/60">{payment.ticket.numero_ticket}</p>
+                      <p className="text-sm text-slate-600">
+                        {payment.ticket.numero_ticket}
+                      </p>
                       <BankingDetails
                         referencia_pago={payment.referencia_pago}
                         metodo_pago={payment.metodo_pago}
@@ -203,8 +202,10 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-white">{formatCurrency(payment.monto_a_pagar)}</p>
-                    <p className="text-xs text-white/50">
+                    <p className="font-medium text-slate-900">
+                      {formatCurrency(payment.monto_a_pagar)}
+                    </p>
+                    <p className="text-xs text-slate-500">
                       {payment.fecha_pago && formatDate(payment.fecha_pago)}
                     </p>
                   </div>
@@ -215,11 +216,12 @@ export function PagosClient({ allPayments, technicians }: PagosClientProps) {
         </Card>
       )}
 
-      {/* Sin resultados */}
       {filteredPayments.length === 0 && (
         <Card variant="glass">
           <CardContent className="py-12 text-center">
-            <p className="text-white/50">No se encontraron pagos con los filtros seleccionados</p>
+            <p className="text-slate-500">
+              No se encontraron pagos con los filtros seleccionados
+            </p>
           </CardContent>
         </Card>
       )}

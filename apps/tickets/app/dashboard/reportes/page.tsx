@@ -59,7 +59,7 @@ export default async function ReportesPage() {
           <p className="page-description">Métricas y rendimiento del equipo</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-white/50 border-white/20 text-xs">
+          <Badge variant="outline" className="text-slate-500 border-slate-200 bg-white text-xs">
             Solo lectura
           </Badge>
           <ReportExportButton stats={stats} />
@@ -105,7 +105,7 @@ export default async function ReportesPage() {
       {/* ─── Distribución por Estado ─── */}
       <Card variant="glass" className="mb-6 animate-slide-up stagger-1">
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
+          <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-blue-400" />
             Distribución por Estado
           </CardTitle>
@@ -117,13 +117,13 @@ export default async function ReportesPage() {
                 <Badge className={`text-xs ${STATUS_COLORS[estado as keyof typeof STATUS_COLORS] ?? ''}`}>
                   {STATUS_LABELS[estado as keyof typeof STATUS_LABELS] ?? estado}
                 </Badge>
-                <span className="text-sm font-bold text-white">{count}</span>
+                <span className="text-sm font-bold text-slate-900">{count}</span>
               </div>
             ))}
           </div>
           {/* Progress bar visual */}
           {stats.ticketsTotal > 0 && (
-            <div className="mt-4 h-3 rounded-full overflow-hidden bg-white/5 flex gap-0.5">
+            <div className="mt-4 h-3 rounded-full overflow-hidden bg-slate-100 flex gap-0.5">
               {Object.entries(stats.ticketsPorEstado).map(([estado, count]) => {
                 const pct = Math.round((count / stats.ticketsTotal) * 100)
                 if (pct === 0) return null
@@ -137,7 +137,7 @@ export default async function ReportesPage() {
                 return (
                   <div
                     key={estado}
-                    className={`h-full ${barColors[estado] ?? 'bg-white/20'} first:rounded-l-full last:rounded-r-full transition-all`}
+                    className={`h-full ${barColors[estado] ?? 'bg-slate-300'} first:rounded-l-full last:rounded-r-full transition-all`}
                     style={{ width: `${pct}%` }}
                     title={`${STATUS_LABELS[estado as keyof typeof STATUS_LABELS] ?? estado}: ${count}`}
                   />
@@ -151,7 +151,7 @@ export default async function ReportesPage() {
       {/* ─── Rendimiento por Técnico ─── */}
       <Card variant="glass" className="mb-6 animate-slide-up stagger-2">
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
+          <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
             <Users className="h-4 w-4 text-sky-400" />
             Rendimiento por Técnico
           </CardTitle>
@@ -165,7 +165,7 @@ export default async function ReportesPage() {
       {stats.ticketsPorMes.length > 0 && (
         <Card variant="glass" className="animate-slide-up stagger-3">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
+            <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
               <BarChart2 className="h-4 w-4 text-blue-400" />
               Evolución Mensual
             </CardTitle>
@@ -188,8 +188,8 @@ export default async function ReportesPage() {
                         title={`${total} tickets`}
                       />
                     </div>
-                    <p className="text-xs text-white/50 capitalize">{m.mes}</p>
-                    <p className="text-sm font-bold text-white">{total}</p>
+                    <p className="text-xs text-slate-500 capitalize">{m.mes}</p>
+                    <p className="text-sm font-bold text-slate-900">{total}</p>
                     <p className="text-xs text-green-400">{m.finalizados} fin.</p>
                   </div>
                 )
@@ -228,11 +228,11 @@ function KPICard({
   return (
     <div className={`rounded-2xl border bg-gradient-to-br p-5 ${colors[color]} ${className ?? ''}`}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-white/50 font-medium uppercase tracking-wider">{label}</span>
+        <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{label}</span>
         {icon}
       </div>
-      <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
-      <div className="text-xs text-white/40">{sub}</div>
+      <div className="text-2xl font-bold text-slate-900 mb-0.5">{value}</div>
+      <div className="text-xs text-slate-500">{sub}</div>
     </div>
   )
 }

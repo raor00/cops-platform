@@ -73,7 +73,7 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
       <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6'>
         <div>
           <div className='flex items-center gap-3 mb-2 flex-wrap'>
-            <h1 className='text-2xl font-bold text-white font-heading'>{ticket.numero_ticket}</h1>
+            <h1 className='text-2xl font-bold text-slate-900 font-heading'>{ticket.numero_ticket}</h1>
             <Badge className={STATUS_COLORS[ticket.estado]}>{STATUS_LABELS[ticket.estado]}</Badge>
             <Badge className={PRIORITY_COLORS[ticket.prioridad]}>{PRIORITY_LABELS[ticket.prioridad]}</Badge>
             <Badge variant='outline' className='capitalize'>{ticket.tipo}</Badge>
@@ -92,7 +92,7 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
               </Link>
             )}
           </div>
-          <p className='text-white/60'>{ticket.asunto}</p>
+          <p className='text-slate-600'>{ticket.asunto}</p>
         </div>
         <div className='flex items-center gap-2 flex-wrap'>
           {canViewComprobante && (

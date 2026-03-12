@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog"
 import {
   Select,
@@ -32,13 +32,14 @@ interface GenCuadroDialogProps {
 export function GenCuadroDialog({ technicians }: GenCuadroDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [tecnicoId, setTecnicoId] = useState<string>("todos")
+  const [tecnicoId, setTecnicoId] = useState("todos")
 
   function handleGenerar() {
     const url =
       tecnicoId === "todos"
         ? "/dashboard/pagos/cuadro"
         : `/dashboard/pagos/cuadro?tecnicoId=${tecnicoId}`
+
     setOpen(false)
     router.push(url)
   }
@@ -48,7 +49,7 @@ export function GenCuadroDialog({ technicians }: GenCuadroDialogProps) {
       <Button
         variant="ghost"
         onClick={() => setOpen(true)}
-        className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-2"
+        className="gap-2 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
       >
         <TableProperties className="h-4 w-4" />
         Generar Cuadro
@@ -61,16 +62,16 @@ export function GenCuadroDialog({ technicians }: GenCuadroDialogProps) {
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <p className="text-sm text-white/60">Selecciona el técnico para el cuadro:</p>
+            <p className="text-sm text-slate-600">Selecciona el tecnico para el cuadro:</p>
             <Select value={tecnicoId} onValueChange={setTecnicoId}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos los técnicos</SelectItem>
-                {technicians.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.nombre} {t.apellido}
+                <SelectItem value="todos">Todos los tecnicos</SelectItem>
+                {technicians.map((technician) => (
+                  <SelectItem key={technician.id} value={technician.id}>
+                    {technician.nombre} {technician.apellido}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -81,9 +82,7 @@ export function GenCuadroDialog({ technicians }: GenCuadroDialogProps) {
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleGenerar}>
-              Generar
-            </Button>
+            <Button onClick={handleGenerar}>Generar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

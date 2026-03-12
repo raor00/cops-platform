@@ -239,7 +239,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
 
         {/* ─── Botones de reversión (solo admin/gerente+) ─── */}
         {canRevert && reverseTransitions.length > 0 && (
-          <div className="flex items-center gap-1.5 border-l border-white/15 pl-2 ml-1">
+          <div className="ml-1 flex items-center gap-1.5 border-l border-slate-200 pl-2">
             {reverseTransitions.map((s) => (
               <Button
                 key={s}
@@ -276,7 +276,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                     "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all duration-300 shrink-0",
                     step >= n
                       ? "bg-sky-500/30 border border-sky-400 text-sky-300"
-                      : "bg-white/5 border border-white/20 text-white/30"
+                      : "border border-slate-200 bg-slate-50 text-slate-400"
                   )}
                 >
                   {n}
@@ -285,7 +285,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                   <div
                     className={cn(
                       "flex-1 h-0.5 mx-2 transition-all duration-300",
-                      step > n ? "bg-sky-400/60" : "bg-white/10"
+                      step > n ? "bg-sky-400/60" : "bg-slate-200"
                     )}
                   />
                 )}
@@ -296,11 +296,11 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
           {/* ─── Paso 1: Materiales ─── */}
           {step === 1 && (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-white/70">Materiales utilizados</p>
+              <p className="text-sm font-medium text-slate-700">Materiales utilizados</p>
 
               {/* Toggle ¿Usó materiales? */}
-              <div className="flex items-center justify-between rounded-lg bg-white/5 border border-white/10 px-3 py-2.5">
-                <span className="text-sm text-white/70">¿Se utilizaron materiales?</span>
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <span className="text-sm text-slate-700">¿Se utilizaron materiales?</span>
                 <button
                   onClick={() => setUsedMaterials(!usedMaterials)}
                   className={cn(
@@ -318,7 +318,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
               </div>
 
               {usedMaterials && materiales.length === 0 && (
-                <p className="text-xs text-white/40 italic">Sin materiales registrados</p>
+                <p className="text-xs italic text-slate-400">Sin materiales registrados</p>
               )}
               {usedMaterials && materiales.map((m) => (
                 <div key={m.id} className="flex items-center gap-2">
@@ -345,7 +345,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-white/40 hover:text-red-400 shrink-0"
+                    className="h-9 w-9 shrink-0 text-slate-400 hover:text-red-500"
                     onClick={() => removeMaterial(m.id)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -356,7 +356,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full border-dashed border-white/20 text-white/50 hover:text-white"
+                  className="w-full border-dashed border-slate-200 text-slate-500 hover:text-slate-900"
                   onClick={addMaterial}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -364,7 +364,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                 </Button>
               )}
               {!usedMaterials && (
-                <p className="text-xs text-white/30 italic text-center py-2">
+                <p className="py-2 text-center text-xs italic text-slate-400">
                   Sin materiales — se finalizará sin lista de materiales
                 </p>
               )}
@@ -374,7 +374,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
           {/* ─── Paso 2: Tiempo ─── */}
           {step === 2 && (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-white/70">Tiempo trabajado</p>
+              <p className="text-sm font-medium text-slate-700">Tiempo trabajado</p>
               <div className="space-y-2">
                 <Label>Duración en minutos</Label>
                 <Input
@@ -390,7 +390,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                   </p>
                 )}
               </div>
-              <p className="text-xs text-white/35">
+              <p className="text-xs text-slate-400">
                 Si no registras el tiempo, puedes dejarlo en blanco.
               </p>
             </div>
@@ -399,7 +399,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
           {/* ─── Paso 3: Resumen ─── */}
           {step === 3 && (
             <div className="space-y-4">
-              <p className="text-sm font-medium text-white/70">Resumen del trabajo</p>
+              <p className="text-sm font-medium text-slate-700">Resumen del trabajo</p>
 
               <div className="space-y-2">
                 <Label>
@@ -416,7 +416,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
               <div className="space-y-2">
                 <Label>
                   Observaciones{" "}
-                  <span className="text-white/40 text-xs">(opcional)</span>
+                  <span className="text-xs text-slate-400">(opcional)</span>
                 </Label>
                 <Textarea
                   placeholder="Notas adicionales, recomendaciones, etc..."
@@ -465,7 +465,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <p className="text-sm text-white/70">¿En qué tipo deseas convertir?</p>
+            <p className="text-sm text-slate-700">¿En qué tipo deseas convertir?</p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -473,7 +473,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                 className={`flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                   convertTipo === "servicio"
                     ? "border-sky-500/50 bg-sky-500/15 text-sky-300"
-                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Servicio Correctivo
@@ -484,7 +484,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                 className={`flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
                   convertTipo === "proyecto"
                     ? "border-blue-500/50 bg-blue-500/15 text-blue-300"
-                    : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 Proyecto

@@ -11,7 +11,8 @@ import type {
 } from "@/types"
 import { ROLE_HIERARCHY, hasPermission } from "@/types"
 import { getCurrentUser } from "./auth"
-import { isLocalMode } from "@/lib/local-mode"
+import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
+import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 import {
   getDemoClientes,
   getDemoClienteById,
@@ -21,8 +22,14 @@ import {
   searchDemoClientes,
 } from "@/lib/mock-data"
 
+async function fbGetAllClientes(): Promise<Cliente[]> {
+  const db = getAdminFirestore()
+  const snap = await db.collection("clientes").orderBy("created_at", "desc").get()
+  return snap.docs.map((d) => fromFirestoreDoc<Cliente>(d.id, d.data()))
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// GET CLIENTES (paginado + búsqueda)
+// GET CLIENTES
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getClientes(
@@ -32,9 +39,37 @@ export async function getClientes(
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (!hasPermission(currentUser.rol, "clients:view")) return { success: false, error: "Sin permisos" }
 
-  if (isLocalMode()) {
-    const data = getDemoClientes(options)
-    return { success: true, data }
+  if (isLocalMode()) return { success: true, data: getDemoClientes(options) }
+
+  if (isFirebaseMode()) {
+    try {
+      let all = await fbGetAllClientes()
+      if (options.estado) all = all.filter((c) => c.estado === options.estado)
+      if (options.search) {
+        const q = options.search.toLowerCase()
+        all = all.filter(
+          (c) =>
+            c.nombre?.toLowerCase().includes(q) ||
+            (c.empresa as string | undefined)?.toLowerCase().includes(q) ||
+            (c.rif_cedula as string | undefined)?.toLowerCase().includes(q)
+        )
+      }
+      const page = options.page || 1
+      const pageSize = options.pageSize || 20
+      const start = (page - 1) * pageSize
+      return {
+        success: true,
+        data: {
+          data: all.slice(start, start + pageSize),
+          total: all.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(all.length / pageSize),
+        },
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
   }
 
   const supabase = await createClient()
@@ -44,15 +79,11 @@ export async function getClientes(
   const to = from + pageSize - 1
 
   let query = supabase.from("clientes").select("*", { count: "exact" })
-
   if (options.search) {
     const s = options.search
     query = query.or(`nombre.ilike.%${s}%,empresa.ilike.%${s}%,rif_cedula.ilike.%${s}%`)
   }
-  if (options.estado) {
-    query = query.eq("estado", options.estado)
-  }
-
+  if (options.estado) query = query.eq("estado", options.estado)
   query = query.order("created_at", { ascending: false }).range(from, to)
 
   const { data, error, count } = await query
@@ -85,6 +116,17 @@ export async function getClienteById(id: string): Promise<ActionResponse<Cliente
     return { success: true, data }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const doc = await db.collection("clientes").doc(id).get()
+      if (!doc.exists) return { success: false, error: "Cliente no encontrado" }
+      return { success: true, data: fromFirestoreDoc<Cliente>(doc.id, doc.data()!) }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
   const supabase = await createClient()
   const { data, error } = await supabase.from("clientes").select("*").eq("id", id).single()
   if (error) return { success: false, error: error.message }
@@ -104,6 +146,32 @@ export async function createCliente(input: ClienteCreateInput): Promise<ActionRe
     const data = createDemoCliente(input)
     revalidatePath("/dashboard/clientes")
     return { success: true, data, message: "Cliente creado exitosamente" }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const now = new Date().toISOString()
+      const ref = db.collection("clientes").doc()
+      const clienteData = cleanForFirestore({
+        nombre: input.nombre,
+        apellido: input.apellido || null,
+        empresa: input.empresa || null,
+        email: input.email || null,
+        telefono: input.telefono,
+        direccion: input.direccion,
+        rif_cedula: input.rif_cedula || null,
+        observaciones: input.observaciones || null,
+        estado: "activo",
+        created_at: now,
+        updated_at: now,
+      })
+      await ref.set(clienteData)
+      revalidatePath("/dashboard/clientes")
+      return { success: true, data: { id: ref.id, ...clienteData } as Cliente, message: "Cliente creado exitosamente" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
   }
 
   const supabase = await createClient()
@@ -147,6 +215,25 @@ export async function updateCliente(
     return { success: true, data, message: "Cliente actualizado" }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("clientes").doc(id)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Cliente no encontrado" }
+      const update = cleanForFirestore({ ...input, updated_at: new Date().toISOString() })
+      await ref.update(update)
+      revalidatePath("/dashboard/clientes")
+      return {
+        success: true,
+        data: fromFirestoreDoc<Cliente>(id, { ...snap.data()!, ...update }),
+        message: "Cliente actualizado",
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("clientes")
@@ -161,7 +248,7 @@ export async function updateCliente(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DELETE CLIENTE (gerente+)
+// DELETE CLIENTE
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function deleteCliente(id: string): Promise<ActionResponse<void>> {
@@ -176,6 +263,16 @@ export async function deleteCliente(id: string): Promise<ActionResponse<void>> {
     return { success: true, message: "Cliente eliminado" }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      await getAdminFirestore().collection("clientes").doc(id).delete()
+      revalidatePath("/dashboard/clientes")
+      return { success: true, message: "Cliente eliminado" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase.from("clientes").delete().eq("id", id)
   if (error) return { success: false, error: error.message }
@@ -184,7 +281,7 @@ export async function deleteCliente(id: string): Promise<ActionResponse<void>> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SEARCH CLIENTES (autocomplete)
+// SEARCH CLIENTES
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function searchClientes(query: string): Promise<ActionResponse<Cliente[]>> {
@@ -192,8 +289,24 @@ export async function searchClientes(query: string): Promise<ActionResponse<Clie
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (!hasPermission(currentUser.rol, "clients:view")) return { success: false, error: "Sin permisos" }
 
-  if (isLocalMode()) {
-    return { success: true, data: searchDemoClientes(query) }
+  if (isLocalMode()) return { success: true, data: searchDemoClientes(query) }
+
+  if (isFirebaseMode()) {
+    try {
+      const all = await fbGetAllClientes()
+      const q = query.toLowerCase()
+      const filtered = all
+        .filter(
+          (c) =>
+            c.estado === "activo" &&
+            (c.nombre?.toLowerCase().includes(q) ||
+              (c.empresa as string | undefined)?.toLowerCase().includes(q))
+        )
+        .slice(0, 10)
+      return { success: true, data: filtered }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
   }
 
   const supabase = await createClient()

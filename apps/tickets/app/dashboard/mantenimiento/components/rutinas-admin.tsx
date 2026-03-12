@@ -9,6 +9,7 @@ import { Plus, CalendarRange, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { Agencia, RutinaMantenimiento } from "@/types"
 
 const INITIAL_MOCK_RUTINAS = [
     { id: 1, titulo: "Mantenimiento Trimestral Q1 2024", periodo: "Ene - Mar 2024", progreso: 85, estado: "En Ejecución" },
@@ -16,7 +17,13 @@ const INITIAL_MOCK_RUTINAS = [
     { id: 3, titulo: "Mantenimiento Trimestral Q2 2024", periodo: "Abr - Jun 2024", progreso: 0, estado: "Planificación" },
 ]
 
-export function RutinasAdmin() {
+export function RutinasAdmin({
+    initialRutinas,
+    initialAgencias,
+}: {
+    initialRutinas: RutinaMantenimiento[]
+    initialAgencias: Agencia[]
+}) {
     const [rutinas, setRutinas] = useState(INITIAL_MOCK_RUTINAS)
 
     // Form state

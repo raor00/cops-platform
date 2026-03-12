@@ -11,11 +11,12 @@ import type {
 import { ROLE_HIERARCHY } from "@/types"
 import type { PaymentProcessInput } from "@/lib/validations"
 import { getCurrentUser } from "./auth"
-import { isLocalMode } from "@/lib/local-mode"
+import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { processPaymentDemo } from "@/lib/mock-data"
+import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROCESAR PAGO (Gerente+)
+// PROCESAR PAGO
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function processPaymentAction(
@@ -33,8 +34,37 @@ export async function processPaymentAction(
     return { success: true, data: result, message: "Pago procesado exitosamente" }
   }
 
-  const supabase = await createClient()
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("pagos").doc(paymentId)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Pago no encontrado" }
+      const pago = snap.data()!
+      if (pago.estado_pago !== "pendiente") return { success: false, error: "Pago no encontrado o ya procesado" }
+      const now = new Date().toISOString()
+      const updateData = cleanForFirestore({
+        estado_pago: "pagado",
+        fecha_pago: now,
+        metodo_pago: input.metodo_pago,
+        referencia_pago: input.referencia_pago || null,
+        pagado_por: currentUser.id,
+        observaciones: input.observaciones || null,
+        updated_at: now,
+      })
+      await ref.update(updateData)
+      revalidatePath("/dashboard/pagos")
+      return {
+        success: true,
+        data: fromFirestoreDoc<TechnicianPayment>(paymentId, { ...pago, ...updateData }),
+        message: "Pago procesado exitosamente",
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
 
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("pagos_tecnicos")
     .update({
@@ -53,13 +83,12 @@ export async function processPaymentAction(
 
   if (error) return { success: false, error: error.message }
   if (!data) return { success: false, error: "Pago no encontrado o ya procesado" }
-
   revalidatePath("/dashboard/pagos")
   return { success: true, data: data as TechnicianPayment, message: "Pago procesado exitosamente" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GENERAR CUADRO DE PAGOS (Gerente+)
+// GENERAR CUADRO DE PAGOS
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function generatePaymentSchedule(params: {
@@ -78,12 +107,10 @@ export async function generatePaymentSchedule(params: {
     : new Date(hasta.getFullYear(), hasta.getMonth(), 1)
 
   if (isLocalMode()) {
-    // Import inline to avoid circular deps
     const { getDemoTickets, getDemoPayments } = await import("@/lib/mock-data")
     const allTickets = getDemoTickets()
     const allPayments = getDemoPayments()
 
-    // Filter finalized tickets in period
     const tickets = allTickets.filter((t) => {
       if (params.soloFinalizados !== false && t.estado !== "finalizado") return false
       if (!t.fecha_finalizacion) return false
@@ -93,74 +120,108 @@ export async function generatePaymentSchedule(params: {
       return true
     })
 
-    // Group by tecnico
     const tecnicoMap = new Map<string, TechnicianPaymentSchedule>()
-
     for (const ticket of tickets) {
       if (!ticket.tecnico_id) continue
       const payment = allPayments.find((p) => p.ticket_id === ticket.id)
       const tecnico = ticket.tecnico
       if (!tecnico) continue
-
       const key = ticket.tecnico_id
       if (!tecnicoMap.has(key)) {
-        tecnicoMap.set(key, {
-          tecnico_id: key,
-          tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`,
-          rows: [],
-          subtotal_servicio: 0,
-          subtotal_comision: 0,
-          pagados: 0,
-          pendientes: 0,
-        })
+        tecnicoMap.set(key, { tecnico_id: key, tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`, rows: [], subtotal_servicio: 0, subtotal_comision: 0, pagados: 0, pendientes: 0 })
       }
       const schedule = tecnicoMap.get(key)!
       const porcentaje = payment?.porcentaje_comision ?? 50
       const montoAPagar = payment?.monto_a_pagar ?? (ticket.monto_servicio * porcentaje) / 100
-
-      schedule.rows.push({
-        fecha_finalizacion: ticket.fecha_finalizacion!,
-        ticket_numero: ticket.numero_ticket,
-        cliente_nombre: ticket.cliente_nombre,
-        cliente_empresa: ticket.cliente_empresa,
-        descripcion: ticket.asunto,
-        monto_servicio: ticket.monto_servicio,
-        porcentaje_comision: porcentaje,
-        monto_a_pagar: montoAPagar,
-        estado_pago: payment?.estado_pago ?? "pendiente",
-        metodo_pago: payment?.metodo_pago ?? null,
-        referencia_pago: payment?.referencia_pago ?? null,
-      })
-
+      schedule.rows.push({ fecha_finalizacion: ticket.fecha_finalizacion!, ticket_numero: ticket.numero_ticket, cliente_nombre: ticket.cliente_nombre, cliente_empresa: ticket.cliente_empresa, descripcion: ticket.asunto, monto_servicio: ticket.monto_servicio, porcentaje_comision: porcentaje, monto_a_pagar: montoAPagar, estado_pago: payment?.estado_pago ?? "pendiente", metodo_pago: payment?.metodo_pago ?? null, referencia_pago: payment?.referencia_pago ?? null })
       schedule.subtotal_servicio += ticket.monto_servicio
       schedule.subtotal_comision += montoAPagar
       if (payment?.estado_pago === "pagado") schedule.pagados += montoAPagar
       else schedule.pendientes += montoAPagar
     }
-
     const tecnicos = Array.from(tecnicoMap.values())
-    const total_servicio = tecnicos.reduce((s, t) => s + t.subtotal_servicio, 0)
-    const total_comision = tecnicos.reduce((s, t) => s + t.subtotal_comision, 0)
-    const total_pagado = tecnicos.reduce((s, t) => s + t.pagados, 0)
-    const total_pendiente = tecnicos.reduce((s, t) => s + t.pendientes, 0)
-
     return {
       success: true,
       data: {
-        periodo_desde: desdeDate.toISOString(),
-        periodo_hasta: hasta.toISOString(),
-        generado_en: new Date().toISOString(),
-        generado_por: `${currentUser.nombre} ${currentUser.apellido}`,
+        periodo_desde: desdeDate.toISOString(), periodo_hasta: hasta.toISOString(),
+        generado_en: new Date().toISOString(), generado_por: `${currentUser.nombre} ${currentUser.apellido}`,
         tecnicos,
-        total_servicio,
-        total_comision,
-        total_pagado,
-        total_pendiente,
+        total_servicio: tecnicos.reduce((s, t) => s + t.subtotal_servicio, 0),
+        total_comision: tecnicos.reduce((s, t) => s + t.subtotal_comision, 0),
+        total_pagado: tecnicos.reduce((s, t) => s + t.pagados, 0),
+        total_pendiente: tecnicos.reduce((s, t) => s + t.pendientes, 0),
       },
     }
   }
 
-  // Supabase mode
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const pagosSnap = await db.collection("pagos").get()
+      const ticketsSnap = await db.collection("tickets").get()
+      const usersSnap = await db.collection("users").get()
+      const ticketsMap = new Map<string, Record<string, unknown>>()
+      ticketsSnap.docs.forEach((d) => ticketsMap.set(d.id, { id: d.id, ...d.data() }))
+      const usersMap = new Map<string, Record<string, unknown>>()
+      usersSnap.docs.forEach((d) => usersMap.set(d.id, { id: d.id, ...d.data() }))
+      const tecnicoMap = new Map<string, TechnicianPaymentSchedule>()
+
+      for (const d of pagosSnap.docs) {
+        const pago = d.data()
+        const ticket = ticketsMap.get(pago.ticket_id as string)
+        if (!ticket) continue
+        if (params.soloFinalizados !== false && ticket.estado !== "finalizado") continue
+        if (!ticket.fecha_finalizacion) continue
+        const finDate = new Date(ticket.fecha_finalizacion as string)
+        if (finDate < desdeDate || finDate > hasta) continue
+        if (params.tecnicoId && ticket.tecnico_id !== params.tecnicoId) continue
+        const tecnicoId = pago.tecnico_id as string
+        const tecnico = usersMap.get(tecnicoId)
+        if (!tecnico) continue
+        const key = tecnicoId
+        if (!tecnicoMap.has(key)) {
+          tecnicoMap.set(key, { tecnico_id: key, tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`, rows: [], subtotal_servicio: 0, subtotal_comision: 0, pagados: 0, pendientes: 0 })
+        }
+        const schedule = tecnicoMap.get(key)!
+        const monto = (pago.monto_a_pagar as number) || 0
+        schedule.rows.push({
+          fecha_finalizacion: ticket.fecha_finalizacion as string,
+          ticket_numero: ticket.numero_ticket as string,
+          cliente_nombre: ticket.cliente_nombre as string,
+          cliente_empresa: (ticket.cliente_empresa as string | null) ?? null,
+          descripcion: ticket.asunto as string,
+          monto_servicio: (ticket.monto_servicio as number) || 0,
+          porcentaje_comision: (pago.porcentaje_comision as number) || 50,
+          monto_a_pagar: monto,
+          estado_pago: pago.estado_pago as string,
+          metodo_pago: (pago.metodo_pago as string | null) ?? null,
+          referencia_pago: (pago.referencia_pago as string | null) ?? null,
+        })
+        schedule.subtotal_servicio += (ticket.monto_servicio as number) || 0
+        schedule.subtotal_comision += monto
+        if (pago.estado_pago === "pagado") schedule.pagados += monto
+        else schedule.pendientes += monto
+      }
+
+      const tecnicos = Array.from(tecnicoMap.values())
+      return {
+        success: true,
+        data: {
+          periodo_desde: desdeDate.toISOString(), periodo_hasta: hasta.toISOString(),
+          generado_en: new Date().toISOString(), generado_por: `${currentUser.nombre} ${currentUser.apellido}`,
+          tecnicos,
+          total_servicio: tecnicos.reduce((s, t) => s + t.subtotal_servicio, 0),
+          total_comision: tecnicos.reduce((s, t) => s + t.subtotal_comision, 0),
+          total_pagado: tecnicos.reduce((s, t) => s + t.pagados, 0),
+          total_pendiente: tecnicos.reduce((s, t) => s + t.pendientes, 0),
+        },
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  // Supabase
   const supabase = await createClient()
   const { data: payments, error } = await supabase
     .from("pagos_tecnicos")
@@ -170,59 +231,34 @@ export async function generatePaymentSchedule(params: {
 
   if (error) return { success: false, error: error.message }
 
-  // Same grouping logic
-  const tecnicoMap = new Map<string, TechnicianPaymentSchedule>()
+  const tecnicoMap2 = new Map<string, TechnicianPaymentSchedule>()
   for (const payment of payments ?? []) {
     const ticket = payment.ticket
     const tecnico = payment.tecnico
     if (!ticket || !tecnico) continue
     if (params.tecnicoId && tecnico.id !== params.tecnicoId) continue
-
     const key = tecnico.id
-    if (!tecnicoMap.has(key)) {
-      tecnicoMap.set(key, {
-        tecnico_id: key,
-        tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`,
-        rows: [],
-        subtotal_servicio: 0,
-        subtotal_comision: 0,
-        pagados: 0,
-        pendientes: 0,
-      })
+    if (!tecnicoMap2.has(key)) {
+      tecnicoMap2.set(key, { tecnico_id: key, tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`, rows: [], subtotal_servicio: 0, subtotal_comision: 0, pagados: 0, pendientes: 0 })
     }
-    const schedule = tecnicoMap.get(key)!
-    schedule.rows.push({
-      fecha_finalizacion: ticket.fecha_finalizacion,
-      ticket_numero: ticket.numero_ticket,
-      cliente_nombre: ticket.cliente_nombre,
-      cliente_empresa: ticket.cliente_empresa,
-      descripcion: ticket.asunto,
-      monto_servicio: ticket.monto_servicio,
-      porcentaje_comision: payment.porcentaje_comision,
-      monto_a_pagar: payment.monto_a_pagar,
-      estado_pago: payment.estado_pago,
-      metodo_pago: payment.metodo_pago,
-      referencia_pago: payment.referencia_pago,
-    })
+    const schedule = tecnicoMap2.get(key)!
+    schedule.rows.push({ fecha_finalizacion: ticket.fecha_finalizacion, ticket_numero: ticket.numero_ticket, cliente_nombre: ticket.cliente_nombre, cliente_empresa: ticket.cliente_empresa, descripcion: ticket.asunto, monto_servicio: ticket.monto_servicio, porcentaje_comision: payment.porcentaje_comision, monto_a_pagar: payment.monto_a_pagar, estado_pago: payment.estado_pago, metodo_pago: payment.metodo_pago, referencia_pago: payment.referencia_pago })
     schedule.subtotal_servicio += ticket.monto_servicio
     schedule.subtotal_comision += payment.monto_a_pagar
     if (payment.estado_pago === "pagado") schedule.pagados += payment.monto_a_pagar
     else schedule.pendientes += payment.monto_a_pagar
   }
-
-  const tecnicos = Array.from(tecnicoMap.values())
+  const tecnicos2 = Array.from(tecnicoMap2.values())
   return {
     success: true,
     data: {
-      periodo_desde: desdeDate.toISOString(),
-      periodo_hasta: hasta.toISOString(),
-      generado_en: new Date().toISOString(),
-      generado_por: `${currentUser.nombre} ${currentUser.apellido}`,
-      tecnicos,
-      total_servicio: tecnicos.reduce((s, t) => s + t.subtotal_servicio, 0),
-      total_comision: tecnicos.reduce((s, t) => s + t.subtotal_comision, 0),
-      total_pagado: tecnicos.reduce((s, t) => s + t.pagados, 0),
-      total_pendiente: tecnicos.reduce((s, t) => s + t.pendientes, 0),
+      periodo_desde: desdeDate.toISOString(), periodo_hasta: hasta.toISOString(),
+      generado_en: new Date().toISOString(), generado_por: `${currentUser.nombre} ${currentUser.apellido}`,
+      tecnicos: tecnicos2,
+      total_servicio: tecnicos2.reduce((s, t) => s + t.subtotal_servicio, 0),
+      total_comision: tecnicos2.reduce((s, t) => s + t.subtotal_comision, 0),
+      total_pagado: tecnicos2.reduce((s, t) => s + t.pagados, 0),
+      total_pendiente: tecnicos2.reduce((s, t) => s + t.pendientes, 0),
     },
   }
 }

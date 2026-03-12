@@ -67,7 +67,7 @@ export function TicketsFilters({
       {/* Search */}
       <form onSubmit={handleSearch} className="flex-1 flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar por número, cliente o asunto..."
             value={search}
@@ -122,7 +122,7 @@ export function TicketsFilters({
           variant="ghost"
           size="icon"
           onClick={clearFilters}
-          className="text-white/60 hover:text-white"
+          className="text-slate-500 hover:text-slate-900"
         >
           <X className="h-4 w-4" />
         </Button>

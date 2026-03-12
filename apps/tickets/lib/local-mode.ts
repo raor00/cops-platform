@@ -17,3 +17,11 @@ export function isLocalMode(): boolean {
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
 }
+
+/**
+ * Returns true when Firebase credentials are configured and local mode is off.
+ * In this mode all data is stored in Firestore / Firebase Auth instead of Supabase.
+ */
+export function isFirebaseMode(): boolean {
+  return !isLocalMode() && Boolean(process.env.FIREBASE_PROJECT_ID)
+}

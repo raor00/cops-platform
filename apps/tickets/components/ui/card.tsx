@@ -12,12 +12,12 @@ const Card = React.forwardRef<
     className={cn(
       "rounded-[1.25rem] transition-all duration-300",
       variant === "glass" && [
-        "border border-white/40",
-        "bg-white/70 backdrop-blur-xl",
+        "border border-slate-200",
+        "bg-white/85 backdrop-blur-xl",
         "shadow-[0_2px_10px_rgba(0,0,0,0.03)]",
         "hover:shadow-[0_8px_30px_rgba(14,47,111,0.06)]",
         "hover:-translate-y-0.5",
-        "hover:bg-white/90 focus-within:bg-white/90",
+        "hover:bg-white focus-within:bg-white",
       ],
       variant === "dark" && [
         "border border-slate-800",

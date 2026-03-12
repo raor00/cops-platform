@@ -92,7 +92,7 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -108,25 +108,25 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left px-4 py-3 text-white/50 font-medium">Cliente</th>
-                  <th className="text-left px-4 py-3 text-white/50 font-medium hidden md:table-cell">
+                <tr className="border-b border-slate-200 bg-slate-50/80">
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">Cliente</th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium hidden md:table-cell">
                     RIF / Cédula
                   </th>
-                  <th className="text-left px-4 py-3 text-white/50 font-medium hidden lg:table-cell">
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium hidden lg:table-cell">
                     Contacto
                   </th>
-                  <th className="text-left px-4 py-3 text-white/50 font-medium hidden xl:table-cell">
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium hidden xl:table-cell">
                     Tickets
                   </th>
-                  <th className="text-left px-4 py-3 text-white/50 font-medium">Estado</th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">Estado</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-white/40">
+                    <td colSpan={6} className="text-center py-12 text-slate-400">
                       No se encontraron clientes
                     </td>
                   </tr>
@@ -136,10 +136,10 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
                       key={cliente.id}
                       onClick={() => setSelectedId(selectedId === cliente.id ? null : cliente.id)}
                       className={cn(
-                        "border-b border-white/5 cursor-pointer transition-colors",
+                        "border-b border-slate-100 cursor-pointer transition-colors",
                         selectedId === cliente.id
-                          ? "bg-sky-500/10"
-                          : "hover:bg-white/5"
+                          ? "bg-sky-50"
+                          : "hover:bg-slate-50"
                       )}
                     >
                       <td className="px-4 py-3">
@@ -152,28 +152,28 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
                             )}
                           </div>
                           <div>
-                            <div className="font-medium text-white">
+                            <div className="font-medium text-slate-900">
                               {cliente.empresa ?? `${cliente.nombre}${cliente.apellido ? " " + cliente.apellido : ""}`}
                             </div>
                             {cliente.empresa && (
-                              <div className="text-xs text-white/50">
+                              <div className="text-xs text-slate-500">
                                 {cliente.nombre}{cliente.apellido ? ` ${cliente.apellido}` : ""}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-white/60 hidden md:table-cell">
+                      <td className="px-4 py-3 text-slate-600 hidden md:table-cell">
                         {cliente.rif_cedula ?? "—"}
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5 text-white/70">
+                          <div className="flex items-center gap-1.5 text-slate-700">
                             <Phone className="h-3 w-3" />
                             {cliente.telefono}
                           </div>
                           {cliente.email && (
-                            <div className="flex items-center gap-1.5 text-white/50 text-xs">
+                            <div className="flex items-center gap-1.5 text-slate-500 text-xs">
                               <Mail className="h-3 w-3" />
                               {cliente.email}
                             </div>
@@ -181,7 +181,7 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden xl:table-cell">
-                        <span className="text-white/60">{cliente.tickets_count ?? 0}</span>
+                        <span className="text-slate-600">{cliente.tickets_count ?? 0}</span>
                       </td>
                       <td className="px-4 py-3">
                         <Badge
@@ -201,7 +201,7 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
                           {canEdit && (
                             <button
                               onClick={(e) => handleEdit(cliente, e)}
-                              className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
@@ -209,12 +209,12 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
                           {canDelete && (
                             <button
                               onClick={(e) => handleDelete(cliente.id, e)}
-                              className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          <ChevronRight className="h-4 w-4 text-white/20" />
+                          <ChevronRight className="h-4 w-4 text-slate-300" />
                         </div>
                       </td>
                     </tr>
@@ -238,10 +238,10 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-slate-900">
                     {selectedCliente.empresa ?? selectedCliente.nombre}
                   </h3>
-                  <p className="text-xs text-white/50">
+                  <p className="text-xs text-slate-500">
                     {selectedCliente.empresa
                       ? `${selectedCliente.nombre}${selectedCliente.apellido ? " " + selectedCliente.apellido : ""}`
                       : selectedCliente.rif_cedula ?? "Sin RIF/Cédula"}
@@ -264,34 +264,34 @@ export function ClientesClient({ initialData, userRole }: ClientesClientProps) {
             <div className="space-y-3 text-sm">
               {selectedCliente.rif_cedula && (
                 <div>
-                  <span className="text-white/40 text-xs">RIF / Cédula</span>
-                  <p className="text-white/80">{selectedCliente.rif_cedula}</p>
+                  <span className="text-slate-400 text-xs">RIF / Cédula</span>
+                  <p className="text-slate-800">{selectedCliente.rif_cedula}</p>
                 </div>
               )}
-              <div className="flex items-center gap-2 text-white/70">
-                <Phone className="h-3.5 w-3.5 text-white/40 shrink-0" />
+              <div className="flex items-center gap-2 text-slate-700">
+                <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                 {selectedCliente.telefono}
               </div>
               {selectedCliente.email && (
-                <div className="flex items-center gap-2 text-white/70">
-                  <Mail className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                   {selectedCliente.email}
                 </div>
               )}
-              <div className="flex items-start gap-2 text-white/70">
-                <MapPin className="h-3.5 w-3.5 text-white/40 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 text-slate-700">
+                <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
                 {selectedCliente.direccion}
               </div>
               {selectedCliente.observaciones && (
                 <div>
-                  <span className="text-white/40 text-xs">Observaciones</span>
-                  <p className="text-white/60 text-xs mt-0.5">{selectedCliente.observaciones}</p>
+                  <span className="text-slate-400 text-xs">Observaciones</span>
+                  <p className="text-slate-600 text-xs mt-0.5">{selectedCliente.observaciones}</p>
                 </div>
               )}
             </div>
 
-            <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-xs text-white/40">
+            <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-xs text-slate-400">
                 {selectedCliente.tickets_count ?? 0} tickets registrados
               </span>
               {canEdit && (

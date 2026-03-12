@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ── Piloto: todos los usuarios autenticados pueden leer/escribir todo ────
+    // Cuando el sistema tenga más usuarios activos, restringir por rol.
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

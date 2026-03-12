@@ -1,4 +1,5 @@
 import type { AIGenerationMetadata } from "./quotation-ai-types"
+import { firestoreSave } from "./firebase/firestore-storage"
 
 const AI_EVENTS_KEY = "cops_ai_events"
 
@@ -34,13 +35,16 @@ export function getAIEvents(): QuotationAIEvent[] {
 }
 
 export function saveAIEvent(event: Omit<QuotationAIEvent, "id" | "timestamp">): void {
-  if (typeof window === "undefined") return
-  const current = getAIEvents()
   const next: QuotationAIEvent = {
     id: makeId(),
     timestamp: new Date().toISOString(),
     ...event,
   }
-  current.unshift(next)
-  localStorage.setItem(AI_EVENTS_KEY, JSON.stringify(current.slice(0, 200)))
+  if (typeof window !== "undefined") {
+    const current = getAIEvents()
+    current.unshift(next)
+    localStorage.setItem(AI_EVENTS_KEY, JSON.stringify(current.slice(0, 200)))
+  }
+  // Log en Firestore (async, fire-and-forget)
+  firestoreSave("ai-events", next).catch(console.error)
 }

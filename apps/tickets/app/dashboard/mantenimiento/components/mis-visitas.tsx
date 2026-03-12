@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Wrench, Calendar, MapPin, Camera, ClipboardCheck, AlertTriangle } from "lucide-react"
+import type { VisitaMantenimiento } from "@/types"
 
 const MOCK_VISITAS = [
     { id: 1, agencia: "Agencia Principal Torre BFC", fecha: "15 Oct 2023", estado: "Asignada", urgencia: "Alta" },
@@ -11,13 +12,16 @@ const MOCK_VISITAS = [
     { id: 3, agencia: "Agencia Las Mercedes", fecha: "12 Oct 2023", estado: "Completada", urgencia: "Alta" },
 ]
 
-export function MisVisitas({ userId }: { userId: string }) {
+export function MisVisitas({ userId, initialVisitas }: { userId: string; initialVisitas: VisitaMantenimiento[] }) {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-semibold text-slate-800">Mis Visitas Asignadas</h2>
                     <p className="text-sm text-slate-500">Ejecuta el mantenimiento y llena el reporte en sitio.</p>
+                    <p className="text-xs text-slate-400 mt-1">
+                        Usuario: {userId} · Visitas cargadas: {initialVisitas.length}
+                    </p>
                 </div>
             </div>
 
