@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Printer, CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -31,8 +31,8 @@ export function InspeccionView({ inspeccion, ticket }: InspeccionViewProps) {
       {/* Barra de acción (oculta en impresión) */}
       <div className="no-print flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Reporte de Inspección</h1>
-          <p className="text-white/60 mt-1">{ticket.numero_ticket} — {ticket.asunto}</p>
+          <h1 className="text-2xl font-bold text-slate-900">Reporte de Inspección</h1>
+          <p className="mt-1 text-slate-500">{ticket.numero_ticket} — {ticket.asunto}</p>
         </div>
         <Button onClick={handlePrint} className="gap-2">
           <Printer className="h-4 w-4" />
@@ -519,3 +519,4 @@ function InspeccionField({
     </div>
   )
 }
+

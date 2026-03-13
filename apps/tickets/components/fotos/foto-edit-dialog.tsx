@@ -82,7 +82,7 @@ export function FotoEditDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Preview de la foto */}
           {foto.url && (
-            <div className="w-full h-48 rounded-lg overflow-hidden border border-white/10">
+            <div className="h-48 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
               <img
                 src={foto.url}
                 alt={foto.nombre_archivo}

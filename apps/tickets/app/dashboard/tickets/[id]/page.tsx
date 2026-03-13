@@ -21,6 +21,7 @@ import { TicketDetailTabs } from './ticket-detail-tabs'
 
 interface TicketPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ edit?: string }>
 }
 
 export async function generateMetadata({ params }: TicketPageProps) {
@@ -30,10 +31,12 @@ export async function generateMetadata({ params }: TicketPageProps) {
   return { title: `${result.data.numero_ticket} - ${result.data.asunto}` }
 }
 
-export default async function TicketDetailPage({ params }: TicketPageProps) {
+export default async function TicketDetailPage({ params, searchParams }: TicketPageProps) {
   const { id } = await params
+  const query = await searchParams
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+  if (query.edit === 'true') redirect(`/dashboard/tickets/${id}/editar`)
 
   const result = await getTicketById(id)
   if (!result.success || !result.data) notFound()
@@ -44,7 +47,10 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
   const canManageFases = ROLE_HIERARCHY[user.rol] >= 3
   const canUpdateProgress = user.rol === 'tecnico' && ticket.tecnico_id === user.id
   const canViewComprobante = ticket.estado === 'finalizado' && ROLE_HIERARCHY[user.rol] >= 2
-  const canUploadFotos = ROLE_HIERARCHY[user.rol] >= 2
+  const canUploadFotos =
+    user.rol === 'tecnico'
+      ? ticket.tecnico_id === user.id
+      : ROLE_HIERARCHY[user.rol] >= 2
   const canDeleteFotos = ROLE_HIERARCHY[user.rol] >= 3
 
   const [fasesResult, historialResult, inspeccionResult, updateLogsResult, origenResult, derivadoResult] = await Promise.all([
@@ -106,7 +112,7 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
           {canChangeStatus && <TicketStatusActions ticket={ticket} userRole={user.rol} />}
           {canEdit && (
             <Button variant='outline' asChild>
-              <Link href={`/dashboard/tickets/${ticket.id}?edit=true`}>Editar</Link>
+              <Link href={`/dashboard/tickets/${ticket.id}/editar`}>Editar</Link>
             </Button>
           )}
         </div>
@@ -118,6 +124,7 @@ export default async function TicketDetailPage({ params }: TicketPageProps) {
         historial={historialResult.data ?? []}
         updateLogs={updateLogsResult.data ?? []}
         userRole={user.rol}
+        currentUserId={user.id}
         inspeccion={(inspeccionResult.data ?? null) as Inspeccion | null}
         canManageFases={canManageFases}
         canUpdateProgress={canUpdateProgress}

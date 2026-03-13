@@ -46,7 +46,7 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Buscar tickets, clientes..."
-              className="pl-9 bg-white/5 border-slate-200 focus:border-blue-500/50"
+              className="border-slate-200 bg-white pl-9 focus:border-blue-500/50"
             />
           </div>
         </div>

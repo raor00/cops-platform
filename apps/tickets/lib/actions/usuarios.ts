@@ -2,8 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import type { ActionResponse, UserProfile, UserUpdateInput } from "@/types"
-import { getCurrentUser } from "./auth"
+import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/types"
+import { getCurrentUser, registerUserAction } from "./auth"
 import { ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminFirestore, getAdminStorage, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
@@ -216,4 +216,31 @@ export async function deleteProfilePhoto(userId: string): Promise<ActionResponse
   } catch (error) {
     return { success: false, error: "Error inesperado al eliminar foto" }
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE USER (wrapper for inline creation from ticket form)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function createUser(input: {
+  nombre: string
+  apellido?: string
+  email: string
+  telefono: string
+  password: string
+  rol: UserRole
+  cedula?: string
+}): Promise<ActionResponse<{ id: string }>> {
+  const result = await registerUserAction({
+    nombre: input.nombre,
+    apellido: input.apellido ?? "",
+    email: input.email,
+    telefono: input.telefono,
+    password: input.password,
+    rol: input.rol,
+    cedula: input.cedula ?? "",
+  })
+  if (!result.success) return { success: false, error: result.error }
+  const id = (result.data as any)?.user?.id ?? (result.data as any)?.id ?? ""
+  return { success: true, data: { id }, message: result.message }
 }

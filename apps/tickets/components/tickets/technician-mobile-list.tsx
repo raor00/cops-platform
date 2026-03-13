@@ -1,11 +1,11 @@
 "use client"
 
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { useCallback } from "react"
-import { TechnicianMobileCard } from "./technician-mobile-card"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { cn } from "@/lib/utils"
 import type { Ticket, TicketStatus } from "@/types"
 import { STATUS_LABELS } from "@/types"
-import { cn } from "@/lib/utils"
+import { TechnicianMobileCard } from "./technician-mobile-card"
 
 interface TechnicianMobileListProps {
   tickets: Ticket[]
@@ -21,11 +21,11 @@ const STATUS_PILLS: { value: TicketStatus | "all"; label: string }[] = [
 ]
 
 const PILL_ACTIVE_COLORS: Record<string, string> = {
-  all: "bg-white/20 text-white border-white/30",
-  asignado: "bg-blue-500/30 text-blue-300 border-blue-400/40",
-  iniciado: "bg-yellow-500/30 text-yellow-300 border-yellow-400/40",
-  en_progreso: "bg-purple-500/30 text-purple-300 border-purple-400/40",
-  finalizado: "bg-green-500/30 text-green-300 border-green-400/40",
+  all: "border-slate-200 bg-slate-100 text-slate-900",
+  asignado: "border-blue-200 bg-blue-50 text-blue-700",
+  iniciado: "border-amber-200 bg-amber-50 text-amber-700",
+  en_progreso: "border-violet-200 bg-violet-50 text-violet-700",
+  finalizado: "border-green-200 bg-green-50 text-green-700",
 }
 
 export function TechnicianMobileList({ tickets, currentStatus }: TechnicianMobileListProps) {
@@ -41,18 +41,16 @@ export function TechnicianMobileList({ tickets, currentStatus }: TechnicianMobil
       } else {
         params.set("status", status)
       }
-      // Reset to page 1
       params.delete("page")
-      router.push(pathname + (params.toString() ? "?" + params.toString() : ""))
+      router.push(pathname + (params.toString() ? `?${params.toString()}` : ""))
     },
-    [router, pathname, searchParams]
+    [pathname, router, searchParams]
   )
 
   const activeFilter = currentStatus ?? "all"
 
   return (
     <div>
-      {/* Status filter pills */}
       <div className="status-pills-bar mb-4">
         {STATUS_PILLS.map((pill) => {
           const isActive = pill.value === activeFilter
@@ -63,8 +61,8 @@ export function TechnicianMobileList({ tickets, currentStatus }: TechnicianMobil
               className={cn(
                 "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-150",
                 isActive
-                  ? PILL_ACTIVE_COLORS[pill.value] ?? "bg-white/20 text-white border-white/30"
-                  : "border-white/15 text-white/50 hover:border-white/25 hover:text-white/70"
+                  ? PILL_ACTIVE_COLORS[pill.value] ?? "border-slate-200 bg-slate-100 text-slate-900"
+                  : "border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
               )}
             >
               {pill.label}
@@ -73,27 +71,22 @@ export function TechnicianMobileList({ tickets, currentStatus }: TechnicianMobil
         })}
       </div>
 
-      {/* Ticket list */}
       {tickets.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 p-10 text-center">
-          <p className="text-white/40 text-sm">Sin tickets en esta categoría</p>
+        <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+          <p className="text-sm text-slate-500">Sin tickets en esta categoria</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {tickets.map((ticket, i) => (
-            <div
-              key={ticket.id}
-              className={`animate-slide-up stagger-${Math.min(i + 1, 6) as 1 | 2 | 3 | 4 | 5 | 6}`}
-            >
+          {tickets.map((ticket, index) => (
+            <div key={ticket.id} className={`animate-slide-up stagger-${Math.min(index + 1, 6) as 1 | 2 | 3 | 4 | 5 | 6}`}>
               <TechnicianMobileCard ticket={ticket} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Ticket count */}
       {tickets.length > 0 && (
-        <p className="text-center text-xs text-white/30 mt-4">
+        <p className="mt-4 text-center text-xs text-slate-400">
           {tickets.length} ticket{tickets.length !== 1 ? "s" : ""}
         </p>
       )}

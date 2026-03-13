@@ -29,6 +29,7 @@ interface TicketDetailTabsProps {
   canUploadFotos?: boolean
   canDeleteFotos?: boolean
   userRole?: string
+  currentUserId?: string
 }
 
 export function TicketDetailTabs({
@@ -42,10 +43,11 @@ export function TicketDetailTabs({
   canUploadFotos = false,
   canDeleteFotos = false,
   userRole,
+  currentUserId,
 }: TicketDetailTabsProps) {
   const canAddLog =
     userRole === "tecnico"
-      ? ticket.tecnico_id !== null
+      ? ticket.tecnico_id === currentUserId
       : userRole
         ? ROLE_HIERARCHY[userRole as keyof typeof ROLE_HIERARCHY] >= 2
         : false
@@ -155,6 +157,7 @@ export function TicketDetailTabs({
               ticketStatus={ticket.estado}
               initialLogs={updateLogs}
               canAdd={canAddLog}
+              canUploadPhotos={canUploadFotos}
             />
           </div>
 

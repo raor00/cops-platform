@@ -283,9 +283,11 @@ export async function createTicket(
         origen: input.origen,
         creado_por: currentUser.id,
         tecnico_id: input.tecnico_id || null,
-        estado: "asignado",
-        fecha_asignacion: now,
+        estado: (input as any).estado === "borrador" ? "borrador" : "asignado",
+        fecha_asignacion: (input as any).estado === "borrador" ? null : now,
         monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
+        facturacion_tipo: (input as any).facturacion_tipo ?? "fijo",
+        tarifa_hora: (input as any).tarifa_hora ?? null,
         ticket_origen_id: null,
         ticket_derivado_id: null,
         created_at: now,
@@ -341,9 +343,11 @@ export async function createTicket(
       origen: input.origen,
       creado_por: currentUser.id,
       tecnico_id: input.tecnico_id || null,
-      estado: "asignado",
-      fecha_asignacion: new Date().toISOString(),
+      estado: (input as any).estado === "borrador" ? "borrador" : "asignado",
+      fecha_asignacion: (input as any).estado === "borrador" ? null : new Date().toISOString(),
       monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
+      facturacion_tipo: (input as any).facturacion_tipo ?? "fijo",
+      tarifa_hora: (input as any).tarifa_hora ?? null,
     })
     .select()
     .single()
@@ -458,6 +462,7 @@ export async function changeTicketStatus(
     tiempo_trabajado?: number
     observaciones_tecnico?: string
     solucion_aplicada?: string
+    monto_servicio_final?: number
   }
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
@@ -508,18 +513,24 @@ export async function changeTicketStatus(
       if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
       if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
       if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
+      // If hourly billing, update monto_servicio with calculated amount
+      if (additionalData?.monto_servicio_final !== undefined) {
+        updateData.monto_servicio = additionalData.monto_servicio_final
+      }
 
       await ref.update(updateData)
 
       // Create payment record when finalized
       if (newStatus === "finalizado" && ticket.tecnico_id) {
-        const montoAPagar = (ticket.monto_servicio || DEFAULT_SERVICE_AMOUNT) * (DEFAULT_COMMISSION_PERCENTAGE / 100)
+        const montoTicket = additionalData?.monto_servicio_final ?? ticket.monto_servicio ?? DEFAULT_SERVICE_AMOUNT
+        const montoAPagar = montoTicket * (DEFAULT_COMMISSION_PERCENTAGE / 100)
         await db.collection("pagos").add(cleanForFirestore({
           ticket_id: id,
           tecnico_id: ticket.tecnico_id,
-          monto_ticket: ticket.monto_servicio || DEFAULT_SERVICE_AMOUNT,
+          monto_ticket: montoTicket,
           porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE,
           monto_a_pagar: montoAPagar,
+          facturacion_tipo: ticket.facturacion_tipo ?? "fijo",
           estado_pago: "pendiente",
           fecha_habilitacion: now,
           created_at: now,
@@ -560,6 +571,7 @@ export async function changeTicketStatus(
   if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
   if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
   if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
+  if (additionalData?.monto_servicio_final !== undefined) updateData.monto_servicio = additionalData.monto_servicio_final
 
   const { data, error } = await supabase.from("tickets").update(updateData).eq("id", id).select().single()
   if (error) return { success: false, error: error.message }
@@ -571,10 +583,12 @@ export async function changeTicketStatus(
   })
 
   if (newStatus === "finalizado" && ticket.tecnico_id) {
-    const montoAPagar = ticket.monto_servicio * (DEFAULT_COMMISSION_PERCENTAGE / 100)
+    const montoTicket = additionalData?.monto_servicio_final ?? ticket.monto_servicio
+    const montoAPagar = montoTicket * (DEFAULT_COMMISSION_PERCENTAGE / 100)
     await supabase.from("pagos_tecnicos").insert({
-      ticket_id: id, tecnico_id: ticket.tecnico_id, monto_ticket: ticket.monto_servicio,
+      ticket_id: id, tecnico_id: ticket.tecnico_id, monto_ticket: montoTicket,
       porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE, monto_a_pagar: montoAPagar,
+      facturacion_tipo: (ticket as any).facturacion_tipo ?? "fijo",
       estado_pago: "pendiente", fecha_habilitacion: new Date().toISOString(),
     })
   }
@@ -750,6 +764,7 @@ export async function getDashboardStats(): Promise<ActionResponse<DashboardStats
         pagosPendientes: 0,
         montosPendientes: 0,
         ticketsPorEstado: {
+          borrador: tickets.filter((t) => t.estado === "borrador").length,
           asignado: tickets.filter((t) => t.estado === "asignado").length,
           iniciado: tickets.filter((t) => t.estado === "iniciado").length,
           en_progreso: tickets.filter((t) => t.estado === "en_progreso").length,
@@ -798,6 +813,7 @@ export async function getDashboardStats(): Promise<ActionResponse<DashboardStats
     pagosPendientes: 0,
     montosPendientes: 0,
     ticketsPorEstado: {
+      borrador: tickets?.filter((t) => t.estado === "borrador").length || 0,
       asignado: tickets?.filter((t) => t.estado === "asignado").length || 0,
       iniciado: tickets?.filter((t) => t.estado === "iniciado").length || 0,
       en_progreso: tickets?.filter((t) => t.estado === "en_progreso").length || 0,
@@ -913,7 +929,7 @@ export async function getTicketUpdateLogs(ticketId: string): Promise<ActionRespo
     .from("historial_cambios")
     .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at, usuario:users(nombre, apellido, rol)")
     .eq("ticket_id", ticketId)
-    .in("tipo_cambio", ["sesion_trabajo", "cambio_estado"])
+    .in("tipo_cambio", ["sesion_trabajo", "cambio_estado", "foto_subida"])
     .order("created_at", { ascending: false })
     .limit(100)
 

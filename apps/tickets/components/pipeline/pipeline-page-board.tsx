@@ -1,9 +1,9 @@
 import Link from "next/link"
+import { AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "@/lib/utils"
-import { AlertTriangle } from "lucide-react"
 import type { Ticket, TicketStatus } from "@/types"
-import { STATUS_LABELS, PRIORITY_COLORS } from "@/types"
+import { PRIORITY_COLORS, STATUS_LABELS } from "@/types"
 
 interface PipelinePageBoardProps {
   tickets: Ticket[]
@@ -12,68 +12,68 @@ interface PipelinePageBoardProps {
 const PIPELINE_COLUMNS: TicketStatus[] = ["asignado", "iniciado", "en_progreso", "finalizado"]
 
 const COLUMN_HEADER_COLORS: Record<TicketStatus, string> = {
-  asignado: "border-blue-500/40 bg-blue-500/10",
-  iniciado: "border-yellow-500/40 bg-yellow-500/10",
-  en_progreso: "border-purple-500/40 bg-purple-500/10",
-  finalizado: "border-green-500/40 bg-green-500/10",
-  cancelado: "border-red-500/40 bg-red-500/10",
+  borrador: "border-slate-300 bg-slate-50",
+  asignado: "border-blue-200 bg-blue-50",
+  iniciado: "border-amber-200 bg-amber-50",
+  en_progreso: "border-violet-200 bg-violet-50",
+  finalizado: "border-green-200 bg-green-50",
+  cancelado: "border-red-200 bg-red-50",
 }
 
 const COLUMN_DOT_COLORS: Record<TicketStatus, string> = {
-  asignado: "bg-blue-400",
-  iniciado: "bg-yellow-400",
-  en_progreso: "bg-purple-400",
-  finalizado: "bg-green-400",
-  cancelado: "bg-red-400",
+  borrador: "bg-slate-400",
+  asignado: "bg-blue-500",
+  iniciado: "bg-amber-500",
+  en_progreso: "bg-violet-500",
+  finalizado: "bg-green-500",
+  cancelado: "bg-red-500",
 }
 
-// SLA threshold: 72 hours (matches default config)
 const SLA_MS = 72 * 60 * 60 * 1000
 
-function isSlaBreached(ticket: Ticket): boolean {
+function isSlaBreached(ticket: Ticket) {
   if (ticket.estado === "finalizado" || ticket.estado === "cancelado") return false
   return Date.now() - new Date(ticket.created_at).getTime() > SLA_MS
 }
 
-interface TicketCardProps {
-  ticket: Ticket
-}
-
-function TicketCard({ ticket }: TicketCardProps) {
+function TicketCard({ ticket }: { ticket: Ticket }) {
   const slaBreached = isSlaBreached(ticket)
 
   return (
     <Link href={`/dashboard/tickets/${ticket.id}`}>
-      <div className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200 p-3.5 group">
-        <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="group rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition-all duration-200 hover:border-sky-200 hover:bg-slate-50">
+        <div className="mb-2 flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-mono text-blue-400/80 shrink-0">{ticket.numero_ticket}</span>
+            <span className="shrink-0 text-xs font-mono text-blue-500/80">{ticket.numero_ticket}</span>
             {slaBreached && (
               <span title="SLA vencido">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
               </span>
             )}
           </div>
-          <Badge className={`text-[10px] px-1.5 py-0.5 shrink-0 ${PRIORITY_COLORS[ticket.prioridad]}`}>
+          <Badge className={`shrink-0 px-1.5 py-0.5 text-[10px] ${PRIORITY_COLORS[ticket.prioridad]}`}>
             {ticket.prioridad}
           </Badge>
         </div>
 
-        <p className="text-sm font-medium text-white leading-snug mb-2 line-clamp-2 group-hover:text-blue-200 transition-colors">
+        <p className="mb-2 line-clamp-2 text-sm font-medium leading-snug text-slate-900 transition-colors group-hover:text-sky-700">
           {ticket.asunto}
         </p>
 
-        <div className="flex items-center justify-between text-xs text-white/40 mb-1.5">
-          <span className="truncate max-w-[120px]">{ticket.cliente_nombre}</span>
+        <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
+          <span className="max-w-[120px] truncate">{ticket.cliente_nombre}</span>
           <span>{formatRelativeTime(ticket.created_at)}</span>
         </div>
 
         {ticket.tecnico && (
-          <div className="flex items-center gap-1.5 text-xs text-white/40">
-            <div className="h-5 w-5 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-bold text-white/70 shrink-0">
-              {ticket.tecnico.nombre.charAt(0)}{ticket.tecnico.apellido.charAt(0)}
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[9px] font-bold text-slate-700">
+              {ticket.tecnico.nombre.charAt(0)}
+              {ticket.tecnico.apellido.charAt(0)}
             </div>
-            <span className="truncate">{ticket.tecnico.nombre} {ticket.tecnico.apellido}</span>
+            <span className="truncate">
+              {ticket.tecnico.nombre} {ticket.tecnico.apellido}
+            </span>
           </div>
         )}
       </div>
@@ -83,34 +83,27 @@ function TicketCard({ ticket }: TicketCardProps) {
 
 export function PipelinePageBoard({ tickets }: PipelinePageBoardProps) {
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1">
+    <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-4">
       {PIPELINE_COLUMNS.map((status) => {
-        const columnTickets = tickets.filter((t) => t.estado === status)
+        const columnTickets = tickets.filter((ticket) => ticket.estado === status)
+
         return (
-          <div key={status} className="shrink-0 w-[300px] sm:w-[320px] flex flex-col">
-            {/* Column header */}
-            <div
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 mb-3 ${COLUMN_HEADER_COLORS[status]}`}
-            >
-              <span className={`h-2 w-2 rounded-full shrink-0 ${COLUMN_DOT_COLORS[status]}`} />
-              <span className="text-sm font-semibold text-white/80">
-                {STATUS_LABELS[status]}
-              </span>
-              <span className="ml-auto text-xs text-white/40 font-medium bg-white/10 rounded-full px-2 py-0.5">
+          <div key={status} className="flex w-[300px] shrink-0 flex-col sm:w-[320px]">
+            <div className={`mb-3 flex items-center gap-2 rounded-xl border px-3 py-2 ${COLUMN_HEADER_COLORS[status]}`}>
+              <span className={`h-2 w-2 shrink-0 rounded-full ${COLUMN_DOT_COLORS[status]}`} />
+              <span className="text-sm font-semibold text-slate-800">{STATUS_LABELS[status]}</span>
+              <span className="ml-auto rounded-full bg-white/70 px-2 py-0.5 text-xs font-medium text-slate-500">
                 {columnTickets.length}
               </span>
             </div>
 
-            {/* Column tickets - scrollable */}
-            <div className="space-y-2 overflow-y-auto max-h-[calc(100vh-320px)] pr-1">
+            <div className="max-h-[calc(100vh-320px)] space-y-2 overflow-y-auto pr-1">
               {columnTickets.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-white/25">
+                <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">
                   Sin tickets en este estado
                 </div>
               ) : (
-                columnTickets.map((ticket) => (
-                  <TicketCard key={ticket.id} ticket={ticket} />
-                ))
+                columnTickets.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)
               )}
             </div>
           </div>

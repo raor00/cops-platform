@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { Pencil, Loader2, Check } from "lucide-react"
@@ -51,21 +51,21 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0e2f6f]/95 backdrop-blur-2xl border border-white/20 text-white max-w-md">
+      <DialogContent className="max-w-md border border-slate-200 bg-white text-slate-900 shadow-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Pencil className="h-4 w-4 text-blue-400" />
+            <Pencil className="h-4 w-4 text-sky-500" />
             Editar configuración
           </DialogTitle>
-          <DialogDescription className="text-white/50">
+          <DialogDescription className="text-slate-500">
             {config.descripcion ?? config.clave}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
           <div>
-            <Label className="text-white/70 text-xs mb-1.5 block">
-              Clave: <span className="font-mono text-blue-300">{config.clave}</span>
+            <Label className="mb-1.5 block text-xs text-slate-500">
+              Clave: <span className="font-mono text-sky-600">{config.clave}</span>
             </Label>
 
             {isBoolean ? (
@@ -74,7 +74,7 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
                   type="button"
                   size="sm"
                   variant={valor === "true" ? "default" : "ghost"}
-                  className={valor === "true" ? "bg-green-600 hover:bg-green-500 border-0" : "border border-white/20 text-white/60"}
+                  className={valor === "true" ? "border-0 bg-green-600 hover:bg-green-500" : "border border-slate-200 text-slate-600"}
                   onClick={() => setValor("true")}
                 >
                   <Check className="h-3.5 w-3.5 mr-1.5" />
@@ -84,7 +84,7 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
                   type="button"
                   size="sm"
                   variant={valor === "false" ? "default" : "ghost"}
-                  className={valor === "false" ? "bg-red-600 hover:bg-red-500 border-0" : "border border-white/20 text-white/60"}
+                  className={valor === "false" ? "border-0 bg-red-600 hover:bg-red-500" : "border border-slate-200 text-slate-600"}
                   onClick={() => setValor("false")}
                 >
                   Desactivado
@@ -94,7 +94,7 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
               <Textarea
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/30 min-h-[80px]"
+                className="min-h-[80px] border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
                 placeholder={`Valor de ${config.clave}`}
               />
             ) : (
@@ -102,7 +102,7 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 type={config.tipo_dato === "number" ? "number" : "text"}
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/30"
+                className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
                 placeholder={`Valor de ${config.clave}`}
               />
             )}
@@ -113,7 +113,7 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-white/60 hover:text-white border border-white/10"
+              className="border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             >
               Cancelar
             </Button>
@@ -135,3 +135,4 @@ export function ConfigEditDialog({ config, open, onOpenChange }: ConfigEditDialo
     </Dialog>
   )
 }
+

@@ -227,7 +227,7 @@ export function ProfileEditDialog({
             </div>
 
             {selectedFile && (
-              <p className="text-xs text-white/60">
+              <p className="text-xs text-slate-500">
                 Nueva foto seleccionada: {selectedFile.name}
               </p>
             )}
@@ -240,18 +240,18 @@ export function ProfileEditDialog({
               <Input
                 value={`${user.nombre} ${user.apellido}`}
                 disabled
-                className="bg-white/5"
+                className="bg-slate-100 text-slate-700"
               />
             </div>
 
             <div>
               <Label>Email</Label>
-              <Input value={user.email} disabled className="bg-white/5" />
+              <Input value={user.email} disabled className="bg-slate-100 text-slate-700" />
             </div>
 
             <div>
               <Label>Rol</Label>
-              <Input value={user.rol} disabled className="bg-white/5 capitalize" />
+              <Input value={user.rol} disabled className="bg-slate-100 text-slate-700 capitalize" />
             </div>
 
             {/* Teléfono (editable) */}

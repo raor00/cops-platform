@@ -150,20 +150,20 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
       {/* Header con progreso */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-blue-400" />
+          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <ClipboardCheck className="h-5 w-5 text-sky-500" />
             Inspección Técnica
           </h2>
-          <p className="text-sm text-white/60 mt-1">
+          <p className="mt-1 text-sm text-slate-500">
             Formulario de levantamiento de información
           </p>
         </div>
         {inspeccion && (
           <div className="text-right">
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900">
               {completionPercentage}%
             </div>
-            <div className="text-xs text-white/60">
+            <div className="text-xs text-slate-500">
               {completedItems} de {totalItems} completados
             </div>
           </div>
@@ -203,10 +203,10 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
             <Card key={categoria} variant="glass">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-white">
+                  <CardTitle className="text-base font-semibold text-slate-900">
                     {categoria}
                   </CardTitle>
-                  <span className="text-sm text-white/60">
+                  <span className="text-sm text-slate-500">
                     {categoryCompleted}/{categoryTotal} ({categoryPercentage}%)
                   </span>
                 </div>
@@ -227,7 +227,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
                       <Label
                         htmlFor={`item-${item.index}`}
                         className={`text-sm flex-1 cursor-pointer ${
-                          item.estado === "ok" ? "text-white/90" : "text-white/70"
+                          item.estado === "ok" ? "text-slate-900" : "text-slate-600"
                         }`}
                       >
                         {item.descripcion}
@@ -256,7 +256,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
       {/* Observaciones Generales */}
       <Card variant="glass">
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">
+          <CardTitle className="text-base font-semibold text-slate-900">
             Observaciones Generales
           </CardTitle>
         </CardHeader>
@@ -274,7 +274,7 @@ export function InspeccionForm({ ticketId, inspeccion, onSuccess }: InspeccionFo
       {/* Recomendaciones */}
       <Card variant="glass">
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-white">
+          <CardTitle className="text-base font-semibold text-slate-900">
             Recomendaciones
           </CardTitle>
         </CardHeader>

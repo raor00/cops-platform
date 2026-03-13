@@ -16,7 +16,7 @@ export function BackButton({ href, label = "Regresar" }: BackButtonProps) {
       variant="ghost"
       size="sm"
       onClick={() => (href ? router.push(href) : router.back())}
-      className="text-white/60 hover:text-white -ml-1"
+      className="-ml-1 text-slate-500 hover:text-slate-900"
     >
       <ArrowLeft className="h-4 w-4 mr-1" />
       {label}

@@ -162,6 +162,7 @@ export async function createCliente(input: ClienteCreateInput): Promise<ActionRe
         direccion: input.direccion,
         rif_cedula: input.rif_cedula || null,
         observaciones: input.observaciones || null,
+        contactos: (input.contactos ?? []).map((ct) => ({ ...ct, id: crypto.randomUUID() })),
         estado: "activo",
         created_at: now,
         updated_at: now,
@@ -186,6 +187,7 @@ export async function createCliente(input: ClienteCreateInput): Promise<ActionRe
       direccion: input.direccion,
       rif_cedula: input.rif_cedula || null,
       observaciones: input.observaciones || null,
+      contactos: (input.contactos ?? []).map((ct) => ({ ...ct, id: crypto.randomUUID() })),
       estado: "activo",
     })
     .select()

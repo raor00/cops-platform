@@ -9,9 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-[rgba(14,165,233,0.3)] bg-gradient-to-br from-[rgba(14,165,233,0.3)] to-[rgba(2,132,199,0.2)] text-white shadow-[0_4px_20px_rgba(14,165,233,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_12px_40px_rgba(14,165,233,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:border-[rgba(56,189,248,0.4)] hover:from-[rgba(14,165,233,0.4)] hover:to-[rgba(2,132,199,0.3)]",
+          "border border-sky-600 bg-sky-600 text-white shadow-sm hover:translate-y-[-1px] hover:bg-sky-500 hover:border-sky-500 hover:shadow-md",
         destructive:
-          "border border-red-500/30 bg-gradient-to-br from-red-600/35 to-red-700/25 text-white shadow-[0_4px_20px_rgba(220,38,38,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] backdrop-blur-xl hover:translate-y-[-2px] hover:shadow-[0_12px_40px_rgba(220,38,38,0.3)] hover:border-red-400/40",
+          "border border-red-600 bg-red-600 text-white shadow-sm hover:translate-y-[-1px] hover:bg-red-500 hover:border-red-500 hover:shadow-md",
         outline:
           "border border-slate-200 bg-white text-slate-700 shadow-sm hover:translate-y-[-1px] hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900",
         secondary:

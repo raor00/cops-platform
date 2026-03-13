@@ -2,14 +2,13 @@
 
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, PlayCircle, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { CheckCircle2, Clock, Loader2, PlayCircle, XCircle } from "lucide-react"
 import { toast } from "sonner"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -17,10 +16,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { changeTicketStatus } from "@/lib/actions/tickets"
-import { VALID_TRANSITIONS, STATUS_LABELS } from "@/types"
+import { STATUS_LABELS, VALID_TRANSITIONS } from "@/types"
 import type { TicketStatus, TicketTechnicianInput } from "@/types"
 
 interface TicketStatusChangerProps {
@@ -29,10 +27,10 @@ interface TicketStatusChangerProps {
   isTechnician: boolean
 }
 
-export function TicketStatusChanger({ 
-  ticketId, 
-  currentStatus, 
-  isTechnician 
+export function TicketStatusChanger({
+  ticketId,
+  currentStatus,
+  isTechnician: _,
 }: TicketStatusChangerProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -45,7 +43,7 @@ export function TicketStatusChanger({
 
   const validTransitions = VALID_TRANSITIONS[currentStatus]
 
-  const handleStatusChange = async (newStatus: TicketStatus) => {
+  async function handleStatusChange(newStatus: TicketStatus) {
     if (newStatus === "finalizado") {
       setShowFinishDialog(true)
       return
@@ -54,12 +52,12 @@ export function TicketStatusChanger({
     setIsLoading(true)
     try {
       const result = await changeTicketStatus(ticketId, newStatus)
-      if (result.success) {
-        toast.success(result.message)
-        router.refresh()
-      } else {
+      if (!result.success) {
         toast.error(result.error)
+        return
       }
+      toast.success(result.message)
+      router.refresh()
     } catch {
       toast.error("Error al cambiar el estado")
     } finally {
@@ -67,17 +65,17 @@ export function TicketStatusChanger({
     }
   }
 
-  const handleFinish = async () => {
+  async function handleFinish() {
     setIsLoading(true)
     try {
       const result = await changeTicketStatus(ticketId, "finalizado", technicianData)
-      if (result.success) {
-        toast.success("Ticket finalizado exitosamente")
-        setShowFinishDialog(false)
-        router.refresh()
-      } else {
+      if (!result.success) {
         toast.error(result.error)
+        return
       }
+      toast.success("Ticket finalizado exitosamente")
+      setShowFinishDialog(false)
+      router.refresh()
     } catch {
       toast.error("Error al finalizar el ticket")
     } finally {
@@ -85,31 +83,31 @@ export function TicketStatusChanger({
     }
   }
 
-  const getButtonConfig = (status: TicketStatus) => {
+  function getButtonConfig(status: TicketStatus) {
     switch (status) {
       case "iniciado":
         return {
           icon: <PlayCircle className="h-4 w-4" />,
           label: "Iniciar trabajo",
-          className: "bg-yellow-500/20 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/30",
+          className: "border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100",
         }
       case "en_progreso":
         return {
           icon: <Clock className="h-4 w-4" />,
           label: "Marcar en progreso",
-          className: "bg-purple-500/20 border-purple-500/30 text-purple-400 hover:bg-purple-500/30",
+          className: "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100",
         }
       case "finalizado":
         return {
           icon: <CheckCircle2 className="h-4 w-4" />,
           label: "Finalizar",
-          className: "bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30",
+          className: "border-green-200 bg-green-50 text-green-700 hover:bg-green-100",
         }
       case "cancelado":
         return {
           icon: <XCircle className="h-4 w-4" />,
           label: "Cancelar ticket",
-          className: "bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30",
+          className: "border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
         }
       default:
         return {
@@ -122,13 +120,13 @@ export function TicketStatusChanger({
 
   return (
     <>
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <CardTitle>Cambiar Estado</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-white/60">
-            Estado actual: <span className="text-white font-medium">{STATUS_LABELS[currentStatus]}</span>
+          <p className="text-sm text-slate-500">
+            Estado actual: <span className="font-medium text-slate-900">{STATUS_LABELS[currentStatus]}</span>
           </p>
 
           <div className="space-y-2">
@@ -143,7 +141,7 @@ export function TicketStatusChanger({
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <span className="mr-2">{config.icon}</span>
                   )}
@@ -154,21 +152,16 @@ export function TicketStatusChanger({
           </div>
 
           {validTransitions.length === 0 && (
-            <p className="text-sm text-white/50 text-center py-2">
-              No hay acciones disponibles
-            </p>
+            <p className="py-2 text-center text-sm text-slate-500">No hay acciones disponibles</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Finish Dialog */}
       <Dialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Finalizar Ticket</DialogTitle>
-            <DialogDescription>
-              Complete la información del servicio realizado
-            </DialogDescription>
+            <DialogDescription>Complete la informacion del servicio realizado</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -178,10 +171,10 @@ export function TicketStatusChanger({
                 type="number"
                 min="0"
                 value={technicianData.tiempo_trabajado || ""}
-                onChange={(e) =>
+                onChange={(event) =>
                   setTechnicianData({
                     ...technicianData,
-                    tiempo_trabajado: Number(e.target.value),
+                    tiempo_trabajado: Number(event.target.value),
                   })
                 }
                 placeholder="Ej: 120"
@@ -189,16 +182,16 @@ export function TicketStatusChanger({
             </div>
 
             <div className="space-y-2">
-              <Label>Solución aplicada</Label>
+              <Label>Solucion aplicada</Label>
               <Textarea
                 value={technicianData.solucion_aplicada || ""}
-                onChange={(e) =>
+                onChange={(event) =>
                   setTechnicianData({
                     ...technicianData,
-                    solucion_aplicada: e.target.value,
+                    solucion_aplicada: event.target.value,
                   })
                 }
-                placeholder="Describa la solución implementada..."
+                placeholder="Describa la solucion implementada..."
                 className="min-h-[100px]"
               />
             </div>
@@ -207,10 +200,10 @@ export function TicketStatusChanger({
               <Label>Observaciones</Label>
               <Textarea
                 value={technicianData.observaciones_tecnico || ""}
-                onChange={(e) =>
+                onChange={(event) =>
                   setTechnicianData({
                     ...technicianData,
-                    observaciones_tecnico: e.target.value,
+                    observaciones_tecnico: event.target.value,
                   })
                 }
                 placeholder="Observaciones adicionales..."
@@ -219,11 +212,7 @@ export function TicketStatusChanger({
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowFinishDialog(false)}
-              disabled={isLoading}
-            >
+            <Button variant="outline" onClick={() => setShowFinishDialog(false)} disabled={isLoading}>
               Cancelar
             </Button>
             <Button onClick={handleFinish} disabled={isLoading}>

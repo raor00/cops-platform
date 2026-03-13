@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type {
   ActionResponse,
+  PaymentMethod,
+  PaymentStatus,
   PaymentScheduleReport,
   TechnicianPayment,
   TechnicianPaymentSchedule,
@@ -193,8 +195,8 @@ export async function generatePaymentSchedule(params: {
           monto_servicio: (ticket.monto_servicio as number) || 0,
           porcentaje_comision: (pago.porcentaje_comision as number) || 50,
           monto_a_pagar: monto,
-          estado_pago: pago.estado_pago as string,
-          metodo_pago: (pago.metodo_pago as string | null) ?? null,
+          estado_pago: pago.estado_pago as PaymentStatus,
+          metodo_pago: (pago.metodo_pago as PaymentMethod | null) ?? null,
           referencia_pago: (pago.referencia_pago as string | null) ?? null,
         })
         schedule.subtotal_servicio += (ticket.monto_servicio as number) || 0

@@ -140,13 +140,13 @@ export const ticketCreateSchema = z.object({
     .optional()
     .or(z.literal('')),
   tipo_mantenimiento: z.enum(['correctivo', 'preventivo']).optional(),
-  tecnico_id: z.string().uuid('ID de técnico inválido').optional().or(z.literal('')),
+  tecnico_id: z.string().min(1, 'Debes seleccionar un técnico'),
   monto_servicio: z
     .number()
     .min(0, 'El monto debe ser positivo')
     .optional()
     .default(40),
-  ticket_origen_id: z.string().uuid().optional().or(z.literal('')),
+  ticket_origen_id: z.string().optional().or(z.literal('')),
 })
 
 export const ticketUpdateSchema = z.object({
@@ -193,7 +193,7 @@ export const ticketUpdateSchema = z.object({
     .optional(),
   materiales_planificados: z.array(materialItemSchema).optional(),
   prioridad: z.enum(['baja', 'media', 'alta', 'urgente']).optional(),
-  tecnico_id: z.string().uuid('ID de técnico inválido').optional().or(z.literal('')),
+  tecnico_id: z.string().optional().or(z.literal('')),
   monto_servicio: z.number().min(0, 'El monto debe ser positivo').optional(),
 })
 
@@ -282,8 +282,8 @@ export const rutinaEstadoSchema = z.object({
 })
 
 export const assignVisitaSchema = z.object({
-  visita_ids: z.array(z.string().uuid('Visita inválida')).min(1, 'Debes seleccionar al menos una visita'),
-  tecnico_id: z.string().uuid('Técnico inválido'),
+  visita_ids: z.array(z.string().min(1)).min(1, 'Debes seleccionar al menos una visita'),
+  tecnico_id: z.string().min(1, 'Técnico inválido'),
   fecha_programada: z.string().min(1, 'La fecha programada es requerida'),
   observaciones_programacion: z.string().max(1000, 'Las observaciones no pueden exceder 1000 caracteres').optional().or(z.literal('')),
 })
@@ -299,7 +299,7 @@ export const bitacoraItemSchema = z.object({
 })
 
 export const bitacoraVisitaSchema = z.object({
-  visita_id: z.string().uuid('Visita inválida'),
+  visita_id: z.string().min(1, 'Visita inválida'),
   log: z.string().max(5000, 'El resumen no puede exceder 5000 caracteres'),
   checklist: z.array(bitacoraItemSchema),
   fotos: z.array(z.string()).optional(),
@@ -316,9 +316,9 @@ export const bitacoraVisitaSchema = z.object({
 })
 
 export const viaticoCreateSchema = z.object({
-  visita_id: z.string().uuid('Visita inválida').optional().or(z.literal('')),
-  tecnico_id: z.string().uuid('Técnico inválido').optional().or(z.literal('')),
-  rutina_id: z.string().uuid('Rutina inválida').optional().or(z.literal('')),
+  visita_id: z.string().optional().or(z.literal('')),
+  tecnico_id: z.string().optional().or(z.literal('')),
+  rutina_id: z.string().optional().or(z.literal('')),
   ruta: z.string().min(3, 'La ruta es requerida').max(255, 'La ruta no puede exceder 255 caracteres'),
   monto: z.number().min(0, 'El monto debe ser positivo'),
   detalle: z.string().max(1000, 'El detalle no puede exceder 1000 caracteres').optional().or(z.literal('')),

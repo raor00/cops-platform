@@ -101,18 +101,29 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
     }
   }
 
+  const isPorHora = ticket.facturacion_tipo === "por_hora"
+  const tarifaHora = ticket.tarifa_hora ?? 10
+  const minutosNum = tiempoTrabajado ? parseInt(tiempoTrabajado) : 0
+  const horasTrabajadas = minutosNum / 60
+  const montoCalculado = isPorHora ? Math.round(horasTrabajadas * tarifaHora * 100) / 100 : null
+
   const handleFinalize = async () => {
     if (!solucion.trim()) {
       toast.error("La solución aplicada es requerida")
+      return
+    }
+    if (isPorHora && !tiempoTrabajado) {
+      toast.error("Registra el tiempo trabajado para calcular el monto")
       return
     }
     setIsLoading(true)
     try {
       const result = await changeTicketStatus(ticket.id, "finalizado", {
         materiales_usados: usedMaterials ? materiales.filter((m) => m.nombre.trim()) : [],
-        tiempo_trabajado: tiempoTrabajado ? parseInt(tiempoTrabajado) : undefined,
+        tiempo_trabajado: minutosNum || undefined,
         solucion_aplicada: solucion,
         observaciones_tecnico: observaciones || undefined,
+        ...(isPorHora && montoCalculado !== null ? { monto_servicio_final: montoCalculado } : {}),
       })
       if (result.success) {
         toast.success("Ticket finalizado", { description: result.message })
@@ -376,7 +387,9 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
             <div className="space-y-3">
               <p className="text-sm font-medium text-slate-700">Tiempo trabajado</p>
               <div className="space-y-2">
-                <Label>Duración en minutos</Label>
+                <Label>
+                  Duración en minutos{isPorHora && <span className="text-red-400 ml-1">*</span>}
+                </Label>
                 <Input
                   type="number"
                   placeholder="Ej: 120"
@@ -390,9 +403,26 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                   </p>
                 )}
               </div>
-              <p className="text-xs text-slate-400">
-                Si no registras el tiempo, puedes dejarlo en blanco.
-              </p>
+              {isPorHora && (
+                <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 p-3 space-y-1">
+                  <p className="text-xs font-medium text-sky-300">Cálculo por hora</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-500">{horasTrabajadas.toFixed(2)} h</span>
+                    <span className="text-slate-400">x</span>
+                    <span className="text-slate-500">${tarifaHora}/h</span>
+                    <span className="text-slate-400">=</span>
+                    <span className="font-semibold text-sky-400">
+                      ${montoCalculado !== null ? montoCalculado.toFixed(2) : "0.00"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">Este monto se guardará en el pago del técnico.</p>
+                </div>
+              )}
+              {!isPorHora && (
+                <p className="text-xs text-slate-400">
+                  Si no registras el tiempo, puedes dejarlo en blanco.
+                </p>
+              )}
             </div>
           )}
 

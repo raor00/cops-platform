@@ -99,6 +99,9 @@ export function FotoUploadDialog({
         setPreviewUrl(null)
         setDescripcion("")
         setTipoFoto("progreso")
+        window.dispatchEvent(
+          new CustomEvent("ticket-fotos-updated", { detail: { ticketId } })
+        )
         onUploadSuccess?.()
       } else {
         toast.error(result.error || "Error al subir la foto")
@@ -136,15 +139,15 @@ export function FotoUploadDialog({
             {!selectedFile ? (
               <label
                 htmlFor="file-upload"
-                className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-white/40 transition-colors bg-black/20"
+                className="flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-sky-400 hover:bg-sky-50/70"
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <ImageIcon className="h-10 w-10 text-white/40 mb-3" />
-                  <p className="text-sm text-white/60 mb-1">
+                  <ImageIcon className="mb-3 h-10 w-10 text-slate-400" />
+                  <p className="mb-1 text-sm text-slate-700">
                     <span className="font-semibold">Click para subir</span> o
                     arrastra aquí
                   </p>
-                  <p className="text-xs text-white/40">
+                  <p className="text-xs text-slate-500">
                     JPEG, PNG, WEBP o HEIC (máx. 10 MB)
                   </p>
                 </div>
@@ -157,7 +160,7 @@ export function FotoUploadDialog({
                 />
               </label>
             ) : (
-              <div className="relative w-full h-48 border border-white/20 rounded-lg overflow-hidden">
+              <div className="relative h-48 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                 <img
                   src={previewUrl || ""}
                   alt="Preview"
@@ -172,7 +175,7 @@ export function FotoUploadDialog({
                 >
                   <X className="h-4 w-4" />
                 </Button>
-                <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-2">
+                <div className="absolute bottom-0 left-0 right-0 bg-slate-900/85 p-2">
                   <p className="text-xs text-white truncate">
                     {selectedFile.name}
                   </p>

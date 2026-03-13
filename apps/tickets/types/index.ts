@@ -12,7 +12,7 @@ export type UserStatus = 'activo' | 'inactivo'
 
 export type TicketType = 'servicio' | 'proyecto' | 'inspeccion'
 
-export type TicketStatus = 'asignado' | 'iniciado' | 'en_progreso' | 'finalizado' | 'cancelado'
+export type TicketStatus = 'borrador' | 'asignado' | 'iniciado' | 'en_progreso' | 'finalizado' | 'cancelado'
 
 export type TicketPriority = 'baja' | 'media' | 'alta' | 'urgente'
 
@@ -57,6 +57,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  borrador: ['asignado', 'cancelado'],
   asignado: ['iniciado', 'cancelado'],
   iniciado: ['en_progreso', 'cancelado'],
   en_progreso: ['finalizado', 'cancelado'],
@@ -66,6 +67,7 @@ export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
 
 // Transiciones inversas — solo para gerente+ (ROLE_HIERARCHY >= 3)
 export const ADMIN_REVERSE_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  borrador: [],
   asignado: [],
   iniciado: ['asignado'],
   en_progreso: ['iniciado'],
@@ -74,6 +76,7 @@ export const ADMIN_REVERSE_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
 } as const
 
 export const STATUS_LABELS: Record<TicketStatus, string> = {
+  borrador: 'Borrador',
   asignado: 'Asignado',
   iniciado: 'Iniciado',
   en_progreso: 'En Progreso',
@@ -82,6 +85,7 @@ export const STATUS_LABELS: Record<TicketStatus, string> = {
 } as const
 
 export const STATUS_COLORS: Record<TicketStatus, string> = {
+  borrador: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
   asignado: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   iniciado: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   en_progreso: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
@@ -117,6 +121,9 @@ export interface User {
   telefono: string | null
   cedula: string
   estado: UserStatus
+  activo_desde: string | null
+  foto_perfil_path: string | null
+  especialidad: string | null
   created_at: string
   updated_at: string
 }
@@ -177,6 +184,8 @@ export interface Ticket {
   comprobante_path: string | null
   // Financiero
   monto_servicio: number
+  facturacion_tipo: 'fijo' | 'por_hora' | null
+  tarifa_hora: number | null
   // Correlación inspección ↔ servicio/proyecto
   ticket_origen_id: string | null
   ticket_derivado_id: string | null
@@ -251,6 +260,7 @@ export interface TechnicianPayment {
   monto_ticket: number
   porcentaje_comision: number
   monto_a_pagar: number
+  facturacion_tipo: 'fijo' | 'por_hora' | null
   estado_pago: PaymentStatus
   fecha_habilitacion: string
   fecha_pago: string | null
@@ -524,6 +534,7 @@ export function generateTicketNumber(type: TicketType, sequence: number): string
 export const DEFAULT_SERVICE_AMOUNT = 40.00
 export const DEFAULT_INSPECTION_AMOUNT = 20.00
 export const DEFAULT_COMMISSION_PERCENTAGE = 50.00
+export const DEFAULT_HOURLY_RATE = 10.00
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NUEVAS INTERFACES v2 - Sistema de Gestión Avanzada
@@ -534,7 +545,7 @@ export interface UserProfile extends User {
   foto_perfil_path: string | null
   especialidad: string | null
   activo_desde: string | null
-  foto_perfil_url?: string
+  foto_perfil_url?: string | null
 }
 
 // ─── Fases de Proyecto ───────────────────────────────────────────────────────
@@ -848,6 +859,18 @@ export interface UpdateLog {
 
 // ─── Clientes DB (Sprint 7) ───────────────────────────────────────────────────
 
+// ─── Contactos de Cliente ────────────────────────────────────────────────────
+
+export interface ClienteContacto {
+  id: string
+  nombre: string
+  apellido: string | null
+  email: string | null
+  telefono: string
+  cargo: string | null
+  es_principal: boolean
+}
+
 export type ClienteStatus = 'activo' | 'inactivo'
 
 export interface Cliente {
@@ -863,6 +886,8 @@ export interface Cliente {
   observaciones: string | null
   created_at: string
   updated_at: string
+  // Contactos de la empresa
+  contactos?: ClienteContacto[]
   // Computed
   tickets_count?: number
   ultimo_ticket_fecha?: string | null
@@ -877,6 +902,7 @@ export interface ClienteCreateInput {
   direccion: string
   rif_cedula?: string
   observaciones?: string
+  contactos?: Omit<ClienteContacto, 'id'>[]
 }
 
 export interface ClienteUpdateInput extends Partial<ClienteCreateInput> {

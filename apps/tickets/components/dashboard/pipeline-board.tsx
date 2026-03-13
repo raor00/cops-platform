@@ -11,6 +11,7 @@ interface PipelineBoardProps {
 const PIPELINE_COLUMNS: TicketStatus[] = ["asignado", "iniciado", "en_progreso", "finalizado"]
 
 const COLUMN_HEADER_COLORS: Record<TicketStatus, string> = {
+  borrador: "border-slate-500/40 bg-slate-500/10",
   asignado: "border-blue-500/40 bg-blue-500/10",
   iniciado: "border-yellow-500/40 bg-yellow-500/10",
   en_progreso: "border-purple-500/40 bg-purple-500/10",
@@ -19,6 +20,7 @@ const COLUMN_HEADER_COLORS: Record<TicketStatus, string> = {
 }
 
 const COLUMN_DOT_COLORS: Record<TicketStatus, string> = {
+  borrador: "bg-slate-400",
   asignado: "bg-blue-400",
   iniciado: "bg-yellow-400",
   en_progreso: "bg-purple-400",
@@ -69,7 +71,7 @@ export function PipelineBoard({ tickets }: PipelineBoardProps) {
           <div key={status} className="shrink-0 w-[240px] sm:w-[260px]">
             {/* Column header */}
             <div
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 mb-3 bg-white/50 backdrop-blur-sm shadow-sm ${COLUMN_HEADER_COLORS[status]}`}
+              className={`flex items-center gap-2 rounded-xl border bg-white px-3 py-2 mb-3 shadow-sm ${COLUMN_HEADER_COLORS[status]}`}
             >
               <span className={`h-2 w-2 rounded-full ${COLUMN_DOT_COLORS[status]}`} />
               <span className="text-sm font-semibold text-slate-700">

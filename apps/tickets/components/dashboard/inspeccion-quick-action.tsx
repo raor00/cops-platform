@@ -17,10 +17,10 @@ export function InspeccionQuickAction({ userRole: _ }: InspeccionQuickActionProp
       variant="ghost"
       size="sm"
       onClick={() => router.push("/dashboard/tickets/nuevo?tipo=inspeccion")}
-      className="border border-white/10 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 gap-1.5"
+      className="gap-1.5 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
     >
       <ClipboardCheck className="h-3.5 w-3.5" />
-      Nueva Inspección
+      Nueva Inspeccion
     </Button>
   )
 }

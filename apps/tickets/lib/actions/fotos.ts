@@ -5,8 +5,51 @@ import { revalidatePath } from "next/cache"
 import type { ActionResponse, TicketFoto, TipoFoto } from "@/types"
 import { getCurrentUser } from "./auth"
 import { ROLE_HIERARCHY } from "@/types"
+import { isFirebaseMode, isLocalMode } from "@/lib/local-mode"
+import {
+  addDemoUpdateLog,
+  createDemoFoto,
+  deleteDemoFoto,
+  getDemoFotoById,
+  getDemoFotosByTicket,
+  getDemoTicketById,
+  updateDemoFoto,
+} from "@/lib/mock-data"
+import {
+  cleanForFirestore,
+  fromFirestoreDoc,
+  getAdminFirestore,
+  getAdminStorage,
+} from "@/lib/firebase/admin"
 
 const BUCKET_NAME = "ticket-fotos"
+
+async function canUploadFotoToTicket(
+  ticketId: string,
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+): Promise<boolean> {
+  if (ROLE_HIERARCHY[user.rol] >= 2) return true
+  if (user.rol !== "tecnico") return false
+
+  if (isLocalMode()) {
+    const ticket = getDemoTicketById(ticketId, user)
+    return ticket?.tecnico_id === user.id
+  }
+
+  if (isFirebaseMode()) {
+    const doc = await getAdminFirestore().collection("tickets").doc(ticketId).get()
+    return doc.exists && doc.data()?.tecnico_id === user.id
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("tickets")
+    .select("tecnico_id")
+    .eq("id", ticketId)
+    .single()
+
+  return data?.tecnico_id === user.id
+}
 
 /**
  * Subir foto a Supabase Storage y crear registro en DB
@@ -23,12 +66,9 @@ export async function uploadTicketFoto(
       return { success: false, error: "No autenticado" }
     }
 
-    // Validar permisos: Coordinador o superior
-    if (ROLE_HIERARCHY[user.rol] < 2) {
+    if (!(await canUploadFotoToTicket(ticketId, user))) {
       return { success: false, error: "No tienes permisos para subir fotos" }
     }
-
-    const supabase = await createClient()
 
     // Validar tipo de archivo
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/heic"]
@@ -49,6 +89,81 @@ export async function uploadTicketFoto(
     }
 
     // Generar nombre único para el archivo
+    if (isLocalMode()) {
+      const foto = createDemoFoto(
+        ticketId,
+        {
+          nombre_archivo: file.name,
+          tipo_foto: tipoFoto,
+          descripcion,
+        },
+        user
+      )
+
+      addDemoUpdateLog({
+        ticket_id: ticketId,
+        autor_id: user.id,
+        contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
+        tipo: "nota",
+        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+      })
+
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return {
+        success: true,
+        data: foto,
+        message: "Foto subida exitosamente",
+      }
+    }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const bucket = getAdminStorage().bucket()
+      const timestamp = Date.now()
+      const randomString = Math.random().toString(36).substring(7)
+      const extension = file.name.split(".").pop()
+      const fileName = `${ticketId}/${timestamp}-${randomString}.${extension}`
+      const buffer = Buffer.from(await file.arrayBuffer())
+      const now = new Date().toISOString()
+
+      await bucket.file(fileName).save(buffer, {
+        metadata: { contentType: file.type },
+      })
+
+      const fotoRef = db.collection("ticket_fotos").doc()
+      const fotoData = cleanForFirestore({
+        ticket_id: ticketId,
+        subido_por: user.id,
+        storage_path: fileName,
+        nombre_archivo: file.name,
+        tipo_foto: tipoFoto,
+        descripcion: descripcion || null,
+        tamanio_bytes: file.size,
+        mime_type: file.type,
+        created_at: now,
+      })
+
+      await fotoRef.set(fotoData)
+      await db.collection("update-logs").doc().set(
+        cleanForFirestore({
+          ticket_id: ticketId,
+          autor_id: user.id,
+          contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
+          tipo: "nota" as const,
+          created_at: now,
+          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+        })
+      )
+
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return {
+        success: true,
+        data: fromFirestoreDoc<TicketFoto>(fotoRef.id, fotoData),
+        message: "Foto subida exitosamente",
+      }
+    }
+
+    const supabase = await createClient()
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(7)
     const extension = file.name.split(".").pop()
@@ -132,6 +247,43 @@ export async function getTicketFotos(
       return { success: false, error: "No autenticado" }
     }
 
+    if (isLocalMode()) {
+      return {
+        success: true,
+        data: getDemoFotosByTicket(ticketId),
+      }
+    }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const bucket = getAdminStorage().bucket()
+      const snap = await db.collection("ticket_fotos").where("ticket_id", "==", ticketId).get()
+
+      const fotosConUrls = await Promise.all(
+        snap.docs.map(async (doc) => {
+          const foto = fromFirestoreDoc<TicketFoto>(doc.id, doc.data())
+          let url: string | undefined
+          try {
+            const [signedUrl] = await bucket
+              .file(foto.storage_path)
+              .getSignedUrl({ action: "read", expires: Date.now() + 3600 * 1000 })
+            url = signedUrl
+          } catch {}
+
+          return { ...foto, url }
+        })
+      )
+
+      fotosConUrls.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+
+      return {
+        success: true,
+        data: fotosConUrls,
+      }
+    }
+
     const supabase = await createClient()
 
     // Obtener fotos de la base de datos
@@ -193,6 +345,64 @@ export async function deleteTicketFoto(
     const user = await getCurrentUser()
     if (!user) {
       return { success: false, error: "No autenticado" }
+    }
+
+    if (isLocalMode()) {
+      const foto = getDemoFotoById(fotoId)
+      if (!foto) return { success: false, error: "Foto no encontrada" }
+
+      const deleted = deleteDemoFoto(fotoId, user.id, ROLE_HIERARCHY[user.rol])
+      if (!deleted) {
+        return { success: false, error: "No tienes permisos para eliminar esta foto" }
+      }
+
+      addDemoUpdateLog({
+        ticket_id: foto.ticket_id,
+        autor_id: user.id,
+        contenido: `Foto eliminada: ${foto.nombre_archivo}`,
+        tipo: "nota",
+        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+      })
+
+      revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
+      return {
+        success: true,
+        message: "Foto eliminada exitosamente",
+      }
+    }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const snap = await db.collection("ticket_fotos").doc(fotoId).get()
+      if (!snap.exists) return { success: false, error: "Foto no encontrada" }
+
+      const foto = fromFirestoreDoc<TicketFoto>(fotoId, snap.data()!)
+      const canDelete = foto.subido_por === user.id || ROLE_HIERARCHY[user.rol] >= 3
+      if (!canDelete) {
+        return { success: false, error: "No tienes permisos para eliminar esta foto" }
+      }
+
+      try {
+        await getAdminStorage().bucket().file(foto.storage_path).delete()
+      } catch {}
+
+      await db.collection("ticket_fotos").doc(fotoId).delete()
+      await db.collection("update-logs").doc().set(
+        cleanForFirestore({
+          ticket_id: foto.ticket_id,
+          autor_id: user.id,
+          contenido: `Foto eliminada: ${foto.nombre_archivo}`,
+          tipo: "nota" as const,
+          created_at: new Date().toISOString(),
+          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+        })
+      )
+
+      revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
+      return {
+        success: true,
+        message: "Foto eliminada exitosamente",
+      }
     }
 
     const supabase = await createClient()
@@ -275,6 +485,41 @@ export async function updateTicketFoto(
     const user = await getCurrentUser()
     if (!user) {
       return { success: false, error: "No autenticado" }
+    }
+
+    if (isLocalMode()) {
+      const foto = getDemoFotoById(fotoId)
+      if (!foto) return { success: false, error: "Foto no encontrada" }
+
+      const updated = updateDemoFoto(fotoId, updates, user.id, ROLE_HIERARCHY[user.rol])
+      if (!updated) {
+        return { success: false, error: "No tienes permisos para modificar esta foto" }
+      }
+
+      revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
+      return {
+        success: true,
+        message: "Foto actualizada exitosamente",
+      }
+    }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const snap = await db.collection("ticket_fotos").doc(fotoId).get()
+      if (!snap.exists) return { success: false, error: "Foto no encontrada" }
+
+      const foto = fromFirestoreDoc<TicketFoto>(fotoId, snap.data()!)
+      const canUpdate = foto.subido_por === user.id || ROLE_HIERARCHY[user.rol] >= 3
+      if (!canUpdate) {
+        return { success: false, error: "No tienes permisos para modificar esta foto" }
+      }
+
+      await db.collection("ticket_fotos").doc(fotoId).update(cleanForFirestore(updates))
+      revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
+      return {
+        success: true,
+        message: "Foto actualizada exitosamente",
+      }
     }
 
     const supabase = await createClient()

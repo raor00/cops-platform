@@ -101,7 +101,7 @@ export function TicketsTableRows({ tickets, canEdit, page, totalPages, total }: 
                   {canEdit && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link href={`/dashboard/tickets/${ticket.id}?edit=true`}>
+                        <Link href={`/dashboard/tickets/${ticket.id}/editar`}>
                           <Edit className="h-4 w-4 mr-2" />
                           Editar
                         </Link>

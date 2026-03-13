@@ -60,6 +60,18 @@ export function FotosGallery({
 
   useEffect(() => {
     loadFotos()
+
+    const handleFotosUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ ticketId?: string }>
+      if (customEvent.detail?.ticketId === ticketId) {
+        void loadFotos()
+      }
+    }
+
+    window.addEventListener("ticket-fotos-updated", handleFotosUpdated)
+    return () => {
+      window.removeEventListener("ticket-fotos-updated", handleFotosUpdated)
+    }
   }, [ticketId])
 
   const handleDelete = async (fotoId: string) => {
@@ -99,10 +111,10 @@ export function FotosGallery({
       {/* Header con botón de subir */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-slate-900">
             Galería de Fotos
           </h3>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-slate-500">
             {fotos.length} {fotos.length === 1 ? "foto" : "fotos"}
           </p>
         </div>
@@ -116,9 +128,9 @@ export function FotosGallery({
 
       {/* Grid de fotos */}
       {fotos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/10 rounded-lg">
-          <ImageIcon className="h-12 w-12 text-white/20 mb-3" />
-          <p className="text-white/40 text-sm">No hay fotos en este ticket</p>
+        <div className="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50/80">
+          <ImageIcon className="mb-3 h-12 w-12 text-slate-300" />
+          <p className="text-sm text-slate-500">No hay fotos en este ticket</p>
           {canUpload && (
             <FotoUploadDialog
               ticketId={ticketId}
@@ -136,7 +148,7 @@ export function FotosGallery({
           {fotos.map((foto) => (
             <div
               key={foto.id}
-              className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 bg-black/20 cursor-pointer hover:border-white/30 transition-all"
+              className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition-all hover:border-sky-300 hover:shadow-sm"
               onClick={() => setSelectedFoto(foto)}
             >
               {foto.url ? (
@@ -147,7 +159,7 @@ export function FotosGallery({
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="h-10 w-10 text-white/20" />
+                  <ImageIcon className="h-10 w-10 text-slate-300" />
                 </div>
               )}
 
@@ -232,7 +244,7 @@ export function FotosGallery({
             </DialogHeader>
             <div className="space-y-4">
               {selectedFoto.url && (
-                <div className="relative w-full max-h-[60vh] overflow-hidden rounded-lg border border-white/10">
+                <div className="relative w-full max-h-[60vh] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                   <img
                     src={selectedFoto.url}
                     alt={selectedFoto.nombre_archivo}
@@ -245,7 +257,7 @@ export function FotosGallery({
                   <Badge variant="outline">
                     {TIPO_FOTO_LABELS[selectedFoto.tipo_foto]}
                   </Badge>
-                  <span className="text-xs text-white/60">
+                  <span className="text-xs text-slate-500">
                     Subida el{" "}
                     {format(
                       new Date(selectedFoto.created_at),
@@ -255,12 +267,12 @@ export function FotosGallery({
                   </span>
                 </div>
                 {selectedFoto.descripcion && (
-                  <p className="text-sm text-white/80">
+                  <p className="text-sm text-slate-700">
                     {selectedFoto.descripcion}
                   </p>
                 )}
                 {selectedFoto.subidor && (
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs text-slate-500">
                     Subida por {selectedFoto.subidor.nombre}{" "}
                     {selectedFoto.subidor.apellido}
                   </p>

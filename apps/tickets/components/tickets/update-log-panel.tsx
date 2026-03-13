@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { MessageSquarePlus, Loader2, Clock, FileText } from "lucide-react"
+import { MessageSquarePlus, Loader2, Clock, FileText, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { addTicketUpdateLog } from "@/lib/actions/tickets"
+import { FotoUploadDialog } from "@/components/fotos/foto-upload-dialog"
 import { formatRelativeTime } from "@/lib/utils"
 import { ROLE_LABELS } from "@/types"
 import type { UpdateLog, TicketStatus } from "@/types"
@@ -17,15 +18,26 @@ interface UpdateLogPanelProps {
   ticketStatus: TicketStatus
   initialLogs: UpdateLog[]
   canAdd: boolean
+  canUploadPhotos?: boolean
 }
 
-export function UpdateLogPanel({ ticketId, ticketStatus, initialLogs, canAdd }: UpdateLogPanelProps) {
+export function UpdateLogPanel({
+  ticketId,
+  ticketStatus,
+  initialLogs,
+  canAdd,
+  canUploadPhotos = false,
+}: UpdateLogPanelProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [contenido, setContenido] = useState("")
   const [logs, setLogs] = useState<UpdateLog[]>(initialLogs)
 
   const isActive = ticketStatus !== "finalizado" && ticketStatus !== "cancelado"
+
+  useEffect(() => {
+    setLogs(initialLogs)
+  }, [initialLogs])
 
   const handleSubmit = async () => {
     if (!contenido.trim()) return
@@ -43,36 +55,61 @@ export function UpdateLogPanel({ ticketId, ticketStatus, initialLogs, canAdd }: 
     })
   }
 
+  const handlePhotoUploadSuccess = () => {
+    router.refresh()
+  }
+
   return (
     <div className="space-y-4">
       {/* Input area — solo cuando está activo y el usuario puede añadir */}
-      {canAdd && isActive && (
+      {(canAdd || canUploadPhotos) && isActive && (
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
             <MessageSquarePlus className="h-3.5 w-3.5" />
             Agregar actualización
           </p>
-          <Textarea
-            placeholder="Describe el avance, observación o novedad del servicio..."
-            value={contenido}
-            onChange={(e) => setContenido(e.target.value)}
-            rows={3}
-            className="resize-none"
-          />
-          <div className="flex justify-end">
-            <Button
-              size="sm"
-              onClick={handleSubmit}
-              disabled={!contenido.trim() || isPending}
-            >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <MessageSquarePlus className="h-4 w-4 mr-2" />
-              )}
-              Publicar
-            </Button>
+          {canAdd && (
+            <Textarea
+              placeholder="Describe el avance, observación o novedad del servicio..."
+              value={contenido}
+              onChange={(e) => setContenido(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
+          )}
+          <div className="flex flex-wrap justify-end gap-2">
+            {canUploadPhotos && (
+              <FotoUploadDialog
+                ticketId={ticketId}
+                onUploadSuccess={handlePhotoUploadSuccess}
+                trigger={
+                  <Button type="button" size="sm" variant="outline">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Agregar foto
+                  </Button>
+                }
+              />
+            )}
+            {canAdd && (
+              <Button
+                size="sm"
+                onClick={handleSubmit}
+                disabled={!contenido.trim() || isPending}
+              >
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <MessageSquarePlus className="h-4 w-4 mr-2" />
+                )}
+                Publicar
+              </Button>
+            )}
           </div>
+          {canUploadPhotos && (
+            <p className="text-xs text-slate-500">
+              Las fotos que subas desde aquí también aparecerán en la pestaña <span className="font-medium text-slate-700">Fotos</span>.
+            </p>
+          )}
         </div>
       )}
 

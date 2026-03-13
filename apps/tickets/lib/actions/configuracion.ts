@@ -9,11 +9,11 @@ import type { ActionResponse, SystemConfig } from "@/types"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 
 const DEFAULT_CONFIG_DATA = [
-  { clave: 'nombre_empresa', valor: 'COPS Electronics', descripcion: 'Nombre de la empresa', tipo: 'texto' },
-  { clave: 'moneda', valor: 'USD', descripcion: 'Moneda del sistema', tipo: 'texto' },
-  { clave: 'comision_tecnico', valor: '50', descripcion: 'Porcentaje de comision tecnico (%)', tipo: 'numero' },
-  { clave: 'monto_servicio_base', valor: '50', descripcion: 'Monto base por servicio', tipo: 'numero' },
-  { clave: 'monto_inspeccion', valor: '20', descripcion: 'Monto por inspeccion', tipo: 'numero' },
+  { clave: 'nombre_empresa', valor: 'COPS Electronics', descripcion: 'Nombre de la empresa', tipo_dato: 'string' as const },
+  { clave: 'moneda', valor: 'USD', descripcion: 'Moneda del sistema', tipo_dato: 'string' as const },
+  { clave: 'comision_tecnico', valor: '50', descripcion: 'Porcentaje de comision tecnico (%)', tipo_dato: 'number' as const },
+  { clave: 'monto_servicio_base', valor: '50', descripcion: 'Monto base por servicio', tipo_dato: 'number' as const },
+  { clave: 'monto_inspeccion', valor: '20', descripcion: 'Monto por inspeccion', tipo_dato: 'number' as const },
 ]
 
 export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>> {
@@ -35,7 +35,7 @@ export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>
           batch.set(db.collection('configuracion').doc(cfg.clave), d)
         }
         await batch.commit()
-        return { success: true, data: DEFAULT_CONFIG_DATA.map(c => ({ id: c.clave, ...c, updated_at: now } as SystemConfig)) }
+        return { success: true, data: DEFAULT_CONFIG_DATA.map(c => ({ id: Number.NaN, ...c, updated_at: now } as unknown as SystemConfig)) }
       }
       const data = snap.docs.map((d) => fromFirestoreDoc<SystemConfig>(d.id, d.data()))
       data.sort((a, b) => a.clave.localeCompare(b.clave))
@@ -69,7 +69,7 @@ export async function updateConfigValue(clave: string, valor: string): Promise<A
       const snap = await ref.get()
       const now = new Date().toISOString()
       if (!snap.exists) {
-        const newCfg = cleanForFirestore({ id: clave, clave, valor, descripcion: clave, tipo: 'texto', updated_at: now })
+        const newCfg = cleanForFirestore({ id: Number.NaN, clave, valor, descripcion: clave, tipo_dato: 'string', updated_at: now })
         await ref.set(newCfg)
         revalidatePath('/dashboard/configuracion')
         return { success: true, data: newCfg as SystemConfig, message: 'Configuracion actualizada' }

@@ -1,11 +1,11 @@
-"use client"
+﻿"use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Plus, Trash2, Loader2, Search, X, CheckCircle2, ExternalLink, BookOpen, Link2, Info } from "lucide-react"
+import { Plus, Trash2, Loader2, Search, X, CheckCircle2, ExternalLink, BookOpen, Link2, Info, UserPlus } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -19,13 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations"
 import { createTicket } from "@/lib/actions/tickets"
-import { searchClientes } from "@/lib/actions/clientes"
+import { createUser } from "@/lib/actions/usuarios"
 import { generateId } from "@/lib/utils"
 import { TICKET_CATALOG, type CatalogEntry } from "@/lib/catalog-data"
 import { getCatalogIdentifier, getCatalogSegment } from "@/lib/catalog-rules"
-import type { MaterialItem, Cliente } from "@/types"
+import type { MaterialItem, Cliente, ClienteContacto } from "@/types"
 
 type CatalogFilter = "all" | "equipos" | "materiales"
 
@@ -63,19 +70,29 @@ function getCotizacionesAppUrl() {
 
 interface CreateTicketFormProps {
   technicians: Array<{ id: string; nombre: string; apellido: string }>
+  initialClientes?: Cliente[]
   defaultTipo?: "servicio" | "proyecto" | "inspeccion"
 }
 
-export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: CreateTicketFormProps) {
+export function CreateTicketForm({ technicians: initialTechnicians, initialClientes = [], defaultTipo = "servicio" }: CreateTicketFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [materials, setMaterials] = useState<MaterialItem[]>([])
+
+  // Technicians list (mutable for inline creation)
+  const [technicians, setTechnicians] = useState(initialTechnicians)
+
+  // Inline technician dialog
+  const [showTechDialog, setShowTechDialog] = useState(false)
+  const [techForm, setTechForm] = useState({ nombre: "", apellido: "", email: "", telefono: "", password: "" })
+  const [techLoading, setTechLoading] = useState(false)
+  const [techError, setTechError] = useState("")
 
   // Client search state
   const [clientQuery, setClientQuery] = useState("")
   const [clientResults, setClientResults] = useState<Cliente[]>([])
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null)
-  const [searchLoading, setSearchLoading] = useState(false)
+  const [selectedContacto, setSelectedContacto] = useState<ClienteContacto | null>(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -92,6 +109,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<TicketCreateInput>({
     resolver: zodResolver(ticketCreateSchema),
@@ -149,27 +167,28 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
-  // Search clients with debounce
+  // Search clients client-side from pre-loaded list
   useEffect(() => {
     if (!clientQuery || clientQuery.length < 2) {
       setClientResults([])
       setShowDropdown(false)
       return
     }
-    const timer = setTimeout(async () => {
-      setSearchLoading(true)
-      try {
-        const result = await searchClientes(clientQuery)
-        if (result.success && result.data) {
-          setClientResults(result.data.slice(0, 5))
-          setShowDropdown(true)
-        }
-      } finally {
-        setSearchLoading(false)
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [clientQuery])
+    const q = clientQuery.toLowerCase()
+    const filtered = initialClientes
+      .filter(
+        (c) =>
+          c.estado === "activo" &&
+          (c.nombre.toLowerCase().includes(q) ||
+            (c.apellido ?? "").toLowerCase().includes(q) ||
+            (c.empresa ?? "").toLowerCase().includes(q) ||
+            (c.rif_cedula ?? "").toLowerCase().includes(q) ||
+            c.telefono.includes(q))
+      )
+      .slice(0, 8)
+    setClientResults(filtered)
+    setShowDropdown(true)
+  }, [clientQuery, initialClientes])
 
   // postMessage listener for quotation import
   useEffect(() => {
@@ -232,26 +251,81 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
 
   function selectCliente(cliente: Cliente) {
     setSelectedCliente(cliente)
+    setSelectedContacto(null)
     setShowDropdown(false)
     setClientQuery("")
-    const nombreCompleto = cliente.apellido
-      ? `${cliente.nombre} ${cliente.apellido}`
-      : cliente.nombre
-    setValue("cliente_nombre", nombreCompleto)
-    setValue("cliente_empresa", cliente.empresa ?? "")
-    setValue("cliente_email", cliente.email ?? "")
-    setValue("cliente_telefono", cliente.telefono)
-    setValue("cliente_direccion", cliente.direccion)
+    // If company with contacts, auto-fill with principal contact or first one
+    const contactos = cliente.contactos ?? []
+    const principal = contactos.find((c) => c.es_principal) ?? contactos[0]
+    if (cliente.empresa && principal) {
+      // Fill with contact data, empresa stays in empresa field
+      setValue("cliente_nombre", `${principal.nombre}${principal.apellido ? " " + principal.apellido : ""}`)
+      setValue("cliente_empresa", cliente.empresa)
+      setValue("cliente_email", principal.email ?? "")
+      setValue("cliente_telefono", principal.telefono)
+      setValue("cliente_direccion", cliente.direccion)
+      setSelectedContacto(principal)
+    } else {
+      const nombreCompleto = cliente.apellido
+        ? `${cliente.nombre} ${cliente.apellido}`
+        : cliente.nombre
+      setValue("cliente_nombre", nombreCompleto)
+      setValue("cliente_empresa", cliente.empresa ?? "")
+      setValue("cliente_email", cliente.email ?? "")
+      setValue("cliente_telefono", cliente.telefono)
+      setValue("cliente_direccion", cliente.direccion)
+    }
+  }
+
+  function selectContacto(contacto: ClienteContacto) {
+    setSelectedContacto(contacto)
+    setValue("cliente_nombre", `${contacto.nombre}${contacto.apellido ? " " + contacto.apellido : ""}`)
+    setValue("cliente_email", contacto.email ?? "")
+    setValue("cliente_telefono", contacto.telefono)
   }
 
   function clearCliente() {
     setSelectedCliente(null)
+    setSelectedContacto(null)
     setClientQuery("")
     setValue("cliente_nombre", "")
     setValue("cliente_empresa", "")
     setValue("cliente_email", "")
     setValue("cliente_telefono", "")
     setValue("cliente_direccion", "")
+  }
+
+  async function handleCreateTechnician() {
+    if (!techForm.nombre.trim()) { setTechError("El nombre es requerido"); return }
+    if (!techForm.email.trim()) { setTechError("El email es requerido"); return }
+    if (!techForm.password || techForm.password.length < 6) { setTechError("La contraseña debe tener al menos 6 caracteres"); return }
+    setTechLoading(true)
+    setTechError("")
+    try {
+      const result = await createUser({
+        nombre: techForm.nombre,
+        apellido: techForm.apellido || undefined,
+        email: techForm.email,
+        telefono: techForm.telefono || "N/A",
+        password: techForm.password,
+        rol: "tecnico",
+        cedula: undefined,
+      })
+      if (!result.success) {
+        setTechError(result.error ?? "Error al crear técnico")
+        return
+      }
+      const newTech = { id: result.data!.id, nombre: techForm.nombre, apellido: techForm.apellido }
+      setTechnicians((prev) => [...prev, newTech])
+      setValue("tecnico_id", newTech.id)
+      setShowTechDialog(false)
+      setTechForm({ nombre: "", apellido: "", email: "", telefono: "", password: "" })
+      toast.success(`Técnico ${techForm.nombre} creado y asignado`)
+    } catch {
+      setTechError("Error inesperado")
+    } finally {
+      setTechLoading(false)
+    }
   }
 
   const addMaterial = () => {
@@ -296,20 +370,32 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
     )
   }
 
-  const onSubmit = async (data: TicketCreateInput) => {
+  const onSubmit = async (data: TicketCreateInput, asBorrador = false) => {
     setIsSubmitting(true)
     try {
+      const montoServicio =
+        tipoTicket === "inspeccion"
+          ? 20
+          : tipoTicket === "servicio" && facturacionTipo === "fijo"
+          ? 40
+          : tipoTicket === "servicio" && facturacionTipo === "por_hora"
+          ? 0
+          : data.monto_servicio
+
       const submitData = {
         ...data,
         materiales_planificados: materials.length > 0 ? materials : undefined,
         tecnico_id: data.tecnico_id || undefined,
-        monto_servicio: tipoTicket === "inspeccion" ? 20 : tipoTicket === "servicio" ? 40 : data.monto_servicio,
-      }
+        monto_servicio: montoServicio,
+        estado: asBorrador ? ("borrador" as const) : undefined,
+        facturacion_tipo: tipoTicket === "servicio" ? facturacionTipo : "fijo",
+        tarifa_hora: tipoTicket === "servicio" && facturacionTipo === "por_hora" ? tarifaHora : null,
+      } as any
 
       const result = await createTicket(submitData)
 
       if (result.success) {
-        toast.success("Ticket creado", { description: result.message })
+        toast.success(asBorrador ? "Borrador guardado" : "Ticket creado", { description: result.message })
         router.push("/dashboard/tickets")
       } else {
         toast.error("Error", { description: result.error || "No se pudo crear el ticket" })
@@ -321,10 +407,27 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+  const [pendingBorrador, setBorrador] = useState(false)
+  const pendingBorradorRef = useRef(false)
 
-      {/* â”€â”€ Tipo y Origen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+  // Facturacion tipo state (for servicio)
+  const [facturacionTipo, setFacturacionTipo] = useState<"fijo" | "por_hora">("fijo")
+  const [tarifaHora, setTarifaHora] = useState<number>(10)
+
+  return (
+    <form
+      id="create-ticket-form"
+      onSubmit={handleSubmit(
+        (data) => onSubmit(data, pendingBorradorRef.current),
+        (errs) => {
+          const firstMsg = Object.values(errs).find((e) => e?.message)?.message
+          toast.error("Formulario incompleto", { description: firstMsg ?? "Revisa los campos marcados en rojo" })
+        }
+      )}
+      className="space-y-8"
+    >
+
+      {/* â"€â"€ Tipo y Origen â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <div className="form-section">
         <h3 className="form-section-title">Tipo de Ticket</h3>
         <div className="form-row">
@@ -430,21 +533,70 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
           )}
         </div>
 
+        {/* Toggle facturación para servicio */}
+        {tipoTicket === "servicio" && (
+          <div className="mt-1 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <span className="text-sm text-slate-600">Facturación:</span>
+            <div className="flex gap-1 rounded-lg bg-white p-0.5 shadow-sm ring-1 ring-slate-200">
+              <button
+                type="button"
+                onClick={() => { setFacturacionTipo("fijo"); setValue("monto_servicio", 40) }}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  facturacionTipo === "fijo"
+                    ? "bg-sky-500 text-white shadow"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Fijo $40
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFacturacionTipo("por_hora"); setValue("monto_servicio", 0) }}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                  facturacionTipo === "por_hora"
+                    ? "bg-sky-500 text-white shadow"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                Por hora
+              </button>
+            </div>
+            {facturacionTipo === "por_hora" && (
+              <div className="flex items-center gap-2 ml-2">
+                <span className="text-xs text-slate-500">Tarifa:</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500 text-xs">$</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    value={tarifaHora}
+                    onChange={(e) => setTarifaHora(Number(e.target.value) || 10)}
+                    className="w-16 rounded-md border border-slate-300 bg-white px-2 py-1 text-center text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-sky-500/50"
+                  />
+                  <span className="text-slate-500 text-xs">/hora</span>
+                </div>
+                <span className="ml-1 text-xs text-slate-400">(el monto final se calcula al cerrar)</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Info badge para inspección */}
         {tipoTicket === "inspeccion" && (
           <div className="flex items-start gap-2.5 rounded-xl bg-sky-500/8 border border-sky-500/20 px-3 py-2.5 text-sm mt-1">
             <Info className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
             <p className="text-sky-300/80">
-              Costo fijo: <span className="font-semibold text-sky-300">$20</span> â€” Al finalizar la inspección podrás convertirla en un servicio correctivo o proyecto.
+              Costo fijo: <span className="font-semibold text-sky-300">$20</span> â€" Al finalizar la inspección podrás convertirla en un servicio correctivo o proyecto.
             </p>
           </div>
         )}
 
-        {/* Cotización vinculada (solo proyecto) â€” compacta */}
+        {/* Cotización vinculada (solo proyecto) â€" compacta */}
         {tipoTicket === "proyecto" && (
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/8">
-            <Link2 className="h-3.5 w-3.5 text-white/40 shrink-0" />
-            <span className="text-xs text-white/50">Cotización vinculada:</span>
+          <div className="mt-2 flex items-center gap-2 border-t border-slate-200 pt-2">
+            <Link2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            <span className="text-xs text-slate-500">Cotización vinculada:</span>
             {cotizacionVinculada ? (
               <>
                 <span className="flex items-center gap-1 text-xs font-medium text-green-400">
@@ -454,7 +606,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                 <button
                   type="button"
                   onClick={() => setCotizacionVinculada(null)}
-                  className="ml-1 text-white/30 hover:text-white/60 transition-colors"
+                  className="ml-1 text-slate-400 transition-colors hover:text-slate-700"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -473,62 +625,90 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         )}
       </div>
 
-      {/* â”€â”€ Datos del Cliente â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â"€â"€ Datos del Cliente â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <div className="form-section">
         <h3 className="form-section-title">Datos del Cliente</h3>
 
         {/* Client search */}
         <div className="mb-4" ref={searchRef}>
           {selectedCliente ? (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-sky-400 shrink-0" />
-              <span className="text-white font-medium truncate">
-                {selectedCliente.empresa ?? selectedCliente.nombre}
-              </span>
-              <span className="text-white/40 text-xs truncate">â€” {selectedCliente.nombre}</span>
-              <button
-                type="button"
-                onClick={clearCliente}
-                className="ml-auto shrink-0 text-white/40 hover:text-white/70 transition-colors"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sm">
+                <CheckCircle2 className="h-4 w-4 text-sky-400 shrink-0" />
+                <span className="truncate font-medium text-slate-900">
+                  {selectedCliente.empresa ?? selectedCliente.nombre}
+                </span>
+                {selectedCliente.empresa && (
+                  <span className="text-slate-500 text-xs truncate">- {selectedCliente.nombre}</span>
+                )}
+                <button
+                  type="button"
+                  onClick={clearCliente}
+                  className="ml-auto shrink-0 text-slate-400 transition-colors hover:text-slate-700"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {/* Contact selector when empresa has multiple contacts */}
+              {selectedCliente.empresa && (selectedCliente.contactos ?? []).length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500">¿Quién realiza el requerimiento?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedCliente.contactos ?? []).map((ct) => (
+                      <button
+                        key={ct.id}
+                        type="button"
+                        onClick={() => selectContacto(ct)}
+                        className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+                          selectedContacto?.id === ct.id
+                            ? "bg-sky-500/20 border-sky-500/50 text-sky-300"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        }`}
+                      >
+                        {ct.nombre} {ct.apellido ?? ""}
+                        {ct.cargo ? ` · ${ct.cargo}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="relative">
               <div className="relative flex items-center">
-                <Search className="absolute left-3 h-4 w-4 text-white/30 pointer-events-none" />
+                <Search className="pointer-events-none absolute left-3 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   value={clientQuery}
                   onChange={(e) => setClientQuery(e.target.value)}
                   placeholder="Buscar cliente existente..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-sky-500/50 focus:border-sky-500/40 transition-colors"
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-sky-500/40 focus:outline-none focus:ring-1 focus:ring-sky-500/50"
                 />
-                {searchLoading && (
-                  <Loader2 className="absolute right-3 h-4 w-4 text-white/30 animate-spin" />
-                )}
               </div>
-              {showDropdown && clientResults.length > 0 && (
-                <div className="absolute z-50 mt-1 w-full rounded-xl border border-white/15 bg-[#111827] shadow-xl overflow-hidden">
-                  {clientResults.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => selectCliente(c)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
-                    >
-                      <p className="text-sm font-medium text-white truncate">
-                        {c.empresa ?? c.nombre}
-                      </p>
-                      {c.empresa && (
-                        <p className="text-xs text-white/40 truncate">{c.nombre}</p>
-                      )}
-                    </button>
-                  ))}
+              {showDropdown && (
+                <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                  {clientResults.length > 0 ? (
+                    clientResults.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => selectCliente(c)}
+                        className="w-full border-b border-slate-100 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 last:border-0"
+                      >
+                        <p className="truncate text-sm font-medium text-slate-900">
+                          {c.empresa ?? `${c.nombre}${c.apellido ? " " + c.apellido : ""}`}
+                        </p>
+                        {c.empresa && (
+                          <p className="text-xs text-slate-500 truncate">{c.nombre}{c.apellido ? ` ${c.apellido}` : ""}</p>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-4 py-3 text-sm text-slate-500">No se encontraron clientes</p>
+                  )}
                   <Link
                     href="/dashboard/clientes"
-                    className="flex items-center gap-2 w-full px-4 py-2.5 text-xs text-sky-400 hover:bg-white/5 transition-colors"
+                    className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-xs text-sky-500 transition-colors hover:bg-sky-50"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Ir a Clientes para crear uno nuevo
@@ -589,7 +769,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         </div>
       </div>
 
-      {/* â”€â”€ Descripción del Trabajo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â"€â"€ Descripción del Trabajo â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <div className="form-section">
         <h3 className="form-section-title">
           {tipoTicket === "inspeccion" ? "Motivo de la Inspección" : "Descripción del Trabajo"}
@@ -631,13 +811,13 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
             error={errors.requerimientos?.message}
             {...register("requerimientos")}
           />
-          <p className="text-xs text-white/40 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Información que el técnico necesita saber antes de la visita
           </p>
         </div>
       </div>
 
-      {/* â”€â”€ Materiales Planificados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â"€â"€ Materiales Planificados â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <div className="form-section">
         <div className="flex items-center justify-between mb-4">
           <h3 className="form-section-title mb-0">Materiales Planificados</h3>
@@ -672,7 +852,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                   className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
                     catalogFilter === f
                       ? "bg-sky-500 text-white"
-                      : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white/80"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
                   {f === "all" ? "Todos" : f === "equipos" ? "Equipos" : "Materiales"}
@@ -680,14 +860,14 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
               ))}
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30 pointer-events-none" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={catalogQuery}
                 onChange={(e) => setCatalogQuery(e.target.value)}
                 placeholder="Buscar por nombre, código o categoría..."
                 autoFocus
-                className="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-sky-500/50 transition-colors"
+                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:ring-1 focus:ring-sky-500/50"
               />
             </div>
             <div className="max-h-52 overflow-y-auto space-y-0.5">
@@ -698,24 +878,24 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
                     key={entry.code}
                     type="button"
                     onClick={() => addMaterialFromCatalog(entry)}
-                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-between gap-3"
+                    className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-white/70"
                   >
                     <div className="min-w-0 flex items-center gap-2">
                       {alreadyAdded && <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />}
                       <div className="min-w-0">
-                        <p className="text-sm text-white truncate">{entry.description}</p>
-                        <p className="text-xs text-white/40">{entry.code} Â· {entry.category}</p>
+                        <p className="truncate text-sm text-slate-900">{entry.description}</p>
+                        <p className="text-xs text-slate-500">{entry.code} Â· {entry.category}</p>
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-xs font-medium text-sky-400">${entry.unitPrice}</p>
-                      <p className="text-xs text-white/30">{entry.unit}</p>
+                      <p className="text-xs text-slate-500">{entry.unit}</p>
                     </div>
                   </button>
                 )
               })}
               {catalogFiltered.length === 0 && (catalogQuery || catalogFilter !== "all") && (
-                <p className="text-center py-4 text-sm text-white/40">
+                <p className="py-4 text-center text-sm text-slate-500">
                   Sin resultados{catalogQuery ? ` para "${catalogQuery}"` : ""}
                 </p>
               )}
@@ -724,7 +904,7 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         )}
 
         {materials.length === 0 && !showCatalogSearch ? (
-          <p className="text-sm text-white/50 text-center py-4">
+          <p className="py-4 text-center text-sm text-slate-500">
             Sin materiales. Usa &quot;Del catálogo&quot; para buscar o &quot;Manual&quot; para agregar libremente.
           </p>
         ) : materials.length > 0 ? (
@@ -769,37 +949,47 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         ) : null}
       </div>
 
-      {/* â”€â”€ Asignación â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Asignación ─────────────────────────────────────────────────── */}
       <div className="form-section">
         <h3 className="form-section-title">Asignación</h3>
         <div className="form-group">
-          <Label>Técnico Asignado</Label>
-          <Select onValueChange={(value) => setValue("tecnico_id", value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar técnico (opcional)" />
-            </SelectTrigger>
-            <SelectContent>
-              {technicians.length === 0 ? (
-                <SelectItem value="" disabled>
-                  No hay técnicos disponibles
-                </SelectItem>
-              ) : (
-                technicians.map((tech) => (
-                  <SelectItem key={tech.id} value={tech.id}>
-                    {tech.nombre} {tech.apellido}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-white/50 mt-1">
-            Puedes asignar el técnico ahora o hacerlo después
-          </p>
+          <div className="flex items-center justify-between mb-1.5">
+            <Label>Técnico Asignado *</Label>
+            <button
+              type="button"
+              onClick={() => setShowTechDialog(true)}
+              className="flex items-center gap-1 text-xs text-sky-400 hover:text-sky-300 transition-colors"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Nuevo técnico
+            </button>
+          </div>
+          <Controller
+            name="tecnico_id"
+            control={control}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                <SelectTrigger error={errors.tecnico_id?.message}>
+                  <SelectValue placeholder="Seleccionar técnico..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {technicians.map((tech) => (
+                    <SelectItem key={tech.id} value={tech.id}>
+                      {tech.nombre} {tech.apellido}
+                    </SelectItem>
+                  ))}
+                  {technicians.length === 0 && (
+                    <div className="px-3 py-2 text-sm text-slate-400">No hay técnicos disponibles</div>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
 
-      {/* â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+      {/* ── Actions ──────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4">
         <Button
           type="button"
           variant="outline"
@@ -808,8 +998,25 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={isSubmitting}
+          onClick={() => { pendingBorradorRef.current = true; setBorrador(true) }}
+          className="border-slate-300 text-slate-700 hover:bg-slate-100"
+        >
+          {isSubmitting && pendingBorrador ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Guardando...</>
+          ) : (
+            "Guardar borrador"
+          )}
+        </Button>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          onClick={() => { pendingBorradorRef.current = false; setBorrador(false) }}
+        >
+          {isSubmitting && !pendingBorrador ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Creando...
@@ -819,7 +1026,88 @@ export function CreateTicketForm({ technicians, defaultTipo = "servicio" }: Crea
           )}
         </Button>
       </div>
+
+      {/* ── Dialog: Nuevo Técnico ──────────────────────────────────────── */}
+      <Dialog open={showTechDialog} onOpenChange={setShowTechDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo Técnico</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Nombre *</Label>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Carlos"
+                  value={techForm.nombre}
+                  onChange={(e) => setTechForm({ ...techForm, nombre: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Apellido</Label>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Pérez"
+                  value={techForm.apellido}
+                  onChange={(e) => setTechForm({ ...techForm, apellido: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Email *</Label>
+              <Input
+                className="h-8 text-sm"
+                type="email"
+                placeholder="tecnico@empresa.com"
+                value={techForm.email}
+                onChange={(e) => setTechForm({ ...techForm, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Teléfono</Label>
+              <Input
+                className="h-8 text-sm"
+                placeholder="+58 412 000 0000"
+                value={techForm.telefono}
+                onChange={(e) => setTechForm({ ...techForm, telefono: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Contraseña temporal *</Label>
+              <Input
+                className="h-8 text-sm"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={techForm.password}
+                onChange={(e) => setTechForm({ ...techForm, password: e.target.value })}
+              />
+            </div>
+            {techError && <p className="text-xs text-red-400">{techError}</p>}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => { setShowTechDialog(false); setTechError("") }}
+              disabled={techLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleCreateTechnician}
+              disabled={techLoading}
+            >
+              {techLoading ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Creando...</> : "Crear técnico"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }
+
 

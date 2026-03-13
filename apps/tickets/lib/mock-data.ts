@@ -66,6 +66,9 @@ const DEMO_USERS: User[] = [
     telefono: "+58 414 000 0000",
     cedula: "V-00000000",
     estado: "activo",
+    activo_desde: new Date(now - 72 * hour).toISOString(),
+    foto_perfil_path: null,
+    especialidad: null,
     created_at: new Date(now - 72 * hour).toISOString(),
     updated_at: new Date(now - 72 * hour).toISOString(),
   },
@@ -79,6 +82,9 @@ const DEMO_USERS: User[] = [
     telefono: "+58 424 111 1111",
     cedula: "V-11111111",
     estado: "activo",
+    activo_desde: new Date(now - 72 * hour).toISOString(),
+    foto_perfil_path: null,
+    especialidad: null,
     created_at: new Date(now - 72 * hour).toISOString(),
     updated_at: new Date(now - 72 * hour).toISOString(),
   },
@@ -92,6 +98,9 @@ const DEMO_USERS: User[] = [
     telefono: "+58 412 222 2222",
     cedula: "V-22222222",
     estado: "activo",
+    activo_desde: new Date(now - 72 * hour).toISOString(),
+    foto_perfil_path: null,
+    especialidad: "CCTV y alarmas",
     created_at: new Date(now - 72 * hour).toISOString(),
     updated_at: new Date(now - 72 * hour).toISOString(),
   },
@@ -105,6 +114,9 @@ const DEMO_USERS: User[] = [
     telefono: "+58 414 333 3333",
     cedula: "V-33333333",
     estado: "activo",
+    activo_desde: new Date(now - 72 * hour).toISOString(),
+    foto_perfil_path: null,
+    especialidad: "Control de acceso",
     created_at: new Date(now - 72 * hour).toISOString(),
     updated_at: new Date(now - 72 * hour).toISOString(),
   },
@@ -157,6 +169,8 @@ function buildTicket(partial: Partial<Ticket> & Pick<Ticket, "id" | "numero_tick
     solucion_aplicada: partial.solucion_aplicada ?? null,
     comprobante_path: partial.comprobante_path ?? null,
     monto_servicio: partial.monto_servicio ?? 40,
+    facturacion_tipo: partial.facturacion_tipo ?? "fijo",
+    tarifa_hora: partial.tarifa_hora ?? null,
     ticket_origen_id: partial.ticket_origen_id ?? null,
     ticket_derivado_id: partial.ticket_derivado_id ?? null,
     modificado_por: partial.modificado_por ?? null,
@@ -257,6 +271,7 @@ function buildPaymentFromTicket(ticket: Ticket): TechnicianPayment {
     referencia_pago: null,
     pagado_por: null,
     observaciones: null,
+    facturacion_tipo: ticket.facturacion_tipo ?? "fijo",
     created_at: nowIso,
     updated_at: nowIso,
     ticket,
@@ -405,6 +420,7 @@ export function getDemoDashboardStats(user: User): DashboardStats {
       0
     ),
     ticketsPorEstado: {
+      borrador: byStatus("borrador"),
       asignado: byStatus("asignado"),
       iniciado: byStatus("iniciado"),
       en_progreso: byStatus("en_progreso"),
@@ -456,8 +472,8 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
     creador: currentUser,
     tecnico_id: input.tecnico_id || null,
     tecnico,
-    estado: "asignado",
-    fecha_asignacion: nowIso,
+    estado: (input as any).estado === "borrador" ? "borrador" : "asignado",
+    fecha_asignacion: (input as any).estado === "borrador" ? undefined : nowIso,
     monto_servicio: input.monto_servicio ?? (input.tipo === 'inspeccion' ? 20 : 40),
     ticket_origen_id: input.ticket_origen_id || null,
     ticket_derivado_id: null,
@@ -565,6 +581,7 @@ export function changeDemoTicketStatus(
     tiempo_trabajado?: number
     observaciones_tecnico?: string
     solucion_aplicada?: string
+    monto_servicio_final?: number
   },
   userRole?: UserRole
 ): { ticket?: Ticket; error?: string } {
@@ -608,6 +625,9 @@ export function changeDemoTicketStatus(
 
   if (additionalData?.solucion_aplicada) {
     updateData.solucion_aplicada = additionalData.solucion_aplicada
+  }
+  if (additionalData?.monto_servicio_final !== undefined) {
+    updateData.monto_servicio = additionalData.monto_servicio_final
   }
 
   const updated: Ticket = { ...current, ...updateData }
@@ -800,6 +820,11 @@ export function getDemoFotosByTicket(ticketId: string, tipoFoto?: TipoFoto): Tic
   return deepClone(fotos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
 }
 
+export function getDemoFotoById(id: string): TicketFoto | null {
+  const foto = demoFotos.find((item) => item.id === id)
+  return foto ? deepClone(foto) : null
+}
+
 export function createDemoFoto(ticketId: string, input: { nombre_archivo: string; tipo_foto: TipoFoto; descripcion?: string }, currentUser: User): TicketFoto {
   const foto: TicketFoto = {
     id: crypto.randomUUID(),
@@ -825,6 +850,27 @@ export function deleteDemoFoto(id: string, userId: string, userLevel: number): b
   if (foto.subido_por !== userId && userLevel < 3) return false
   demoFotos = demoFotos.filter((f) => f.id !== id)
   return true
+}
+
+export function updateDemoFoto(
+  id: string,
+  updates: { descripcion?: string; tipo_foto?: TipoFoto },
+  userId: string,
+  userLevel: number
+): TicketFoto | null {
+  const foto = demoFotos.find((f) => f.id === id)
+  if (!foto) return null
+  if (foto.subido_por !== userId && userLevel < 3) return null
+
+  const updated: TicketFoto = {
+    ...foto,
+    ...updates,
+    descripcion:
+      updates.descripcion !== undefined ? updates.descripcion || null : foto.descripcion,
+  }
+
+  demoFotos = demoFotos.map((item) => (item.id === id ? updated : item))
+  return deepClone(updated)
 }
 
 // ─── Sesiones de Trabajo ─────────────────────────────────────────────────────
@@ -1133,6 +1179,11 @@ let demoClientes: Cliente[] = [
     updated_at: new Date(now - 90 * hour).toISOString(),
     tickets_count: 2,
     ultimo_ticket_fecha: new Date(now - 48 * hour).toISOString(),
+    contactos: [
+      { id: "ct01", nombre: "Carlos", apellido: "Rodríguez", email: "c.rodriguez@banconacional.com.ve", telefono: "+58 212 600 0001", cargo: "Gerente de TI", es_principal: true },
+      { id: "ct02", nombre: "María", apellido: "López", email: "m.lopez@banconacional.com.ve", telefono: "+58 212 600 0002", cargo: "Jefe de Compras", es_principal: false },
+      { id: "ct03", nombre: "Luis", apellido: "Pérez", email: "l.perez@banconacional.com.ve", telefono: "+58 412 600 0003", cargo: "Supervisor de Sistemas", es_principal: false },
+    ],
   },
   {
     id: "c1000000-0000-0000-0000-000000000002",
@@ -1197,6 +1248,10 @@ let demoClientes: Cliente[] = [
     updated_at: new Date(now - 30 * hour).toISOString(),
     tickets_count: 0,
     ultimo_ticket_fecha: null,
+    contactos: [
+      { id: "ct11", nombre: "Alejandro", apellido: "Vásquez", email: "a.vasquez@tecnomax.com.ve", telefono: "+58 212 700 4441", cargo: "Director Comercial", es_principal: true },
+      { id: "ct12", nombre: "Sandra", apellido: "Mora", email: "s.mora@tecnomax.com.ve", telefono: "+58 414 700 4442", cargo: "Coordinadora de Proyectos", es_principal: false },
+    ],
   },
   {
     id: "c1000000-0000-0000-0000-000000000006",
@@ -1264,6 +1319,7 @@ export function createDemoCliente(input: ClienteCreateInput): Cliente {
     rif_cedula: input.rif_cedula || null,
     estado: "activo",
     observaciones: input.observaciones || null,
+    contactos: input.contactos ? input.contactos.map((ct) => ({ ...ct, id: crypto.randomUUID() })) : [],
     created_at: now,
     updated_at: now,
     tickets_count: 0,
@@ -1284,6 +1340,7 @@ export function updateDemoCliente(id: string, input: ClienteUpdateInput): Client
     email: input.email !== undefined ? (input.email || null) : demoClientes[idx]!.email,
     rif_cedula: input.rif_cedula !== undefined ? (input.rif_cedula || null) : demoClientes[idx]!.rif_cedula,
     observaciones: input.observaciones !== undefined ? (input.observaciones || null) : demoClientes[idx]!.observaciones,
+    contactos: input.contactos !== undefined ? input.contactos.map((ct) => ({ ...ct, id: (ct as any).id || crypto.randomUUID() })) : demoClientes[idx]!.contactos,
     updated_at: new Date().toISOString(),
   }
   demoClientes[idx] = updated

@@ -16,6 +16,7 @@ interface StatusDistributionChartProps {
 }
 
 const STATUS_FILL: Record<TicketStatus, string> = {
+  borrador: "#94a3b8",
   asignado: "#60a5fa",
   iniciado: "#fbbf24",
   en_progreso: "#a78bfa",

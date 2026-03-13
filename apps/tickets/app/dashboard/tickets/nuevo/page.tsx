@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentUser } from "@/lib/actions/auth"
 import { getTechnicians } from "@/lib/actions/tickets"
+import { getClientes } from "@/lib/actions/clientes"
 import { ROLE_HIERARCHY } from "@/types"
 import { CreateTicketForm } from "./create-ticket-form"
 
@@ -32,6 +33,10 @@ export default async function NuevoTicketPage({
   // Obtener técnicos disponibles
   const techniciansResult = await getTechnicians()
   const technicians = techniciansResult.success ? techniciansResult.data || [] : []
+
+  // Obtener clientes para búsqueda en el formulario
+  const clientesResult = await getClientes({ pageSize: 200 })
+  const clientes = clientesResult.success ? clientesResult.data?.data || [] : []
 
   const params = await searchParams
   const defaultTipo = params?.tipo === 'inspeccion' ? 'inspeccion'
@@ -70,7 +75,7 @@ export default async function NuevoTicketPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateTicketForm technicians={technicians} defaultTipo={defaultTipo as 'servicio' | 'proyecto' | 'inspeccion'} />
+          <CreateTicketForm technicians={technicians} initialClientes={clientes} defaultTipo={defaultTipo as 'servicio' | 'proyecto' | 'inspeccion'} />
         </CardContent>
       </Card>
     </div>
