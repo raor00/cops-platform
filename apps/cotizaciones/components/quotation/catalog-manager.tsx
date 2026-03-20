@@ -364,16 +364,16 @@ export function CatalogManager() {
   return (
     <div className="min-w-0 space-y-4 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header">
         <div className="min-w-0">
-          <h2 className="truncate font-heading text-xl font-bold text-foreground sm:text-2xl">Catalogo de Productos</h2>
-          <p className="text-xs text-muted-foreground">{counts.all} productos  - {counts.ablerex} Ablerex</p>
+          <h1 className="page-title truncate">Catalogo de Productos</h1>
+          <p className="page-description">{counts.all} productos  - {counts.ablerex} Ablerex</p>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+        <div className="page-actions">
           <Button variant="outline" size="sm" onClick={handleSyncAblerexCatalog} className="text-xs">
             Sync Ablerex
           </Button>
-          <Button size="sm" onClick={openCreate} className="bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]">
+          <Button size="sm" onClick={openCreate} className="text-xs">
             <Plus className="mr-1 h-3.5 w-3.5" />
             Nuevo
           </Button>
@@ -400,7 +400,7 @@ export function CatalogManager() {
             className={cn(
               "rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200",
               brandFilter === b
-                ? "bg-[#4a72ef] text-white shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
@@ -416,7 +416,7 @@ export function CatalogManager() {
           className={cn(
             "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-200",
             selectedCategory === "all"
-              ? "bg-[#4a72ef] text-white shadow-sm"
+              ? "bg-primary text-primary-foreground shadow-sm"
               : "bg-muted/60 text-muted-foreground hover:bg-muted"
           )}
         >
@@ -429,7 +429,7 @@ export function CatalogManager() {
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all duration-200",
               selectedCategory === cat
-                ? "bg-[#4a72ef] text-white shadow-sm"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-muted/60 text-muted-foreground hover:bg-muted"
             )}
           >
@@ -478,7 +478,7 @@ export function CatalogManager() {
       <Collapsible open={priceOpen} onOpenChange={setPriceOpen}>
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/30">
-            <Settings2 className="h-4 w-4 shrink-0 text-[#4a72ef]" />
+            <Settings2 className="h-4 w-4 shrink-0 text-primary" />
             <span className="text-xs font-semibold text-foreground sm:text-sm">Ajuste de Precios</span>
             <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", priceOpen && "rotate-180")} />
           </button>
@@ -525,7 +525,7 @@ export function CatalogManager() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={applyMassivePriceAdjustment} size="sm" className="h-8 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]">
+              <Button onClick={applyMassivePriceAdjustment} size="sm" className="h-8 text-xs">
                 Aplicar
               </Button>
             </div>
@@ -537,7 +537,7 @@ export function CatalogManager() {
       <Collapsible open={discountOpen} onOpenChange={setDiscountOpen}>
         <CollapsibleTrigger asChild>
           <button className="flex w-full items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-muted/30">
-            <Tags className="h-4 w-4 shrink-0 text-[#4a72ef]" />
+            <Tags className="h-4 w-4 shrink-0 text-primary" />
             <span className="min-w-0 truncate text-xs font-semibold text-foreground sm:text-sm">Descuento Global</span>
             {discountConfig.enabled && <Badge variant="secondary" className="shrink-0 text-[10px]">Activo</Badge>}
             <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", discountOpen && "rotate-180")} />
@@ -555,7 +555,7 @@ export function CatalogManager() {
                 <SelectContent><SelectItem value="percentage">% Porcentaje</SelectItem><SelectItem value="amount">USD Monto</SelectItem></SelectContent>
               </Select>
               <Input type="number" min={0} step={0.01} value={discountConfig.value} onFocus={(e) => e.currentTarget.select()} onChange={(e) => setDiscountConfig((prev) => ({ ...prev, value: e.target.value === "" ? 0 : Number(e.target.value) }))} className="h-8 text-xs" />
-              <Button onClick={handleSaveDiscountConfig} size="sm" className="h-8 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]">Guardar</Button>
+              <Button onClick={handleSaveDiscountConfig} size="sm" className="h-8 text-xs">Guardar</Button>
             </div>
           </div>
         </CollapsibleContent>
@@ -601,7 +601,7 @@ export function CatalogManager() {
 
             <div className="space-y-1 p-2.5">
               <div className="flex items-start justify-between gap-1">
-                <p className="min-w-0 truncate font-mono text-[11px] font-semibold text-[#4a72ef] leading-tight">{item.code}</p>
+                <p className="min-w-0 truncate font-mono text-[11px] font-semibold text-primary leading-tight">{item.code}</p>
                 <div className="flex shrink-0 items-center">
                   <Button variant="ghost" size="sm" onClick={() => openEdit(item)} className="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100">
                     <Pencil className="h-3 w-3" />
@@ -662,7 +662,7 @@ export function CatalogManager() {
               p === "dots" ? (
                 <span key={`dots-${i}`} className="px-1 text-xs text-muted-foreground">...</span>
               ) : (
-                <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" onClick={() => goToPage(p)} className={cn("h-8 w-8 p-0 text-xs", p === safePage && "bg-[#4a72ef] text-white")}>
+                <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" onClick={() => goToPage(p)} className={cn("h-8 w-8 p-0 text-xs", p === safePage && "bg-primary text-primary-foreground")}>
                   {p}
                 </Button>
               )
@@ -737,7 +737,7 @@ export function CatalogManager() {
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleSave} className="bg-[#4a72ef] text-white hover:bg-[#2f54e0]">{editingItem ? "Guardar" : "Agregar"}</Button>
+            <Button size="sm" onClick={handleSave}>{editingItem ? "Guardar" : "Agregar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -758,7 +758,7 @@ export function CatalogManager() {
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-y-auto bg-card text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-mono text-sm text-[#4a72ef]">{previewImage?.code}</DialogTitle>
+            <DialogTitle className="font-mono text-sm text-primary">{previewImage?.code}</DialogTitle>
           </DialogHeader>
           {previewImage && (
             <div className="space-y-3">

@@ -132,16 +132,16 @@ export function AppShell() {
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
       {/* Sidebar - Desktop */}
       <aside className="hidden w-60 shrink-0 lg:block lg:px-3 lg:py-4">
-        <div className="glass-card sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden border border-white/24 bg-white/[0.14] shadow-[0_18px_44px_rgba(7,20,52,0.34)]">
+        <div className="sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-[1rem] bg-[#0A192F] shadow-xl border border-[#1e345e]">
           {/* Logo */}
-          <div className="border-b border-white/12 bg-transparent px-5 py-5">
+          <div className="border-b border-white/10 bg-transparent px-5 py-5">
             <div className="flex items-center gap-2.5">
-              <div className="glass-pill flex h-9 w-9 items-center justify-center rounded-md">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 border border-white/20">
                 <Image src="/cops-logo.png" alt="COPS Electronics" width={28} height={28} />
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-wide text-white">{"COP'S ELECTRONICS"}</h1>
-                <p className="text-[10px] text-white/70">Sistema de Cotizaciones</p>
+                <p className="text-[10px] text-slate-400">Sistema de Cotizaciones</p>
               </div>
             </div>
           </div>
@@ -154,11 +154,11 @@ export function AppShell() {
                   key={item.id}
                   type="button"
                   onClick={() => navigateTo(item.id)}
-                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
-                    activeView === item.id
-                      ? "glass-pill bg-white/18 font-medium text-white shadow-[0_8px_20px_rgba(10,30,70,0.24)]"
-                      : "text-white/70 hover:bg-white/10 hover:text-white"
-                  }`}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
+                      activeView === item.id
+                        ? "bg-[#4a72ef] font-medium text-white shadow-sm"
+                        : "text-slate-300 hover:bg-white/10 hover:text-white"
+                    }`}
                 >
                   {item.icon}
                   {item.label}
@@ -168,18 +168,18 @@ export function AppShell() {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-white/12 px-5 py-4">
-            <div className="text-[10px] text-white/65">
+          <div className="border-t border-white/10 px-5 py-4">
+            <div className="text-[10px] text-slate-400">
               <p className="font-medium text-white">{"Cop's Electronics S.A."}</p>
               <p className="mt-0.5">0212-7934136 / 7940316</p>
               <p>proyectos@copselectronics.com</p>
             </div>
             <div className="mt-3 space-y-2">
-              <Button type="button" onClick={goToPortal} className="h-8 w-full justify-start bg-white/12 text-xs text-white hover:bg-white/18">
+              <Button type="button" onClick={goToPortal} className="h-8 w-full justify-start border border-white/10 bg-white/5 text-xs text-white hover:bg-white/15">
                 <LayoutGrid className="mr-2 h-3.5 w-3.5" />
                 Cambiar modulo
               </Button>
-              <Button type="button" onClick={logoutToWeb} className="h-8 w-full justify-start border border-red-300/40 bg-red-500/25 text-xs text-red-100 hover:bg-red-500/38">
+              <Button type="button" onClick={logoutToWeb} className="h-8 w-full justify-start border border-red-500/30 bg-red-500/10 text-xs text-red-400 hover:bg-red-500/20 hover:text-red-300">
                 <LogOut className="mr-2 h-3.5 w-3.5" />
                 Cerrar sesion
               </Button>
@@ -191,17 +191,17 @@ export function AppShell() {
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-[#102a58]/54 backdrop-blur-[2px]" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="glass absolute left-0 top-0 h-full w-[85vw] max-w-72 border-r border-white/24 bg-white/[0.16] shadow-lg">
-            <div className="border-b border-white/12 bg-transparent px-5 py-5">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+          <aside className="absolute left-0 top-0 h-full w-[85vw] max-w-72 border-r border-[#1e345e] bg-[#0A192F] shadow-xl">
+            <div className="border-b border-white/10 bg-transparent px-5 py-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="glass-pill flex h-9 w-9 items-center justify-center rounded-md">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 border border-white/20">
                     <Image src="/cops-logo.png" alt="COPS Electronics" width={26} height={26} />
                   </div>
                   <span className="text-sm font-bold text-white">{"COP'S"}</span>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(false)} className="h-8 w-8 p-0 text-white hover:bg-white/12">
+                <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(false)} className="h-8 w-8 p-0 text-slate-400 hover:bg-white/10 hover:text-white">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -215,8 +215,8 @@ export function AppShell() {
                     onClick={() => navigateTo(item.id)}
                     className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
                       activeView === item.id
-                        ? "glass-pill bg-white/18 font-medium text-white shadow-[0_8px_20px_rgba(10,30,70,0.24)]"
-                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                        ? "bg-[#4a72ef] font-medium text-white shadow-sm"
+                        : "text-slate-300 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {item.icon}
@@ -236,14 +236,14 @@ export function AppShell() {
             type="button"
             aria-label="Cerrar menu de cuenta"
             onClick={() => setMobileAccountMenuOpen(false)}
-            className="absolute inset-0 bg-[#102a58]/54 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
           />
-          <div className="glass absolute right-3 top-20 w-56 rounded-2xl border border-white/24 bg-white/[0.16] p-2 shadow-lg">
-            <Button type="button" onClick={goToPortal} className="h-9 w-full justify-start bg-white/12 text-sm text-white hover:bg-white/18">
+          <div className="absolute right-3 top-20 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <Button type="button" onClick={goToPortal} className="h-9 w-full justify-start bg-slate-50 text-sm text-slate-700 hover:bg-slate-100">
               <LayoutGrid className="mr-2 h-4 w-4" />
               Cambiar modulo
             </Button>
-            <Button type="button" onClick={logoutToWeb} className="mt-2 h-9 w-full justify-start border border-red-300/40 bg-red-500/25 text-sm text-red-100 hover:bg-red-500/38">
+            <Button type="button" onClick={logoutToWeb} className="mt-2 h-9 w-full justify-start border border-red-200 bg-red-50 text-sm text-red-600 hover:bg-red-100">
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesion
             </Button>
@@ -251,16 +251,15 @@ export function AppShell() {
         </div>
       )}
 
-      {/* Main Content */}
       <div className="flex flex-1 flex-col">
         {/* Mobile Header */}
-        <header className={`glass sticky top-3 z-30 mx-3 mt-3 flex items-center justify-between rounded-2xl border border-white/24 bg-white/[0.16] px-4 py-3 transition-transform duration-300 lg:hidden ${mobileHeaderVisible ? "translate-y-0" : "-translate-y-[130%]"}`}>
-          <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(true)} className="h-8 w-8 p-0 text-white">
+        <header className={`sticky top-3 z-30 mx-3 mt-3 flex items-center justify-between rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 shadow-md transition-transform duration-300 lg:hidden ${mobileHeaderVisible ? "translate-y-0" : "-translate-y-[130%]"}`}>
+          <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(true)} className="h-8 w-8 p-0 text-slate-800 hover:bg-slate-100">
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex min-w-0 items-center gap-2">
             <Image src="/cops-logo.png" alt="COPS Electronics" width={20} height={20} />
-            <span className="truncate text-sm font-bold text-white">{"COP'S ELECTRONICS"}</span>
+            <span className="truncate text-sm font-bold text-slate-900">{"COP'S ELECTRONICS"}</span>
           </div>
           <Button
             variant="ghost"
@@ -269,7 +268,7 @@ export function AppShell() {
               setMobileAccountMenuOpen((v) => !v)
               setMobileMenuOpen(false)
             }}
-            className="h-8 w-8 p-0 text-white"
+            className="h-8 w-8 p-0 text-slate-700 hover:bg-slate-100"
           >
             <MoreVertical className="h-4 w-4" />
           </Button>

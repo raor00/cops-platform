@@ -54,9 +54,9 @@ export function SummaryPanel({
     <div className="grid gap-4 lg:grid-cols-2">
       {/* Notes and Terms */}
       <div className="space-y-4">
-        <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <StickyNote className="h-4 w-4 text-[#4a72ef]" />
+        <div className="form-section">
+          <h3 className="form-section-title flex items-center gap-2">
+            <StickyNote className="h-4 w-4 text-primary" />
             {companyFormat === "llc" ? "Special Instructions" : "Notas Adicionales"}
           </h3>
           <Textarea
@@ -67,16 +67,16 @@ export function SummaryPanel({
             className="resize-none border-border bg-card text-sm text-foreground"
           />
         </div>
-        <div className="rounded-lg border border-border bg-card p-5">
+        <div className="form-section">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <FileCheck className="h-4 w-4 text-[#4a72ef]" />
+            <h3 className="form-section-title flex items-center gap-2">
+              <FileCheck className="h-4 w-4 text-primary" />
               {companyFormat === "llc" ? "Terms & Conditions" : "Terminos y Condiciones"}
             </h3>
             <button
               type="button"
               onClick={() => onTermsChange(companyFormat === "llc" ? DEFAULT_TERMS_LLC : DEFAULT_TERMS)}
-              className="text-xs text-[#4a72ef] underline-offset-2 hover:underline"
+              className="text-xs text-primary underline-offset-2 hover:underline"
             >
               {companyFormat === "llc" ? "Load defaults" : "Cargar predeterminados"}
             </button>
@@ -93,9 +93,9 @@ export function SummaryPanel({
 
       {/* Totals */}
       <div className="flex flex-col justify-end">
-        <div className="rounded-lg border border-border bg-card p-6">
-          <h3 className="mb-5 flex items-center gap-2 font-heading text-base font-semibold text-foreground">
-            <Calculator className="h-5 w-5 text-[#4a72ef]" />
+        <div className="form-section">
+          <h3 className="form-section-title flex items-center gap-2">
+            <Calculator className="h-5 w-5 text-primary" />
             {companyFormat === "llc" ? "Quote Summary" : "Resumen de Cotizacion"}
           </h3>
 
@@ -189,8 +189,8 @@ export function SummaryPanel({
                 </div>
               </>
             )}
-            <div className="mt-3 border-t-2 border-[#4a72ef] pt-3">
-              <div className="flex items-center justify-between rounded-lg bg-[#153977] px-5 py-4">
+            <div className="mt-3 border-t-2 border-primary pt-3">
+              <div className="flex items-center justify-between rounded-lg bg-primary px-5 py-4">
                 <span className="text-sm font-bold text-white">{companyFormat === "llc" ? "TOTAL" : "TOTAL USD"}</span>
                 <span className="font-heading text-xl font-bold text-white">${formatCurrency(total)}</span>
               </div>

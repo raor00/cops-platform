@@ -254,21 +254,21 @@ export function TransportGuideBuilder() {
 
   return (
     <div className="min-w-0 space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header">
         <div>
-          <h2 className="font-heading text-2xl font-bold text-foreground">Guia de Transporte</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Documento predeterminado editable, basado en tu formato oficial 2025.</p>
+          <h1 className="page-title">Guia de Transporte</h1>
+          <p className="page-description">Documento predeterminado editable, basado en tu formato oficial 2025.</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button variant="outline" size="sm" onClick={clearForm} className="w-full border-border bg-transparent text-muted-foreground hover:bg-muted sm:w-auto">
+        <div className="page-actions">
+          <Button variant="outline" size="sm" onClick={clearForm} className="w-full sm:w-auto">
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             Limpiar
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} className="w-full border-[#4a72ef] bg-transparent text-[#4a72ef] hover:bg-[#4a72ef] hover:text-white sm:w-auto">
+          <Button variant="outline" size="sm" onClick={handleSave} className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10">
             <Save className="mr-1.5 h-3.5 w-3.5" />
             Guardar
           </Button>
-          <Button size="sm" onClick={handleExport} className="w-full bg-[#4a72ef] text-white hover:bg-[#2f54e0] sm:w-auto">
+          <Button size="sm" onClick={handleExport} className="w-full sm:w-auto">
             <FileDown className="mr-1.5 h-3.5 w-3.5" />
             Exportar PDF
           </Button>
@@ -276,9 +276,9 @@ export function TransportGuideBuilder() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "editor" | "preview")}>
-        <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted">
-          <TabsTrigger value="editor" className="text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white">Editor</TabsTrigger>
-          <TabsTrigger value="preview" className="text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white">Vista Previa</TabsTrigger>
+        <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted p-1">
+          <TabsTrigger value="editor" className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition-all">Editor</TabsTrigger>
+          <TabsTrigger value="preview" className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition-all">Vista Previa</TabsTrigger>
         </TabsList>
 
         <TabsContent value="editor" className="mt-6 space-y-4">
@@ -304,7 +304,7 @@ export function TransportGuideBuilder() {
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Productos a Transportar</CardTitle>
-              <Button type="button" size="sm" onClick={addItem} className="bg-[#4a72ef] text-white hover:bg-[#2f54e0]"><FilePlus className="mr-1.5 h-3.5 w-3.5" />Agregar Item</Button>
+              <Button type="button" size="sm" onClick={addItem}><FilePlus className="mr-1.5 h-3.5 w-3.5" />Agregar Item</Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {items.map((item) => (
@@ -346,7 +346,7 @@ export function TransportGuideBuilder() {
               {savedGuides.map((guide) => (
                 <div key={guide.id} className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-mono text-xs font-semibold text-[#4a72ef]">{guide.code}</p>
+                    <p className="font-mono text-xs font-semibold text-primary">{guide.code}</p>
                     <p className="text-sm text-foreground">{guide.authorizedName || "Sin autorizado"}</p>
                     <p className="text-xs text-muted-foreground">{guide.issueDate}</p>
                   </div>

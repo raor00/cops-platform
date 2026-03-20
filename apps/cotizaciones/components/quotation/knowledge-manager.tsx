@@ -75,7 +75,7 @@ export function KnowledgeManager() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <Database className="h-4 w-4 text-[#4a72ef]" />
+              <Database className="h-4 w-4 text-primary" />
               Base de Conocimiento (COPIBOT)
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -112,7 +112,7 @@ export function KnowledgeManager() {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button onClick={handleUpload} disabled={!canUpload} className="bg-[#4a72ef] hover:bg-[#2f54e0]">
+          <Button onClick={handleUpload} disabled={!canUpload}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
             Ingerir documento
           </Button>

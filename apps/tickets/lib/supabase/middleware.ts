@@ -59,7 +59,8 @@ export async function updateSession(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
 
   if (!user && !isPublicRoute) {
-    return NextResponse.redirect(`${WEB_APP_URL}/login`)
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 
   if (user && request.nextUrl.pathname === '/login') {

@@ -117,7 +117,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
       tipo: defaultTipo,
       prioridad: "media",
       origen: "email",
-      monto_servicio: defaultTipo === "inspeccion" ? 20 : 40,
+      monto_servicio: 0,
       tipo_mantenimiento: defaultTipo === "servicio" ? "correctivo" : undefined,
     },
   })
@@ -125,13 +125,9 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
   const tipoTicket = watch("tipo")
   const origenTicket = watch("origen")
 
-  // Auto-set monto when tipo changes
+  // Reset monto when tipo changes
   useEffect(() => {
-    if (tipoTicket === "inspeccion") {
-      setValue("monto_servicio", 20)
-    } else if (tipoTicket === "servicio") {
-      setValue("monto_servicio", 40)
-    }
+    setValue("monto_servicio", 0)
   }, [tipoTicket, setValue])
 
   // Filtered catalog entries
@@ -373,14 +369,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
   const onSubmit = async (data: TicketCreateInput, asBorrador = false) => {
     setIsSubmitting(true)
     try {
-      const montoServicio =
-        tipoTicket === "inspeccion"
-          ? 20
-          : tipoTicket === "servicio" && facturacionTipo === "fijo"
-          ? 40
-          : tipoTicket === "servicio" && facturacionTipo === "por_hora"
-          ? 0
-          : data.monto_servicio
+      const montoServicio = data.monto_servicio
 
       const submitData = {
         ...data,
@@ -441,9 +430,9 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="servicio">Servicio ($40 fijo)</SelectItem>
-                <SelectItem value="proyecto">Proyecto (monto variable)</SelectItem>
-                <SelectItem value="inspeccion">Inspección ($20 fijo)</SelectItem>
+                <SelectItem value="servicio">Servicio</SelectItem>
+                <SelectItem value="proyecto">Proyecto</SelectItem>
+                <SelectItem value="inspeccion">Inspección</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -540,14 +529,14 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
             <div className="flex gap-1 rounded-lg bg-white p-0.5 shadow-sm ring-1 ring-slate-200">
               <button
                 type="button"
-                onClick={() => { setFacturacionTipo("fijo"); setValue("monto_servicio", 40) }}
+                onClick={() => { setFacturacionTipo("fijo"); setValue("monto_servicio", 0) }}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                   facturacionTipo === "fijo"
                     ? "bg-sky-500 text-white shadow"
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
-                Fijo $40
+                Fijo
               </button>
               <button
                 type="button"

@@ -131,11 +131,11 @@ export function QuotationAIAssistant({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 sm:p-5">
+    <div className="form-section">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Bot className="h-4 w-4 text-[#4a72ef]" />
+            <Bot className="h-4 w-4 text-primary" />
             {companyFormat === "llc" ? "COPIBOT - AI Quotation Assistant" : "COPIBOT - Asistente IA de Cotizaciones"}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -168,7 +168,7 @@ export function QuotationAIAssistant({
           className="min-h-24 resize-y"
         />
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" onClick={handleGenerate} disabled={!canGenerate} className="bg-[#4a72ef] hover:bg-[#2f54e0]">
+          <Button size="sm" onClick={handleGenerate} disabled={!canGenerate}>
             {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
             {companyFormat === "llc" ? "Generate draft" : "Generar borrador"}
           </Button>
@@ -188,7 +188,7 @@ export function QuotationAIAssistant({
       </div>
 
       {loading && (
-        <div className="mt-4 rounded-md border border-[#153977]/30 bg-[#153977] p-3 text-white shadow-[0_10px_24px_rgba(21,57,119,0.25)]">
+        <div className="mt-4 rounded-md border border-primary/30 bg-primary p-3 text-primary-foreground shadow-[0_10px_24px_rgba(var(--primary),0.25)]">
           <p className="text-sm font-semibold text-white">
             {companyFormat === "llc"
               ? "COPIBOT is generating your quote draft..."
@@ -266,7 +266,7 @@ export function QuotationAIAssistant({
                 {companyFormat === "llc" ? "Technical details" : "Detalles tecnicos"}
               </summary>
               <pre className="mt-2 max-h-56 overflow-auto rounded bg-white/60 p-2 text-[10px] leading-relaxed">
-                {JSON.stringify(lastError.details, null, 2)}
+                {JSON.stringify(lastError.details as any, null, 2)}
               </pre>
             </details>
           )}

@@ -67,9 +67,9 @@ export function ClientInfoForm({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
-      <h2 className="mb-5 flex items-center gap-2 font-heading text-lg font-semibold text-foreground">
-        <Building2 className="h-5 w-5 text-[#4a72ef]" />
+    <div className="form-section">
+      <h2 className="form-section-title flex items-center gap-2">
+        <Building2 className="h-5 w-5 text-primary" />
         {companyFormat === "llc" ? "Quote Details" : "Datos de la Cotizacion"}
       </h2>
 
@@ -196,9 +196,9 @@ export function ClientInfoForm({
         </div>
       </div>
 
-      <div className="mt-6 border-t border-border pt-5">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-          <User className="h-4 w-4 text-[#4a72ef]" />
+      <div className="mt-6 border-t border-slate-200 pt-5">
+        <h3 className="mb-4 flex items-center gap-2 font-semibold text-slate-900">
+          <User className="h-5 w-5 text-primary" />
           {companyFormat === "llc" ? "Bill To / Ship To" : "Datos del Cliente"}
         </h3>
 

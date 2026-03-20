@@ -145,8 +145,17 @@ function generateSAPDFContent(data: QuotationData): string {
       <div>
         <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:2px;">COP'S ELECTRONICS, S.A.</div>
         <div style="font-size:10px;color:#7a9cc7;margin-top:3px;letter-spacing:1px;">SOLUCIONES TECNOLOGICAS INTEGRALES</div>
+        <div style="font-size:9px;color:#e2e8f0;margin-top:4px;font-style:italic;max-width:280px;">28 años transformando estructuras en soluciones tecnológicas</div>
       </div>
     </div>
+    
+    <!-- Partner Logos (Middle) -->
+    <div style="display:flex;align-items:center;gap:12px;opacity:0.9;">
+      <!-- PLACEHOLDER FOR PARTNER LOGOS -->
+      <!-- <img src="/path-to-partner.png" alt="Partner" style="height:28px;object-fit:contain;" /> -->
+    </div>
+
+    <!-- Quote Info -->
     <div style="text-align:right;">
       <div style="background:rgba(255,255,255,0.08);border-radius:6px;padding:10px 18px;border:1px solid rgba(255,255,255,0.12);">
         <div style="font-size:9px;color:#7a9cc7;text-transform:uppercase;letter-spacing:1px;">Cotizacion</div>
@@ -342,8 +351,16 @@ function generateLLCPDFContent(data: QuotationData): string {
           <div style="font-size:10px;color:#6b7280;margin-top:4px;">Doral, FL 33178</div>
           <div style="font-size:10px;color:#6b7280;">Phone: (305) 200-7352</div>
           <div style="font-size:10px;color:#2563eb;">www.copselectronics.com</div>
+          <div style="font-size:9px;color:#4b5563;margin-top:5px;font-style:italic;">28 años transformando estructuras en soluciones tecnológicas</div>
         </div>
       </div>
+      
+      <!-- Partner Logos (Middle) -->
+      <div style="display:flex;align-items:center;gap:12px;padding-top:10px;">
+        <!-- PLACEHOLDER FOR PARTNER LOGOS -->
+        <!-- <img src="/path-to-partner.png" alt="Partner" style="height:28px;object-fit:contain;" /> -->
+      </div>
+
       <div style="text-align:right;">
         <div style="font-size:22px;font-weight:800;letter-spacing:2px;">QUOTE</div>
         <table style="margin-top:10px;border-collapse:collapse;">

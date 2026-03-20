@@ -3,13 +3,13 @@
   "private": true,
   "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "dev:web": "corepack pnpm --filter web dev",
-    "dev:cotizaciones": "corepack pnpm --filter cotizaciones dev",
-    "dev:tickets": "corepack pnpm --filter tickets dev",
-    "build:web": "corepack pnpm --filter web build",
-    "build:cotizaciones": "corepack pnpm --filter cotizaciones build",
-    "build:tickets": "corepack pnpm --filter tickets build",
-    "lint:web": "corepack pnpm --filter web lint",
-    "lint:cotizaciones": "corepack pnpm --filter cotizaciones lint"
+    "dev:web": "pnpm --filter web dev",
+    "dev:cotizaciones": "pnpm --filter cotizaciones dev",
+    "dev:tickets": "pnpm --filter tickets dev",
+    "build:web": "pnpm --filter web build",
+    "build:cotizaciones": "pnpm --filter cotizaciones build",
+    "build:tickets": "pnpm --filter tickets build",
+    "lint:web": "pnpm --filter web lint",
+    "lint:cotizaciones": "pnpm --filter cotizaciones lint"
   }
 }

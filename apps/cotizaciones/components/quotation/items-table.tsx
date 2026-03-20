@@ -149,7 +149,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0)
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="glass-card">
       {/* Section Header */}
       <div className="flex flex-col gap-2 border-b border-border px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3">
         <button
@@ -182,7 +182,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           <Button
             size="sm"
             onClick={addEmpty}
-            className="h-7 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]"
+            className="h-7 text-xs"
           >
             <Plus className="mr-1 h-3 w-3" />
             {companyFormat === "llc" ? "Add" : "Agregar"}
@@ -297,7 +297,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
           <div className="shrink-0 space-y-3 border-b border-border p-3 sm:p-4">
             <DialogHeader className="p-0">
               <DialogTitle className="flex items-center gap-2 font-heading text-base text-foreground">
-                <ShoppingCart className="h-4 w-4 text-[#4a72ef]" />
+                <ShoppingCart className="h-4 w-4 text-primary" />
                 {companyFormat === "llc" ? "Select from Catalog" : "Seleccionar del Catalogo"}
               </DialogTitle>
             </DialogHeader>
@@ -327,7 +327,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   className={cn(
                     "rounded-full px-3 py-1 text-[11px] font-medium transition-all duration-150",
                     brandFilter === b
-                      ? "bg-[#4a72ef] text-white shadow-sm"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   )}
                 >
@@ -343,7 +343,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-all duration-150",
                   catFilter === "all"
-                    ? "bg-[#4a72ef] text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted"
                 )}
               >
@@ -356,7 +356,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-all duration-150",
                     catFilter === cat
-                      ? "bg-[#4a72ef] text-white"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-muted/60 text-muted-foreground hover:bg-muted"
                   )}
                 >
@@ -380,7 +380,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   key={preset.id}
                   type="button"
                   onClick={() => addFromCatalog(preset)}
-                  className="flex w-full items-start gap-3 rounded-lg border border-border p-2.5 text-left transition-all duration-150 hover:border-[#4a72ef]/50 hover:bg-muted/40 hover:shadow-sm active:scale-[0.99] sm:p-3"
+                  className="flex w-full items-start gap-3 rounded-lg border border-border p-2.5 text-left transition-all duration-150 hover:border-primary/50 hover:bg-muted/40 hover:shadow-sm active:scale-[0.99] sm:p-3"
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border bg-gradient-to-b from-muted/20 to-muted/40 sm:h-14 sm:w-14">
                     {preset.imageUrl ? (
@@ -394,7 +394,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="min-w-0 truncate font-mono text-xs font-semibold text-[#4a72ef]">{preset.code}</p>
+                      <p className="min-w-0 truncate font-mono text-xs font-semibold text-primary">{preset.code}</p>
                       <p className="shrink-0 font-mono text-sm font-bold text-foreground">${formatCurrency(preset.unitPrice)}</p>
                     </div>
                     <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-foreground/80">{preset.description}</p>
@@ -436,7 +436,7 @@ export function ItemsSection({ title, icon, items, onItemsChange, catalogFilter,
                     p === "dots" ? (
                       <span key={`dots-${i}`} className="px-0.5 text-xs text-muted-foreground">...</span>
                     ) : (
-                      <Button key={p} variant={p === pickerSafePage ? "default" : "outline"} size="sm" onClick={() => setPickerPage(p)} className={cn("h-7 w-7 p-0 text-[11px]", p === pickerSafePage && "bg-[#4a72ef] text-white")}>
+                      <Button key={p} variant={p === pickerSafePage ? "default" : "outline"} size="sm" onClick={() => setPickerPage(p)} className={cn("h-7 w-7 p-0 text-[11px]", p === pickerSafePage && "bg-primary text-primary-foreground")}>
                         {p}
                       </Button>
                     )

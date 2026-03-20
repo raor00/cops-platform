@@ -393,14 +393,14 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   return (
     <div className="min-w-0 space-y-6">
       {/* Action Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header">
         <div>
-          <h2 className="font-heading text-2xl font-bold text-foreground">
+          <h1 className="page-title">
             {companyFormat === "llc"
               ? (initialData ? "Edit Quote" : "New Quote")
               : (initialData ? "Editar Cotizacion" : "Nueva Cotizacion")}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </h1>
+          <p className="page-description">
             {quotationCode} &middot; {quotationType === "proyecto"
               ? (companyFormat === "llc" ? "Project" : "Proyecto")
               : quotationType === "servicio"
@@ -408,12 +408,12 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
                 : (companyFormat === "llc" ? "Preventive Maintenance" : "Mantenimiento Preventivo")}
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="page-actions">
           <Button
             variant="outline"
             size="sm"
             onClick={handleReset}
-            className="w-full border-border bg-transparent text-muted-foreground hover:bg-muted sm:w-auto"
+            className="w-full sm:w-auto"
           >
             <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Reset" : "Limpiar"}
@@ -422,7 +422,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             variant="outline"
             size="sm"
             onClick={handleSave}
-            className="w-full border-[#4a72ef] bg-transparent text-[#4a72ef] hover:bg-[#4a72ef] hover:text-white sm:w-auto"
+            className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10"
           >
             <Save className="mr-1.5 h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Save" : "Guardar"}
@@ -430,7 +430,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
           <Button
             size="sm"
             onClick={handleExportPDF}
-            className="w-full bg-[#4a72ef] text-white hover:bg-[#2f54e0] sm:w-auto"
+            className="w-full sm:w-auto"
           >
             <FileDown className="mr-1.5 h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Export PDF" : "Exportar PDF"}
@@ -440,17 +440,17 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted">
+        <TabsList className="grid w-full max-w-xs grid-cols-2 bg-muted p-1">
           <TabsTrigger
             value="editor"
-            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white"
+            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition-all"
           >
             <PenLine className="h-3.5 w-3.5" />
             Editor
           </TabsTrigger>
           <TabsTrigger
             value="preview"
-            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-[#4a72ef] data-[state=active]:text-white"
+            className="flex items-center gap-1.5 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md transition-all"
           >
             <Eye className="h-3.5 w-3.5" />
             {companyFormat === "llc" ? "Preview" : "Vista Previa"}

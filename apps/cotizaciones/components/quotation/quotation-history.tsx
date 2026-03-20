@@ -186,13 +186,15 @@ export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: Quo
           </button>
         </div>
       ) : (
-        <div>
-          <h2 className="font-heading text-2xl font-bold text-foreground">Historial</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Seccionado por tipo de documento</p>
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Historial</h1>
+            <p className="page-description">Seccionado por tipo de documento</p>
+          </div>
         </div>
       )}
 
-      <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
+      <div className="glass-card flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -229,15 +231,15 @@ export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: Quo
         )}
 
         <TabsContent value="quotes" className="mt-4">
-          <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <table className="w-full min-w-[720px]">
+          <div className="overflow-x-auto">
+            <table className="table-glass table-row-stagger min-w-[720px]">
               <thead>
-                <tr className="border-b border-border bg-[#153977]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Cliente</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-white">Total</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Estado</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Acciones</th>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Cliente</th>
+                  <th className="text-right">Total</th>
+                  <th className="text-center">Estado</th>
+                  <th className="text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -298,15 +300,15 @@ export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: Quo
         </TabsContent>
 
         <TabsContent value="delivery" className="mt-4">
-          <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <table className="w-full min-w-[720px]">
+          <div className="overflow-x-auto">
+            <table className="table-glass table-row-stagger min-w-[720px]">
               <thead>
-                <tr className="border-b border-border bg-[#153977]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Cliente</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Atencion</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Fecha</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Acciones</th>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Cliente</th>
+                  <th>Atencion</th>
+                  <th className="text-center">Fecha</th>
+                  <th className="text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -333,15 +335,15 @@ export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: Quo
         </TabsContent>
 
         <TabsContent value="transport" className="mt-4">
-          <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <table className="w-full min-w-[720px]">
+          <div className="overflow-x-auto">
+            <table className="table-glass table-row-stagger min-w-[720px]">
               <thead>
-                <tr className="border-b border-border bg-[#153977]">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Codigo</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Autorizado</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-white">Dirigido a</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Fecha</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-white">Acciones</th>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Autorizado</th>
+                  <th>Dirigido a</th>
+                  <th className="text-center">Fecha</th>
+                  <th className="text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

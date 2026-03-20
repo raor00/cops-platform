@@ -38,14 +38,14 @@ export function LaborSection({ laborItems, onLaborItemsChange, companyFormat = "
   const totalLabor = laborItems.reduce((sum, item) => sum + item.cost, 0)
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="glass-card">
       <div className="flex flex-col gap-3 border-b border-border px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-2 text-foreground"
         >
-          <Wrench className="h-4 w-4 text-[#4a72ef]" />
+          <Wrench className="h-4 w-4 text-primary" />
           <span className="font-heading text-sm font-semibold">{companyFormat === "llc" ? "Labor" : "Mano de Obra"}</span>
           <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
             {laborItems.length}
@@ -61,7 +61,7 @@ export function LaborSection({ laborItems, onLaborItemsChange, companyFormat = "
           <Button
             size="sm"
             onClick={addLabor}
-            className="h-7 bg-[#4a72ef] text-xs text-white hover:bg-[#2f54e0]"
+            className="h-7 text-xs"
           >
             <Plus className="mr-1 h-3 w-3" />
             {companyFormat === "llc" ? "Add" : "Agregar"}
