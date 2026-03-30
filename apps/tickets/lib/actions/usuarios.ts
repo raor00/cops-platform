@@ -7,7 +7,7 @@ import { getCurrentUser, registerUserAction } from "./auth"
 import { ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminFirestore, getAdminStorage, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
-import { getDemoCurrentUser } from "@/lib/mock-data"
+import { getDemoCurrentUser, getDemoUsers } from "@/lib/mock-data"
 
 const BUCKET_NAME = "user-profiles"
 
@@ -35,8 +35,8 @@ export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
     if (ROLE_HIERARCHY[user.rol] < 3) return { success: false, error: "No tienes permisos para ver usuarios" }
 
     if (isLocalMode()) {
-      const demo = getDemoCurrentUser()
-      return { success: true, data: [{ ...demo, foto_perfil_url: null }] as UserProfile[] }
+      const allUsers = getDemoUsers().map((u) => ({ ...u, foto_perfil_url: null }) as UserProfile)
+      return { success: true, data: allUsers }
     }
 
     if (isFirebaseMode()) {

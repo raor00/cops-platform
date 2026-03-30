@@ -7,12 +7,16 @@ import { ROLE_HIERARCHY } from "@/types"
 import { getCurrentUser } from "./auth"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+import { getDemoInspeccionByTicket, createDemoInspeccion, updateDemoInspeccion } from "@/lib/mock-data"
 
 export async function getInspeccionByTicket(ticketId: string): Promise<ActionResponse<Inspeccion | null>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
 
-  if (isLocalMode()) return { success: true, data: null }
+  if (isLocalMode()) {
+    const insp = getDemoInspeccionByTicket(ticketId)
+    return { success: true, data: insp }
+  }
 
   if (isFirebaseMode()) {
     try {
@@ -38,7 +42,11 @@ export async function createInspeccion(ticketId: string, input: InspeccionCreate
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (ROLE_HIERARCHY[currentUser.rol] < 2) return { success: false, error: "Sin permisos para crear inspecciones" }
 
-  if (isLocalMode()) return { success: false, error: "Modo local no soporta creacion de inspecciones" }
+  if (isLocalMode()) {
+    const insp = createDemoInspeccion(ticketId, input, currentUser)
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    return { success: true, data: insp, message: "Inspeccion creada exitosamente" }
+  }
 
   if (isFirebaseMode()) {
     try {
@@ -84,7 +92,12 @@ export async function updateInspeccion(inspeccionId: string, input: Partial<Insp
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (ROLE_HIERARCHY[currentUser.rol] < 2) return { success: false, error: "Sin permisos para actualizar inspecciones" }
 
-  if (isLocalMode()) return { success: false, error: "Modo local no soporta actualizacion de inspecciones" }
+  if (isLocalMode()) {
+    const updated = updateDemoInspeccion(inspeccionId, input)
+    if (!updated) return { success: false, error: "Inspeccion no encontrada" }
+    revalidatePath(`/dashboard/tickets/${updated.ticket_id}`)
+    return { success: true, data: updated, message: "Inspeccion actualizada exitosamente" }
+  }
 
   if (isFirebaseMode()) {
     try {
@@ -123,7 +136,12 @@ export async function completarInspeccion(inspeccionId: string): Promise<ActionR
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (ROLE_HIERARCHY[currentUser.rol] < 2) return { success: false, error: "Sin permisos para completar inspecciones" }
 
-  if (isLocalMode()) return { success: false, error: "Modo local no soporta completar inspecciones" }
+  if (isLocalMode()) {
+    const completed = updateDemoInspeccion(inspeccionId, { estado: "completada" })
+    if (!completed) return { success: false, error: "Inspeccion no encontrada" }
+    revalidatePath(`/dashboard/tickets/${completed.ticket_id}`)
+    return { success: true, data: completed, message: "Inspeccion completada exitosamente" }
+  }
 
   if (isFirebaseMode()) {
     try {
@@ -157,7 +175,11 @@ export async function deleteInspeccion(inspeccionId: string): Promise<ActionResp
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "Sin permisos para eliminar inspecciones" }
 
-  if (isLocalMode()) return { success: false, error: "Modo local no soporta eliminar inspecciones" }
+  if (isLocalMode()) {
+    // En local mode, simplemente indicamos éxito (no hay persistencia real)
+    revalidatePath("/dashboard/tickets")
+    return { success: true, message: "Inspeccion eliminada exitosamente" }
+  }
 
   if (isFirebaseMode()) {
     try {
