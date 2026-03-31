@@ -20,6 +20,8 @@ export type BridgeVerificationResult =
       reason: "missing-secret" | "invalid-format" | "invalid-signature" | "invalid-payload" | "expired";
     };
 
+export const BRIDGE_TOKEN_COOKIE_MAX_AGE = 60 * 60 * 12;
+
 function readBridgeSecret() {
   const candidates = [
     process.env.PLATFORM_TICKETS_BRIDGE_SECRET,

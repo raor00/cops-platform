@@ -1,6 +1,5 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type {
   ActionResponse,
@@ -10,13 +9,14 @@ import type {
 } from "@/types"
 import { ROLE_HIERARCHY } from "@/types"
 import { getCurrentUser } from "./auth"
-import { isLocalMode } from "@/lib/local-mode"
+import { isFirebaseMode, isLocalMode } from "@/lib/local-mode"
 import {
   getDemoFasesByTicket,
   createDemoFase,
   updateDemoFase,
   deleteDemoFase,
 } from "@/lib/mock-data"
+import { cleanForFirestore, fromFirestoreDoc, getAdminFirestore } from "@/lib/firebase/admin"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OBTENER FASES DE UN TICKET
@@ -30,6 +30,24 @@ export async function getFasesByTicket(ticketId: string): Promise<ActionResponse
     return { success: true, data: getDemoFasesByTicket(ticketId) }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      const snap = await getAdminFirestore()
+        .collection("ticket_fases")
+        .where("ticket_id", "==", ticketId)
+        .orderBy("orden", "asc")
+        .get()
+
+      return {
+        success: true,
+        data: snap.docs.map((doc) => fromFirestoreDoc<TicketFase>(doc.id, doc.data())),
+      }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  }
+
+  const { createClient } = await import("@/lib/supabase/server")
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("ticket_fases")
@@ -56,6 +74,49 @@ export async function createFase(input: FaseCreateInput): Promise<ActionResponse
     return { success: true, data: fase, message: "Fase creada exitosamente" }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const existing = await db
+        .collection("ticket_fases")
+        .where("ticket_id", "==", input.ticket_id)
+        .orderBy("orden", "desc")
+        .limit(1)
+        .get()
+
+      const nextOrden =
+        input.orden ??
+        (existing.empty ? 1 : Number(existing.docs[0]?.data().orden || 0) + 1)
+      const now = new Date().toISOString()
+      const ref = db.collection("ticket_fases").doc()
+      const payload = cleanForFirestore({
+        ticket_id: input.ticket_id,
+        nombre: input.nombre,
+        descripcion: input.descripcion || null,
+        orden: nextOrden,
+        estado: "pendiente",
+        progreso_porcentaje: 0,
+        fecha_inicio_estimada: input.fecha_inicio_estimada || null,
+        fecha_fin_estimada: input.fecha_fin_estimada || null,
+        fecha_inicio_real: null,
+        fecha_fin_real: null,
+        created_at: now,
+        updated_at: now,
+      })
+
+      await ref.set(payload)
+      revalidatePath(`/dashboard/tickets/${input.ticket_id}`)
+      return {
+        success: true,
+        data: fromFirestoreDoc<TicketFase>(ref.id, payload),
+        message: "Fase creada exitosamente",
+      }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  }
+
+  const { createClient } = await import("@/lib/supabase/server")
   const supabase = await createClient()
 
   // Obtener el siguiente orden
@@ -124,6 +185,37 @@ export async function updateFase(
     return { success: true, data: fase, message: "Fase actualizada" }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("ticket_fases").doc(id)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Fase no encontrada" }
+
+      const now = new Date().toISOString()
+      const updatePayload: Record<string, unknown> = { ...safeInput, updated_at: now }
+
+      if (safeInput.estado === "en_progreso" && !safeInput.fecha_inicio_real) {
+        updatePayload.fecha_inicio_real = now
+      }
+      if (safeInput.estado === "completada") {
+        updatePayload.fecha_fin_real = now
+        updatePayload.progreso_porcentaje = 100
+      }
+
+      await ref.update(cleanForFirestore(updatePayload))
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return {
+        success: true,
+        data: fromFirestoreDoc<TicketFase>(id, { ...snap.data()!, ...updatePayload }),
+        message: "Fase actualizada",
+      }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  }
+
+  const { createClient } = await import("@/lib/supabase/server")
   const supabase = await createClient()
 
   const updatePayload: Record<string, unknown> = { ...safeInput, updated_at: new Date().toISOString() }
@@ -166,6 +258,17 @@ export async function deleteFase(id: string, ticketId: string): Promise<ActionRe
     return { success: true, message: "Fase eliminada" }
   }
 
+  if (isFirebaseMode()) {
+    try {
+      await getAdminFirestore().collection("ticket_fases").doc(id).delete()
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return { success: true, message: "Fase eliminada" }
+    } catch (error) {
+      return { success: false, error: (error as Error).message }
+    }
+  }
+
+  const { createClient } = await import("@/lib/supabase/server")
   const supabase = await createClient()
   const { error } = await supabase.from("ticket_fases").delete().eq("id", id)
 

@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/actions/auth"
-import { createClient } from "@/lib/supabase/server"
-import { isLocalMode } from "@/lib/local-mode"
+import { isFirebaseMode, isLocalMode } from "@/lib/local-mode"
 import { getDemoPaymentsView, getDemoUsers } from "@/lib/mock-data"
 import { ROLE_HIERARCHY } from "@/types"
 import { GenCuadroDialog } from "@/components/pagos/gen-cuadro-dialog"
 import { PagosClient } from "./pagos-client"
+import { getAdminFirestore } from "@/lib/firebase/admin"
 
 export const metadata = { title: "Pagos" }
 
@@ -27,6 +27,44 @@ async function getAllPayments(): Promise<Payment[]> {
     return [...demoPayments.pending, ...demoPayments.completed] as Payment[]
   }
 
+  if (isFirebaseMode()) {
+    const db = getAdminFirestore()
+    const [paymentsSnap, ticketsSnap, usersSnap] = await Promise.all([
+      db.collection("pagos").orderBy("fecha_habilitacion", "desc").get(),
+      db.collection("tickets").get(),
+      db.collection("users").get(),
+    ])
+
+    const tickets = new Map(ticketsSnap.docs.map((doc) => [doc.id, doc.data()]))
+    const users = new Map(usersSnap.docs.map((doc) => [doc.id, doc.data()]))
+
+    return paymentsSnap.docs.map((doc) => {
+      const data = doc.data()
+      const ticket = tickets.get(String(data.ticket_id))
+      const tecnico = users.get(String(data.tecnico_id))
+
+      return {
+        id: doc.id,
+        monto_a_pagar: Number(data.monto_a_pagar || 0),
+        estado_pago: String(data.estado_pago || "pendiente"),
+        fecha_habilitacion: String(data.fecha_habilitacion || data.created_at || new Date().toISOString()),
+        fecha_pago: (data.fecha_pago as string | null) ?? null,
+        metodo_pago: (data.metodo_pago as string | null) ?? null,
+        referencia_pago: (data.referencia_pago as string | null) ?? null,
+        ticket: {
+          numero_ticket: String(ticket?.numero_ticket || "N/D"),
+          asunto: String(ticket?.asunto || "Sin asunto"),
+        },
+        tecnico: {
+          id: String(data.tecnico_id || ""),
+          nombre: String(tecnico?.nombre || "Técnico"),
+          apellido: String(tecnico?.apellido || ""),
+        },
+      }
+    })
+  }
+
+  const { createClient } = await import("@/lib/supabase/server")
   const supabase = await createClient()
   const { data } = await supabase
     .from("pagos_tecnicos")
@@ -47,6 +85,25 @@ async function getTechnicians(): Promise<Array<{ id: string; nombre: string; ape
       .map((u) => ({ id: u.id, nombre: u.nombre, apellido: u.apellido }))
   }
 
+  if (isFirebaseMode()) {
+    const snap = await getAdminFirestore()
+      .collection("users")
+      .where("rol", "==", "tecnico")
+      .where("estado", "==", "activo")
+      .orderBy("nombre")
+      .get()
+
+    return snap.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        nombre: String(data.nombre || ""),
+        apellido: String(data.apellido || ""),
+      }
+    })
+  }
+
+  const { createClient } = await import("@/lib/supabase/server")
   const supabase = await createClient()
   const { data } = await supabase
     .from("users")

@@ -31,7 +31,7 @@ async function fbGetDashboardStats(user: User): Promise<DashboardStats> {
   let pagosPendientes = 0
   let montosPendientes = 0
   if (canViewAll) {
-    const pagosSnap = await db.collection("pagos_tecnicos").where("estado_pago", "==", "pendiente").get()
+    const pagosSnap = await db.collection("pagos").where("estado_pago", "==", "pendiente").get()
     pagosPendientes = pagosSnap.size
     montosPendientes = pagosSnap.docs.reduce((sum, d) => sum + Number(d.data().monto_a_pagar || 0), 0)
   }
@@ -138,7 +138,7 @@ export async function getTechnicianStats(tecnicoId?: string): Promise<ActionResp
       const ticketsCompletados = tickets.filter((t) => t.estado === "finalizado").length
       const ticketsEnProgreso = tickets.filter((t) => t.estado !== "finalizado" && t.estado !== "cancelado").length
 
-      const pagosSnap = await db.collection("pagos_tecnicos").where("tecnico_id", "==", targetId).where("estado_pago", "==", "pendiente").get()
+      const pagosSnap = await db.collection("pagos").where("tecnico_id", "==", targetId).where("estado_pago", "==", "pendiente").get()
       const pagosPendientes = pagosSnap.size
       const montoPendiente = pagosSnap.docs.reduce((sum, d) => sum + Number(d.data().monto_a_pagar || 0), 0)
 
@@ -226,7 +226,7 @@ export async function getEnhancedDashboardStats(): Promise<ActionResponse<Enhanc
         .filter((t) => t.fecha_finalizacion && new Date(t.fecha_finalizacion) >= inicioMes)
         .reduce((sum, t) => sum + Number(t.monto_servicio || 0), 0)
 
-      const pagosSnap = await db.collection("pagos_tecnicos").where("estado_pago", "==", "pendiente").get()
+      const pagosSnap = await db.collection("pagos").where("estado_pago", "==", "pendiente").get()
       const ingresoPendiente = pagosSnap.docs.reduce((sum, d) => sum + Number(d.data().monto_a_pagar || 0), 0)
 
       // Technician KPIs
@@ -237,7 +237,7 @@ export async function getEnhancedDashboardStats(): Promise<ActionResponse<Enhanc
           const tTickets = allTickets.filter((t) => t.tecnico_id === tDoc.id)
           const tFinalizados = tTickets.filter((t) => t.estado === "finalizado")
           const tiempos = tFinalizados.filter((t) => t.tiempo_trabajado).map((t) => t.tiempo_trabajado || 0)
-          const tPagosSnap = await db.collection("pagos_tecnicos").where("tecnico_id", "==", tDoc.id).where("estado_pago", "==", "pendiente").get()
+          const tPagosSnap = await db.collection("pagos").where("tecnico_id", "==", tDoc.id).where("estado_pago", "==", "pendiente").get()
 
           return {
             id: tDoc.id,

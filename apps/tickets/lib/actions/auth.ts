@@ -1,14 +1,19 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import type { ActionResponse, User } from "@/types"
 import { ROLE_HIERARCHY } from "@/types"
 import type { LoginInput } from "@/lib/validations"
-import { DEMO_SESSION_COOKIE, isLocalMode, isFirebaseMode } from "@/lib/local-mode"
+import {
+  BRIDGE_SESSION_COOKIE,
+  DEMO_SESSION_COOKIE,
+  isLocalMode,
+  isFirebaseMode,
+} from "@/lib/local-mode"
 import { getDemoCurrentUser } from "@/lib/mock-data"
+import { verifyTicketsBridgeToken } from "@/lib/platform-bridge"
 
 // Firebase imports (only used when isFirebaseMode() is true)
 import { getAdminAuth, getAdminFirestore, fromFirestoreDoc } from "@/lib/firebase/admin"
@@ -43,6 +48,26 @@ async function clearDemoSessionCookie() {
 async function hasDemoSession(): Promise<boolean> {
   const cookieStore = await cookies()
   return cookieStore.get(DEMO_SESSION_COOKIE)?.value === "1"
+}
+
+async function clearBridgeSessionCookie() {
+  const cookieStore = await cookies()
+  cookieStore.delete(BRIDGE_SESSION_COOKIE)
+}
+
+async function getBridgeSessionUid(): Promise<string | null> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(BRIDGE_SESSION_COOKIE)?.value?.trim()
+
+  if (!token) return null
+
+  const verification = verifyTicketsBridgeToken(token)
+  if (!verification.valid) {
+    cookieStore.delete(BRIDGE_SESSION_COOKIE)
+    return null
+  }
+
+  return verification.payload.sub
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
@@ -81,56 +106,9 @@ export async function loginAction(
     }
   }
 
-  // ── Supabase mode ────────────────────────────────────────────────────────────
-  const identifier = data.identifier.trim()
-  if (!identifier.includes("@")) {
-    return {
-      success: false,
-      error: "En modo productivo debes iniciar sesion con tu correo",
-    }
-  }
-
-  const supabase = await createClient()
-
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: identifier,
-    password: data.password,
-  })
-
-  if (authError) {
-    return {
-      success: false,
-      error: authError.message === "Invalid login credentials"
-        ? "Credenciales inválidas"
-        : authError.message,
-    }
-  }
-
-  if (!authData.user) {
-    return { success: false, error: "No se pudo obtener información del usuario" }
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", authData.user.id)
-    .single()
-
-  if (profileError || !profile) {
-    return { success: false, error: "No se encontró el perfil del usuario" }
-  }
-
-  if (profile.estado !== "activo") {
-    await supabase.auth.signOut()
-    return { success: false, error: "Tu cuenta está desactivada. Contacta al administrador." }
-  }
-
-  revalidatePath("/", "layout")
-
   return {
-    success: true,
-    data: { user: profile as User },
-    message: "Inicio de sesión exitoso",
+    success: false,
+    error: "El módulo opera con Firebase Auth. Usa el formulario de Firebase para iniciar sesión.",
   }
 }
 
@@ -188,12 +166,11 @@ export async function logoutAction(): Promise<void> {
 
   if (isFirebaseMode()) {
     await clearFirebaseSession()
+    await clearBridgeSessionCookie()
     revalidatePath("/", "layout")
     redirect(`${WEB_APP_URL}/`)
   }
 
-  const supabase = await createClient()
-  await supabase.auth.signOut()
   revalidatePath("/", "layout")
   redirect(`${WEB_APP_URL}/`)
 }
@@ -214,7 +191,7 @@ export async function getCurrentUser(): Promise<User | null> {
   // ── Firebase mode ────────────────────────────────────────────────────────────
   if (isFirebaseMode()) {
     try {
-      const uid = await verifyFirebaseSession()
+      const uid = (await verifyFirebaseSession()) ?? (await getBridgeSessionUid())
       if (!uid) return null
 
       const db = getAdminFirestore()
@@ -227,19 +204,7 @@ export async function getCurrentUser(): Promise<User | null> {
     }
   }
 
-  // ── Supabase mode ────────────────────────────────────────────────────────────
-  const supabase = await createClient()
-
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-  if (!authUser) return null
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", authUser.id)
-    .single()
-
-  return profile as User | null
+  return null
 }
 
 // ─── Register user ────────────────────────────────────────────────────────────
@@ -305,46 +270,7 @@ export async function registerUserAction(data: {
     }
   }
 
-  // ── Supabase mode ────────────────────────────────────────────────────────────
-  const supabase = await createClient()
-
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: data.email,
-    password: data.password,
-    email_confirm: true,
-  })
-
-  if (authError) return { success: false, error: authError.message }
-  if (!authData.user) return { success: false, error: "No se pudo crear el usuario" }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .insert({
-      id: authData.user.id,
-      email: data.email,
-      nombre: data.nombre,
-      apellido: data.apellido,
-      rol: data.rol,
-      nivel_jerarquico: ROLE_HIERARCHY[data.rol as keyof typeof ROLE_HIERARCHY],
-      cedula: data.cedula,
-      telefono: data.telefono || null,
-      estado: "activo",
-    })
-    .select()
-    .single()
-
-  if (profileError) {
-    await supabase.auth.admin.deleteUser(authData.user.id)
-    return { success: false, error: profileError.message }
-  }
-
-  revalidatePath("/dashboard/usuarios")
-
-  return {
-    success: true,
-    data: { user: profile as User },
-    message: "Usuario creado exitosamente",
-  }
+  return { success: false, error: "La creación de usuarios requiere configuración Firebase válida" }
 }
 
 // ─── Update password ──────────────────────────────────────────────────────────
@@ -374,10 +300,5 @@ export async function updatePasswordAction(
     }
   }
 
-  // ── Supabase mode ────────────────────────────────────────────────────────────
-  const supabase = await createClient()
-  const { error } = await supabase.auth.admin.updateUserById(userId, { password: newPassword })
-  if (error) return { success: false, error: error.message }
-
-  return { success: true, message: "Contraseña actualizada exitosamente" }
+  return { success: false, error: "La actualización de contraseñas requiere configuración Firebase válida" }
 }

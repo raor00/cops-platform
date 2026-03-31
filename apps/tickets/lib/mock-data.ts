@@ -15,6 +15,7 @@ import type {
   BitacoraVisitaInput,
   ChangeType,
   Cliente,
+  ClienteContacto,
   ClienteCreateInput,
   ClienteUpdateInput,
   DashboardStats,
@@ -410,8 +411,8 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
     creador: currentUser,
     tecnico_id: input.tecnico_id || null,
     tecnico,
-    estado: (input as any).estado === "borrador" ? "borrador" : "asignado",
-    fecha_asignacion: (input as any).estado === "borrador" ? undefined : nowIso,
+    estado: input.estado === "borrador" ? "borrador" : "asignado",
+    fecha_asignacion: input.estado === "borrador" ? undefined : nowIso,
     monto_servicio: input.monto_servicio ?? (input.tipo === 'inspeccion' ? 20 : 40),
     ticket_origen_id: input.ticket_origen_id || null,
     ticket_derivado_id: null,
@@ -1099,7 +1100,13 @@ export function updateDemoCliente(id: string, input: ClienteUpdateInput): Client
     email: input.email !== undefined ? (input.email || null) : demoClientes[idx]!.email,
     rif_cedula: input.rif_cedula !== undefined ? (input.rif_cedula || null) : demoClientes[idx]!.rif_cedula,
     observaciones: input.observaciones !== undefined ? (input.observaciones || null) : demoClientes[idx]!.observaciones,
-    contactos: input.contactos !== undefined ? input.contactos.map((ct) => ({ ...ct, id: (ct as any).id || crypto.randomUUID() })) : demoClientes[idx]!.contactos,
+    contactos:
+      input.contactos !== undefined
+        ? input.contactos.map((ct) => ({
+            ...ct,
+            id: (ct as Partial<ClienteContacto>).id ?? crypto.randomUUID(),
+          }))
+        : demoClientes[idx]!.contactos,
     updated_at: new Date().toISOString(),
   }
   demoClientes[idx] = updated

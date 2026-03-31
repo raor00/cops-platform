@@ -241,6 +241,6 @@ export async function createUser(input: {
     cedula: input.cedula ?? "",
   })
   if (!result.success) return { success: false, error: result.error }
-  const id = (result.data as any)?.user?.id ?? (result.data as any)?.id ?? ""
+  const id = result.data?.user.id ?? ""
   return { success: true, data: { id }, message: result.message }
 }

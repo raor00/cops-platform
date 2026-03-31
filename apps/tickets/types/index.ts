@@ -226,6 +226,9 @@ export interface TicketCreateInput {
   tecnico_id?: string
   monto_servicio?: number
   ticket_origen_id?: string
+  estado?: Extract<TicketStatus, "borrador" | "asignado">
+  facturacion_tipo?: "fijo" | "por_hora" | null
+  tarifa_hora?: number | null
 }
 
 export interface TicketUpdateInput {

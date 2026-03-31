@@ -74,6 +74,12 @@ interface CreateTicketFormProps {
   defaultTipo?: "servicio" | "proyecto" | "inspeccion"
 }
 
+type TicketSubmitPayload = TicketCreateInput & {
+  estado?: "borrador"
+  facturacion_tipo?: "fijo" | "por_hora"
+  tarifa_hora?: number | null
+}
+
 export function CreateTicketForm({ technicians: initialTechnicians, initialClientes = [], defaultTipo = "servicio" }: CreateTicketFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -371,15 +377,15 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
     try {
       const montoServicio = data.monto_servicio
 
-      const submitData = {
+      const submitData: TicketSubmitPayload = {
         ...data,
         materiales_planificados: materials.length > 0 ? materials : undefined,
-        tecnico_id: data.tecnico_id || undefined,
+        ...(data.tecnico_id ? { tecnico_id: data.tecnico_id } : {}),
         monto_servicio: montoServicio,
         estado: asBorrador ? ("borrador" as const) : undefined,
         facturacion_tipo: tipoTicket === "servicio" ? facturacionTipo : "fijo",
         tarifa_hora: tipoTicket === "servicio" && facturacionTipo === "por_hora" ? tarifaHora : null,
-      } as any
+      }
 
       const result = await createTicket(submitData)
 
@@ -1098,5 +1104,3 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
     </form>
   )
 }
-
-

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { DEMO_SESSION_COOKIE, isFirebaseMode, isLocalMode } from "@/lib/local-mode"
 import { verifyFirebaseSession } from "@/lib/firebase/session"
 import FirebaseLoginForm from "./FirebaseLoginForm"
-import SupabaseLoginForm from "./SupabaseLoginForm"
+import LocalLoginForm from "./LocalLoginForm"
 
 export default async function LoginPage() {
   // Firebase mode: show built-in login form
@@ -19,8 +19,9 @@ export default async function LoginPage() {
     const cookieStore = await cookies()
     const hasDemoSession = cookieStore.get(DEMO_SESSION_COOKIE)?.value === "1"
     if (hasDemoSession) redirect("/dashboard")
+
+    return <LocalLoginForm />
   }
 
-  // Supabase mode: show login form directly
-  return <SupabaseLoginForm />
+  return <LocalLoginForm />
 }

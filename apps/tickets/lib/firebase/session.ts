@@ -2,8 +2,9 @@
 
 import { cookies } from "next/headers"
 import { getAdminAuth } from "./admin"
+import { FIREBASE_SESSION_COOKIE } from "@/lib/local-mode"
 
-const SESSION_COOKIE_NAME = "tickets_firebase_session"
+const SESSION_COOKIE_NAME = FIREBASE_SESSION_COOKIE
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days in seconds
 
 /**

@@ -283,11 +283,11 @@ export async function createTicket(
         origen: input.origen,
         creado_por: currentUser.id,
         tecnico_id: input.tecnico_id || null,
-        estado: (input as any).estado === "borrador" ? "borrador" : "asignado",
-        fecha_asignacion: (input as any).estado === "borrador" ? null : now,
+        estado: input.estado === "borrador" ? "borrador" : "asignado",
+        fecha_asignacion: input.estado === "borrador" ? null : now,
         monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
-        facturacion_tipo: (input as any).facturacion_tipo ?? "fijo",
-        tarifa_hora: (input as any).tarifa_hora ?? null,
+        facturacion_tipo: input.facturacion_tipo ?? "fijo",
+        tarifa_hora: input.tarifa_hora ?? null,
         ticket_origen_id: null,
         ticket_derivado_id: null,
         created_at: now,
@@ -343,11 +343,11 @@ export async function createTicket(
       origen: input.origen,
       creado_por: currentUser.id,
       tecnico_id: input.tecnico_id || null,
-      estado: (input as any).estado === "borrador" ? "borrador" : "asignado",
-      fecha_asignacion: (input as any).estado === "borrador" ? null : new Date().toISOString(),
+      estado: input.estado === "borrador" ? "borrador" : "asignado",
+      fecha_asignacion: input.estado === "borrador" ? null : new Date().toISOString(),
       monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
-      facturacion_tipo: (input as any).facturacion_tipo ?? "fijo",
-      tarifa_hora: (input as any).tarifa_hora ?? null,
+      facturacion_tipo: input.facturacion_tipo ?? "fijo",
+      tarifa_hora: input.tarifa_hora ?? null,
     })
     .select()
     .single()
@@ -588,7 +588,7 @@ export async function changeTicketStatus(
     await supabase.from("pagos_tecnicos").insert({
       ticket_id: id, tecnico_id: ticket.tecnico_id, monto_ticket: montoTicket,
       porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE, monto_a_pagar: montoAPagar,
-      facturacion_tipo: (ticket as any).facturacion_tipo ?? "fijo",
+      facturacion_tipo: ticket.facturacion_tipo ?? "fijo",
       estado_pago: "pendiente", fecha_habilitacion: new Date().toISOString(),
     })
   }

@@ -30,11 +30,14 @@ Sistema de gestión de servicios y proyectos para COP'S Electronics, desarrollad
 ## 🛠️ Stack Tecnológico
 
 - **Framework**: Next.js 16 (App Router)
-- **Estilos**: Tailwind CSS + Glass Morphism
-- **Base de datos**: Supabase (PostgreSQL)
-- **Autenticación**: Supabase Auth
+- **Lenguaje**: TypeScript
+- **Estilos**: Tailwind CSS + componentes UI propios sobre Radix UI
+- **Datos**:
+  - **Modo local/demo** con datos mock
+  - **Modo Firebase** con Firestore + Firebase Auth
+  - **Modo Supabase** con PostgreSQL + Supabase Auth
 - **Validaciones**: Zod + React Hook Form
-- **UI Components**: Radix UI
+- **Gráficas**: Recharts
 
 ## 📁 Estructura del Proyecto
 
@@ -54,13 +57,16 @@ apps/tickets/
 │   ├── layout/             # Sidebar, Header
 │   └── tickets/            # Componentes específicos de tickets
 ├── lib/
-│   ├── actions/            # Server Actions
-│   ├── supabase/           # Configuración Supabase
+│   ├── actions/            # Server Actions por dominio
+│   ├── firebase/           # Integración Firebase/Auth/Firestore
+│   ├── supabase/           # Integración Supabase
+│   ├── mock-data.ts        # Datos demo y helpers de modo local
+│   ├── local-mode.ts       # Selección de proveedor de datos
 │   ├── utils/              # Utilidades
 │   └── validations/        # Esquemas Zod
-├── types/                  # TypeScript types
-└── supabase/
-    └── schema.sql          # Script de base de datos
+├── types/
+│   └── index.ts            # Contratos de dominio compartidos
+└── middleware.ts           # Protección de rutas y sesión
 ```
 
 ## 🚀 Instalación
@@ -70,11 +76,15 @@ apps/tickets/
 - pnpm 10+
 - Cuenta en Supabase
 
-### 2. Configurar Supabase
+### 2. Configurar proveedor de datos
 
-1. Crear proyecto en [Supabase](https://supabase.com)
-2. Ejecutar el script `supabase/schema.sql` en el SQL Editor
-3. Copiar las credenciales
+Este módulo soporta tres modos:
+
+- **Local/demo**: se activa automáticamente si no hay credenciales de Supabase.
+- **Firebase**: requiere `FIREBASE_PROJECT_ID` y credenciales de servicio.
+- **Supabase**: requiere URL y anon key.
+
+> Importante: actualmente este módulo **no versiona un `schema.sql` dentro de `apps/tickets`**. Si vas a usar Supabase debes aprovisionar el esquema desde la fuente operativa del proyecto o documentarlo aparte.
 
 ### 3. Variables de entorno
 
@@ -82,10 +92,16 @@ apps/tickets/
 cp .env.example .env.local
 ```
 
-Editar `.env.local`:
+Editar `.env.local` según el modo:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=tu_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+
+# Opcional: forzar modo local/demo
+TICKETS_LOCAL_MODE=true
+
+# Opcional: modo Firebase
+FIREBASE_PROJECT_ID=tu_project_id
 ```
 
 ### 4. Instalar dependencias
@@ -133,12 +149,17 @@ VALUES ('UUID_DEL_USUARIO', 'Admin', 'Sistema', 'admin@copselectronics.com', 'pr
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🔒 Seguridad
+## 🔒 Seguridad y control de acceso
 
 - **Row Level Security (RLS)** en todas las tablas
 - **Middleware** de autenticación en todas las rutas
 - **Validación** de permisos en cada Server Action
 - **Auditoría** completa de cambios
+
+## 📚 Documentación adicional
+
+- Arquitectura y mapa técnico: `/Users/oviedo/Documents/GitHub/cops-platform/docs/TICKETS-MODULE.md`
+- Subagentes instalados para Codex: `/Users/oviedo/Documents/GitHub/cops-platform/docs/CODEX-SUBAGENTS.md`
 
 ## 📦 Deploy en Vercel
 

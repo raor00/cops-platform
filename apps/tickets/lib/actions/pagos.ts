@@ -17,6 +17,116 @@ import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { processPaymentDemo } from "@/lib/mock-data"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 
+export interface PaymentDashboardItem {
+  id: string
+  monto_a_pagar: number
+  estado_pago: PaymentStatus
+  fecha_habilitacion: string
+  fecha_pago: string | null
+  metodo_pago: PaymentMethod | null
+  referencia_pago: string | null
+  ticket: { numero_ticket: string; asunto: string }
+  tecnico: { id: string; nombre: string; apellido: string }
+}
+
+export async function getPaymentsDashboardData(): Promise<ActionResponse<PaymentDashboardItem[]>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "Sin permisos" }
+
+  if (isLocalMode()) {
+    const { getDemoPaymentsView } = await import("@/lib/mock-data")
+    const demoPayments = getDemoPaymentsView()
+    return {
+      success: true,
+      data: [...demoPayments.pending, ...demoPayments.completed] as PaymentDashboardItem[],
+    }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const [pagosSnap, ticketsSnap, usersSnap] = await Promise.all([
+        db.collection("pagos").orderBy("fecha_habilitacion", "desc").get(),
+        db.collection("tickets").get(),
+        db.collection("users").get(),
+      ])
+
+      const ticketsMap = new Map<string, Record<string, unknown>>()
+      const usersMap = new Map<string, Record<string, unknown>>()
+
+      ticketsSnap.docs.forEach((doc) => ticketsMap.set(doc.id, { id: doc.id, ...doc.data() }))
+      usersSnap.docs.forEach((doc) => usersMap.set(doc.id, { id: doc.id, ...doc.data() }))
+
+      const data = pagosSnap.docs.flatMap((doc) => {
+        const pago = fromFirestoreDoc<TechnicianPayment>(doc.id, doc.data())
+        const ticket = ticketsMap.get(pago.ticket_id)
+        const tecnico = usersMap.get(pago.tecnico_id)
+
+        if (!ticket || !tecnico) return []
+
+        return [{
+          id: pago.id,
+          monto_a_pagar: pago.monto_a_pagar,
+          estado_pago: pago.estado_pago,
+          fecha_habilitacion: pago.fecha_habilitacion,
+          fecha_pago: pago.fecha_pago,
+          metodo_pago: pago.metodo_pago,
+          referencia_pago: pago.referencia_pago,
+          ticket: {
+            numero_ticket: String(ticket.numero_ticket ?? ""),
+            asunto: String(ticket.asunto ?? ""),
+          },
+          tecnico: {
+            id: String(tecnico.id ?? pago.tecnico_id),
+            nombre: String(tecnico.nombre ?? ""),
+            apellido: String(tecnico.apellido ?? ""),
+          },
+        }] satisfies PaymentDashboardItem[]
+      })
+
+      return { success: true, data }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  return { success: false, error: "Pagos requiere configuración Firebase válida" }
+}
+
+export async function getPaymentTechnicians(): Promise<ActionResponse<Array<{ id: string; nombre: string; apellido: string }>>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "Sin permisos" }
+
+  if (isLocalMode()) {
+    const { getDemoUsers } = await import("@/lib/mock-data")
+    return {
+      success: true,
+      data: getDemoUsers()
+        .filter((user) => user.rol === "tecnico" && user.estado === "activo")
+        .map((user) => ({ id: user.id, nombre: user.nombre, apellido: user.apellido })),
+    }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const usersSnap = await db.collection("users").where("rol", "==", "tecnico").where("estado", "==", "activo").get()
+      return {
+        success: true,
+        data: usersSnap.docs
+          .map((doc) => fromFirestoreDoc<{ id: string; nombre: string; apellido: string }>(doc.id, doc.data()))
+          .sort((a, b) => a.nombre.localeCompare(b.nombre)),
+      }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  return { success: false, error: "Pagos requiere configuración Firebase válida" }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROCESAR PAGO
 // ─────────────────────────────────────────────────────────────────────────────
