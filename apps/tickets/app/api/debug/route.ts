@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { DEMO_SESSION_COOKIE, isLocalMode } from "@/lib/local-mode"
+import {
+  DEMO_SESSION_COOKIE,
+  hasFirebaseAdminConfig,
+  hasFirebaseClientConfig,
+  isFirebaseMode,
+  isLocalMode,
+  resolveTicketsDataMode,
+} from "@/lib/local-mode"
 import { verifyTicketsBridgeToken } from "@/lib/platform-bridge"
 
 export const dynamic = "force-dynamic"
@@ -21,11 +28,35 @@ export async function GET(request: Request) {
         ? `✓ definido (${process.env.PLATFORM_TICKETS_BRIDGE_SECRET.length} chars)`
         : "❌ NO DEFINIDO",
       WEB_URL: process.env.WEB_URL ?? "(no definido, usando default)",
+      NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+        ? "✓ definido"
+        : "(no definido)",
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        ? "✓ definido"
+        : "(no definido)",
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        ? "✓ definido"
+        : "(no definido)",
+      FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID
+        ? "✓ definido"
+        : "(no definido)",
+      FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL
+        ? "✓ definido"
+        : "(no definido)",
+      FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY
+        ? `✓ definido (${process.env.FIREBASE_PRIVATE_KEY.length} chars)`
+        : "(no definido)",
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL
         ? "✓ definido"
         : "(no definido)",
     },
-    isLocalMode: isLocalMode(),
+    mode: {
+      resolved: resolveTicketsDataMode(),
+      isLocalMode: isLocalMode(),
+      isFirebaseMode: isFirebaseMode(),
+      hasFirebaseAdminConfig: hasFirebaseAdminConfig(),
+      hasFirebaseClientConfig: hasFirebaseClientConfig(),
+    },
     session: {
       cookie_present: sessionCookie === "1",
       cookie_value: sessionCookie ?? "(vacío)",

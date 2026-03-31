@@ -187,34 +187,39 @@ Si solo tienes hosting compartido de DreamHost, usa la Opción A (Vercel gratis 
 # ─── apps/tickets ────────────────────────────────────────────
 
 # Modo de operación
-TICKETS_LOCAL_MODE=false                    # true = demo sin Supabase
+TICKETS_LOCAL_MODE=false                    # true = demo/local; en producción debe quedarse false
 NEXT_PUBLIC_TICKETS_LOCAL_MODE=false
 
-# Supabase (solo modo real)
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...           # solo para operaciones admin (opcional)
+# Firebase Client SDK
+NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu-proyecto
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-proyecto.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1234567890
+NEXT_PUBLIC_FIREBASE_APP_ID=1:1234567890:web:abcdef
 
-# Demo credentials (solo modo local)
-TICKETS_DEMO_EMAIL=admin@copselectronics.com
+# Firebase Admin SDK
+FIREBASE_PROJECT_ID=tu-proyecto
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxx@tu-proyecto.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Demo credentials (solo modo local explícito)
+TICKETS_DEMO_USERNAME=admin
 TICKETS_DEMO_PASSWORD=admin123
+
+# Bridge SSO
+PLATFORM_TICKETS_BRIDGE_SECRET=secreto-largo-compartido
 ```
 
 ---
 
-## Base de Datos — Aplicar Schema en Supabase
+## Base de Datos — Configuración en Firebase
 
-El schema SQL completo está en `migrations/` dentro del proyecto.
-
-```bash
-# Opción 1: Via Supabase Dashboard → SQL Editor
-# Copiar y pegar el contenido de migrations/*.sql
-
-# Opción 2: Via Supabase CLI (local)
-npm install -g supabase
-supabase link --project-ref TU_PROJECT_REF
-supabase db push
-```
+- Crear el proyecto en Firebase
+- Habilitar **Authentication / Email+Password**
+- Crear la cuenta de servicio para Admin SDK
+- Crear Firestore y Storage
+- Cargar TODAS las variables anteriores en Vercel
 
 ---
 
@@ -223,12 +228,13 @@ supabase db push
 Antes de hacer público el sistema, verificar:
 
 - [ ] `TICKETS_LOCAL_MODE=false` en variables de entorno de Vercel
-- [ ] Schema SQL aplicado en Supabase Cloud
-- [ ] Crear usuario administrador inicial en Supabase Auth
+- [ ] TODAS las variables de Firebase Client y Admin configuradas en Vercel
+- [ ] `PLATFORM_TICKETS_BRIDGE_SECRET` configurado en tickets y web
+- [ ] Crear usuario administrador inicial en Firebase Auth
 - [ ] Dominio apuntando correctamente (verificar SSL verde en navegador)
 - [ ] Probar login con credenciales reales (no demo)
-- [ ] Revisar Storage en Supabase: crear buckets `ticket-fotos` y `profile-photos` con políticas RLS
-- [ ] Configurar backup automático en Supabase (Dashboard → Database → Backups)
+- [ ] Revisar Storage en Firebase para `ticket-fotos` y `profile-photos`
+- [ ] Verificar `/api/debug` y confirmar `resolved=firebase`
 
 ---
 
@@ -237,7 +243,7 @@ Antes de hacer público el sistema, verificar:
 | Tarea | Frecuencia | Cómo |
 |-------|-----------|------|
 | Deploy de actualizaciones | Según necesidad | Push a `main` → Vercel redeploy automático |
-| Backup de DB | Semanal (auto en Supabase free) | Supabase Dashboard → Backups |
+| Backup de DB | Semanal | Firebase Console / export programado |
 | Monitoreo | Continuo | Vercel Analytics (gratis) |
 | Revisión de errores | Semanal | Vercel → Logs |
 

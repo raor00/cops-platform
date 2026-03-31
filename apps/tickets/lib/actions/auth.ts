@@ -9,6 +9,8 @@ import type { LoginInput } from "@/lib/validations"
 import {
   BRIDGE_SESSION_COOKIE,
   DEMO_SESSION_COOKIE,
+  getMissingFirebaseEnvKeys,
+  hasFirebaseConfig,
   isLocalMode,
   isFirebaseMode,
 } from "@/lib/local-mode"
@@ -120,6 +122,13 @@ export async function setFirebaseSessionAction(
   idToken: string
 ): Promise<ActionResponse<{ user: User }>> {
   try {
+    if (!hasFirebaseConfig()) {
+      return {
+        success: false,
+        error: `Firebase no está configurado completamente. Faltan: ${getMissingFirebaseEnvKeys().join(", ")}`,
+      }
+    }
+
     const auth = getAdminAuth()
 
     // Verify the ID token
@@ -229,6 +238,13 @@ export async function registerUserAction(data: {
 
   // ── Firebase mode ────────────────────────────────────────────────────────────
   if (isFirebaseMode()) {
+    if (!hasFirebaseConfig()) {
+      return {
+        success: false,
+        error: `Firebase no está configurado completamente. Faltan: ${getMissingFirebaseEnvKeys().join(", ")}`,
+      }
+    }
+
     try {
       const auth = getAdminAuth()
       const db = getAdminFirestore()
@@ -281,6 +297,13 @@ export async function updatePasswordAction(
 ): Promise<ActionResponse> {
   if (isLocalMode()) {
     return { success: false, error: "Cambio de contrasena no disponible en modo local" }
+  }
+
+  if (isFirebaseMode() && !hasFirebaseConfig()) {
+    return {
+      success: false,
+      error: `Firebase no está configurado completamente. Faltan: ${getMissingFirebaseEnvKeys().join(", ")}`,
+    }
   }
 
   const currentUser = await getCurrentUser()

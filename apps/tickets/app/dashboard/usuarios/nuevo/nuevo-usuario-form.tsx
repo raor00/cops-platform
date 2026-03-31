@@ -102,7 +102,7 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
           <div>
             <p className="text-sm font-medium text-yellow-300">Modo de demostración activo</p>
             <p className="text-xs text-yellow-300/70 mt-0.5">
-              La creación de usuarios no está disponible en modo local. Conecta Supabase para habilitar esta función.
+              La creación de usuarios no está disponible en modo local. Configura Firebase para habilitar esta función.
             </p>
           </div>
         </div>

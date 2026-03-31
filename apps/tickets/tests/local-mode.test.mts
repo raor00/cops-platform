@@ -2,10 +2,12 @@ import { afterEach, describe, it } from "node:test"
 import assert from "node:assert/strict"
 
 import {
+  getMissingFirebaseEnvKeys,
   hasFirebaseAdminConfig,
   hasFirebaseClientConfig,
   isFirebaseMode,
   isLocalMode,
+  resolveTicketsDataMode,
 } from "../lib/local-mode.ts"
 
 const ORIGINAL_ENV = { ...process.env }
@@ -59,6 +61,7 @@ afterEach(() => {
 describe("local-mode", () => {
   it("entra en modo local cuando Firebase no está configurado", () => {
     clearFirebaseEnv()
+    process.env.NODE_ENV = "development"
 
     assert.equal(hasFirebaseAdminConfig(), false)
     assert.equal(hasFirebaseClientConfig(), false)
@@ -83,5 +86,30 @@ describe("local-mode", () => {
 
     assert.equal(isLocalMode(), true)
     assert.equal(isFirebaseMode(), false)
+  })
+
+  it("en producción no cae a modo local implícito cuando falta Firebase", () => {
+    clearFirebaseEnv()
+    process.env.NODE_ENV = "production"
+
+    assert.equal(resolveTicketsDataMode(), "firebase")
+    assert.equal(isLocalMode(), false)
+    assert.equal(isFirebaseMode(), true)
+  })
+
+  it("reporta las variables Firebase faltantes", () => {
+    clearFirebaseEnv()
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY = "api-key"
+
+    assert.deepEqual(getMissingFirebaseEnvKeys(), [
+      "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+      "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+      "NEXT_PUBLIC_FIREBASE_APP_ID",
+      "FIREBASE_PROJECT_ID",
+      "FIREBASE_CLIENT_EMAIL",
+      "FIREBASE_PRIVATE_KEY",
+    ])
   })
 })

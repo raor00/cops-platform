@@ -19,7 +19,7 @@ Documentar el estado real del módulo `apps/tickets` para poder revisarlo, mejor
 - Tres modos de persistencia:
   - local/demo: `lib/mock-data.ts`
   - Firebase: `lib/firebase/*`
-  - Supabase: `lib/supabase/*`
+  - Supabase: legado pendiente de retiro; NO debe usarse para pilotos nuevos
 
 ## Cómo decide el proveedor de datos
 
@@ -28,9 +28,9 @@ Archivo clave: `/Users/oviedo/Documents/GitHub/cops-platform/apps/tickets/lib/lo
 Reglas actuales:
 
 1. Si `TICKETS_LOCAL_MODE=true` o `NEXT_PUBLIC_TICKETS_LOCAL_MODE=true`, entra en modo local.
-2. Si no hay credenciales públicas de Supabase, también entra en modo local.
-3. Si NO está en local y existe `FIREBASE_PROJECT_ID`, entra en modo Firebase.
-4. En cualquier otro caso usa Supabase.
+2. Si existen credenciales completas de Firebase Client + Admin, entra en modo Firebase.
+3. En producción/Vercel, si falta Firebase, FALLA CERRADO a modo Firebase para no servir datos mock por accidente.
+4. Solo en desarrollo, cuando no hay Firebase y nadie forzó el modo, entra en local/demo.
 
 ## Rutas clave
 
