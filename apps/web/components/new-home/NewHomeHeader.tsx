@@ -56,12 +56,12 @@ export default function NewHomeHeader() {
       <header className="fixed left-0 right-0 top-0 z-[100] flex w-full justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
         <div
           className={`pointer-events-auto relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isAtTop
-            ? "mt-0 w-full max-w-7xl rounded-none border-b border-transparent bg-transparent px-4 py-5 sm:px-6 lg:px-8 lg:py-6"
+            ? "mt-0 w-full max-w-6xl rounded-none border-b border-transparent bg-transparent px-6 py-5 lg:px-8 lg:py-6"
             : "mt-4 mx-auto w-[96%] max-w-5xl rounded-full border border-white/10 bg-[#0b1426]/80 px-4 py-2 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:px-5 lg:px-6"
             }`}
         >
           {/* Logo - fixed width */}
-          <div className={`${styles.logoContainer} scale-90 md:scale-100 origin-left whitespace-nowrap flex-shrink-0`}>
+          <div className={`${styles.logoContainer} whitespace-nowrap flex-shrink-0`}>
             <div className={styles.atomLogo}>
               <div className={styles.electron} />
               <div className={styles.electron} />
