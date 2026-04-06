@@ -188,7 +188,6 @@ export const ticketUpdateSchema = z.object({
     .optional(),
   requerimientos: z
     .string()
-    .min(1, 'Los requerimientos son requeridos')
     .max(5000, 'Los requerimientos no pueden exceder 5000 caracteres')
     .optional(),
   materiales_planificados: z.array(materialItemSchema).optional(),

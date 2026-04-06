@@ -22,7 +22,7 @@ export default async function MantenimientoPage() {
     const user = await getCurrentUser()
 
     if (!user) {
-        redirect("/auth/login")
+        redirect("/login")
     }
 
     const isCoordinatorOrHigher = ROLE_HIERARCHY[user.rol] >= 2

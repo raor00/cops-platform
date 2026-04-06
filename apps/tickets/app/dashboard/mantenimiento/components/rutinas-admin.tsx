@@ -11,11 +11,29 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Agencia, RutinaMantenimiento } from "@/types"
 
-const INITIAL_MOCK_RUTINAS = [
-    { id: 1, titulo: "Mantenimiento Trimestral Q1 2024", periodo: "Ene - Mar 2024", progreso: 85, estado: "En Ejecución" },
-    { id: 2, titulo: "Mantenimiento Trimestral Q4 2023", periodo: "Oct - Dic 2023", progreso: 100, estado: "Finalizado" },
-    { id: 3, titulo: "Mantenimiento Trimestral Q2 2024", periodo: "Abr - Jun 2024", progreso: 0, estado: "Planificación" },
-]
+const ESTADO_LABELS: Record<string, string> = {
+    borrador: "Borrador",
+    programada: "Planificación",
+    en_curso: "En Ejecución",
+    finalizada: "Finalizado",
+}
+
+function getEstadoBadgeClass(estado: string) {
+    if (estado === "finalizada") return "bg-slate-100 text-slate-600 border-slate-200"
+    if (estado === "en_curso") return "bg-blue-50 text-blue-700 border-blue-200"
+    return "bg-yellow-50 text-yellow-700 border-yellow-200"
+}
+
+function getPeriodoLabel(rutina: RutinaMantenimiento) {
+    const trimestres: Record<number, string> = {
+        1: "Ene - Mar",
+        2: "Abr - Jun",
+        3: "Jul - Sep",
+        4: "Oct - Dic",
+    }
+    const rango = trimestres[rutina.trimestre] ?? `Q${rutina.trimestre}`
+    return `${rango} ${rutina.anio}`
+}
 
 export function RutinasAdmin({
     initialRutinas,
@@ -24,7 +42,7 @@ export function RutinasAdmin({
     initialRutinas: RutinaMantenimiento[]
     initialAgencias: Agencia[]
 }) {
-    const [rutinas, setRutinas] = useState(INITIAL_MOCK_RUTINAS)
+    const [rutinas, setRutinas] = useState<RutinaMantenimiento[]>(initialRutinas)
 
     // Form state
     const [open, setOpen] = useState(false)
@@ -35,18 +53,23 @@ export function RutinasAdmin({
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault()
 
-        let periodoStr = ""
-        if (newTrimestre === "Q1") periodoStr = `Ene - Mar ${newAnio}`
-        if (newTrimestre === "Q2") periodoStr = `Abr - Jun ${newAnio}`
-        if (newTrimestre === "Q3") periodoStr = `Jul - Sep ${newAnio}`
-        if (newTrimestre === "Q4") periodoStr = `Oct - Dic ${newAnio}`
+        const trimNum = parseInt(newTrimestre.replace("Q", ""), 10)
+        const anioNum = parseInt(newAnio, 10)
 
-        const newRutina = {
-            id: Date.now(),
-            titulo: newTitulo || `Mantenimiento Trimestral ${newTrimestre} ${newAnio}`,
-            periodo: periodoStr,
-            progreso: 0,
-            estado: "Planificación"
+        const newRutina: RutinaMantenimiento = {
+            id: crypto.randomUUID(),
+            titulo: newTitulo || `Mantenimiento Trimestral Q${trimNum} ${anioNum}`,
+            trimestre: trimNum,
+            anio: anioNum,
+            fecha_inicio: null,
+            fecha_fin: null,
+            regiones: [],
+            equipos_objetivo: [],
+            presupuesto_viaticos: null,
+            creado_por: null,
+            estado: "borrador",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
         }
 
         setRutinas([newRutina, ...rutinas])
@@ -104,35 +127,27 @@ export function RutinasAdmin({
                                 <div className="space-y-3">
                                     <Label>Agencias Objetivo</Label>
                                     <div className="flex flex-col gap-2 p-3 border border-slate-200 rounded-lg bg-slate-50">
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" defaultChecked />
-                                            <span>Región Capital (18)</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" defaultChecked />
-                                            <span>Interior del País (26)</span>
-                                        </label>
+                                        {initialAgencias.length > 0 ? (
+                                            initialAgencias.slice(0, 4).map((agencia) => (
+                                                <label key={agencia.id} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                    <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                                    <span>{agencia.nombre}</span>
+                                                </label>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-slate-400">Sin agencias disponibles</p>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="space-y-3">
                                     <Label>Elementos a Revisar</Label>
                                     <div className="flex flex-col gap-2 p-3 border border-slate-200 rounded-lg bg-slate-50 h-[88px] overflow-y-auto sidebar-scroll-hide">
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" defaultChecked />
-                                            <span>CCTV / DVRs</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" defaultChecked />
-                                            <span>Sistemas de Alarma</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" defaultChecked />
-                                            <span>Bóvedas y Esclusas</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                            <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                            <span>Cercos Eléctricos</span>
-                                        </label>
+                                        {["CCTV / DVRs", "Sistemas de Alarma", "Bóvedas y Esclusas", "Cercos Eléctricos"].map((eq) => (
+                                            <label key={eq} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                                <span>{eq}</span>
+                                            </label>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -153,54 +168,34 @@ export function RutinasAdmin({
                 </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rutinas.map(rutina => (
-                    <Card key={rutina.id} className="p-5 border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="bg-blue-50 p-2 rounded-lg">
-                                <CalendarRange className="w-5 h-5 text-blue-600" />
+            {rutinas.length === 0 ? (
+                <Card className="border-slate-200 bg-white p-12 text-center">
+                    <CalendarRange className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500 font-medium">Sin ciclos registrados</p>
+                    <p className="text-slate-400 text-sm mt-1">Crea el primer ciclo de mantenimiento trimestral.</p>
+                </Card>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {rutinas.map(rutina => (
+                        <Card key={rutina.id} className="p-5 border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="bg-blue-50 p-2 rounded-lg">
+                                    <CalendarRange className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <Badge variant="outline" className={getEstadoBadgeClass(rutina.estado)}>
+                                    {ESTADO_LABELS[rutina.estado] ?? rutina.estado}
+                                </Badge>
                             </div>
-                            <Badge variant="outline" className={
-                                rutina.estado === "Finalizado" ? "bg-slate-100 text-slate-600 border-slate-200" :
-                                    rutina.estado === "En Ejecución" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                        "bg-yellow-50 text-yellow-700 border-yellow-200"
-                            }>
-                                {rutina.estado}
-                            </Badge>
-                        </div>
 
-                        <h3 className="font-semibold text-slate-800 text-lg mb-1">{rutina.titulo}</h3>
-                        <p className="text-slate-500 text-sm mb-6 flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" />
-                            {rutina.periodo}
-                        </p>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-600 font-medium">Progreso Global</span>
-                                <span className="text-slate-800 font-bold">{rutina.progreso}%</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full ${rutina.progreso === 100 ? "bg-slate-400" : "bg-blue-500"}`}
-                                    style={{ width: `${rutina.progreso}%` }}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-2">
-                            <Button variant="outline" size="sm" className="text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-slate-200">
-                                Ver Detalles
-                            </Button>
-                            {rutina.estado !== "Finalizado" && (
-                                <Button size="sm" className="bg-slate-800 hover:bg-slate-900 text-white">
-                                    Gestionar
-                                </Button>
-                            )}
-                        </div>
-                    </Card>
-                ))}
-            </div>
+                            <h3 className="font-semibold text-slate-800 text-lg mb-1">{rutina.titulo}</h3>
+                            <p className="text-slate-500 text-sm mb-4 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" />
+                                {getPeriodoLabel(rutina)}
+                            </p>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

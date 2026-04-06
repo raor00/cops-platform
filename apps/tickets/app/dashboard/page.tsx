@@ -13,9 +13,6 @@ import {
   Activity,
   Users,
   Hand,
-  Sun,
-  Sunset,
-  Moon,
   Building2,
   TableProperties,
 } from "lucide-react"
