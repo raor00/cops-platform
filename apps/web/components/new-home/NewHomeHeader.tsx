@@ -56,7 +56,7 @@ export default function NewHomeHeader() {
       <header className="fixed left-0 right-0 top-0 z-[100] flex w-full justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
         <div
           className={`pointer-events-auto relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isAtTop
-            ? "mt-0 w-full rounded-none border-b border-transparent bg-transparent px-6 py-4 lg:px-12 lg:py-5"
+            ? "mt-0 w-full max-w-7xl mx-auto rounded-none border-b border-transparent bg-transparent px-6 py-4 lg:px-10 lg:py-5"
             : "mt-4 mx-auto w-[96%] max-w-5xl rounded-full border border-white/10 bg-[#0b1426]/80 px-4 py-2 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:px-5 lg:px-6"
             }`}
         >
