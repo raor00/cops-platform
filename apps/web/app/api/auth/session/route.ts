@@ -5,32 +5,12 @@ import {
   MASTER_SESSION_VALUE,
   MASTER_USER_COOKIE,
 } from "../../../../lib/masterAuth"
-import { getTicketsAppUrl } from "../../../../lib/moduleLinks"
-import { getTicketsBridgeSecret } from "../../../../lib/ticketsBridge"
 
-const COOKIE_MAX_AGE = 60 * 60 * 8 // 8 hours
+const COOKIE_MAX_AGE = 60 * 60 * 8
 
-function verifyBridgeToken(token: string, secret: string): { sub: string; role: string } | null {
-  try {
-    const { createHmac, timingSafeEqual } = require("crypto") as typeof import("crypto")
-    const parts = token.split(".")
-    if (parts.length !== 3) return null
-
-    const unsigned = `${parts[0]}.${parts[1]}`
-    const expected = createHmac("sha256", secret).update(unsigned).digest("base64url")
-    const a = Buffer.from(parts[2])
-    const b = Buffer.from(expected)
-    if (a.length !== b.length || !timingSafeEqual(a, b)) return null
-
-    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"))
-    const now = Math.floor(Date.now() / 1000)
-    if (payload.exp <= now) return null
-
-    return { sub: payload.sub as string, role: payload.role as string }
-  } catch {
-    return null
-  }
-}
+// Firebase public config — NEXT_PUBLIC_ vars are client-safe by design
+const FIREBASE_API_KEY =
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "AIzaSyCkxGHytPvbd1ZoCXGuLKoS_PW6QkkOnFM"
 
 export async function POST(request: Request) {
   try {
@@ -39,53 +19,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Credenciales requeridas" }, { status: 400 })
     }
 
-    // Delegate authentication to tickets (which has Firebase Admin)
-    const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "")
-    const endpoint = `${ticketsUrl}/api/auth/web-session`
-
-    let res: Response
-    try {
-      res = await fetch(endpoint, {
+    // Sign in directly via Firebase Identity Toolkit REST API
+    const firebaseRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
-    } catch (fetchErr) {
-      console.error("[session] fetch error →", endpoint, fetchErr)
-      return NextResponse.json(
-        { success: false, error: `No se pudo contactar el servidor de autenticación (${endpoint})` },
-        { status: 503 }
-      )
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      }
+    )
+
+    if (!firebaseRes.ok) {
+      const body = (await firebaseRes.json().catch(() => ({}))) as { error?: { message?: string } }
+      const code = body.error?.message ?? ""
+      console.error("[session] Firebase sign-in failed:", code)
+
+      if (
+        code.includes("INVALID_LOGIN_CREDENTIALS") ||
+        code.includes("EMAIL_NOT_FOUND") ||
+        code.includes("INVALID_PASSWORD") ||
+        code.includes("INVALID_EMAIL")
+      ) {
+        return NextResponse.json({ success: false, error: "Credenciales inválidas" }, { status: 401 })
+      }
+      if (code.includes("TOO_MANY_ATTEMPTS") || code.includes("USER_DISABLED")) {
+        return NextResponse.json({ success: false, error: "Cuenta bloqueada. Contacta a IT." }, { status: 429 })
+      }
+      return NextResponse.json({ success: false, error: `Error Firebase: ${code || firebaseRes.status}` }, { status: 401 })
     }
 
-    let data: { success: boolean; bridgeToken?: string; error?: string }
-    try {
-      data = await res.json()
-    } catch {
-      const raw = await res.text().catch(() => "(no body)")
-      console.error("[session] non-JSON response from tickets:", res.status, raw.slice(0, 200))
-      return NextResponse.json(
-        { success: false, error: `Respuesta inválida del servidor (HTTP ${res.status})` },
-        { status: 502 }
-      )
-    }
-
-    if (!data.success || !data.bridgeToken) {
-      return NextResponse.json(
-        { success: false, error: data.error ?? "Credenciales inválidas" },
-        { status: res.status === 429 ? 429 : 401 }
-      )
-    }
-
-    // Verify bridge token signature
-    const secret = getTicketsBridgeSecret()
-    if (!secret) {
-      return NextResponse.json({ success: false, error: "Bridge secret no configurado" }, { status: 500 })
-    }
-
-    const payload = verifyBridgeToken(data.bridgeToken, secret)
-    if (!payload) {
-      return NextResponse.json({ success: false, error: "Token inválido" }, { status: 401 })
+    const { localId: uid } = (await firebaseRes.json()) as { localId: string }
+    if (!uid) {
+      return NextResponse.json({ success: false, error: "Respuesta inválida de Firebase" }, { status: 500 })
     }
 
     const response = NextResponse.json({ success: true })
@@ -99,12 +64,12 @@ export async function POST(request: Request) {
 
     response.cookies.set(MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE, cookieOpts)
     response.cookies.set(MASTER_ROLE_COOKIE, "admin", cookieOpts)
-    response.cookies.set(MASTER_USER_COOKIE, payload.sub, cookieOpts)
+    response.cookies.set(MASTER_USER_COOKIE, uid, cookieOpts)
 
     return response
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error("[session] unexpected error:", msg)
-    return NextResponse.json({ success: false, error: `Error interno: ${msg}` }, { status: 500 })
+    return NextResponse.json({ success: false, error: `Error: ${msg}` }, { status: 500 })
   }
 }
