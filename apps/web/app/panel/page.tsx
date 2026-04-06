@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+
+export const dynamic = "force-dynamic";
 import CircuitNetwork from "../../components/new-home/CircuitNetwork";
 import ModuleCardClient from "./ModuleCardClient";
 import {

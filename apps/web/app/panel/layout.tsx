@@ -3,6 +3,8 @@ import { cookies } from "next/headers"
 import { MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE } from "../../lib/masterAuth"
 import type { ReactNode } from "react"
 
+export const dynamic = "force-dynamic"
+
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const cookieStore = await cookies()
   const session = cookieStore.get(MASTER_SESSION_COOKIE)?.value

@@ -41,12 +41,36 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Disable client-side router cache for dynamic segments.
+    // Prevents stale page segments from being served after a new Vercel deploy.
+    staleTimes: {
+      dynamic: 0,
+      static: 180,
+    },
+  },
+
   async headers() {
     return [
       {
-        // Apply to all routes
+        // Apply security headers to all routes
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      {
+        // Auth-sensitive routes must never be served from CDN cache
+        source: "/panel/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+          { key: "Pragma", value: "no-cache" },
+        ],
+      },
+      {
+        source: "/login",
+        headers: [
+          { key: "Cache-Control", value: "no-store, must-revalidate" },
+          { key: "Pragma", value: "no-cache" },
+        ],
       },
     ];
   },
