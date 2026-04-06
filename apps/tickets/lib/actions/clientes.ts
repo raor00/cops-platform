@@ -80,7 +80,7 @@ export async function getClientes(
 
   let query = supabase.from("clientes").select("*", { count: "exact" })
   if (options.search) {
-    const s = options.search
+    const s = options.search.replace(/[,().%\\]/g, "")
     query = query.or(`nombre.ilike.%${s}%,empresa.ilike.%${s}%,rif_cedula.ilike.%${s}%`)
   }
   if (options.estado) query = query.eq("estado", options.estado)
@@ -315,7 +315,7 @@ export async function searchClientes(query: string): Promise<ActionResponse<Clie
   const { data, error } = await supabase
     .from("clientes")
     .select("*")
-    .or(`nombre.ilike.%${query}%,empresa.ilike.%${query}%`)
+    .or(`nombre.ilike.%${query.replace(/[,().%\\]/g, "")}%,empresa.ilike.%${query.replace(/[,().%\\]/g, "")}%`)
     .eq("estado", "activo")
     .limit(10)
 

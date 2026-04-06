@@ -63,6 +63,23 @@ function canManageAgencias(role: string) {
   return ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY] >= 3
 }
 
+async function canAccessVisita(
+  visitaId: string,
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+): Promise<boolean> {
+  if (canCoordinate(user.rol)) return true
+
+  if (isFirebaseMode()) {
+    const db = getAdminFirestore()
+    const doc = await db.collection("visitas_mantenimiento").doc(visitaId).get()
+    return doc.exists && doc.data()?.tecnico_id === user.id
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase.from("visitas_mantenimiento").select("tecnico_id").eq("id", visitaId).single()
+  return data?.tecnico_id === user.id
+}
+
 async function getSupabaseTechnicians() {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -153,7 +170,7 @@ export async function getAgencias(search = ""): Promise<ActionResponse<Agencia[]
   let query = supabase.from("agencias").select("*").order("nombre", { ascending: true })
 
   if (search.trim()) {
-    const q = search.trim()
+    const q = search.trim().replace(/[,().%\\]/g, "")
     query = query.or(`nombre.ilike.%${q}%,ciudad.ilike.%${q}%,region.ilike.%${q}%`)
   }
 
@@ -871,6 +888,7 @@ export async function getMisVisitas(): Promise<ActionResponse<VisitaMantenimient
 export async function getBitacoraByVisita(visitaId: string): Promise<ActionResponse<BitacoraVisita | null>> {
   const user = await getCurrentUser()
   if (!user) return { success: false, error: "No autenticado" }
+  if (!(await canAccessVisita(visitaId, user))) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) {
     return { success: true, data: getDemoBitacoraByVisita(visitaId) }
@@ -909,6 +927,7 @@ export async function saveBitacoraVisita(input: BitacoraVisitaInput): Promise<Ac
 
   const parsed = bitacoraVisitaSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos" }
+  if (!(await canAccessVisita(parsed.data.visita_id, user))) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) {
     const data = saveDemoBitacoraVisita(parsed.data, user)
