@@ -4,17 +4,34 @@ import ModuleCardClient from "./ModuleCardClient";
 import {
   MASTER_ROLE_COOKIE,
   MASTER_USER_COOKIE,
-  ModuleId,
   getVisibleModules,
 } from "../../lib/masterAuth";
-import { getCotizacionesAppUrl } from "../../lib/moduleLinks";
+import { getCotizacionesAppUrl, getTicketsAppUrl } from "../../lib/moduleLinks";
+import { createTicketsBridgeToken, getTicketsBridgeSecret } from "../../lib/ticketsBridge";
 
 export default async function PanelHomePage() {
   const cookieStore = await cookies();
   const role = cookieStore.get(MASTER_ROLE_COOKIE)?.value;
   const username = cookieStore.get(MASTER_USER_COOKIE)?.value ?? "Operador";
+
   const cotizacionesHref = getCotizacionesAppUrl();
-  const ticketsHref = "/panel/tickets";
+
+  // Generate tickets URL directly — no intermediate /panel/tickets page
+  const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "");
+  const bridgeSecret = getTicketsBridgeSecret();
+  let ticketsHref: string;
+  if (bridgeSecret) {
+    const token = createTicketsBridgeToken(
+      { sub: username, role: role ?? "admin" },
+      bridgeSecret,
+    );
+    const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
+    bridgeUrl.searchParams.set("token", token);
+    ticketsHref = bridgeUrl.toString();
+  } else {
+    ticketsHref = ticketsUrl + "/dashboard";
+  }
+
   const modules = getVisibleModules(role).map((module) => {
     if (module.id === "cotizaciones") return { ...module, href: cotizacionesHref };
     if (module.id === "tickets") return { ...module, href: ticketsHref };
@@ -22,13 +39,12 @@ export default async function PanelHomePage() {
   });
 
   return (
-    <div className="relative w-full flex min-h-[calc(100vh-80px)] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0a192f] to-[#112240]">
-      {/* Background Graphic Engine (Cyber Circuit) */}
+    <div className="relative w-full flex min-h-screen flex-col items-center justify-center overflow-hidden">
+      {/* Animated background — full screen, same as login */}
       <div className="fixed inset-0 z-0">
         <CircuitNetwork />
       </div>
-
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(14,165,233,0.15),transparent_80%)]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(14,165,233,0.12),transparent_80%)]" />
 
       {/* Main Content */}
       <section className="relative z-10 w-full max-w-5xl px-4 py-12 text-center flex flex-col items-center justify-center">
@@ -47,9 +63,9 @@ export default async function PanelHomePage() {
         </p>
 
         <div className="mt-12 grid w-full gap-5 sm:px-10 md:grid-cols-3 max-w-4xl mx-auto">
-          {modules.map((module) => {
-            return <ModuleCardClient key={module.id} module={module} />;
-          })}
+          {modules.map((module) => (
+            <ModuleCardClient key={module.id} module={module} />
+          ))}
         </div>
       </section>
     </div>

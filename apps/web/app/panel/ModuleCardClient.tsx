@@ -28,16 +28,19 @@ export default function ModuleCardClient({
 
     const IconToRender = iconMap[module.id] || Box;
 
+    const isExternal = module.href.startsWith("http");
+
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         if (isNavigating) return;
-
         setIsNavigating(true);
-
-        // Add small delay for UI feedback to guarantee they see the loading process
         setTimeout(() => {
-            router.push(module.href);
-        }, 50); // fast transition but guarantees state render
+            if (isExternal) {
+                window.location.href = module.href;
+            } else {
+                router.push(module.href);
+            }
+        }, 50);
     };
 
     return (

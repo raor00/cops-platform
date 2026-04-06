@@ -10,7 +10,7 @@ export default function AppHeader() {
     const isDashboard = pathname.startsWith("/panel");
 
     return (
-        <header className="fixed left-0 right-0 top-0 z-[100] px-4 py-3 md:px-6 transition-all duration-300 backdrop-blur-sm bg-transparent">
+        <header className="fixed left-0 right-0 top-0 z-[100] px-4 py-4 md:px-6 transition-all duration-300 backdrop-blur-md bg-[#070f1e]/40 border-b border-white/5">
             <div className="mx-auto max-w-7xl flex items-center justify-between">
                 <Link href="/" className="group flex items-center gap-3">
                     <Image
@@ -18,11 +18,13 @@ export default function AppHeader() {
                         alt="COPS Electronics"
                         width={36}
                         height={36}
-                        className="drop-shadow-[0_0_10px_rgba(0,163,196,0.4)]"
+                        className="drop-shadow-[0_0_12px_rgba(0,163,196,0.5)]"
                     />
-                    <span className="text-lg font-black tracking-tight text-white drop-shadow-md">
-                        COP&apos;S <span className="text-cyan-400">Electronics</span>
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="text-lg font-black tracking-tight text-white drop-shadow-md">
+                            COP&apos;S <span className="text-cyan-400">Electronics</span>
+                        </span>
+                    </div>
                 </Link>
 
                 {isDashboard && (
@@ -34,7 +36,7 @@ export default function AppHeader() {
                         >
                             <Settings className="h-4 w-4" />
                         </Link>
-                        <div className="h-4 w-[1px] bg-white/10 mx-1" />
+                        <div className="h-4 w-[1px] bg-white/10 mx-1 border-none" />
                         <a
                             href="/logout"
                             className="flex h-9 px-3 items-center justify-center gap-2 rounded-full border border-rose-500/30 bg-rose-500/10 text-xs font-semibold text-rose-200 transition-all hover:bg-rose-500/20 hover:text-rose-100"
