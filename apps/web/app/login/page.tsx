@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Zap, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { getFirebaseClientAuth } from "../../lib/firebase/client"
+import Image from "next/image"
 import CircuitNetwork from "../../components/new-home/CircuitNetwork"
 
 export default function LoginPage() {
@@ -54,7 +55,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden px-4 py-16 bg-[#070f1e]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16 bg-[#070f1e]">
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a192f] to-[#112240]">
         <CircuitNetwork />
       </div>
@@ -62,11 +63,18 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-[120px]" />
 
       <section className="relative z-10 w-full max-w-md text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-[#0f1b2e]/60 shadow-[0_0_30px_rgba(0,163,196,0.2)] backdrop-blur-xl">
-          <Zap className="h-7 w-7 text-cyan-400" />
+        <div className="mx-auto flex items-center justify-center">
+          <Image
+            src="/branding/cops.PNG"
+            alt="COPS Electronics"
+            width={120}
+            height={120}
+            className="drop-shadow-[0_0_20px_rgba(0,163,196,0.3)]"
+            priority
+          />
         </div>
 
-        <h1 className="mt-5 text-3xl font-black tracking-tight text-white drop-shadow-md">
+        <h1 className="mt-4 text-3xl font-black tracking-tight text-white drop-shadow-md">
           COP&apos;S Electronics
         </h1>
         <p className="mt-2 text-sm font-medium tracking-wide text-cyan-200/70 uppercase">

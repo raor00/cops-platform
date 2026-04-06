@@ -11,19 +11,19 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   const useNewHome = process.env.NEXT_PUBLIC_NEW_HOME !== "0";
   const isNewHomeRoute = useNewHome && pathname === "/";
 
-  const isInternalPortal = pathname.startsWith("/login") || pathname.startsWith("/panel");
+  const isLoginPage = pathname.startsWith("/login")
+  const isInternalPortal = pathname.startsWith("/panel");
 
   return (
     <>
-      {isInternalPortal ? <AppHeader /> : <NewHomeHeader />}
-      {!isInternalPortal && <ScrollProgressBar />}
+      {!isLoginPage && (isInternalPortal ? <AppHeader /> : <NewHomeHeader />)}
+      {!isInternalPortal && !isLoginPage && <ScrollProgressBar />}
 
-      <div className={isNewHomeRoute ? "" : isInternalPortal ? "pt-[80px]" : "pt-[68px] md:pt-[76px]"}>
+      <div className={isNewHomeRoute ? "" : isInternalPortal ? "pt-[80px]" : isLoginPage ? "" : "pt-[68px] md:pt-[76px]"}>
         {children}
       </div>
 
-      {/* Remove footer from the portal paths as well as the new home */}
-      {!(isNewHomeRoute || isInternalPortal) && <SiteFooter />}
+      {!(isNewHomeRoute || isInternalPortal || isLoginPage) && <SiteFooter />}
     </>
   );
 }
