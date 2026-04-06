@@ -247,6 +247,10 @@ export async function getTicketFotos(
       return { success: false, error: "No autenticado" }
     }
 
+    if (!(await canUploadFotoToTicket(ticketId, user))) {
+      return { success: false, error: "No tienes permisos para ver fotos de este ticket" }
+    }
+
     if (isLocalMode()) {
       return {
         success: true,

@@ -8,6 +8,18 @@ import { getAdminFirestore } from "@/lib/firebase/admin"
 import type { ActionResponse, ChangeType, DashboardStats, EnhancedDashboardStats, TechnicianStats, Ticket, TicketStatus, TicketPriority, User } from "@/types"
 import { canViewAllTickets } from "@/types"
 
+interface RecentTicket {
+  id: string
+  numero_ticket: string
+  tipo: string
+  cliente_nombre: string
+  asunto: string
+  estado: TicketStatus
+  prioridad: string
+  created_at: string
+  tecnico?: { id: string; nombre: string; apellido: string } | null
+}
+
 // ─── Firebase helpers ────────────────────────────────────────────────────────
 
 async function fbGetDashboardStats(user: User): Promise<DashboardStats> {
@@ -169,7 +181,7 @@ export async function getTechnicianStats(tecnicoId?: string): Promise<ActionResp
   return { success: true, data: { ticketsAsignados: ticketsAsignados || 0, ticketsCompletados: ticketsCompletados || 0, ticketsEnProgreso: ticketsEnProgreso || 0, pagosPendientes, montoPendiente, tiempoPromedioMinutos: Math.round(tiempoPromedioMinutos) } }
 }
 
-export async function getRecentTickets(limit = 5): Promise<ActionResponse<unknown[]>> {
+export async function getRecentTickets(limit = 5): Promise<ActionResponse<RecentTicket[]>> {
   const user = await getCurrentUser()
   if (!user) return { success: false, error: "No autorizado" }
 
@@ -182,7 +194,7 @@ export async function getRecentTickets(limit = 5): Promise<ActionResponse<unknow
       if (!canViewAllTickets(user.rol)) query = db.collection("tickets").where("tecnico_id", "==", user.id).orderBy("created_at", "desc").limit(limit)
 
       const snap = await query.get()
-      return { success: true, data: snap.docs.map((d) => ({ id: d.id, ...d.data() })) }
+      return { success: true, data: snap.docs.map((d) => ({ id: d.id, ...d.data() }) as RecentTicket) }
     } catch (e: unknown) {
       return { success: false, error: (e as Error).message }
     }
@@ -199,7 +211,7 @@ export async function getRecentTickets(limit = 5): Promise<ActionResponse<unknow
 
   const { data, error } = await query
   if (error) return { success: false, error: error.message }
-  return { success: true, data: data || [] }
+  return { success: true, data: (data ?? []) as unknown as RecentTicket[] }
 }
 
 export async function getEnhancedDashboardStats(): Promise<ActionResponse<EnhancedDashboardStats>> {

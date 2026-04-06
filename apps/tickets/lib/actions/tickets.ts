@@ -63,6 +63,27 @@ async function fbGetUserMini(id: string): Promise<{ id: string; nombre: string; 
   return { id: doc.id, nombre: d.nombre, apellido: d.apellido, email: d.email, rol: d.rol, telefono: d.telefono }
 }
 
+async function canAccessTicket(
+  ticketId: string,
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+): Promise<boolean> {
+  if (ROLE_HIERARCHY[user.rol] >= 2) return true
+
+  if (isLocalMode()) {
+    const ticket = getDemoTicketById(ticketId, user)
+    return ticket?.tecnico_id === user.id
+  }
+
+  if (isFirebaseMode()) {
+    const ticket = await fbGetTicketById(ticketId)
+    return ticket?.tecnico_id === user.id
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase.from("tickets").select("tecnico_id").eq("id", ticketId).single()
+  return data?.tecnico_id === user.id
+}
+
 async function fbEnrichTicket(ticket: Ticket): Promise<Ticket> {
   const [creador, tecnico] = await Promise.all([
     ticket.creado_por ? fbGetUserMini(ticket.creado_por) : null,
@@ -164,10 +185,12 @@ export async function getTickets(options?: {
   if (options?.status) query = query.eq("estado", options.status)
   if (options?.priority) query = query.eq("prioridad", options.priority)
   if (options?.tecnicoId) query = query.eq("tecnico_id", options.tecnicoId)
-  if (options?.search)
+  if (options?.search) {
+    const sanitizedSearch = options.search.replace(/[,().%\\]/g, "")
     query = query.or(
-      `numero_ticket.ilike.%${options.search}%,cliente_nombre.ilike.%${options.search}%,asunto.ilike.%${options.search}%`
+      `numero_ticket.ilike.%${sanitizedSearch}%,cliente_nombre.ilike.%${sanitizedSearch}%,asunto.ilike.%${sanitizedSearch}%`
     )
+  }
 
   query = query.order("created_at", { ascending: false }).range(offset, offset + pageSize - 1)
 
@@ -740,6 +763,10 @@ export async function deleteTicket(id: string): Promise<ActionResponse> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getTechnicians(): Promise<ActionResponse<Array<{ id: string; nombre: string; apellido: string }>>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 2) return { success: false, error: "Sin permisos" }
+
   if (isLocalMode()) return { success: true, data: getDemoTechnicians() }
 
   if (isFirebaseMode()) {
@@ -775,6 +802,7 @@ export async function getTechnicians(): Promise<ActionResponse<Array<{ id: strin
 export async function getTicketHistory(ticketId: string): Promise<ActionResponse<ChangeHistory[]>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
+  if (!(await canAccessTicket(ticketId, currentUser))) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) return { success: true, data: [] }
 
@@ -801,6 +829,7 @@ export async function getTicketHistory(ticketId: string): Promise<ActionResponse
 export async function getTicketUpdateLogs(ticketId: string): Promise<ActionResponse<UpdateLog[]>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
+  if (!(await canAccessTicket(ticketId, currentUser))) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) return { success: true, data: getDemoUpdateLogs(ticketId) }
 

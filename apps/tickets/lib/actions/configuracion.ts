@@ -35,7 +35,7 @@ export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>
           batch.set(db.collection('configuracion').doc(cfg.clave), d)
         }
         await batch.commit()
-        return { success: true, data: DEFAULT_CONFIG_DATA.map(c => ({ id: Number.NaN, ...c, updated_at: now } as unknown as SystemConfig)) }
+        return { success: true, data: DEFAULT_CONFIG_DATA.map((c, i) => ({ id: i + 1, ...c, updated_at: now } as unknown as SystemConfig)) }
       }
       const data = snap.docs.map((d) => fromFirestoreDoc<SystemConfig>(d.id, d.data()))
       data.sort((a, b) => a.clave.localeCompare(b.clave))
@@ -69,7 +69,7 @@ export async function updateConfigValue(clave: string, valor: string): Promise<A
       const snap = await ref.get()
       const now = new Date().toISOString()
       if (!snap.exists) {
-        const newCfg = cleanForFirestore({ id: Number.NaN, clave, valor, descripcion: clave, tipo_dato: 'string', updated_at: now })
+        const newCfg = cleanForFirestore({ id: 0, clave, valor, descripcion: clave, tipo_dato: 'string', updated_at: now })
         await ref.set(newCfg)
         revalidatePath('/dashboard/configuracion')
         return { success: true, data: newCfg as SystemConfig, message: 'Configuracion actualizada' }

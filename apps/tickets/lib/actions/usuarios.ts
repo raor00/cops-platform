@@ -69,10 +69,11 @@ export async function getUserById(userId: string): Promise<ActionResponse<UserPr
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
+    if (user.id !== userId && ROLE_HIERARCHY[user.rol] < 3) return { success: false, error: "Sin permisos" }
 
     if (isLocalMode()) {
-      const demo = getDemoCurrentUser()
-      return { success: true, data: { ...demo, foto_perfil_url: null } as UserProfile }
+      const demoUser = getDemoUsers().find((u) => u.id === userId) ?? getDemoCurrentUser()
+      return { success: true, data: { ...demoUser, foto_perfil_url: null } as UserProfile }
     }
 
     if (isFirebaseMode()) {
