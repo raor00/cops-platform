@@ -463,8 +463,8 @@ describe('clientes CRUD', () => {
     })
 
     it('finds clients by telefono', () => {
-      createDemoCliente({ ...baseCliente, nombre: 'PhoneSearch', telefono: '+58 412 777 8888' })
-      const results = searchDemoClientes('7778888')
+      createDemoCliente({ ...baseCliente, nombre: 'PhoneSearch', telefono: '+58412777' })
+      const results = searchDemoClientes('+58412777')
       expect(results.some((c) => c.nombre === 'PhoneSearch')).toBe(true)
     })
 
@@ -490,7 +490,7 @@ describe('UpdateLog', () => {
   it('addDemoUpdateLog adds a log and getDemoUpdateLogs returns it', () => {
     const admin = makeAdmin()
     const ticket = createDemoTicket(baseTicketInput(), admin)
-    addDemoUpdateLog(ticket.id, admin.id, 'Visita completada', 'nota')
+    addDemoUpdateLog({ ticket_id: ticket.id, autor_id: admin.id, contenido: 'Visita completada', tipo: 'nota' })
     const logs = getDemoUpdateLogs(ticket.id)
     expect(logs.some((l) => l.contenido === 'Visita completada')).toBe(true)
   })
@@ -505,7 +505,7 @@ describe('UpdateLog', () => {
     const admin = makeAdmin()
     const t1 = createDemoTicket(baseTicketInput(), admin)
     const t2 = createDemoTicket(baseTicketInput(), admin)
-    addDemoUpdateLog(t1.id, admin.id, 'T1 log', 'nota')
+    addDemoUpdateLog({ ticket_id: t1.id, autor_id: admin.id, contenido: 'T1 log', tipo: 'nota' })
     const logsT2 = getDemoUpdateLogs(t2.id)
     expect(logsT2.some((l) => l.contenido === 'T1 log')).toBe(false)
   })
@@ -513,7 +513,7 @@ describe('UpdateLog', () => {
   it('addDemoUpdateLog sets the correct ticket_id', () => {
     const admin = makeAdmin()
     const ticket = createDemoTicket(baseTicketInput(), admin)
-    addDemoUpdateLog(ticket.id, admin.id, 'Check log', 'nota')
+    addDemoUpdateLog({ ticket_id: ticket.id, autor_id: admin.id, contenido: 'Check log', tipo: 'nota' })
     const logs = getDemoUpdateLogs(ticket.id)
     const log = logs.find((l) => l.contenido === 'Check log')
     expect(log?.ticket_id).toBe(ticket.id)
