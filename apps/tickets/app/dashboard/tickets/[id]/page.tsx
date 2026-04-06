@@ -52,6 +52,7 @@ export default async function TicketDetailPage({ params, searchParams }: TicketP
       ? ticket.tecnico_id === user.id
       : ROLE_HIERARCHY[user.rol] >= 2
   const canDeleteFotos = ROLE_HIERARCHY[user.rol] >= 3
+  const canViewHistorial = ROLE_HIERARCHY[user.rol] >= 2
 
   const [fasesResult, historialResult, inspeccionResult, updateLogsResult, origenResult, derivadoResult] = await Promise.all([
     ticket.tipo === 'proyecto'
@@ -130,6 +131,7 @@ export default async function TicketDetailPage({ params, searchParams }: TicketP
         canUpdateProgress={canUpdateProgress}
         canUploadFotos={canUploadFotos}
         canDeleteFotos={canDeleteFotos}
+        canViewHistorial={canViewHistorial}
       />
     </div>
   )

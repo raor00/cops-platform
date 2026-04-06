@@ -58,8 +58,8 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   borrador: ['asignado', 'cancelado'],
-  asignado: ['iniciado', 'cancelado'],
-  iniciado: ['en_progreso', 'cancelado'],
+  asignado: ['en_progreso', 'cancelado'],
+  iniciado: ['en_progreso', 'cancelado'],  // backwards compat for existing tickets
   en_progreso: ['finalizado', 'cancelado'],
   finalizado: [],
   cancelado: [],
@@ -70,7 +70,7 @@ export const ADMIN_REVERSE_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   borrador: [],
   asignado: [],
   iniciado: ['asignado'],
-  en_progreso: ['iniciado'],
+  en_progreso: ['asignado'],
   finalizado: ['en_progreso'],
   cancelado: ['asignado'],
 } as const

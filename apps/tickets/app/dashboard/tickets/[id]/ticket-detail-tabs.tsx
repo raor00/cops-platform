@@ -7,6 +7,7 @@ import {
   History,
   FileSearch,
   Camera,
+  BookOpen,
 } from "lucide-react"
 import { cn, formatDateTime } from "@/lib/utils"
 import type { ChangeHistory, Inspeccion, Ticket, TicketFase, UpdateLog } from "@/types"
@@ -28,6 +29,7 @@ interface TicketDetailTabsProps {
   canUpdateProgress: boolean
   canUploadFotos?: boolean
   canDeleteFotos?: boolean
+  canViewHistorial?: boolean
   userRole?: string
   currentUserId?: string
 }
@@ -42,6 +44,7 @@ export function TicketDetailTabs({
   canUpdateProgress,
   canUploadFotos = false,
   canDeleteFotos = false,
+  canViewHistorial = false,
   userRole,
   currentUserId,
 }: TicketDetailTabsProps) {
@@ -86,10 +89,22 @@ export function TicketDetailTabs({
           Fotos
         </TabsTrigger>
 
-        <TabsTrigger value="historial">
-          <History className="mr-1.5 h-4 w-4" />
-          Historial
+        <TabsTrigger value="bitacora">
+          <BookOpen className="mr-1.5 h-4 w-4" />
+          Bitácora
+          {updateLogs.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
+              {updateLogs.length}
+            </span>
+          )}
         </TabsTrigger>
+
+        {canViewHistorial && (
+          <TabsTrigger value="historial">
+            <History className="mr-1.5 h-4 w-4" />
+            Historial
+          </TabsTrigger>
+        )}
 
         {!isInspeccion && (
           <TabsTrigger value="inspeccion">
@@ -145,66 +160,59 @@ export function TicketDetailTabs({
         />
       </TabsContent>
 
-      <TabsContent value="historial">
-        <div className="space-y-6">
-          <div>
-            <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-slate-500">
-              <History className="h-3.5 w-3.5" />
-              Actualizaciones del servicio
-            </h3>
-            <UpdateLogPanel
-              ticketId={ticket.id}
-              ticketStatus={ticket.estado}
-              initialLogs={updateLogs}
-              canAdd={canAddLog}
-              canUploadPhotos={canUploadFotos}
-            />
-          </div>
+      {/* ── Bitácora: seguimiento y notas de avance (todos los roles) ── */}
+      <TabsContent value="bitacora">
+        <UpdateLogPanel
+          ticketId={ticket.id}
+          ticketStatus={ticket.estado}
+          initialLogs={updateLogs}
+          canAdd={canAddLog}
+          canUploadPhotos={canUploadFotos}
+        />
+      </TabsContent>
 
-          {historial.length > 0 && (
-            <div>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Historial de cambios
-              </h3>
-              <div className="space-y-2">
-                {historial.map((entry, index) => (
-                  <div
-                    key={entry.id}
-                    className="animate-slide-up rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:bg-slate-50"
-                    style={{ animationDelay: `${index * 40}ms` }}
-                  >
-                    <div className="flex gap-4">
-                      <div className="w-32 shrink-0 pt-0.5 text-xs text-slate-400">
-                        {formatDateTime(entry.created_at)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-slate-800">
-                          {CHANGE_TYPE_LABELS[entry.tipo_cambio] ?? entry.tipo_cambio}
+      {/* ── Historial: cambios de estado automáticos (coordinador+) ── */}
+      {canViewHistorial && (
+        <TabsContent value="historial">
+          {historial.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-400">Sin cambios registrados.</p>
+          ) : (
+            <div className="space-y-2">
+              {historial.map((entry, index) => (
+                <div
+                  key={entry.id}
+                  className="animate-slide-up rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:bg-slate-50"
+                  style={{ animationDelay: `${index * 40}ms` }}
+                >
+                  <div className="flex gap-4">
+                    <div className="w-32 shrink-0 pt-0.5 text-xs text-slate-400">
+                      {formatDateTime(entry.created_at)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-slate-800">
+                        {CHANGE_TYPE_LABELS[entry.tipo_cambio] ?? entry.tipo_cambio}
+                      </p>
+                      {entry.observacion && (
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{entry.observacion}</p>
+                      )}
+                      {entry.valor_anterior && entry.valor_nuevo && (
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          {entry.valor_anterior} → {entry.valor_nuevo}
                         </p>
-                        {entry.observacion && (
-                          <p className="mt-0.5 truncate text-xs text-slate-500">
-                            {entry.observacion}
-                          </p>
-                        )}
-                        {entry.valor_anterior && entry.valor_nuevo && (
-                          <p className="mt-0.5 text-xs text-slate-400">
-                            {entry.valor_anterior} -&gt; {entry.valor_nuevo}
-                          </p>
-                        )}
-                        {entry.usuario && (
-                          <p className="mt-0.5 text-xs text-slate-400">
-                            por {entry.usuario.nombre} {entry.usuario.apellido}
-                          </p>
-                        )}
-                      </div>
+                      )}
+                      {entry.usuario && (
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          por {entry.usuario.nombre} {entry.usuario.apellido}
+                        </p>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
-        </div>
-      </TabsContent>
+        </TabsContent>
+      )}
 
       {!isInspeccion && (
         <TabsContent value="inspeccion">

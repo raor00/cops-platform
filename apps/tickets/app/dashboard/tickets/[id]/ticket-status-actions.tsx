@@ -217,8 +217,12 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
             disabled={isLoading}
             variant="outline"
           >
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            En Progreso
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Play className="h-4 w-4 mr-2" />
+            )}
+            {ticket.estado === "asignado" || ticket.estado === "iniciado" ? "Iniciar" : "En Progreso"}
           </Button>
         )}
 
