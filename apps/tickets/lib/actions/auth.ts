@@ -63,7 +63,8 @@ async function getBridgeSessionUid(): Promise<string | null> {
 
   if (!token) return null
 
-  const verification = verifyTicketsBridgeToken(token)
+  // skipExpiry: the cookie maxAge (12h) controls session lifetime, not the JWT exp (90s transit TTL)
+  const verification = verifyTicketsBridgeToken(token, { skipExpiry: true })
   if (!verification.valid) {
     cookieStore.delete(BRIDGE_SESSION_COOKIE)
     return null

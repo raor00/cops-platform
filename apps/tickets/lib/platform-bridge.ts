@@ -53,7 +53,10 @@ function safeCompare(a: string, b: string) {
   return timingSafeEqual(left, right);
 }
 
-export function verifyTicketsBridgeToken(token: string): BridgeVerificationResult {
+export function verifyTicketsBridgeToken(
+  token: string,
+  options?: { skipExpiry?: boolean }
+): BridgeVerificationResult {
   const secret = readBridgeSecret();
   if (!secret) {
     return { valid: false, reason: "missing-secret" };
@@ -101,9 +104,11 @@ export function verifyTicketsBridgeToken(token: string): BridgeVerificationResul
     return { valid: false, reason: "invalid-payload" };
   }
 
-  const now = Math.floor(Date.now() / 1000);
-  if (payload.exp <= now || payload.iat > now + 60) {
-    return { valid: false, reason: "expired" };
+  if (!options?.skipExpiry) {
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp <= now || payload.iat > now + 60) {
+      return { valid: false, reason: "expired" };
+    }
   }
 
   return { valid: true, payload };
