@@ -41,13 +41,35 @@ export async function POST(request: Request) {
 
     // Delegate authentication to tickets (which has Firebase Admin)
     const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "")
-    const res = await fetch(`${ticketsUrl}/api/auth/web-login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
+    const endpoint = `${ticketsUrl}/api/auth/web-login`
 
-    const data = (await res.json()) as { success: boolean; bridgeToken?: string; error?: string }
+    let res: Response
+    try {
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
+    } catch (fetchErr) {
+      console.error("[session] fetch error →", endpoint, fetchErr)
+      return NextResponse.json(
+        { success: false, error: `No se pudo contactar el servidor de autenticación (${endpoint})` },
+        { status: 503 }
+      )
+    }
+
+    let data: { success: boolean; bridgeToken?: string; error?: string }
+    try {
+      data = await res.json()
+    } catch {
+      const raw = await res.text().catch(() => "(no body)")
+      console.error("[session] non-JSON response from tickets:", res.status, raw.slice(0, 200))
+      return NextResponse.json(
+        { success: false, error: `Respuesta inválida del servidor (HTTP ${res.status})` },
+        { status: 502 }
+      )
+    }
+
     if (!data.success || !data.bridgeToken) {
       return NextResponse.json(
         { success: false, error: data.error ?? "Credenciales inválidas" },
@@ -81,7 +103,8 @@ export async function POST(request: Request) {
 
     return response
   } catch (err) {
-    console.error("[session]", err)
-    return NextResponse.json({ success: false, error: "Error interno" }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("[session] unexpected error:", msg)
+    return NextResponse.json({ success: false, error: `Error interno: ${msg}` }, { status: 500 })
   }
 }
