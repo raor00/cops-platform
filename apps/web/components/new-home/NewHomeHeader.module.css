@@ -12,13 +12,13 @@
 
 .brand {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: 1rem;
   letter-spacing: 1px;
   color: #ffffff;
 }
 
 .subtitle {
-  font-size: 0.55rem;
+  font-size: 0.5rem;
   letter-spacing: 2px;
   font-weight: 500;
   color: #94a3b8;
@@ -26,8 +26,8 @@
 
 .atomLogo {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -35,8 +35,8 @@
 }
 
 .nucleus {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   background: #ffffff;
   border-radius: 50%;
   box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);

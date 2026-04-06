@@ -19,7 +19,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
       {!isLoginPage && (isInternalPortal ? <AppHeader /> : <NewHomeHeader />)}
       {!isInternalPortal && !isLoginPage && <ScrollProgressBar />}
 
-      <div className={isNewHomeRoute ? "" : isInternalPortal ? "pt-[80px]" : isLoginPage ? "" : "pt-[68px] md:pt-[76px]"}>
+      <div className={isNewHomeRoute ? "" : isInternalPortal ? "pt-[80px]" : isLoginPage ? "" : "pt-[62px] md:pt-[70px]"}>
         {children}
       </div>
 
