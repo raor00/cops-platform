@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     // Delegate authentication to tickets (which has Firebase Admin)
     const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "")
-    const endpoint = `${ticketsUrl}/api/auth/web-login`
+    const endpoint = `${ticketsUrl}/api/auth/web-session`
 
     let res: Response
     try {
