@@ -46,8 +46,10 @@ export default function LoginPage() {
         setError("Credenciales inválidas")
       } else if (code === "auth/too-many-requests") {
         setError("Demasiados intentos. Intenta más tarde.")
+      } else if (code === "auth/invalid-api-key" || code === "auth/api-key-not-valid") {
+        setError("Error de configuración Firebase. Contacta a IT.")
       } else {
-        setError("Error al iniciar sesión. Verifica tu conexión.")
+        setError(`Error: ${code ?? (err instanceof Error ? err.message : "desconocido")}`)
       }
     } finally {
       setLoading(false)
