@@ -3,8 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { getFirebaseClientAuth } from "../../lib/firebase/client"
 import Image from "next/image"
 import CircuitNetwork from "../../components/new-home/CircuitNetwork"
 
@@ -22,17 +20,13 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const auth = getFirebaseClientAuth()
-      const credential = await signInWithEmailAndPassword(auth, email.trim(), password)
-      const idToken = await credential.user.getIdToken()
-
       const res = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ email: email.trim(), password }),
       })
 
-      const data = await res.json()
+      const data = (await res.json()) as { success: boolean; error?: string }
       if (!data.success) {
         setError(data.error ?? "Error al iniciar sesión")
         return
@@ -40,17 +34,8 @@ export default function LoginPage() {
 
       router.push("/panel")
       router.refresh()
-    } catch (err: unknown) {
-      const code = (err as { code?: string }).code
-      if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
-        setError("Credenciales inválidas")
-      } else if (code === "auth/too-many-requests") {
-        setError("Demasiados intentos. Intenta más tarde.")
-      } else if (code === "auth/invalid-api-key" || code === "auth/api-key-not-valid") {
-        setError("Error de configuración Firebase. Contacta a IT.")
-      } else {
-        setError(`Error: ${code ?? (err instanceof Error ? err.message : "desconocido")}`)
-      }
+    } catch {
+      setError("Error de conexión. Verifica tu red e inténtalo de nuevo.")
     } finally {
       setLoading(false)
     }
