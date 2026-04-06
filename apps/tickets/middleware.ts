@@ -64,10 +64,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next({ request })
     }
 
-    return NextResponse.redirect(new URL("/login", request.url))
+    // No standalone login in Firebase mode — send directly to web platform
+    return NextResponse.redirect(WEB_APP_URL + "/login")
   }
 
-  return NextResponse.redirect(new URL("/login", request.url))
+  return NextResponse.redirect(WEB_APP_URL + "/login")
 }
 
 export const config = {
