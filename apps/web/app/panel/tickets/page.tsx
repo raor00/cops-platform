@@ -28,22 +28,15 @@ export default async function TicketsPage() {
   const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "");
   const bridgeSecret = getTicketsBridgeSecret();
 
-  try {
-    if (bridgeSecret) {
-      // Intentar via bridge SSO con token firmado
-      const token = createTicketsBridgeToken(
-        { sub: username, role: role ?? "admin" },
-        bridgeSecret,
-      );
-      const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
-      bridgeUrl.searchParams.set("token", token);
-      redirect(bridgeUrl.toString());
-    } else {
-      // Sin secreto configurado: pasar directamente al dashboard con ?auth=1
-      // El middleware de tickets acepta este parámetro para bootstrapear sesión
-      redirect(ticketsUrl + "/dashboard?auth=1");
-    }
-  } catch {
-    redirect(ticketsUrl + "/dashboard?auth=1");
+  if (bridgeSecret) {
+    const token = createTicketsBridgeToken(
+      { sub: username, role: role ?? "admin" },
+      bridgeSecret,
+    );
+    const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
+    bridgeUrl.searchParams.set("token", token);
+    redirect(bridgeUrl.toString());
   }
+
+  redirect(ticketsUrl + "/dashboard");
 }
