@@ -15,7 +15,7 @@ import {
   isFirebaseMode,
 } from "@/lib/local-mode"
 import { getDemoCurrentUser } from "@/lib/mock-data"
-import { verifyTicketsBridgeToken } from "@/lib/platform-bridge"
+import { verifyTicketsBridgeToken, createTicketsBridgeToken } from "@/lib/platform-bridge"
 
 // Firebase imports (only used when isFirebaseMode() is true)
 import { getAdminAuth, getAdminFirestore, fromFirestoreDoc } from "@/lib/firebase/admin"
@@ -186,6 +186,27 @@ export async function logoutAction(): Promise<void> {
 
 export async function logout(): Promise<void> {
   await logoutAction()
+}
+
+// ─── Web Bridge Redirect ──────────────────────────────────────────────────────
+
+export async function createWebBridgeRedirectAction(): Promise<ActionResponse<{ url: string }>> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) return { success: false, error: "No autenticado" }
+
+    const secret = process.env.PLATFORM_TICKETS_BRIDGE_SECRET?.trim()
+    if (!secret || secret.length < 16) return { success: false, error: "Bridge secret no configurado" }
+
+    const token = createTicketsBridgeToken({ sub: user.id, role: user.rol }, secret)
+    const webUrl = WEB_APP_URL
+    const callbackUrl = new URL("/auth/callback", webUrl)
+    callbackUrl.searchParams.set("token", token)
+
+    return { success: true, data: { url: callbackUrl.toString() } }
+  } catch {
+    return { success: false, error: "Error al generar token de bridge" }
+  }
 }
 
 // ─── Get current user ─────────────────────────────────────────────────────────

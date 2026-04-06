@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 
 type BridgeHeader = {
   alg: "HS256";
@@ -107,4 +107,21 @@ export function verifyTicketsBridgeToken(token: string): BridgeVerificationResul
   }
 
   return { valid: true, payload };
+}
+
+export function createTicketsBridgeToken(input: { sub: string; role: string }, secret: string): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "HS256", typ: "COPS-BRIDGE" };
+  const payload: BridgePayload = {
+    sub: input.sub,
+    role: input.role,
+    iat: now,
+    exp: now + 90,
+    nonce: randomUUID(),
+  };
+  const headerPart = Buffer.from(JSON.stringify(header), "utf8").toString("base64url");
+  const payloadPart = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const unsigned = `${headerPart}.${payloadPart}`;
+  const signature = createHmac("sha256", secret).update(unsigned).digest("base64url");
+  return `${unsigned}.${signature}`;
 }

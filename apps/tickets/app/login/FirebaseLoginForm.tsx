@@ -1,15 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Eye, EyeOff, Zap, Loader2 } from "lucide-react"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { getFirebaseClientAuth } from "@/lib/firebase/client"
-import { setFirebaseSessionAction } from "@/lib/actions/auth"
+import { setFirebaseSessionAction, createWebBridgeRedirectAction } from "@/lib/actions/auth"
+import CircuitBackground from "./CircuitBackground"
 
 export default function FirebaseLoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectToWeb = searchParams.get("redirect") === "web"
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -19,19 +25,22 @@ export default function FirebaseLoginForm() {
     setLoading(true)
 
     try {
-      // Step 1: Sign in with Firebase client SDK
       const auth = getFirebaseClientAuth()
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password)
-
-      // Step 2: Get the ID token
       const idToken = await credential.user.getIdToken()
-
-      // Step 3: Create server-side session cookie
       const result = await setFirebaseSessionAction(idToken)
 
       if (!result.success) {
         setError(result.error ?? "Error al iniciar sesión")
         return
+      }
+
+      if (redirectToWeb) {
+        const bridgeResult = await createWebBridgeRedirectAction()
+        if (bridgeResult.success && bridgeResult.data?.url) {
+          window.location.href = bridgeResult.data.url
+          return
+        }
       }
 
       router.push("/dashboard")
@@ -51,54 +60,87 @@ export default function FirebaseLoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0f1e]">
-      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
-        {/* Logo / title */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/20">
-            <svg className="h-6 w-6 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white">COPS Platform</h1>
-          <p className="mt-1 text-sm text-gray-400">Sistema de tickets</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16 bg-[#070f1e]">
+      {/* Fondo animado */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#0a192f] to-[#112240]">
+        <CircuitBackground />
+      </div>
+
+      {/* Overlays */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-t from-[#070f1e]/90 via-[#070f1e]/50 to-transparent" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-[120px]" />
+
+      <section className="relative z-10 w-full max-w-md text-center animate-fade-in">
+        {/* Icono */}
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-[#0f1b2e]/60 shadow-[0_0_30px_rgba(0,163,196,0.2)] backdrop-blur-xl">
+          <Zap className="h-7 w-7 text-cyan-400" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-300">
+        <h1 className="mt-5 text-3xl font-black tracking-tight text-white drop-shadow-md">
+          COP&apos;S Electronics
+        </h1>
+        <p className="mt-2 text-sm font-medium tracking-wide text-cyan-200/70 uppercase">
+          Enterprise Service Portal
+        </p>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 rounded-3xl border border-white/10 bg-[#0b1426]/70 p-7 text-left shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-2xl transition-all duration-500 hover:border-cyan-500/30 hover:bg-[#0b1426]/80"
+        >
+          <h2 className="text-center text-2xl font-bold text-white">Iniciar Sesión</h2>
+          <p className="mt-2 text-center text-sm font-medium text-slate-400">
+            Ingresa tus credenciales operativas
+          </p>
+
+          <div className="mt-8">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-cyan-500" htmlFor="email">
               Correo electrónico
             </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50"
-              placeholder="admin@copselectronics.com"
-            />
+            <div className="relative mt-2">
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm font-medium text-white placeholder:text-slate-500 outline-none transition focus:border-cyan-500/50 focus:bg-black/40 focus:ring-1 focus:ring-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="usuario@copselectronics.com"
+              />
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-300">
+          <div className="mt-5">
+            <label className="block text-[11px] font-bold uppercase tracking-widest text-cyan-500" htmlFor="password">
               Contraseña
             </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50"
-              placeholder="••••••••"
-            />
+            <div className="relative mt-2">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 pr-12 text-sm font-medium text-white placeholder:text-slate-500 outline-none transition focus:border-cyan-500/50 focus:bg-black/40 focus:ring-1 focus:ring-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                disabled={loading}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-cyan-300 disabled:opacity-50"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           {error && (
-            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+            <p className="mt-4 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-center text-xs font-semibold text-rose-300">
               {error}
             </p>
           )}
@@ -106,12 +148,30 @@ export default function FirebaseLoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-600/80 to-blue-600/80 px-4 py-3.5 text-sm font-bold uppercase tracking-widest text-white shadow-[0_0_20px_rgba(0,163,196,0.2)] transition-all hover:border-cyan-400 hover:from-cyan-500 hover:to-blue-500 hover:shadow-[0_0_30px_rgba(0,163,196,0.4)] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            {loading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                AUTENTICANDO...
+              </>
+            ) : (
+              <>
+                ACCEDER
+                <span aria-hidden className="ml-1">→</span>
+              </>
+            )}
           </button>
+
+          <div className="mt-6 flex flex-col items-center justify-center gap-2 border-t border-white/5 pt-5">
+            <p className="text-[11px] font-medium text-slate-500">¿Problemas de acceso? Contacta a IT.</p>
+          </div>
         </form>
-      </div>
-    </div>
+
+        <p className="mt-8 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          © {new Date().getFullYear()} COP&apos;S Electronics.
+        </p>
+      </section>
+    </main>
   )
 }
