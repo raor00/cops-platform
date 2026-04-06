@@ -76,8 +76,11 @@ export async function POST(request: Request) {
       maxAge: COOKIE_MAX_AGE,
     }
 
+    // Mapear roles Firebase a roles master (todos los usuarios Firebase tienen acceso admin al portal)
+    const masterRole = "admin"
+
     response.cookies.set(MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE, cookieOpts)
-    response.cookies.set(MASTER_ROLE_COOKIE, payload.role, cookieOpts)
+    response.cookies.set(MASTER_ROLE_COOKIE, masterRole, cookieOpts)
     response.cookies.set(MASTER_USER_COOKIE, payload.sub, cookieOpts)
 
     return response
