@@ -48,7 +48,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: `Error Firebase: ${code || firebaseRes.status}` }, { status: 401 })
     }
 
-    const { localId: uid } = (await firebaseRes.json()) as { localId: string }
+    const firebaseData = (await firebaseRes.json()) as { localId: string; idToken: string }
+    const { localId: uid, idToken } = firebaseData
     if (!uid) {
       return NextResponse.json({ success: false, error: "Respuesta inválida de Firebase" }, { status: 500 })
     }
@@ -65,6 +66,13 @@ export async function POST(request: Request) {
     response.cookies.set(MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE, cookieOpts)
     response.cookies.set(MASTER_ROLE_COOKIE, "admin", cookieOpts)
     response.cookies.set(MASTER_USER_COOKIE, uid, cookieOpts)
+    // Save Firebase ID token so /api/bridge can use it for SSO without a shared secret
+    if (idToken) {
+      response.cookies.set("cops_firebase_id_token", idToken, {
+        ...cookieOpts,
+        maxAge: 55 * 60, // 55 min — idToken expires in 1h
+      })
+    }
 
     return response
   } catch (err) {

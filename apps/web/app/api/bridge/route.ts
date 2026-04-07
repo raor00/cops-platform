@@ -31,17 +31,27 @@ export async function GET(request: Request) {
 
   if (module === "tickets") {
     const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "")
-    const bridgeSecret = getTicketsBridgeSecret()
 
-    if (!bridgeSecret) {
-      // No SSO — send directly, user logs in separately
-      return NextResponse.json({ url: ticketsUrl + "/dashboard" })
+    // Prefer Firebase ID Token bridge — no shared secret needed.
+    // The idToken is saved at login time (55 min TTL) in cops_firebase_id_token.
+    const firebaseIdToken = cookieStore.get("cops_firebase_id_token")?.value?.trim()
+    if (firebaseIdToken) {
+      const bridgeUrl = new URL("/auth/firebase-bridge", ticketsUrl)
+      bridgeUrl.searchParams.set("token", firebaseIdToken)
+      return NextResponse.json({ url: bridgeUrl.toString() })
     }
 
-    const token = createTicketsBridgeToken({ sub: username, role }, bridgeSecret)
-    const bridgeUrl = new URL("/auth/bridge", ticketsUrl)
-    bridgeUrl.searchParams.set("token", token)
-    return NextResponse.json({ url: bridgeUrl.toString() })
+    // Fallback: HMAC bridge token (requires PLATFORM_TICKETS_BRIDGE_SECRET in both apps)
+    const bridgeSecret = getTicketsBridgeSecret()
+    if (bridgeSecret) {
+      const token = createTicketsBridgeToken({ sub: username, role }, bridgeSecret)
+      const bridgeUrl = new URL("/auth/bridge", ticketsUrl)
+      bridgeUrl.searchParams.set("token", token)
+      return NextResponse.json({ url: bridgeUrl.toString() })
+    }
+
+    // No SSO configured — send directly, user logs in separately
+    return NextResponse.json({ url: ticketsUrl + "/dashboard" })
   }
 
   return NextResponse.json({ error: "Módulo no reconocido" }, { status: 400 })
