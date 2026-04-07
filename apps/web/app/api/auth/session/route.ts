@@ -48,8 +48,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: `Error Firebase: ${code || firebaseRes.status}` }, { status: 401 })
     }
 
-    const firebaseData = (await firebaseRes.json()) as { localId: string; idToken: string }
-    const { localId: uid, idToken } = firebaseData
+    const firebaseData = (await firebaseRes.json()) as {
+      localId: string
+      idToken: string
+      refreshToken: string
+    }
+    const { localId: uid, idToken, refreshToken } = firebaseData
     if (!uid) {
       return NextResponse.json({ success: false, error: "Respuesta inválida de Firebase" }, { status: 500 })
     }
@@ -66,11 +70,21 @@ export async function POST(request: Request) {
     response.cookies.set(MASTER_SESSION_COOKIE, MASTER_SESSION_VALUE, cookieOpts)
     response.cookies.set(MASTER_ROLE_COOKIE, "admin", cookieOpts)
     response.cookies.set(MASTER_USER_COOKIE, uid, cookieOpts)
-    // Save Firebase ID token so /api/bridge can use it for SSO without a shared secret
+
+    // Firebase ID token (short-lived, 1h) — used by /api/bridge for SSO
     if (idToken) {
       response.cookies.set("cops_firebase_id_token", idToken, {
         ...cookieOpts,
-        maxAge: 55 * 60, // 55 min — idToken expires in 1h
+        maxAge: 55 * 60, // 55 min — expires before Firebase's 1h
+      })
+    }
+
+    // Firebase refresh token (long-lived) — used by /api/bridge to get a fresh idToken
+    // when the short-lived one has expired, without forcing the user to re-login
+    if (refreshToken) {
+      response.cookies.set("cops_firebase_refresh_token", refreshToken, {
+        ...cookieOpts,
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       })
     }
 

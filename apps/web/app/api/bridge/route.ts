@@ -11,10 +11,46 @@ import { getTicketsAppUrl } from "../../../lib/moduleLinks"
 
 export const dynamic = "force-dynamic"
 
+const FIREBASE_API_KEY =
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "AIzaSyCkxGHytPvbd1ZoCXGuLKoS_PW6QkkOnFM"
+
+/**
+ * Exchanges a Firebase refresh token for a fresh ID token.
+ * Firebase ID tokens expire in 1h; this lets us always get a valid one
+ * without requiring the user to re-login.
+ */
+async function refreshFirebaseIdToken(refreshToken: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(refreshToken)}`,
+      }
+    )
+    if (!res.ok) {
+      console.error("[bridge] token refresh failed:", res.status)
+      return null
+    }
+    const data = (await res.json()) as { id_token?: string; refresh_token?: string }
+    return data.id_token ?? null
+  } catch (err) {
+    console.error("[bridge] token refresh error:", err)
+    return null
+  }
+}
+
 /**
  * GET /api/bridge?module=tickets
- * Generates a fresh bridge token and returns the destination URL.
+ * Generates a fresh bridge URL and returns it.
  * Called by ModuleCardClient at click time so the token is never stale.
+ *
+ * Authentication priority:
+ * 1. cops_firebase_id_token cookie (set at login, valid 55 min)
+ * 2. cops_firebase_refresh_token cookie (exchange for fresh idToken)
+ * 3. HMAC bridge token (fallback — requires PLATFORM_TICKETS_BRIDGE_SECRET)
+ * 4. Direct URL (no SSO — user logs in separately)
  */
 export async function GET(request: Request) {
   const cookieStore = await cookies()
@@ -32,16 +68,25 @@ export async function GET(request: Request) {
   if (module === "tickets") {
     const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "")
 
-    // Prefer Firebase ID Token bridge — no shared secret needed.
-    // The idToken is saved at login time (55 min TTL) in cops_firebase_id_token.
-    const firebaseIdToken = cookieStore.get("cops_firebase_id_token")?.value?.trim()
+    // ── Priority 1: cached idToken (fresh from login, valid ~55 min) ──────────
+    let firebaseIdToken = cookieStore.get("cops_firebase_id_token")?.value?.trim()
+
+    // ── Priority 2: refresh token → get a new idToken ─────────────────────────
+    if (!firebaseIdToken) {
+      const refreshToken = cookieStore.get("cops_firebase_refresh_token")?.value?.trim()
+      if (refreshToken) {
+        firebaseIdToken = (await refreshFirebaseIdToken(refreshToken)) ?? undefined
+      }
+    }
+
+    // ── Use Firebase ID Token bridge (no shared secret needed) ────────────────
     if (firebaseIdToken) {
       const bridgeUrl = new URL("/auth/firebase-bridge", ticketsUrl)
       bridgeUrl.searchParams.set("token", firebaseIdToken)
       return NextResponse.json({ url: bridgeUrl.toString() })
     }
 
-    // Fallback: HMAC bridge token (requires PLATFORM_TICKETS_BRIDGE_SECRET in both apps)
+    // ── Priority 3: HMAC bridge (fallback — requires matching secret in both apps)
     const bridgeSecret = getTicketsBridgeSecret()
     if (bridgeSecret) {
       const token = createTicketsBridgeToken({ sub: username, role }, bridgeSecret)
@@ -50,7 +95,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ url: bridgeUrl.toString() })
     }
 
-    // No SSO configured — send directly, user logs in separately
+    // ── Priority 4: direct URL (no SSO — user logs in separately) ────────────
     return NextResponse.json({ url: ticketsUrl + "/dashboard" })
   }
 

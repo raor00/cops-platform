@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
-import { getAdminAuth, getAdminFirestore } from "@/lib/firebase/admin"
+import { getAdminAuth, getAdminFirestore, cleanForFirestore } from "@/lib/firebase/admin"
 import {
   BRIDGE_SESSION_COOKIE,
   FIREBASE_BRIDGE_ID_TOKEN_COOKIE,
   FIREBASE_SESSION_COOKIE,
   isFirebaseMode,
 } from "@/lib/local-mode"
+import { ROLE_HIERARCHY } from "@/types"
 
 const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
 
@@ -16,13 +17,14 @@ const ID_TOKEN_COOKIE_MAX_AGE = 55 * 60
  * GET /auth/firebase-bridge?token=<firebase_id_token>
  *
  * Bridge from the web platform. Accepts a raw Firebase ID Token, verifies it
- * with Firebase Admin SDK (no shared secret needed), checks the user is active,
- * stores the token in a short-lived httpOnly cookie, and redirects to /dashboard.
+ * with Firebase Admin SDK (no shared secret needed), ensures the user has a
+ * Firestore profile (auto-creating one with role "tecnico" if needed), stores
+ * the token in a short-lived httpOnly cookie, and redirects to /dashboard.
  *
- * We intentionally avoid auth.createSessionCookie() because it requires the
- * idToken to be less than 5 minutes old — too restrictive for a click-based flow.
- * Instead, getCurrentUser() calls auth.verifyIdToken() on every request, which
- * works for the full 1-hour idToken lifetime.
+ * Why not createSessionCookie(): Firebase requires the idToken to be <5 min old
+ * to create a session cookie — too restrictive for a click-based flow. Instead,
+ * getCurrentUser() calls auth.verifyIdToken() on every request, which works for
+ * the full 1-hour idToken lifetime.
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -53,18 +55,50 @@ export async function GET(request: Request) {
       return errorRedirect("expired")
     }
 
-    // Ensure the user has a profile in Firestore and is active
     const db = getAdminFirestore()
-    const userDoc = await db.collection("users").doc(uid).get()
-    if (!userDoc.exists) {
-      console.error("[firebase-bridge] user not found in Firestore:", uid)
-      return errorRedirect("invalid-signature")
-    }
+    const userRef = db.collection("users").doc(uid)
+    const userDoc = await userRef.get()
 
-    const userData = userDoc.data() as { estado?: string }
-    if (userData?.estado !== "activo") {
-      console.error("[firebase-bridge] user account inactive:", uid)
-      return errorRedirect("invalid-signature")
+    if (!userDoc.exists) {
+      // User authenticated via Firebase Auth but has no Tickets profile yet.
+      // Auto-create one with role "tecnico" so they can access the system.
+      // The admin can promote them later from /dashboard/usuarios.
+      console.log("[firebase-bridge] auto-provisioning Firestore profile for uid:", uid)
+      try {
+        const authUser = await auth.getUser(uid)
+        const displayName = authUser.displayName ?? ""
+        const nameParts = displayName.trim().split(" ")
+        const nombre = nameParts[0] || authUser.email?.split("@")[0] || uid
+        const apellido = nameParts.slice(1).join(" ") || null
+
+        const now = new Date().toISOString()
+        const newProfile = cleanForFirestore({
+          nombre,
+          apellido,
+          email: authUser.email ?? "",
+          rol: "tecnico",
+          nivel_jerarquico: ROLE_HIERARCHY["tecnico"],
+          estado: "activo",
+          cedula: null,
+          telefono: null,
+          foto_perfil_path: null,
+          especialidad: null,
+          activo_desde: now.split("T")[0],
+          created_at: now,
+          updated_at: now,
+        })
+        await userRef.set(newProfile)
+      } catch (createErr) {
+        console.error("[firebase-bridge] failed to auto-create profile:", createErr)
+        return errorRedirect("invalid-signature")
+      }
+    } else {
+      // Profile exists — verify it is active
+      const userData = userDoc.data() as { estado?: string }
+      if (userData?.estado !== "activo") {
+        console.error("[firebase-bridge] user account inactive:", uid)
+        return errorRedirect("invalid-signature")
+      }
     }
 
     const cookieOpts = {

@@ -56,6 +56,7 @@ async function hasDemoSession(): Promise<boolean> {
 async function clearBridgeSessionCookie() {
   const cookieStore = await cookies()
   cookieStore.delete(BRIDGE_SESSION_COOKIE)
+  cookieStore.delete(FIREBASE_BRIDGE_ID_TOKEN_COOKIE)
 }
 
 async function getBridgeSessionUid(): Promise<string | null> {
