@@ -2,20 +2,27 @@ import { NextResponse } from "next/server"
 import { getAdminAuth, getAdminFirestore } from "@/lib/firebase/admin"
 import {
   BRIDGE_SESSION_COOKIE,
+  FIREBASE_BRIDGE_ID_TOKEN_COOKIE,
   FIREBASE_SESSION_COOKIE,
   isFirebaseMode,
 } from "@/lib/local-mode"
 
 const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
+
+// idToken expires in 1h — keep the cookie a bit shorter to avoid edge cases
+const ID_TOKEN_COOKIE_MAX_AGE = 55 * 60
 
 /**
  * GET /auth/firebase-bridge?token=<firebase_id_token>
  *
- * Bridge endpoint that accepts a Firebase ID Token from the web platform.
- * Verifies the token with Firebase Admin SDK, checks the user exists and is
- * active, creates a long-lived Firebase session cookie, and redirects to
- * the dashboard. No shared secret required.
+ * Bridge from the web platform. Accepts a raw Firebase ID Token, verifies it
+ * with Firebase Admin SDK (no shared secret needed), checks the user is active,
+ * stores the token in a short-lived httpOnly cookie, and redirects to /dashboard.
+ *
+ * We intentionally avoid auth.createSessionCookie() because it requires the
+ * idToken to be less than 5 minutes old — too restrictive for a click-based flow.
+ * Instead, getCurrentUser() calls auth.verifyIdToken() on every request, which
+ * works for the full 1-hour idToken lifetime.
  */
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -29,24 +36,24 @@ export async function GET(request: Request) {
   }
 
   if (!isFirebaseMode()) {
-    // Local/demo mode: just redirect to dashboard without a session check
+    // Local/demo mode — bridge not needed, just go to dashboard
     return NextResponse.redirect(new URL("/dashboard", requestUrl.origin).toString())
   }
 
   try {
     const auth = getAdminAuth()
 
-    // Verify the Firebase ID token (checks signature + expiry)
+    // Verify the Firebase ID token — valid for the full 1-hour lifetime
     let uid: string
     try {
       const decoded = await auth.verifyIdToken(idToken)
       uid = decoded.uid
-    } catch {
-      console.error("[firebase-bridge] invalid or expired idToken")
+    } catch (err) {
+      console.error("[firebase-bridge] idToken verification failed:", err)
       return errorRedirect("expired")
     }
 
-    // Ensure user has a profile in Firestore
+    // Ensure the user has a profile in Firestore and is active
     const db = getAdminFirestore()
     const userDoc = await db.collection("users").doc(uid).get()
     if (!userDoc.exists) {
@@ -60,11 +67,6 @@ export async function GET(request: Request) {
       return errorRedirect("invalid-signature")
     }
 
-    // Create a long-lived Firebase session cookie (7 days)
-    const sessionCookie = await auth.createSessionCookie(idToken, {
-      expiresIn: SESSION_MAX_AGE * 1000, // ms
-    })
-
     const cookieOpts = {
       httpOnly: true,
       sameSite: "lax" as const,
@@ -75,13 +77,14 @@ export async function GET(request: Request) {
     const dashboardUrl = new URL("/dashboard", requestUrl.origin)
     const response = NextResponse.redirect(dashboardUrl.toString())
 
-    // Set long-lived Firebase session
-    response.cookies.set(FIREBASE_SESSION_COOKIE, sessionCookie, {
+    // Store the raw idToken — getCurrentUser() will verify it with verifyIdToken()
+    response.cookies.set(FIREBASE_BRIDGE_ID_TOKEN_COOKIE, idToken, {
       ...cookieOpts,
-      maxAge: SESSION_MAX_AGE,
+      maxAge: ID_TOKEN_COOKIE_MAX_AGE,
     })
 
-    // Clear any stale bridge token (prefer the Firebase session going forward)
+    // Clear older session cookies so the new user takes effect immediately
+    response.cookies.set(FIREBASE_SESSION_COOKIE, "", { ...cookieOpts, maxAge: 0 })
     response.cookies.set(BRIDGE_SESSION_COOKIE, "", { ...cookieOpts, maxAge: 0 })
 
     return response

@@ -1,6 +1,9 @@
 export const DEMO_SESSION_COOKIE = "tickets_demo_session"
 export const FIREBASE_SESSION_COOKIE = "tickets_firebase_session"
 export const BRIDGE_SESSION_COOKIE = "tickets_bridge_session"
+// Short-lived (55 min) cookie set by /auth/firebase-bridge — stores raw Firebase idToken
+// verified with auth.verifyIdToken() on each request. No shared secret needed.
+export const FIREBASE_BRIDGE_ID_TOKEN_COOKIE = "tickets_firebase_id_token"
 
 export type TicketsDataMode = "local" | "firebase"
 

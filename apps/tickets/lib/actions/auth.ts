@@ -9,6 +9,7 @@ import type { LoginInput } from "@/lib/validations"
 import {
   BRIDGE_SESSION_COOKIE,
   DEMO_SESSION_COOKIE,
+  FIREBASE_BRIDGE_ID_TOKEN_COOKIE,
   getMissingFirebaseEnvKeys,
   hasFirebaseConfig,
   isLocalMode,
@@ -71,6 +72,25 @@ async function getBridgeSessionUid(): Promise<string | null> {
   }
 
   return verification.payload.sub
+}
+
+/**
+ * Verifies the Firebase ID Token stored by /auth/firebase-bridge.
+ * This token is the raw Firebase idToken (valid for 1 hour) — no shared secret needed.
+ */
+async function getFirebaseBridgeIdTokenUid(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    const idToken = cookieStore.get(FIREBASE_BRIDGE_ID_TOKEN_COOKIE)?.value?.trim()
+    if (!idToken) return null
+
+    const auth = getAdminAuth()
+    const decoded = await auth.verifyIdToken(idToken)
+    return decoded.uid
+  } catch {
+    // Token expired or invalid — middleware will handle cleanup on next navigation
+    return null
+  }
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
@@ -222,10 +242,14 @@ export async function getCurrentUser(): Promise<User | null> {
   // ── Firebase mode ────────────────────────────────────────────────────────────
   if (isFirebaseMode()) {
     try {
-      // Bridge token takes priority: it represents a fresh, authoritative login
-      // from the web platform. Without this, an old Firebase session from a
-      // previous direct login would override the bridge user.
-      const uid = (await getBridgeSessionUid()) ?? (await verifyFirebaseSession())
+      // Priority order:
+      // 1. Firebase ID Token bridge (web platform SSO — no shared secret)
+      // 2. HMAC bridge token (legacy SSO — requires shared secret)
+      // 3. Firebase session cookie (direct login to tickets)
+      const uid =
+        (await getFirebaseBridgeIdTokenUid()) ??
+        (await getBridgeSessionUid()) ??
+        (await verifyFirebaseSession())
       if (!uid) return null
 
       const db = getAdminFirestore()

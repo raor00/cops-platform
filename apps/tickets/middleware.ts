@@ -3,12 +3,13 @@ import {
   BRIDGE_SESSION_COOKIE,
   DEMO_SESSION_COOKIE,
   FIREBASE_SESSION_COOKIE,
+  FIREBASE_BRIDGE_ID_TOKEN_COOKIE,
   isFirebaseMode,
   isLocalMode,
 } from "@/lib/local-mode"
 
 const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
-const PUBLIC_PATHS = ["/auth/bridge", "/login", "/_next", "/favicon", "/api/"]
+const PUBLIC_PATHS = ["/auth/bridge", "/auth/firebase-bridge", "/login", "/_next", "/favicon", "/api/"]
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((path) => pathname.startsWith(path))
@@ -60,7 +61,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isFirebaseMode()) {
-    if (hasCookie(request, FIREBASE_SESSION_COOKIE) || hasCookie(request, BRIDGE_SESSION_COOKIE)) {
+    if (
+      hasCookie(request, FIREBASE_SESSION_COOKIE) ||
+      hasCookie(request, BRIDGE_SESSION_COOKIE) ||
+      hasCookie(request, FIREBASE_BRIDGE_ID_TOKEN_COOKIE)
+    ) {
       return NextResponse.next({ request })
     }
 
