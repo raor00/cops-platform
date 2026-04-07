@@ -19,8 +19,12 @@ import {
   cleanForFirestore,
   fromFirestoreDoc,
   getAdminFirestore,
-  getAdminStorage,
 } from "@/lib/firebase/admin"
+import {
+  uploadFileToStorage,
+  getSignedDownloadUrl,
+  deleteFileFromStorage,
+} from "@/lib/firebase/storage-rest"
 
 const BUCKET_NAME = "ticket-fotos"
 
@@ -119,27 +123,20 @@ export async function uploadTicketFoto(
     if (isFirebaseMode()) {
       try {
         const db = getAdminFirestore()
-        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-        if (!storageBucket) {
-          return { success: false, error: "Firebase Storage no configurado (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ausente)" }
-        }
-        const bucket = getAdminStorage().bucket(storageBucket)
         const timestamp = Date.now()
         const randomString = Math.random().toString(36).substring(7)
         const extension = file.name.split(".").pop()
-        const fileName = `${ticketId}/${timestamp}-${randomString}.${extension}`
+        const storagePath = `ticket-fotos/${ticketId}/${timestamp}-${randomString}.${extension}`
         const buffer = Buffer.from(await file.arrayBuffer())
         const now = new Date().toISOString()
 
-        await bucket.file(fileName).save(buffer, {
-          metadata: { contentType: file.type },
-        })
+        await uploadFileToStorage(storagePath, buffer, file.type)
 
         const fotoRef = db.collection("ticket_fotos").doc()
         const fotoData = cleanForFirestore({
           ticket_id: ticketId,
           subido_por: user.id,
-          storage_path: fileName,
+          storage_path: storagePath,
           nombre_archivo: file.name,
           tipo_foto: tipoFoto,
           descripcion: descripcion || null,
@@ -169,7 +166,7 @@ export async function uploadTicketFoto(
       } catch (firebaseErr) {
         const msg = firebaseErr instanceof Error ? firebaseErr.message : String(firebaseErr)
         console.error("[fotos] Firebase upload error:", msg)
-        return { success: false, error: `Error al subir foto (Firebase): ${msg}` }
+        return { success: false, error: `Error al subir foto: ${msg}` }
       }
     }
 
@@ -268,20 +265,12 @@ export async function getTicketFotos(
 
     if (isFirebaseMode()) {
       const db = getAdminFirestore()
-      const bucket = getAdminStorage().bucket()
       const snap = await db.collection("ticket_fotos").where("ticket_id", "==", ticketId).get()
 
       const fotosConUrls = await Promise.all(
         snap.docs.map(async (doc) => {
           const foto = fromFirestoreDoc<TicketFoto>(doc.id, doc.data())
-          let url: string | undefined
-          try {
-            const [signedUrl] = await bucket
-              .file(foto.storage_path)
-              .getSignedUrl({ action: "read", expires: Date.now() + 3600 * 1000 })
-            url = signedUrl
-          } catch {}
-
+          const url = await getSignedDownloadUrl(foto.storage_path).catch(() => undefined)
           return { ...foto, url }
         })
       )
@@ -290,10 +279,7 @@ export async function getTicketFotos(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
 
-      return {
-        success: true,
-        data: fotosConUrls,
-      }
+      return { success: true, data: fotosConUrls }
     }
 
     const supabase = await createClient()
@@ -394,9 +380,7 @@ export async function deleteTicketFoto(
         return { success: false, error: "No tienes permisos para eliminar esta foto" }
       }
 
-      try {
-        await getAdminStorage().bucket().file(foto.storage_path).delete()
-      } catch {}
+      await deleteFileFromStorage(foto.storage_path)
 
       await db.collection("ticket_fotos").doc(fotoId).delete()
       await db.collection("update-logs").doc().set(

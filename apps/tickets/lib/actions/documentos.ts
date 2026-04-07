@@ -15,8 +15,12 @@ import {
   cleanForFirestore,
   fromFirestoreDoc,
   getAdminFirestore,
-  getAdminStorage,
 } from "@/lib/firebase/admin"
+import {
+  uploadFileToStorage,
+  getSignedDownloadUrl,
+  deleteFileFromStorage,
+} from "@/lib/firebase/storage-rest"
 
 const STORAGE_FOLDER = "ticket-documentos"
 
@@ -87,14 +91,13 @@ export async function uploadTicketDocumento(
 
     if (isFirebaseMode()) {
       const db = getAdminFirestore()
-      const bucket = getAdminStorage().bucket()
       const timestamp = Date.now()
       const random = Math.random().toString(36).substring(7)
       const fileName = `${STORAGE_FOLDER}/${ticketId}/${timestamp}-${random}-${file.name}`
       const buffer = Buffer.from(await file.arrayBuffer())
       const now = new Date().toISOString()
 
-      await bucket.file(fileName).save(buffer, { metadata: { contentType: file.type } })
+      await uploadFileToStorage(fileName, buffer, file.type)
 
       const docRef = db.collection("ticket_documentos").doc()
       const docData = cleanForFirestore({
@@ -178,7 +181,6 @@ export async function getTicketDocumentos(
 
     if (isFirebaseMode()) {
       const db = getAdminFirestore()
-      const bucket = getAdminStorage().bucket()
       const snap = await db
         .collection("ticket_documentos")
         .where("ticket_id", "==", ticketId)
@@ -187,14 +189,8 @@ export async function getTicketDocumentos(
       const docs = await Promise.all(
         snap.docs.map(async (d) => {
           const doc = fromFirestoreDoc<TicketDocumento>(d.id, d.data())
-          try {
-            const [signedUrl] = await bucket
-              .file(doc.storage_path)
-              .getSignedUrl({ action: "read", expires: Date.now() + 3600 * 1000 })
-            return { ...doc, url: signedUrl }
-          } catch {
-            return { ...doc, url: null }
-          }
+          const url = await getSignedDownloadUrl(doc.storage_path).catch(() => null)
+          return { ...doc, url }
         })
       )
 
@@ -254,7 +250,7 @@ export async function deleteTicketDocumento(
       const canDelete = doc.subido_por === user.id || ROLE_HIERARCHY[user.rol] >= 3
       if (!canDelete) return { success: false, error: "No tienes permisos para eliminar este documento" }
 
-      try { await getAdminStorage().bucket().file(doc.storage_path).delete() } catch { /* ignore */ }
+      await deleteFileFromStorage(doc.storage_path)
       await db.collection("ticket_documentos").doc(documentoId).delete()
       revalidatePath(`/dashboard/tickets/${doc.ticket_id}`)
       return { success: true, message: "Documento eliminado" }
