@@ -122,7 +122,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                 {targetUser.estado}
               </Badge>
             </div>
-            <p className="text-blue-400 font-medium text-sm mb-2">{ROLE_LABELS[targetUser.rol]}</p>
+            <p className="text-blue-400 font-medium text-sm mb-2">{targetUser.cargo || ROLE_LABELS[targetUser.rol]}</p>
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
               <span className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5" />

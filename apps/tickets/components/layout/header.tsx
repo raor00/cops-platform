@@ -88,7 +88,7 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
                   <p className="text-sm font-medium">
                     {user.nombre} {user.apellido}
                   </p>
-                  <p className="text-xs text-slate-500">{ROLE_LABELS[user.rol]}</p>
+                  <p className="text-xs text-slate-500">{user.cargo || ROLE_LABELS[user.rol]}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>

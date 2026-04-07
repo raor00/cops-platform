@@ -126,6 +126,7 @@ export interface User {
   activo_desde: string | null
   foto_perfil_path: string | null
   especialidad: string | null
+  cargo?: string | null
   created_at: string
   updated_at: string
 }
@@ -147,6 +148,7 @@ export interface UserUpdateInput {
   telefono?: string
   estado?: UserStatus
   especialidad?: string
+  cargo?: string | null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

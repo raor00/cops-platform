@@ -21,6 +21,7 @@ import {
   updateUserProfile,
 } from "@/lib/actions/usuarios"
 import type { UserProfile } from "@/types"
+import { ROLE_LABELS } from "@/types"
 import { getInitials } from "@/lib/utils"
 
 interface ProfileEditDialogProps {
@@ -41,12 +42,18 @@ export function ProfileEditDialog({
     user.foto_perfil_url || null
   )
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [nombre, setNombre] = useState(user.nombre)
+  const [apellido, setApellido] = useState(user.apellido)
+  const [cargo, setCargo] = useState(user.cargo || "")
   const [telefono, setTelefono] = useState(user.telefono || "")
   const [especialidad, setEspecialidad] = useState(user.especialidad || "")
 
   useEffect(() => {
     if (open) {
       setPreviewUrl(user.foto_perfil_url || null)
+      setNombre(user.nombre)
+      setApellido(user.apellido)
+      setCargo(user.cargo || "")
       setTelefono(user.telefono || "")
       setEspecialidad(user.especialidad || "")
       setSelectedFile(null)
@@ -57,14 +64,12 @@ export function ProfileEditDialog({
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validar tipo
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
     if (!allowedTypes.includes(file.type)) {
       toast.error("Tipo de archivo no permitido. Solo JPEG, PNG o WEBP")
       return
     }
 
-    // Validar tamaño (5 MB máximo)
     const maxSize = 5 * 1024 * 1024
     if (file.size > maxSize) {
       toast.error("El archivo es demasiado grande. Máximo 5 MB")
@@ -73,7 +78,6 @@ export function ProfileEditDialog({
 
     setSelectedFile(file)
 
-    // Crear preview
     const reader = new FileReader()
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string)
@@ -85,10 +89,8 @@ export function ProfileEditDialog({
     if (!selectedFile) return
 
     setIsUploading(true)
-
     try {
       const result = await uploadProfilePhoto(user.id, selectedFile)
-
       if (result.success) {
         toast.success(result.message || "Foto de perfil subida exitosamente")
         setSelectedFile(null)
@@ -96,8 +98,7 @@ export function ProfileEditDialog({
       } else {
         toast.error(result.error || "Error al subir foto de perfil")
       }
-    } catch (error) {
-      console.error("[v0] Upload photo error:", error)
+    } catch {
       toast.error("Error inesperado al subir foto")
     } finally {
       setIsUploading(false)
@@ -106,10 +107,8 @@ export function ProfileEditDialog({
 
   const handleDeletePhoto = async () => {
     setIsUploading(true)
-
     try {
       const result = await deleteProfilePhoto(user.id)
-
       if (result.success) {
         toast.success(result.message || "Foto de perfil eliminada")
         setPreviewUrl(null)
@@ -118,8 +117,7 @@ export function ProfileEditDialog({
       } else {
         toast.error(result.error || "Error al eliminar foto")
       }
-    } catch (error) {
-      console.error("[v0] Delete photo error:", error)
+    } catch {
       toast.error("Error inesperado al eliminar foto")
     } finally {
       setIsUploading(false)
@@ -129,16 +127,21 @@ export function ProfileEditDialog({
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Si hay una foto seleccionada, subirla primero
+    if (!nombre.trim()) {
+      toast.error("El nombre es requerido")
+      return
+    }
+
     if (selectedFile) {
       await handleUploadPhoto()
     }
 
-    // Actualizar otros datos del perfil
     setIsUpdating(true)
-
     try {
       const result = await updateUserProfile(user.id, {
+        nombre: nombre.trim(),
+        apellido: apellido.trim(),
+        cargo: cargo.trim() || null,
         telefono: telefono || undefined,
         especialidad: especialidad || undefined,
       })
@@ -150,8 +153,7 @@ export function ProfileEditDialog({
       } else {
         toast.error(result.error || "Error al actualizar perfil")
       }
-    } catch (error) {
-      console.error("[v0] Update profile error:", error)
+    } catch {
       toast.error("Error inesperado al actualizar perfil")
     } finally {
       setIsUpdating(false)
@@ -168,41 +170,39 @@ export function ProfileEditDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90dvh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
           <DialogDescription>
-            Actualiza tu foto de perfil e información personal
+            Actualiza tu información personal y foto de perfil
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleUpdateProfile} className="space-y-6">
+        <form onSubmit={handleUpdateProfile} className="flex-1 overflow-y-auto space-y-6 pr-1">
           {/* Foto de perfil */}
           <div className="flex flex-col items-center gap-4">
             <Avatar className="h-24 w-24">
               {previewUrl && <AvatarImage src={previewUrl} alt={user.nombre} />}
               <AvatarFallback className="text-2xl">
-                {getInitials(user.nombre, user.apellido)}
+                {getInitials(nombre || user.nombre, apellido || user.apellido)}
               </AvatarFallback>
             </Avatar>
 
             <div className="flex gap-2">
-              <label htmlFor="photo-upload">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isUploading}
-                  onClick={() => document.getElementById("photo-upload")?.click()}
-                >
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4 mr-2" />
-                  )}
-                  {selectedFile ? "Cambiar Foto" : "Subir Foto"}
-                </Button>
-              </label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isUploading}
+                onClick={() => document.getElementById("photo-upload")?.click()}
+              >
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4 mr-2" />
+                )}
+                {selectedFile ? "Cambiar Foto" : "Subir Foto"}
+              </Button>
               <input
                 id="photo-upload"
                 type="file"
@@ -233,28 +233,55 @@ export function ProfileEditDialog({
             )}
           </div>
 
-          {/* Información básica (readonly) */}
+          {/* Datos personales */}
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="nombre">Nombre</Label>
+                <Input
+                  id="nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="Nombre"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="apellido">Apellido</Label>
+                <Input
+                  id="apellido"
+                  value={apellido}
+                  onChange={(e) => setApellido(e.target.value)}
+                  placeholder="Apellido"
+                />
+              </div>
+            </div>
+
             <div>
-              <Label>Nombre Completo</Label>
+              <Label htmlFor="cargo">
+                Cargo / Título personalizado
+                <span className="ml-1.5 text-xs text-slate-400 font-normal">
+                  (reemplaza "{ROLE_LABELS[user.rol]}" en la UI)
+                </span>
+              </Label>
               <Input
-                value={`${user.nombre} ${user.apellido}`}
-                disabled
-                className="bg-slate-100 text-slate-700"
+                id="cargo"
+                value={cargo}
+                onChange={(e) => setCargo(e.target.value)}
+                placeholder={`Ej: Desarrollador, CEO, Administrador...`}
               />
             </div>
 
             <div>
               <Label>Email</Label>
-              <Input value={user.email} disabled className="bg-slate-100 text-slate-700" />
+              <Input value={user.email} disabled className="bg-slate-100 text-slate-500" />
             </div>
 
             <div>
-              <Label>Rol</Label>
-              <Input value={user.rol} disabled className="bg-slate-100 text-slate-700 capitalize" />
+              <Label>Rol del sistema</Label>
+              <Input value={ROLE_LABELS[user.rol]} disabled className="bg-slate-100 text-slate-500" />
             </div>
 
-            {/* Teléfono (editable) */}
             <div>
               <Label htmlFor="telefono">Teléfono</Label>
               <Input
@@ -266,7 +293,6 @@ export function ProfileEditDialog({
               />
             </div>
 
-            {/* Especialidad (editable) */}
             <div>
               <Label htmlFor="especialidad">Especialidad</Label>
               <Input
@@ -279,7 +305,7 @@ export function ProfileEditDialog({
           </div>
 
           {/* Botones */}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pb-1">
             <Button
               type="button"
               variant="outline"
