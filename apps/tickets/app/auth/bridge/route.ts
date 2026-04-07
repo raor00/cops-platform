@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import {
   BRIDGE_SESSION_COOKIE,
   DEMO_SESSION_COOKIE,
+  FIREBASE_SESSION_COOKIE,
   isFirebaseMode,
   isLocalMode,
 } from "@/lib/local-mode"
@@ -43,13 +44,15 @@ export async function GET(request: Request) {
   }
 
   if (isFirebaseMode()) {
-    response.cookies.set(BRIDGE_SESSION_COOKIE, token, {
+    const cookieOpts = {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "lax" as const,
       secure: process.env.NODE_ENV === "production",
       path: "/",
-      maxAge: BRIDGE_TOKEN_COOKIE_MAX_AGE,
-    })
+    }
+    // Clear any existing Firebase session so the bridge user takes effect immediately
+    response.cookies.set(FIREBASE_SESSION_COOKIE, "", { ...cookieOpts, maxAge: 0 })
+    response.cookies.set(BRIDGE_SESSION_COOKIE, token, { ...cookieOpts, maxAge: BRIDGE_TOKEN_COOKIE_MAX_AGE })
     return response
   }
 

@@ -222,7 +222,10 @@ export async function getCurrentUser(): Promise<User | null> {
   // ── Firebase mode ────────────────────────────────────────────────────────────
   if (isFirebaseMode()) {
     try {
-      const uid = (await verifyFirebaseSession()) ?? (await getBridgeSessionUid())
+      // Bridge token takes priority: it represents a fresh, authoritative login
+      // from the web platform. Without this, an old Firebase session from a
+      // previous direct login would override the bridge user.
+      const uid = (await getBridgeSessionUid()) ?? (await verifyFirebaseSession())
       if (!uid) return null
 
       const db = getAdminFirestore()
