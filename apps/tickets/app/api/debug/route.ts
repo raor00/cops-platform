@@ -27,6 +27,18 @@ export async function GET(request: Request) {
       PLATFORM_TICKETS_BRIDGE_SECRET: process.env.PLATFORM_TICKETS_BRIDGE_SECRET
         ? `✓ definido (${process.env.PLATFORM_TICKETS_BRIDGE_SECRET.length} chars)`
         : "❌ NO DEFINIDO",
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME
+        ? `✓ "${process.env.CLOUDINARY_CLOUD_NAME}"`
+        : "❌ NO DEFINIDO",
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY
+        ? `✓ definido`
+        : "❌ NO DEFINIDO",
+      CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET
+        ? `✓ definido`
+        : "❌ NO DEFINIDO",
+      CLOUDINARY_URL: process.env.CLOUDINARY_URL
+        ? `✓ definido`
+        : "(no definido)",
       WEB_URL: process.env.WEB_URL ?? "(no definido, usando default)",
       NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
         ? "✓ definido"
