@@ -45,10 +45,14 @@ export function UpdateLogPanel({
     startTransition(async () => {
       const result = await addTicketUpdateLog(ticketId, contenido)
       if (result.success && result.data) {
+        // Optimistic update only — do NOT call router.refresh() here.
+        // router.refresh() triggers a server re-render; if Firestore hasn't
+        // indexed the new document yet the returned list won't include it,
+        // and the useEffect([initialLogs]) would overwrite the optimistic entry,
+        // making the log appear briefly and then disappear.
         setLogs((prev) => [result.data!, ...prev])
         setContenido("")
         toast.success("Actualización agregada")
-        router.refresh()
       } else {
         toast.error("Error", { description: result.error })
       }

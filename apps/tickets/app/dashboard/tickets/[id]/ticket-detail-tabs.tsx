@@ -8,6 +8,7 @@ import {
   FileSearch,
   Camera,
   BookOpen,
+  FileText,
 } from "lucide-react"
 import { cn, formatDateTime } from "@/lib/utils"
 import type { ChangeHistory, Inspeccion, Ticket, TicketFase, UpdateLog } from "@/types"
@@ -18,6 +19,7 @@ import { TicketDetails } from "./ticket-details"
 import { TicketFasesList } from "@/components/tickets/ticket-fases-list"
 import { FotosGallery } from "@/components/fotos/fotos-gallery"
 import { UpdateLogPanel } from "@/components/tickets/update-log-panel"
+import { DocumentosSection } from "@/components/documentos/documentos-section"
 
 interface TicketDetailTabsProps {
   ticket: Ticket
@@ -30,6 +32,8 @@ interface TicketDetailTabsProps {
   canUploadFotos?: boolean
   canDeleteFotos?: boolean
   canViewHistorial?: boolean
+  canUploadDocumentos?: boolean
+  canDeleteDocumentos?: boolean
   userRole?: string
   currentUserId?: string
 }
@@ -45,6 +49,8 @@ export function TicketDetailTabs({
   canUploadFotos = false,
   canDeleteFotos = false,
   canViewHistorial = false,
+  canUploadDocumentos = false,
+  canDeleteDocumentos = false,
   userRole,
   currentUserId,
 }: TicketDetailTabsProps) {
@@ -87,6 +93,11 @@ export function TicketDetailTabs({
         <TabsTrigger value="fotos">
           <Camera className="mr-1.5 h-4 w-4" />
           Fotos
+        </TabsTrigger>
+
+        <TabsTrigger value="documentos">
+          <FileText className="mr-1.5 h-4 w-4" />
+          Documentos
         </TabsTrigger>
 
         <TabsTrigger value="bitacora">
@@ -157,6 +168,14 @@ export function TicketDetailTabs({
           ticketId={ticket.id}
           canUpload={canUploadFotos}
           canDelete={canDeleteFotos}
+        />
+      </TabsContent>
+
+      <TabsContent value="documentos">
+        <DocumentosSection
+          ticketId={ticket.id}
+          canUpload={canUploadDocumentos}
+          canDelete={canDeleteDocumentos}
         />
       </TabsContent>
 

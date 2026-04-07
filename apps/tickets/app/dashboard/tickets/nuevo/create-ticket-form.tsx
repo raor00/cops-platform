@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { Plus, Trash2, Loader2, Search, X, CheckCircle2, ExternalLink, BookOpen, Link2, Info, UserPlus } from "lucide-react"
+import { Plus, Trash2, Loader2, Search, X, CheckCircle2, ExternalLink, BookOpen, Link2, Info, UserPlus, FileText, Upload } from "lucide-react"
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
@@ -28,11 +28,13 @@ import {
 } from "@/components/ui/dialog"
 import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations"
 import { createTicket } from "@/lib/actions/tickets"
+import { uploadTicketDocumento } from "@/lib/actions/documentos"
 import { createUser } from "@/lib/actions/usuarios"
 import { generateId } from "@/lib/utils"
 import { TICKET_CATALOG, type CatalogEntry } from "@/lib/catalog-data"
 import { getCatalogIdentifier, getCatalogSegment } from "@/lib/catalog-rules"
-import type { MaterialItem, Cliente, ClienteContacto } from "@/types"
+import { TIPO_DOCUMENTO_LABELS, DOCUMENTO_UPLOAD_CONFIG } from "@/types"
+import type { MaterialItem, Cliente, ClienteContacto, TipoDocumento } from "@/types"
 
 type CatalogFilter = "all" | "equipos" | "materiales"
 
@@ -84,6 +86,9 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [materials, setMaterials] = useState<MaterialItem[]>([])
+  const [pendingDocumentos, setPendingDocumentos] = useState<
+    Array<{ file: File; tipo: TipoDocumento; descripcion: string }>
+  >([])
 
   // Technicians list (mutable for inline creation)
   const [technicians, setTechnicians] = useState(initialTechnicians)
@@ -389,7 +394,34 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
 
       const result = await createTicket(submitData)
 
-      if (result.success) {
+      if (result.success && result.data) {
+        // Upload pending documents now that we have the ticket ID
+        if (pendingDocumentos.length > 0) {
+          toast.loading("Subiendo documentos...", { id: "doc-upload" })
+          let uploaded = 0
+          for (const pending of pendingDocumentos) {
+            const docResult = await uploadTicketDocumento(
+              result.data.id,
+              pending.file,
+              pending.tipo,
+              pending.descripcion || undefined
+            )
+            if (docResult.success) uploaded++
+          }
+          toast.dismiss("doc-upload")
+          if (uploaded > 0) {
+            toast.success(
+              asBorrador ? "Borrador guardado" : "Ticket creado",
+              { description: `${uploaded} documento${uploaded !== 1 ? "s" : ""} adjuntado${uploaded !== 1 ? "s" : ""}` }
+            )
+          } else {
+            toast.success(asBorrador ? "Borrador guardado" : "Ticket creado", { description: result.message })
+          }
+        } else {
+          toast.success(asBorrador ? "Borrador guardado" : "Ticket creado", { description: result.message })
+        }
+        router.push(`/dashboard/tickets/${result.data.id}`)
+      } else if (result.success) {
         toast.success(asBorrador ? "Borrador guardado" : "Ticket creado", { description: result.message })
         router.push("/dashboard/tickets")
       } else {
@@ -982,6 +1014,91 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
           />
         </div>
       </div>
+
+      {/* ── Documentos y Planos ────────────────────────────────────────── */}
+      {tipoTicket !== "inspeccion" && (
+        <div className="form-section">
+          <h3 className="form-section-title flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Documentos y Planos
+            <span className="text-xs font-normal text-slate-400">(opcional)</span>
+          </h3>
+          <p className="mb-3 text-xs text-slate-500">
+            Adjunta planos, memorias técnicas, contratos o cualquier archivo relevante al {tipoTicket === "proyecto" ? "proyecto" : "servicio"}.
+            Los documentos se cargarán al crear el ticket.
+          </p>
+
+          {/* File picker row */}
+          <div className="space-y-2">
+            <label
+              htmlFor="form-doc-upload"
+              className="flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-sky-400 hover:bg-sky-50/70"
+            >
+              <Upload className="mb-1.5 h-6 w-6 text-slate-400" />
+              <p className="text-sm text-slate-600">
+                <span className="font-medium">Seleccionar archivos</span>
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">PDF, Word, Excel, imágenes — máx. 25 MB c/u</p>
+              <input
+                id="form-doc-upload"
+                type="file"
+                multiple
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? [])
+                  const valid = files.filter((f) => {
+                    const ext = f.name.split(".").pop()?.toLowerCase() ?? ""
+                    return (
+                      (DOCUMENTO_UPLOAD_CONFIG.allowedTypes.includes(f.type) ||
+                        (DOCUMENTO_UPLOAD_CONFIG.allowedExtensions as readonly string[]).includes(ext)) &&
+                      f.size <= DOCUMENTO_UPLOAD_CONFIG.maxSizeBytes
+                    )
+                  })
+                  setPendingDocumentos((prev) => [
+                    ...prev,
+                    ...valid.map((file) => ({ file, tipo: "otro" as TipoDocumento, descripcion: "" })),
+                  ])
+                  // Reset input so the same file can be added again
+                  e.target.value = ""
+                }}
+              />
+            </label>
+
+            {/* Pending documents list */}
+            {pendingDocumentos.length > 0 && (
+              <div className="space-y-2 mt-2">
+                {pendingDocumentos.map((pending, idx) => (
+                  <div key={idx} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                    <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                    <p className="min-w-0 flex-1 truncate text-sm text-slate-700">{pending.file.name}</p>
+                    <select
+                      className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      value={pending.tipo}
+                      onChange={(e) => {
+                        setPendingDocumentos((prev) =>
+                          prev.map((p, i) => i === idx ? { ...p, tipo: e.target.value as TipoDocumento } : p)
+                        )
+                      }}
+                    >
+                      {Object.entries(TIPO_DOCUMENTO_LABELS).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      onClick={() => setPendingDocumentos((prev) => prev.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Actions ──────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4">

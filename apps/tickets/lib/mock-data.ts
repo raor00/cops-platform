@@ -36,11 +36,13 @@ import type {
   TechnicianPayment,
   Ticket,
   TicketCreateInput,
+  TicketDocumento,
   TicketFase,
   TicketFoto,
   TicketPriority,
   TicketStatus,
   TicketUpdateInput,
+  TipoDocumento,
   TipoFoto,
   UpdateLog,
   User,
@@ -737,6 +739,54 @@ export function updateDemoFoto(
 
   demoFotos = demoFotos.map((item) => (item.id === id ? updated : item))
   return deepClone(updated)
+}
+
+// ─── Documentos de Ticket ─────────────────────────────────────────────────────
+
+let demoDocumentos: TicketDocumento[] = []
+
+export function getDemoDocumentosByTicket(ticketId: string): TicketDocumento[] {
+  return deepClone(
+    demoDocumentos
+      .filter((d) => d.ticket_id === ticketId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  )
+}
+
+export function getDemoDocumentoById(id: string): TicketDocumento | null {
+  const doc = demoDocumentos.find((d) => d.id === id)
+  return doc ? deepClone(doc) : null
+}
+
+export function createDemoDocumento(
+  ticketId: string,
+  input: { nombre_archivo: string; tipo_documento: TipoDocumento; descripcion?: string; tamanio_bytes?: number; mime_type?: string },
+  currentUser: User
+): TicketDocumento {
+  const doc: TicketDocumento = {
+    id: crypto.randomUUID(),
+    ticket_id: ticketId,
+    subido_por: currentUser.id,
+    storage_path: `documentos/${ticketId}/${input.nombre_archivo}`,
+    nombre_archivo: input.nombre_archivo,
+    tipo_documento: input.tipo_documento,
+    descripcion: input.descripcion || null,
+    tamanio_bytes: input.tamanio_bytes ?? null,
+    mime_type: input.mime_type ?? null,
+    created_at: new Date().toISOString(),
+    subidor: currentUser,
+    url: null,
+  }
+  demoDocumentos = [doc, ...demoDocumentos]
+  return deepClone(doc)
+}
+
+export function deleteDemoDocumento(id: string, userId: string, userLevel: number): boolean {
+  const doc = demoDocumentos.find((d) => d.id === id)
+  if (!doc) return false
+  if (doc.subido_por !== userId && userLevel < 3) return false
+  demoDocumentos = demoDocumentos.filter((d) => d.id !== id)
+  return true
 }
 
 // ─── Sesiones de Trabajo ─────────────────────────────────────────────────────

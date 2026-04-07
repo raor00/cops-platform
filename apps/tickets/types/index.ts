@@ -32,6 +32,8 @@ export type InspeccionEstado = 'borrador' | 'completada' | 'reportada'
 
 export type TipoBloqueador = 'material' | 'acceso' | 'tecnico' | 'otro'
 
+export type TipoDocumento = 'plano' | 'memoria_tecnica' | 'contrato' | 'presupuesto' | 'especificacion' | 'otro'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // JERARQUÍA DE ROLES - Sistema RBAC
 // ─────────────────────────────────────────────────────────────────────────────
@@ -653,6 +655,48 @@ export const FOTO_UPLOAD_CONFIG = {
   maxSizeBytes: 10 * 1024 * 1024,
   allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'],
   maxFiles: 20,
+} as const
+
+// ─── Documentos de Ticket ─────────────────────────────────────────────────────
+
+export interface TicketDocumento {
+  id: string
+  ticket_id: string
+  subido_por: string
+  storage_path: string
+  nombre_archivo: string
+  tipo_documento: TipoDocumento
+  descripcion: string | null
+  tamanio_bytes: number | null
+  mime_type: string | null
+  created_at: string
+  subidor?: User
+  url?: string | null
+}
+
+export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
+  plano: 'Plano',
+  memoria_tecnica: 'Memoria Técnica',
+  contrato: 'Contrato',
+  presupuesto: 'Presupuesto',
+  especificacion: 'Especificación Técnica',
+  otro: 'Otro',
+} as const
+
+export const DOCUMENTO_UPLOAD_CONFIG = {
+  maxSizeBytes: 25 * 1024 * 1024, // 25 MB — documentos pueden ser más pesados
+  allowedTypes: [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ] as string[],
+  allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xls', 'xlsx', 'doc', 'docx'],
+  maxFiles: 10,
 } as const
 
 // ─── Inspecciones ─────────────────────────────────────────────────────────────
