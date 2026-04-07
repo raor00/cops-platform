@@ -20,18 +20,29 @@ import {
   deleteProfilePhoto,
   updateUserProfile,
 } from "@/lib/actions/usuarios"
-import type { UserProfile } from "@/types"
+import type { UserProfile, UserRole } from "@/types"
 import { ROLE_LABELS } from "@/types"
 import { getInitials } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+const ALL_ROLES: UserRole[] = ["tecnico", "coordinador", "gerente", "vicepresidente", "presidente"]
 
 interface ProfileEditDialogProps {
   user: UserProfile
+  canEditRole?: boolean
   onSuccess?: () => void
   trigger?: React.ReactNode
 }
 
 export function ProfileEditDialog({
   user,
+  canEditRole = false,
   onSuccess,
   trigger,
 }: ProfileEditDialogProps) {
@@ -45,6 +56,7 @@ export function ProfileEditDialog({
   const [nombre, setNombre] = useState(user.nombre)
   const [apellido, setApellido] = useState(user.apellido)
   const [cargo, setCargo] = useState(user.cargo || "")
+  const [rol, setRol] = useState<UserRole>(user.rol)
   const [telefono, setTelefono] = useState(user.telefono || "")
   const [especialidad, setEspecialidad] = useState(user.especialidad || "")
 
@@ -54,6 +66,7 @@ export function ProfileEditDialog({
       setNombre(user.nombre)
       setApellido(user.apellido)
       setCargo(user.cargo || "")
+      setRol(user.rol)
       setTelefono(user.telefono || "")
       setEspecialidad(user.especialidad || "")
       setSelectedFile(null)
@@ -142,6 +155,7 @@ export function ProfileEditDialog({
         nombre: nombre.trim(),
         apellido: apellido.trim(),
         cargo: cargo.trim() || null,
+        ...(canEditRole && rol !== user.rol ? { rol } : {}),
         telefono: telefono || undefined,
         especialidad: especialidad || undefined,
       })
@@ -278,8 +292,23 @@ export function ProfileEditDialog({
             </div>
 
             <div>
-              <Label>Rol del sistema</Label>
-              <Input value={ROLE_LABELS[user.rol]} disabled className="bg-slate-100 text-slate-500" />
+              <Label htmlFor="rol">Rol del sistema</Label>
+              {canEditRole ? (
+                <Select value={rol} onValueChange={(v) => setRol(v as UserRole)}>
+                  <SelectTrigger id="rol">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ALL_ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {ROLE_LABELS[r]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input value={ROLE_LABELS[user.rol]} disabled className="bg-slate-100 text-slate-500" />
+              )}
             </div>
 
             <div>

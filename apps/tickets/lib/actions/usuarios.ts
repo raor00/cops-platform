@@ -103,18 +103,29 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
     const canUpdate = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
     if (!canUpdate) return { success: false, error: "No tienes permisos para editar este usuario" }
 
+    // Solo presidente puede cambiar roles
+    if (updates.rol && ROLE_HIERARCHY[user.rol] < 5) {
+      return { success: false, error: "Solo el presidente puede cambiar roles" }
+    }
+
+    // Sincronizar nivel_jerarquico cuando cambia el rol
+    const finalUpdates: UserUpdateInput = { ...updates }
+    if (updates.rol) {
+      finalUpdates.nivel_jerarquico = ROLE_HIERARCHY[updates.rol]
+    }
+
     if (isLocalMode()) return { success: true, message: "Perfil actualizado (modo local)" }
 
     if (isFirebaseMode()) {
       const db = getAdminFirestore()
-      await db.collection("users").doc(userId).update(cleanForFirestore({ ...updates, updated_at: new Date().toISOString() }))
+      await db.collection("users").doc(userId).update(cleanForFirestore({ ...finalUpdates, updated_at: new Date().toISOString() }))
       revalidatePath("/dashboard/usuarios")
       revalidatePath(`/dashboard/usuarios/${userId}`)
       return { success: true, message: "Perfil actualizado exitosamente" }
     }
 
     const supabase = await createClient()
-    const { error } = await supabase.from("users").update(updates).eq("id", userId)
+    const { error } = await supabase.from("users").update(finalUpdates).eq("id", userId)
     if (error) return { success: false, error: `Error al actualizar perfil: ${error.message}` }
     revalidatePath("/dashboard/usuarios")
     revalidatePath(`/dashboard/usuarios/${userId}`)

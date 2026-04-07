@@ -141,7 +141,12 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
             </div>
           </div>
 
-          {canEdit && <ProfileEditDialog user={targetUser} />}
+          {canEdit && (
+            <ProfileEditDialog
+              user={targetUser}
+              canEditRole={ROLE_HIERARCHY[user.rol] >= 5}
+            />
+          )}
         </div>
       </div>
 

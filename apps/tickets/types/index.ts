@@ -149,6 +149,8 @@ export interface UserUpdateInput {
   estado?: UserStatus
   especialidad?: string
   cargo?: string | null
+  rol?: UserRole
+  nivel_jerarquico?: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
