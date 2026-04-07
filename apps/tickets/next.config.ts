@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       dynamic: 0,
       static: 180,
     },
+
+    // Server actions body limit — default is 1MB which blocks photo uploads.
+    // Set to match the 10MB validation in FotoUploadDialog.
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 
   async headers() {
