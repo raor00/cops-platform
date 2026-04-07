@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { MessageSquarePlus, Loader2, Clock, FileText, Camera } from "lucide-react"
@@ -34,10 +34,6 @@ export function UpdateLogPanel({
   const [logs, setLogs] = useState<UpdateLog[]>(initialLogs)
 
   const isActive = ticketStatus !== "finalizado" && ticketStatus !== "cancelado"
-
-  useEffect(() => {
-    setLogs(initialLogs)
-  }, [initialLogs])
 
   const handleSubmit = async () => {
     if (!contenido.trim()) return
