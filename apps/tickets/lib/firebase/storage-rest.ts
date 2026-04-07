@@ -189,7 +189,10 @@ export async function uploadFileToStorage(
   }
 
   // Firebase Storage REST fallback
-  if (!BUCKET) throw new Error("Ni CLOUDINARY_CLOUD_NAME ni NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET están configurados")
+  if (!BUCKET) throw new Error(
+    "CLOUDINARY_CLOUD_NAME no está configurado. " +
+    "Agrega CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en Vercel → Settings → Environment Variables y redespliega."
+  )
 
   const token = await getAccessToken()
   const encodedPath = encodeURIComponent(storagePath)

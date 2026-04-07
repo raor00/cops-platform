@@ -6,7 +6,8 @@ import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/t
 import { getCurrentUser, registerUserAction } from "./auth"
 import { ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
-import { getAdminFirestore, getAdminStorage, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+import { uploadFileToStorage, getSignedDownloadUrl, deleteFileFromStorage } from "@/lib/firebase/storage-rest"
 import { getDemoCurrentUser, getDemoUsers } from "@/lib/mock-data"
 
 const BUCKET_NAME = "user-profiles"
@@ -18,9 +19,7 @@ async function fbGetUserWithPhoto(uid: string): Promise<UserProfile | null> {
   const user = fromFirestoreDoc<UserProfile>(uid, doc.data()!)
   if (user.foto_perfil_path) {
     try {
-      const bucket = getAdminStorage().bucket()
-      const [url] = await bucket.file(user.foto_perfil_path).getSignedUrl({ action: "read", expires: Date.now() + 3600 * 1000 })
-      user.foto_perfil_url = url
+      user.foto_perfil_url = await getSignedDownloadUrl(user.foto_perfil_path)
     } catch { user.foto_perfil_url = null }
   } else {
     user.foto_perfil_url = null
@@ -151,26 +150,25 @@ export async function uploadProfilePhoto(userId: string, file: File): Promise<Ac
 
     if (isFirebaseMode()) {
       const db = getAdminFirestore()
-      const bucket = getAdminStorage().bucket()
       const timestamp = Date.now()
       const extension = file.name.split(".").pop()
-      const filePath = `profile-photos/${userId}/profile-${timestamp}.${extension}`
+      const storagePath = `profile-photos/${userId}/profile-${timestamp}.${extension}`
 
       const userDoc = await db.collection("users").doc(userId).get()
       if (userDoc.exists) {
         const oldPath = userDoc.data()!.foto_perfil_path as string | null
         if (oldPath) {
-          try { await bucket.file(oldPath).delete() } catch {}
+          try { await deleteFileFromStorage(oldPath) } catch {}
         }
       }
 
       const buffer = Buffer.from(await file.arrayBuffer())
-      await bucket.file(filePath).save(buffer, { metadata: { contentType: file.type } })
-      await db.collection("users").doc(userId).update({ foto_perfil_path: filePath, updated_at: new Date().toISOString() })
+      const savedPath = await uploadFileToStorage(storagePath, buffer, file.type)
+      await db.collection("users").doc(userId).update({ foto_perfil_path: savedPath, updated_at: new Date().toISOString() })
 
       revalidatePath("/dashboard/usuarios")
       revalidatePath(`/dashboard/usuarios/${userId}`)
-      return { success: true, data: filePath, message: "Foto de perfil subida exitosamente" }
+      return { success: true, data: savedPath, message: "Foto de perfil subida exitosamente" }
     }
 
     const supabase = await createClient()
@@ -209,7 +207,7 @@ export async function deleteProfilePhoto(userId: string): Promise<ActionResponse
       if (!doc.exists) return { success: false, error: "Usuario no encontrado" }
       const oldPath = doc.data()!.foto_perfil_path as string | null
       if (oldPath) {
-        try { await getAdminStorage().bucket().file(oldPath).delete() } catch {}
+        try { await deleteFileFromStorage(oldPath) } catch {}
       }
       await db.collection("users").doc(userId).update({ foto_perfil_path: null, updated_at: new Date().toISOString() })
       revalidatePath("/dashboard/usuarios")
