@@ -893,7 +893,6 @@ export async function addTicketUpdateLog(
       ticket_id: ticketId, autor_id: currentUser.id, contenido: contenido.trim(), tipo: "nota",
       autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
     })
-    revalidatePath(`/dashboard/tickets/${ticketId}`)
     return { success: true, data: log, message: "Actualización agregada" }
   }
 
@@ -922,7 +921,6 @@ export async function addTicketUpdateLog(
       await logRef.set(logData)
 
       const log: UpdateLog = { id: logRef.id, ...logData }
-      revalidatePath(`/dashboard/tickets/${ticketId}`)
       return { success: true, data: log, message: "Actualización agregada" }
     } catch (err) {
       return { success: false, error: (err as Error).message }
@@ -952,7 +950,6 @@ export async function addTicketUpdateLog(
     autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
   }
 
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
   return { success: true, data: log, message: "Actualización agregada" }
 }
 
