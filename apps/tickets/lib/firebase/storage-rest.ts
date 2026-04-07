@@ -11,10 +11,24 @@
 import crypto from "crypto"
 
 // ── Cloudinary config ─────────────────────────────────────────────────────────
-const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME ?? ""
+// Supports both individual vars and the combined CLOUDINARY_URL format:
+//   CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+function parseCloudinaryUrl(url: string): { cloud: string; key: string; secret: string } | null {
+  try {
+    // cloudinary://387784455651542:FR-SWWne2lM68mDjq7-nZvDQgIY@dr3uisdst
+    const match = url.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/)
+    if (!match) return null
+    return { key: match[1], secret: match[2], cloud: match[3] }
+  } catch { return null }
+}
+
+const _cloudinaryUrl = process.env.CLOUDINARY_URL ?? ""
+const _parsed = _cloudinaryUrl ? parseCloudinaryUrl(_cloudinaryUrl) : null
+
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME ?? _parsed?.cloud ?? ""
 const CLOUDINARY_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET ?? ""
-const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY ?? ""
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? ""
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY ?? _parsed?.key ?? ""
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? _parsed?.secret ?? ""
 
 // ── Firebase Storage config ───────────────────────────────────────────────────
 const BUCKET = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? ""

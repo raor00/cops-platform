@@ -18,12 +18,14 @@ export async function GET(request: Request) {
   const localMode = isLocalMode()
 
   if (!token) {
-    return NextResponse.redirect(WEB_APP_URL + "/panel")
+    return NextResponse.redirect(WEB_APP_URL + "/panel?bridge_error=no_token")
   }
 
   const verification = verifyTicketsBridgeToken(token)
   if (!verification.valid) {
-    return NextResponse.redirect(WEB_APP_URL + "/panel")
+    const reason = verification.reason
+    console.error("[bridge] token verification failed:", reason)
+    return NextResponse.redirect(WEB_APP_URL + `/panel?bridge_error=${reason}`)
   }
 
   const dashboardUrl = new URL("/dashboard", requestUrl.origin)
