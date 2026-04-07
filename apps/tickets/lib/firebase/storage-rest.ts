@@ -68,22 +68,46 @@ async function getAccessToken(): Promise<string> {
 
 // ── Cloudinary ────────────────────────────────────────────────────────────────
 
-/** Upload via Cloudinary unsigned preset. Returns the secure_url. */
+/**
+ * Upload via Cloudinary.
+ * Uses signed upload (API key + secret) if available — no preset needed.
+ * Falls back to unsigned upload with a preset.
+ */
 async function cloudinaryUpload(
   storagePath: string,
   buffer: Buffer,
   contentType: string
 ): Promise<{ url: string; publicId: string }> {
   if (!CLOUDINARY_CLOUD) throw new Error("CLOUDINARY_CLOUD_NAME no configurado")
-  if (!CLOUDINARY_PRESET) throw new Error("CLOUDINARY_UPLOAD_PRESET no configurado")
+
+  const publicId = storagePath.replace(/\//g, "__")
+  const blob = new Blob([buffer], { type: contentType })
+  const filename = storagePath.split("/").pop() ?? "file"
 
   const form = new FormData()
-  const blob = new Blob([buffer], { type: contentType })
-  form.append("file", blob, storagePath.split("/").pop() ?? "file")
-  form.append("upload_preset", CLOUDINARY_PRESET)
-  // Use storagePath as folder+publicId so we can reference it later
-  form.append("public_id", storagePath.replace(/\//g, "__"))
+  form.append("file", blob, filename)
   form.append("resource_type", "auto")
+
+  if (CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+    // Signed upload — no preset required
+    const timestamp = Math.floor(Date.now() / 1000)
+    const paramsToSign = `public_id=${publicId}&timestamp=${timestamp}`
+    const signature = crypto
+      .createHash("sha256")
+      .update(paramsToSign + CLOUDINARY_API_SECRET)
+      .digest("hex")
+
+    form.append("api_key", CLOUDINARY_API_KEY)
+    form.append("timestamp", String(timestamp))
+    form.append("public_id", publicId)
+    form.append("signature", signature)
+  } else if (CLOUDINARY_PRESET) {
+    // Unsigned upload with preset
+    form.append("upload_preset", CLOUDINARY_PRESET)
+    form.append("public_id", publicId)
+  } else {
+    throw new Error("Cloudinary: configura CLOUDINARY_API_KEY + CLOUDINARY_API_SECRET o CLOUDINARY_UPLOAD_PRESET")
+  }
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`,
@@ -127,14 +151,22 @@ async function cloudinaryDelete(publicId: string): Promise<void> {
 // After upload, Cloudinary returns a permanent URL. We store publicId in
 // storage_path as "cloudinary::{publicId}" so we can reconstruct the URL.
 
+// storagePath format for Cloudinary: "cloudinary::{publicId}::{secureUrl}"
+// This way we always have the download URL without extra API calls.
 const CLOUDINARY_PREFIX = "cloudinary::"
 
 function isCloudinaryPath(storagePath: string): boolean {
   return storagePath.startsWith(CLOUDINARY_PREFIX)
 }
 
-function extractPublicId(storagePath: string): string {
-  return storagePath.replace(CLOUDINARY_PREFIX, "")
+function extractCloudinaryParts(storagePath: string): { publicId: string; url: string } {
+  const withoutPrefix = storagePath.replace(CLOUDINARY_PREFIX, "")
+  const sepIdx = withoutPrefix.indexOf("::")
+  if (sepIdx === -1) return { publicId: withoutPrefix, url: "" }
+  return {
+    publicId: withoutPrefix.slice(0, sepIdx),
+    url: withoutPrefix.slice(sepIdx + 2),
+  }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -151,9 +183,9 @@ export async function uploadFileToStorage(
   buffer: Buffer,
   contentType: string
 ): Promise<string> {
-  if (CLOUDINARY_CLOUD && CLOUDINARY_PRESET) {
-    const { publicId } = await cloudinaryUpload(storagePath, buffer, contentType)
-    return `${CLOUDINARY_PREFIX}${publicId}`
+  if (CLOUDINARY_CLOUD) {
+    const { publicId, url } = await cloudinaryUpload(storagePath, buffer, contentType)
+    return `${CLOUDINARY_PREFIX}${publicId}::${url}`
   }
 
   // Firebase Storage REST fallback
@@ -183,11 +215,8 @@ export async function uploadFileToStorage(
  */
 export async function getSignedDownloadUrl(storagePath: string): Promise<string> {
   if (isCloudinaryPath(storagePath)) {
-    const publicId = extractPublicId(storagePath)
-    // Reconstruct Cloudinary URL from publicId
-    // publicId was encoded as storagePath.replace(/\//g, "__")
-    // We need to decode it back to get the resource type
-    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD}/auto/upload/${publicId}`
+    // URL is embedded in the storage_path — no extra API call needed
+    return extractCloudinaryParts(storagePath).url
   }
 
   // Firebase Storage: return URL with access token
@@ -206,7 +235,7 @@ export async function getSignedDownloadUrl(storagePath: string): Promise<string>
  */
 export async function deleteFileFromStorage(storagePath: string): Promise<void> {
   if (isCloudinaryPath(storagePath)) {
-    await cloudinaryDelete(extractPublicId(storagePath))
+    await cloudinaryDelete(extractCloudinaryParts(storagePath).publicId)
     return
   }
 
