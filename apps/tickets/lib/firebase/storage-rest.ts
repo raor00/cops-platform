@@ -1,13 +1,22 @@
 /**
- * Firebase Storage via REST API
+ * Cloud Storage abstraction — Firebase Storage REST API or Cloudinary
  *
- * Replaces the @google-cloud/storage Admin SDK for uploads.
- * Uses only built-in Node.js APIs (crypto + fetch) so it works
- * reliably in Vercel serverless without GCP credential file issues.
+ * Priority:
+ *   1. Cloudinary  — if CLOUDINARY_CLOUD_NAME is set (free, no billing country needed)
+ *   2. Firebase Storage REST API — fallback using service-account JWT + GCS API
+ *
+ * Only built-in Node.js APIs (crypto + fetch), no extra packages.
  */
 
 import crypto from "crypto"
 
+// ── Cloudinary config ─────────────────────────────────────────────────────────
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME ?? ""
+const CLOUDINARY_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET ?? ""
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY ?? ""
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? ""
+
+// ── Firebase Storage config ───────────────────────────────────────────────────
 const BUCKET = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? ""
 const CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL ?? ""
 const RAW_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY ?? ""
@@ -57,14 +66,98 @@ async function getAccessToken(): Promise<string> {
   return json.access_token
 }
 
-// ── Upload ────────────────────────────────────────────────────────────────────
+// ── Cloudinary ────────────────────────────────────────────────────────────────
 
+/** Upload via Cloudinary unsigned preset. Returns the secure_url. */
+async function cloudinaryUpload(
+  storagePath: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<{ url: string; publicId: string }> {
+  if (!CLOUDINARY_CLOUD) throw new Error("CLOUDINARY_CLOUD_NAME no configurado")
+  if (!CLOUDINARY_PRESET) throw new Error("CLOUDINARY_UPLOAD_PRESET no configurado")
+
+  const form = new FormData()
+  const blob = new Blob([buffer], { type: contentType })
+  form.append("file", blob, storagePath.split("/").pop() ?? "file")
+  form.append("upload_preset", CLOUDINARY_PRESET)
+  // Use storagePath as folder+publicId so we can reference it later
+  form.append("public_id", storagePath.replace(/\//g, "__"))
+  form.append("resource_type", "auto")
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`,
+    { method: "POST", body: form }
+  )
+
+  if (!res.ok) {
+    const txt = await res.text()
+    throw new Error(`Cloudinary upload fallido (${res.status}): ${txt}`)
+  }
+
+  const data = (await res.json()) as { secure_url: string; public_id: string }
+  return { url: data.secure_url, publicId: data.public_id }
+}
+
+/** Delete from Cloudinary using API key + secret (signed request). */
+async function cloudinaryDelete(publicId: string): Promise<void> {
+  if (!CLOUDINARY_CLOUD || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) return
+
+  try {
+    const timestamp = Math.floor(Date.now() / 1000)
+    const str = `public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`
+    const signature = crypto.createHash("sha1").update(str).digest("hex")
+
+    const form = new FormData()
+    form.append("public_id", publicId)
+    form.append("timestamp", String(timestamp))
+    form.append("api_key", CLOUDINARY_API_KEY)
+    form.append("signature", signature)
+
+    await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/destroy`, {
+      method: "POST",
+      body: form,
+    })
+  } catch {
+    // Non-fatal
+  }
+}
+
+// ── Cloudinary URL store (publicId → url) ────────────────────────────────────
+// After upload, Cloudinary returns a permanent URL. We store publicId in
+// storage_path as "cloudinary::{publicId}" so we can reconstruct the URL.
+
+const CLOUDINARY_PREFIX = "cloudinary::"
+
+function isCloudinaryPath(storagePath: string): boolean {
+  return storagePath.startsWith(CLOUDINARY_PREFIX)
+}
+
+function extractPublicId(storagePath: string): string {
+  return storagePath.replace(CLOUDINARY_PREFIX, "")
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Upload a file to Cloudinary (if configured) or Firebase Storage REST.
+ * Returns the storagePath to persist in the DB.
+ *
+ * For Cloudinary, storagePath is "cloudinary::{publicId}".
+ * For Firebase, storagePath is the GCS object path.
+ */
 export async function uploadFileToStorage(
   storagePath: string,
   buffer: Buffer,
   contentType: string
 ): Promise<string> {
-  if (!BUCKET) throw new Error("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET no configurado")
+  if (CLOUDINARY_CLOUD && CLOUDINARY_PRESET) {
+    const { publicId } = await cloudinaryUpload(storagePath, buffer, contentType)
+    return `${CLOUDINARY_PREFIX}${publicId}`
+  }
+
+  // Firebase Storage REST fallback
+  if (!BUCKET) throw new Error("Ni CLOUDINARY_CLOUD_NAME ni NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET están configurados")
 
   const token = await getAccessToken()
   const encodedPath = encodeURIComponent(storagePath)
@@ -72,10 +165,7 @@ export async function uploadFileToStorage(
 
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": contentType,
-    },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": contentType },
     body: buffer,
   })
 
@@ -87,58 +177,49 @@ export async function uploadFileToStorage(
   return storagePath
 }
 
-// ── Signed URL (válida 1 hora) ────────────────────────────────────────────────
-
+/**
+ * Get a download URL for the stored file.
+ * Cloudinary URLs are permanent and don't need signing.
+ */
 export async function getSignedDownloadUrl(storagePath: string): Promise<string> {
-  if (!BUCKET || !CLIENT_EMAIL || !PRIVATE_KEY) return ""
-
-  const expires = Math.floor(Date.now() / 1000) + 3600
-
-  // V4 signed URL — canonical resource
-  const resource = `/v0/b/${BUCKET}/o/${encodeURIComponent(storagePath)}`
-  const stringToSign = [
-    "GOOG4-RSA-SHA256",
-    new Date().toISOString().replace(/[-:]/g, "").slice(0, 8) + "T" + new Date().toISOString().replace(/[-:]/g, "").slice(9, 13) + "00Z",
-    `${new Date().toISOString().replace(/[-:]/g, "").slice(0, 8)}/auto/storage/goog4_request`,
-    crypto.createHash("sha256").update(`GET\n${resource}\nexpires=${expires}&x-goog-signature=...`).digest("hex"),
-  ].join("\n")
-
-  // Use simpler Firebase Storage download token approach instead
-  // This generates a permanent download URL using the access token
-  const token = await getAccessToken()
-  const alt = encodeURIComponent(storagePath)
-  const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(BUCKET)}/o/${alt}?alt=media`
-
-  // Verify file exists and get metadata to confirm access
-  const checkRes = await fetch(downloadUrl, {
-    headers: { Authorization: `Bearer ${token}` },
-    method: "HEAD",
-  }).catch(() => null)
-
-  if (!checkRes?.ok) {
-    // Return URL with token for inline access
-    return `${downloadUrl}&access_token=${token}`
+  if (isCloudinaryPath(storagePath)) {
+    const publicId = extractPublicId(storagePath)
+    // Reconstruct Cloudinary URL from publicId
+    // publicId was encoded as storagePath.replace(/\//g, "__")
+    // We need to decode it back to get the resource type
+    return `https://res.cloudinary.com/${CLOUDINARY_CLOUD}/auto/upload/${publicId}`
   }
 
-  return `${downloadUrl}&access_token=${token}`
+  // Firebase Storage: return URL with access token
+  if (!BUCKET) return ""
+  try {
+    const token = await getAccessToken()
+    const encodedPath = encodeURIComponent(storagePath)
+    return `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(BUCKET)}/o/${encodedPath}?alt=media&access_token=${token}`
+  } catch {
+    return ""
+  }
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
-
+/**
+ * Delete a stored file.
+ */
 export async function deleteFileFromStorage(storagePath: string): Promise<void> {
-  if (!BUCKET) return
+  if (isCloudinaryPath(storagePath)) {
+    await cloudinaryDelete(extractPublicId(storagePath))
+    return
+  }
 
+  // Firebase Storage delete
+  if (!BUCKET) return
   try {
     const token = await getAccessToken()
     const encodedPath = encodeURIComponent(storagePath)
     await fetch(
       `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(BUCKET)}/o/${encodedPath}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
+      { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
     )
   } catch {
-    // Non-fatal: log and continue
+    // Non-fatal
   }
 }
