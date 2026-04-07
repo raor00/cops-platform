@@ -9,7 +9,7 @@ import {
   getVisibleModules,
 } from "../../lib/masterAuth";
 import { getCotizacionesAppUrl, getTicketsAppUrl } from "../../lib/moduleLinks";
-import { createTicketsBridgeToken, getTicketsBridgeSecret } from "../../lib/ticketsBridge";
+import { getTicketsBridgeSecret } from "../../lib/ticketsBridge";
 
 const BRIDGE_ERROR_MESSAGES: Record<string, string> = {
   missing_secret: "El módulo Tickets no está configurado para SSO. Contacta al administrador (falta PLATFORM_TICKETS_BRIDGE_SECRET).",
@@ -33,21 +33,10 @@ export default async function PanelHomePage({ searchParams }: PanelHomePageProps
 
   const cotizacionesHref = getCotizacionesAppUrl();
 
+  // Token is generated at click time via /api/bridge — never stale
   const ticketsUrl = getTicketsAppUrl().replace(/\/$/, "");
   const bridgeSecret = getTicketsBridgeSecret();
-  let ticketsHref: string;
-  if (bridgeSecret) {
-    const token = createTicketsBridgeToken(
-      { sub: username, role: role ?? "admin" },
-      bridgeSecret,
-    );
-    const bridgeUrl = new URL("/auth/bridge", ticketsUrl);
-    bridgeUrl.searchParams.set("token", token);
-    ticketsHref = bridgeUrl.toString();
-  } else {
-    // No bridge secret — go directly; user will need to log in to tickets separately
-    ticketsHref = ticketsUrl + "/dashboard";
-  }
+  const ticketsHref = ticketsUrl + "/dashboard";
 
   const modules = getVisibleModules(role).map((module) => {
     if (module.id === "cotizaciones") return { ...module, href: cotizacionesHref };
