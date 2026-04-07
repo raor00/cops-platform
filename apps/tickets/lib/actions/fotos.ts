@@ -117,49 +117,59 @@ export async function uploadTicketFoto(
     }
 
     if (isFirebaseMode()) {
-      const db = getAdminFirestore()
-      const bucket = getAdminStorage().bucket()
-      const timestamp = Date.now()
-      const randomString = Math.random().toString(36).substring(7)
-      const extension = file.name.split(".").pop()
-      const fileName = `${ticketId}/${timestamp}-${randomString}.${extension}`
-      const buffer = Buffer.from(await file.arrayBuffer())
-      const now = new Date().toISOString()
+      try {
+        const db = getAdminFirestore()
+        const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        if (!storageBucket) {
+          return { success: false, error: "Firebase Storage no configurado (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ausente)" }
+        }
+        const bucket = getAdminStorage().bucket(storageBucket)
+        const timestamp = Date.now()
+        const randomString = Math.random().toString(36).substring(7)
+        const extension = file.name.split(".").pop()
+        const fileName = `${ticketId}/${timestamp}-${randomString}.${extension}`
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const now = new Date().toISOString()
 
-      await bucket.file(fileName).save(buffer, {
-        metadata: { contentType: file.type },
-      })
-
-      const fotoRef = db.collection("ticket_fotos").doc()
-      const fotoData = cleanForFirestore({
-        ticket_id: ticketId,
-        subido_por: user.id,
-        storage_path: fileName,
-        nombre_archivo: file.name,
-        tipo_foto: tipoFoto,
-        descripcion: descripcion || null,
-        tamanio_bytes: file.size,
-        mime_type: file.type,
-        created_at: now,
-      })
-
-      await fotoRef.set(fotoData)
-      await db.collection("update-logs").doc().set(
-        cleanForFirestore({
-          ticket_id: ticketId,
-          autor_id: user.id,
-          contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
-          tipo: "nota" as const,
-          created_at: now,
-          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+        await bucket.file(fileName).save(buffer, {
+          metadata: { contentType: file.type },
         })
-      )
 
-      revalidatePath(`/dashboard/tickets/${ticketId}`)
-      return {
-        success: true,
-        data: fromFirestoreDoc<TicketFoto>(fotoRef.id, fotoData),
-        message: "Foto subida exitosamente",
+        const fotoRef = db.collection("ticket_fotos").doc()
+        const fotoData = cleanForFirestore({
+          ticket_id: ticketId,
+          subido_por: user.id,
+          storage_path: fileName,
+          nombre_archivo: file.name,
+          tipo_foto: tipoFoto,
+          descripcion: descripcion || null,
+          tamanio_bytes: file.size,
+          mime_type: file.type,
+          created_at: now,
+        })
+
+        await fotoRef.set(fotoData)
+        await db.collection("update-logs").doc().set(
+          cleanForFirestore({
+            ticket_id: ticketId,
+            autor_id: user.id,
+            contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
+            tipo: "nota" as const,
+            created_at: now,
+            autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+          })
+        )
+
+        revalidatePath(`/dashboard/tickets/${ticketId}`)
+        return {
+          success: true,
+          data: fromFirestoreDoc<TicketFoto>(fotoRef.id, fotoData),
+          message: "Foto subida exitosamente",
+        }
+      } catch (firebaseErr) {
+        const msg = firebaseErr instanceof Error ? firebaseErr.message : String(firebaseErr)
+        console.error("[fotos] Firebase upload error:", msg)
+        return { success: false, error: `Error al subir foto (Firebase): ${msg}` }
       }
     }
 
@@ -227,11 +237,9 @@ export async function uploadTicketFoto(
       message: "Foto subida exitosamente",
     }
   } catch (error) {
-    console.error("[v0] Upload foto exception:", error)
-    return {
-      success: false,
-      error: "Error inesperado al subir la foto",
-    }
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("[fotos] Upload exception:", msg)
+    return { success: false, error: `Error al subir foto: ${msg}` }
   }
 }
 

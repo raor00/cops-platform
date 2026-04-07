@@ -107,8 +107,9 @@ export function FotoUploadDialog({
         toast.error(result.error || "Error al subir la foto")
       }
     } catch (error) {
-      console.error("[v0] Upload error:", error)
-      toast.error("Error inesperado al subir la foto")
+      const msg = error instanceof Error ? error.message : String(error)
+      console.error("[fotos] Upload client error:", msg)
+      toast.error("Error al subir la foto", { description: msg })
     } finally {
       setIsUploading(false)
     }
