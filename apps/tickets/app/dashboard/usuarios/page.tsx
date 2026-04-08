@@ -16,13 +16,8 @@ import type { User, UserProfile } from "@/types"
 import { AvatarImage } from "@/components/ui/avatar"
 
 export const metadata = { title: "Usuarios" }
-
-interface UsuariosPageProps {
-  searchParams?: Promise<{
-    cleanup?: string
-    message?: string
-  }>
-}
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 async function getUsers(): Promise<UserProfile[]> {
   if (isLocalMode()) {
@@ -33,7 +28,7 @@ async function getUsers(): Promise<UserProfile[]> {
   return result.data || []
 }
 
-export default async function UsuariosPage({ searchParams }: UsuariosPageProps) {
+export default async function UsuariosPage() {
   const user = await getCurrentUser()
 
   if (!user || ROLE_HIERARCHY[user.rol] < 3) {
@@ -41,12 +36,6 @@ export default async function UsuariosPage({ searchParams }: UsuariosPageProps) 
   }
 
   const users = await getUsers()
-  const params = await searchParams
-
-  const cleanupBanner = {
-    success: "Usuario duplicado eliminado exitosamente.",
-    error: "No se pudo completar la limpieza del usuario duplicado.",
-  } as const
 
   return (
     <div className="page-container">
@@ -62,15 +51,6 @@ export default async function UsuariosPage({ searchParams }: UsuariosPageProps) 
           </Link>
         </Button>
       </div>
-
-      {/* Banner opcional tras limpieza temporal */}
-      {params?.cleanup && (
-        <div
-          className={`mb-4 rounded-xl border px-4 py-3 text-sm ${params.cleanup === "success" ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"}`}
-        >
-          {cleanupBanner[params.cleanup as keyof typeof cleanupBanner] || params?.message || "Operación completada."}
-        </div>
-      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {users.map((u) => (
