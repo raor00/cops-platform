@@ -841,14 +841,29 @@ export async function getTicketUpdateLogs(ticketId: string): Promise<ActionRespo
   if (isFirebaseMode()) {
     try {
       const db = getAdminFirestore()
-      const snap = await db
-        .collection("update-logs")
-        .where("ticket_id", "==", ticketId)
-        .orderBy("created_at", "desc")
-        .limit(100)
-        .get()
+      const [subcollectionSnap, legacySnap] = await Promise.all([
+        db.collection("tickets").doc(ticketId).collection("update_logs").limit(100).get(),
+        db.collection("update-logs").where("ticket_id", "==", ticketId).limit(100).get(),
+      ])
 
-      const logs: UpdateLog[] = snap.docs.map((d) => fromFirestoreDoc<UpdateLog>(d.id, d.data()))
+      const merged = new Map<string, UpdateLog>()
+
+      for (const d of subcollectionSnap.docs) {
+        const log = fromFirestoreDoc<UpdateLog>(d.id, d.data())
+        merged.set(log.id, log)
+      }
+
+      for (const d of legacySnap.docs) {
+        const log = fromFirestoreDoc<UpdateLog>(d.id, d.data())
+        if (!merged.has(log.id)) {
+          merged.set(log.id, log)
+        }
+      }
+
+      const logs = Array.from(merged.values()).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+
       return { success: true, data: logs }
     } catch (err) {
       return { success: false, error: (err as Error).message }
@@ -915,6 +930,7 @@ export async function addTicketUpdateLog(
 
       const now = new Date().toISOString()
       const logRef = db.collection("update-logs").doc()
+      const ticketLogRef = db.collection("tickets").doc(ticketId).collection("update_logs").doc(logRef.id)
       const logData = cleanForFirestore({
         ticket_id: ticketId,
         autor_id: currentUser.id,
@@ -923,7 +939,7 @@ export async function addTicketUpdateLog(
         created_at: now,
         autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
       })
-      await logRef.set(logData)
+      await Promise.all([logRef.set(logData), ticketLogRef.set(logData)])
       revalidatePath(`/dashboard/tickets/${ticketId}`)
       revalidatePath("/dashboard/tickets")
 

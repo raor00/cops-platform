@@ -146,16 +146,17 @@ export async function uploadTicketFoto(
         })
 
         await fotoRef.set(fotoData)
-        await db.collection("update-logs").doc().set(
-          cleanForFirestore({
-            ticket_id: ticketId,
-            autor_id: user.id,
-            contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
-            tipo: "nota" as const,
-            created_at: now,
-            autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
-          })
-        )
+        const logData = cleanForFirestore({
+          ticket_id: ticketId,
+          autor_id: user.id,
+          contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
+          tipo: "nota" as const,
+          created_at: now,
+          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+        })
+        const logRef = db.collection("update-logs").doc()
+        const ticketLogRef = db.collection("tickets").doc(ticketId).collection("update_logs").doc(logRef.id)
+        await Promise.all([logRef.set(logData), ticketLogRef.set(logData)])
 
         revalidatePath(`/dashboard/tickets/${ticketId}`)
         return {
@@ -383,16 +384,18 @@ export async function deleteTicketFoto(
       await deleteFileFromStorage(foto.storage_path)
 
       await db.collection("ticket_fotos").doc(fotoId).delete()
-      await db.collection("update-logs").doc().set(
-        cleanForFirestore({
-          ticket_id: foto.ticket_id,
-          autor_id: user.id,
-          contenido: `Foto eliminada: ${foto.nombre_archivo}`,
-          tipo: "nota" as const,
-          created_at: new Date().toISOString(),
-          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
-        })
-      )
+      const logNow = new Date().toISOString()
+      const logData = cleanForFirestore({
+        ticket_id: foto.ticket_id,
+        autor_id: user.id,
+        contenido: `Foto eliminada: ${foto.nombre_archivo}`,
+        tipo: "nota" as const,
+        created_at: logNow,
+        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+      })
+      const logRef = db.collection("update-logs").doc()
+      const ticketLogRef = db.collection("tickets").doc(foto.ticket_id).collection("update_logs").doc(logRef.id)
+      await Promise.all([logRef.set(logData), ticketLogRef.set(logData)])
 
       revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
       return {

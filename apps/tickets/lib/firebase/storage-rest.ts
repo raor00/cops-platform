@@ -54,8 +54,24 @@ function getFirebaseBucketCandidates(): string[] {
   ].filter(Boolean))]
 }
 
-function getFirebaseBucketNamesOrThrow(): string[] {
-  const candidates = getFirebaseBucketCandidates()
+async function discoverFirebaseBuckets(): Promise<string[]> {
+  try {
+    const storage = getAdminStorage() as unknown as {
+      getBuckets?: () => Promise<[Array<{ name: string }>]>
+    }
+
+    if (!storage.getBuckets) return []
+
+    const [buckets] = await storage.getBuckets()
+    return buckets.map((bucket) => bucket.name).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+async function getFirebaseBucketNamesOrThrow(): Promise<string[]> {
+  const discovered = await discoverFirebaseBuckets()
+  const candidates = [...new Set([...getFirebaseBucketCandidates(), ...discovered])]
   if (candidates.length === 0) {
     throw new Error(
       "No hay proveedor de almacenamiento configurado. Configura FIREBASE_STORAGE_BUCKET o NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, o Cloudinary."
@@ -68,7 +84,7 @@ function getFirebaseBucketNamesOrThrow(): string[] {
 async function withFirebaseBucketFallback<T>(
   operation: (bucketName: string) => Promise<T>
 ): Promise<T> {
-  const candidates = getFirebaseBucketNamesOrThrow()
+  const candidates = await getFirebaseBucketNamesOrThrow()
   let lastError: unknown = null
 
   for (const bucketName of candidates) {
