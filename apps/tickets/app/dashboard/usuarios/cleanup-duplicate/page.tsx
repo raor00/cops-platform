@@ -18,7 +18,7 @@ const CANONICAL_UID = "ZhlKLUX8MNOucwS3jjdb2kQvmvt1"
 export default async function CleanupDuplicateUserPage() {
   const user = await getCurrentUser()
 
-  if (!user || ROLE_HIERARCHY[user.rol] < 3) {
+  if (!user || ROLE_HIERARCHY[user.rol] < 2) {
     redirect("/dashboard")
   }
 
@@ -26,7 +26,7 @@ export default async function CleanupDuplicateUserPage() {
     "use server"
 
     const currentUser = await getCurrentUser()
-    if (!currentUser || ROLE_HIERARCHY[currentUser.rol] < 3) {
+    if (!currentUser || ROLE_HIERARCHY[currentUser.rol] < 2) {
       redirect("/dashboard")
     }
 
