@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { getFullName, getInitials } from "@/lib/utils"
 import type { User } from "@/types"
 import { ROLE_LABELS } from "@/types"
 
@@ -24,6 +25,8 @@ interface HeaderProps {
 
 export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
   const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+  const userFullName = getFullName(user.nombre, user.apellido)
+  const userInitials = getInitials(user.nombre, user.apellido)
 
   const goToModuleSelector = () => {
     window.location.href = `${webAppUrl}/panel`
@@ -79,15 +82,10 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
                 className="flex items-center gap-2 px-2 text-slate-700 hover:text-slate-900"
               >
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="text-xs">
-                    {user.nombre.charAt(0)}
-                    {user.apellido.charAt(0)}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
                 </Avatar>
                 <div className="hidden lg:block text-left">
-                  <p className="text-sm font-medium">
-                    {user.nombre} {user.apellido}
-                  </p>
+                  <p className="text-sm font-medium">{userFullName}</p>
                   <p className="text-xs text-slate-500">{user.cargo || ROLE_LABELS[user.rol]}</p>
                 </div>
               </Button>

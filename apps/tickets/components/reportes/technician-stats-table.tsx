@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Users, TrendingUp, CheckCircle2, Clock, DollarSign, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency, formatMinutesToDuration } from "@/lib/utils"
+import { formatCurrency, formatMinutesToDuration, getFullName, getInitials } from "@/lib/utils"
 import type { TechnicianKPI } from "@/types"
 import { cn } from "@/lib/utils"
 
@@ -74,12 +74,11 @@ export function TechnicianStatsTable({ kpis }: TechnicianStatsTableProps) {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-500/25 bg-sky-500/15 text-[11px] font-bold text-sky-600">
-                        {kpi.nombre.charAt(0)}
-                        {kpi.apellido.charAt(0)}
+                        {getInitials(kpi.nombre, kpi.apellido)}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-slate-900">
-                          {kpi.nombre} {kpi.apellido}
+                          {getFullName(kpi.nombre, kpi.apellido)}
                         </p>
                         <p className="text-xs text-slate-400">{totalRate}% tasa de cierre</p>
                       </div>
@@ -144,12 +143,11 @@ export function TechnicianStatsTable({ kpis }: TechnicianStatsTableProps) {
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-500/30 bg-sky-500/20 text-sm font-bold text-sky-700">
-                {selected.nombre.charAt(0)}
-                {selected.apellido.charAt(0)}
+                {getInitials(selected.nombre, selected.apellido)}
               </div>
               <div>
                 <h4 className="font-semibold text-slate-900">
-                  {selected.nombre} {selected.apellido}
+                  {getFullName(selected.nombre, selected.apellido)}
                 </h4>
                 <p className="text-xs text-slate-500">Desglose de rendimiento</p>
               </div>

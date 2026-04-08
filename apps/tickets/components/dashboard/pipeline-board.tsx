@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
-import { formatRelativeTime } from "@/lib/utils"
+import { formatRelativeTime, getFullName, getInitials } from "@/lib/utils"
 import type { Ticket, TicketStatus } from "@/types"
 import { STATUS_LABELS, STATUS_COLORS, PRIORITY_COLORS } from "@/types"
 
@@ -52,9 +52,9 @@ function TicketCard({ ticket }: TicketCardProps) {
         {ticket.tecnico && (
           <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
             <div className="h-4 w-4 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-600">
-              {ticket.tecnico.nombre.charAt(0)}
+              {getInitials(ticket.tecnico.nombre, ticket.tecnico.apellido)}
             </div>
-            <span className="truncate">{ticket.tecnico.nombre} {ticket.tecnico.apellido}</span>
+            <span className="truncate">{getFullName(ticket.tecnico.nombre, ticket.tecnico.apellido)}</span>
           </div>
         )}
       </div>

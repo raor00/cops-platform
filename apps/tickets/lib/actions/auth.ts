@@ -26,6 +26,28 @@ import {
   clearFirebaseSession,
 } from "@/lib/firebase/session"
 
+function normalizeAuthUser(uid: string, rawUser: Partial<User> & { email?: string | null }): User {
+  const fallbackName = rawUser.email?.split("@")[0]?.trim() || "Usuario"
+
+  return {
+    id: uid,
+    email: rawUser.email?.trim() || "",
+    nombre: rawUser.nombre?.trim() || fallbackName,
+    apellido: rawUser.apellido?.trim() || "",
+    rol: rawUser.rol || "tecnico",
+    nivel_jerarquico: rawUser.nivel_jerarquico ?? ROLE_HIERARCHY[rawUser.rol || "tecnico"],
+    telefono: rawUser.telefono ?? null,
+    cedula: rawUser.cedula ?? "",
+    estado: rawUser.estado || "activo",
+    activo_desde: rawUser.activo_desde ?? null,
+    foto_perfil_path: rawUser.foto_perfil_path ?? null,
+    especialidad: rawUser.especialidad ?? null,
+    cargo: rawUser.cargo ?? null,
+    created_at: rawUser.created_at || new Date().toISOString(),
+    updated_at: rawUser.updated_at || new Date().toISOString(),
+  }
+}
+
 const DEMO_USERNAME = process.env.TICKETS_DEMO_USERNAME || "admin"
 const DEMO_PASSWORD = process.env.TICKETS_DEMO_PASSWORD || "admin123"
 const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
@@ -165,7 +187,7 @@ export async function setFirebaseSessionAction(
       return { success: false, error: "Perfil de usuario no encontrado en el sistema" }
     }
 
-    const user = fromFirestoreDoc<User>(uid, userDoc.data()!)
+    const user = normalizeAuthUser(uid, fromFirestoreDoc<Partial<User>>(uid, userDoc.data()!))
 
     if (user.estado !== "activo") {
       return { success: false, error: "Tu cuenta está desactivada. Contacta al administrador." }
@@ -257,7 +279,7 @@ export async function getCurrentUser(): Promise<User | null> {
       const userDoc = await db.collection("users").doc(uid).get()
       if (!userDoc.exists) return null
 
-      return fromFirestoreDoc<User>(uid, userDoc.data()!)
+      return normalizeAuthUser(uid, fromFirestoreDoc<Partial<User>>(uid, userDoc.data()!))
     } catch {
       return null
     }

@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts"
+import { getFullName } from "@/lib/utils"
 import type { TechnicianKPI } from "@/types"
 
 interface TechnicianPerformanceChartProps {
@@ -34,7 +35,9 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 export function TechnicianPerformanceChart({ data }: TechnicianPerformanceChartProps) {
   const chartData = data.map((tec) => ({
-    nombre: `${tec.nombre} ${tec.apellido.charAt(0)}.`,
+    nombre: tec.apellido?.trim()
+      ? `${getFullName(tec.nombre)} ${tec.apellido.trim().charAt(0)}.`
+      : getFullName(tec.nombre, tec.apellido),
     Completados: tec.ticketsCompletados,
     Activos: tec.ticketsActivos,
   }))

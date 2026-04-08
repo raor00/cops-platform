@@ -52,10 +52,17 @@ export function formatMinutesToDuration(minutes: number): string {
   return `${hours}h ${mins}min`
 }
 
-export function getInitials(nombre: string, apellido?: string): string {
-  const first = nombre.charAt(0).toUpperCase()
-  const last = apellido ? apellido.charAt(0).toUpperCase() : ''
+export function getInitials(nombre?: string | null, apellido?: string | null): string {
+  const safeNombre = nombre?.trim() || 'Usuario'
+  const safeApellido = apellido?.trim() || ''
+  const first = safeNombre.charAt(0).toUpperCase()
+  const last = safeApellido ? safeApellido.charAt(0).toUpperCase() : ''
   return `${first}${last}`
+}
+
+export function getFullName(nombre?: string | null, apellido?: string | null): string {
+  const parts = [nombre?.trim(), apellido?.trim()].filter(Boolean)
+  return parts.join(' ') || 'Usuario'
 }
 
 export function truncate(str: string, length: number): string {

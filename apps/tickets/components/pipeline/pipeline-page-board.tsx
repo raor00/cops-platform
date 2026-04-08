@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { AlertTriangle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { formatRelativeTime } from "@/lib/utils"
+import { formatRelativeTime, getFullName, getInitials } from "@/lib/utils"
 import type { Ticket, TicketStatus } from "@/types"
 import { PRIORITY_COLORS, STATUS_LABELS } from "@/types"
 
@@ -68,11 +68,10 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
         {ticket.tecnico && (
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[9px] font-bold text-slate-700">
-              {ticket.tecnico.nombre.charAt(0)}
-              {ticket.tecnico.apellido.charAt(0)}
+              {getInitials(ticket.tecnico.nombre, ticket.tecnico.apellido)}
             </div>
             <span className="truncate">
-              {ticket.tecnico.nombre} {ticket.tecnico.apellido}
+              {getFullName(ticket.tecnico.nombre, ticket.tecnico.apellido)}
             </span>
           </div>
         )}

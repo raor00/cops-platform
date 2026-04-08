@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { addTicketUpdateLog } from "@/lib/actions/tickets"
 import { FotoUploadDialog } from "@/components/fotos/foto-upload-dialog"
-import { formatRelativeTime } from "@/lib/utils"
+import { formatRelativeTime, getFullName, getInitials } from "@/lib/utils"
 import { ROLE_LABELS } from "@/types"
 import type { UpdateLog, TicketStatus } from "@/types"
 import { cn } from "@/lib/utils"
@@ -149,14 +149,10 @@ export function UpdateLogPanel({
                   <div className="flex items-center gap-1.5 min-w-0">
                     {/* Avatar iniciales */}
                     <div className="h-5 w-5 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-[9px] font-bold text-sky-300 shrink-0">
-                      {log.autor
-                        ? `${log.autor.nombre.charAt(0)}${log.autor.apellido.charAt(0)}`
-                        : "?"}
+                      {log.autor ? getInitials(log.autor.nombre, log.autor.apellido) : "?"}
                     </div>
                     <span className="text-xs font-medium text-slate-700 truncate">
-                      {log.autor
-                        ? `${log.autor.nombre} ${log.autor.apellido}`
-                        : "Sistema"}
+                      {log.autor ? getFullName(log.autor.nombre, log.autor.apellido) : "Sistema"}
                     </span>
                     {log.autor && (
                       <span className="text-[10px] text-slate-400 shrink-0">

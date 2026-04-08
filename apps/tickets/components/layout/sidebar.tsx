@@ -20,7 +20,7 @@ import {
   Zap,
   CalendarDays,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, getFullName, getInitials } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import type { User, UserProfile } from "@/types"
@@ -114,6 +114,8 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
   const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const collapsed = controlledCollapsed ?? internalCollapsed
+  const userFullName = getFullName(user.nombre, user.apellido)
+  const userInitials = getInitials(user.nombre, user.apellido)
   const setCollapsed = (val: boolean) => {
     setInternalCollapsed(val)
     onCollapsedChange?.(val)
@@ -236,16 +238,16 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
           <div className={cn("flex items-center gap-3 rounded-xl p-2", collapsed ? "justify-center" : "")}>
             <Avatar className="h-9 w-9 shrink-0 ring-1 ring-white/20">
               {"foto_perfil_url" in user && user.foto_perfil_url && (
-                <AvatarImage src={user.foto_perfil_url} alt={`${user.nombre} ${user.apellido}`} />
+                <AvatarImage src={user.foto_perfil_url} alt={userFullName} />
               )}
               <AvatarFallback className="bg-gradient-to-br from-sky-600/30 to-slate-600/30 text-white text-xs font-bold">
-                {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                {userInitials}
               </AvatarFallback>
             </Avatar>
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {user.nombre} {user.apellido}
+                  {userFullName}
                 </p>
                 <p className="text-xs text-white/50 truncate">{ROLE_LABELS[user.rol]}</p>
               </div>
