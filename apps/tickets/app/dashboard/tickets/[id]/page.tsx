@@ -24,6 +24,9 @@ interface TicketPageProps {
   searchParams: Promise<{ edit?: string }>
 }
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function generateMetadata({ params }: TicketPageProps) {
   const { id } = await params
   const result = await getTicketById(id)

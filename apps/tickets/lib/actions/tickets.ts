@@ -924,6 +924,8 @@ export async function addTicketUpdateLog(
         autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
       })
       await logRef.set(logData)
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      revalidatePath("/dashboard/tickets")
 
       const log: UpdateLog = { id: logRef.id, ...logData }
       return { success: true, data: log, message: "Actualización agregada" }
@@ -954,6 +956,9 @@ export async function addTicketUpdateLog(
     contenido: data.observacion ?? "", tipo: "nota", created_at: data.created_at,
     autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
   }
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  revalidatePath("/dashboard/tickets")
 
   return { success: true, data: log, message: "Actualización agregada" }
 }

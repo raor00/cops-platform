@@ -32,22 +32,60 @@ function getCloudinaryConfig() {
 }
 
 function getFirebaseConfig() {
+  const projectId = (process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "").trim()
   return {
+    projectId,
     bucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "")
+      .replace(/^gs:\/\//, "")
+      .trim(),
+    adminBucket: (process.env.FIREBASE_STORAGE_BUCKET ?? "")
       .replace(/^gs:\/\//, "")
       .trim(),
   }
 }
 
-function getFirebaseBucket() {
-  const { bucket } = getFirebaseConfig()
-  if (!bucket) {
+function getFirebaseBucketCandidates(): string[] {
+  const { bucket, adminBucket, projectId } = getFirebaseConfig()
+  return [...new Set([
+    bucket,
+    adminBucket,
+    projectId ? `${projectId}.firebasestorage.app` : "",
+    projectId ? `${projectId}.appspot.com` : "",
+  ].filter(Boolean))]
+}
+
+function getFirebaseBucketNamesOrThrow(): string[] {
+  const candidates = getFirebaseBucketCandidates()
+  if (candidates.length === 0) {
     throw new Error(
-      "No hay proveedor de almacenamiento configurado. Configura NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET o Cloudinary."
+      "No hay proveedor de almacenamiento configurado. Configura FIREBASE_STORAGE_BUCKET o NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, o Cloudinary."
     )
   }
 
-  return getAdminStorage().bucket(bucket)
+  return candidates
+}
+
+async function withFirebaseBucketFallback<T>(
+  operation: (bucketName: string) => Promise<T>
+): Promise<T> {
+  const candidates = getFirebaseBucketNamesOrThrow()
+  let lastError: unknown = null
+
+  for (const bucketName of candidates) {
+    try {
+      return await operation(bucketName)
+    } catch (error) {
+      lastError = error
+      const message = error instanceof Error ? error.message : String(error)
+      if (!message.toLowerCase().includes("bucket does not exist")) {
+        throw error
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? new Error(`No se encontró un bucket válido para Storage. Intentados: ${candidates.join(", ")}. Último error: ${lastError.message}`)
+    : new Error(`No se encontró un bucket válido para Storage. Intentados: ${candidates.join(", ")}`)
 }
 
 // ── Cloudinary path helpers ───────────────────────────────────────────────────
@@ -158,14 +196,16 @@ export async function uploadFileToStorage(
   }
 
   // Firebase Storage REST fallback
-  const file = getFirebaseBucket().file(storagePath)
-  await file.save(buffer, {
-    resumable: false,
-    contentType,
-    metadata: {
+  await withFirebaseBucketFallback(async (bucketName) => {
+    const file = getAdminStorage().bucket(bucketName).file(storagePath)
+    await file.save(buffer, {
+      resumable: false,
       contentType,
-      cacheControl: "public, max-age=3600",
-    },
+      metadata: {
+        contentType,
+        cacheControl: "public, max-age=3600",
+      },
+    })
   })
 
   return storagePath
@@ -177,12 +217,14 @@ export async function getSignedDownloadUrl(storagePath: string): Promise<string>
   }
 
   try {
-    const file = getFirebaseBucket().file(storagePath)
-    const [url] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 60 * 60 * 1000,
+    return await withFirebaseBucketFallback(async (bucketName) => {
+      const file = getAdminStorage().bucket(bucketName).file(storagePath)
+      const [url] = await file.getSignedUrl({
+        action: "read",
+        expires: Date.now() + 60 * 60 * 1000,
+      })
+      return url
     })
-    return url
   } catch {
     return ""
   }
@@ -195,7 +237,9 @@ export async function deleteFileFromStorage(storagePath: string): Promise<void> 
   }
 
   try {
-    await getFirebaseBucket().file(storagePath).delete({ ignoreNotFound: true })
+    await withFirebaseBucketFallback(async (bucketName) => {
+      await getAdminStorage().bucket(bucketName).file(storagePath).delete({ ignoreNotFound: true })
+    })
   } catch {
     // Non-fatal
   }
