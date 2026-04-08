@@ -320,15 +320,29 @@ export async function registerUserAction(data: {
     try {
       const auth = getAdminAuth()
       const db = getAdminFirestore()
+      const normalizedEmail = data.email.trim().toLowerCase()
+
+      try {
+        await auth.getUserByEmail(normalizedEmail)
+        return { success: false, error: "Ya existe un usuario autenticable con ese correo" }
+      } catch {
+        // Expected when the email is new in Firebase Auth
+      }
+
+      const existingProfiles = await db.collection("users").where("email", "==", normalizedEmail).get()
+      const visibleProfiles = existingProfiles.docs.filter((doc) => doc.data().hidden !== true)
+      if (visibleProfiles.length > 0) {
+        return { success: false, error: "Ya existe un perfil de usuario con ese correo en el sistema" }
+      }
 
       const authUser = await auth.createUser({
-        email: data.email,
+        email: normalizedEmail,
         password: data.password,
         emailVerified: true,
       })
 
       const profile: Omit<User, "id"> = {
-        email: data.email,
+        email: normalizedEmail,
         nombre: data.nombre,
         apellido: data.apellido,
         rol: data.rol as User["rol"],

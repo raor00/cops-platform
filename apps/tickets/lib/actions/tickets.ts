@@ -95,7 +95,7 @@ async function fbEnrichTicket(ticket: Ticket): Promise<Ticket> {
 function fbFilterTickets(
   tickets: Ticket[],
   currentUser: { id: string; rol: string },
-  options?: { status?: TicketStatus; priority?: string; tecnicoId?: string; search?: string }
+  options?: { status?: TicketStatus; priority?: string; tecnicoId?: string; createdById?: string; search?: string }
 ): Ticket[] {
   let result = tickets
 
@@ -110,6 +110,9 @@ function fbFilterTickets(
   }
   if (options?.tecnicoId) {
     result = result.filter((t) => t.tecnico_id === options.tecnicoId)
+  }
+  if (options?.createdById) {
+    result = result.filter((t) => t.creado_por === options.createdById)
   }
   if (options?.search) {
     const q = options.search.toLowerCase()
@@ -133,6 +136,7 @@ export async function getTickets(options?: {
   status?: TicketStatus
   priority?: string
   tecnicoId?: string
+  createdById?: string
   search?: string
 }): Promise<ActionResponse<PaginatedResponse<Ticket>>> {
   const currentUser = await getCurrentUser()
@@ -185,6 +189,7 @@ export async function getTickets(options?: {
   if (options?.status) query = query.eq("estado", options.status)
   if (options?.priority) query = query.eq("prioridad", options.priority)
   if (options?.tecnicoId) query = query.eq("tecnico_id", options.tecnicoId)
+  if (options?.createdById) query = query.eq("creado_por", options.createdById)
   if (options?.search) {
     const sanitizedSearch = options.search.replace(/[,().%\\]/g, "")
     query = query.or(

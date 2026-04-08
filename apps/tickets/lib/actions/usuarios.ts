@@ -6,16 +6,32 @@ import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/t
 import { getCurrentUser, registerUserAction } from "./auth"
 import { ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
-import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+import { getAdminAuth, getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 import { uploadFileToStorage, getSignedDownloadUrl, deleteFileFromStorage } from "@/lib/firebase/storage-rest"
 import { getDemoCurrentUser, getDemoUsers } from "@/lib/mock-data"
 
 const BUCKET_NAME = "user-profiles"
 
+function normalizeEmail(email?: string | null): string {
+  return email?.trim().toLowerCase() || ""
+}
+
+function scoreUserProfile(user: UserProfile): number {
+  let score = 0
+  if (user.estado === "activo") score += 4
+  if (user.nombre?.trim()) score += 2
+  if (user.apellido?.trim()) score += 2
+  if (user.cedula?.trim()) score += 1
+  if (user.telefono?.trim()) score += 1
+  if (user.created_at) score += 1
+  return score
+}
+
 async function fbGetUserWithPhoto(uid: string): Promise<UserProfile | null> {
   const db = getAdminFirestore()
   const doc = await db.collection("users").doc(uid).get()
   if (!doc.exists) return null
+  if (doc.data()?.hidden === true) return null
   const user = fromFirestoreDoc<UserProfile>(uid, doc.data()!)
   if (user.foto_perfil_path) {
     try {
@@ -25,6 +41,38 @@ async function fbGetUserWithPhoto(uid: string): Promise<UserProfile | null> {
     user.foto_perfil_url = null
   }
   return user
+}
+
+async function fbGetCanonicalUsers(): Promise<UserProfile[]> {
+  const db = getAdminFirestore()
+  const auth = getAdminAuth()
+  const snap = await db.collection("users").orderBy("nombre").get()
+  const visibleDocs = snap.docs.filter((d) => d.data().hidden !== true)
+  const users = (await Promise.all(visibleDocs.map((d) => fbGetUserWithPhoto(d.id)))).filter(Boolean) as UserProfile[]
+
+  const grouped = new Map<string, UserProfile[]>()
+  for (const user of users) {
+    const key = normalizeEmail(user.email) || user.id
+    grouped.set(key, [...(grouped.get(key) || []), user])
+  }
+
+  const canonicalUsers = await Promise.all(
+    Array.from(grouped.entries()).map(async ([email, group]) => {
+      if (group.length === 1 || !email.includes("@")) return group[0]!
+
+      try {
+        const authUser = await auth.getUserByEmail(email)
+        const authMatch = group.find((candidate) => candidate.id === authUser.uid)
+        if (authMatch) return authMatch
+      } catch {
+        // ignore and fall back to best local profile below
+      }
+
+      return [...group].sort((a, b) => scoreUserProfile(b) - scoreUserProfile(a))[0]!
+    })
+  )
+
+  return canonicalUsers.sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
 }
 
 export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
@@ -39,11 +87,7 @@ export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
     }
 
     if (isFirebaseMode()) {
-      const db = getAdminFirestore()
-      const snap = await db.collection("users").orderBy("nombre").get()
-      const visibleDocs = snap.docs.filter((d) => d.data().hidden !== true)
-      const users = await Promise.all(visibleDocs.map((d) => fbGetUserWithPhoto(d.id)))
-      return { success: true, data: users.filter(Boolean) as UserProfile[] }
+      return { success: true, data: await fbGetCanonicalUsers() }
     }
 
     const supabase = await createClient()
@@ -253,4 +297,50 @@ export async function createUser(input: {
   if (!result.success) return { success: false, error: result.error }
   const id = result.data?.user.id ?? ""
   return { success: true, data: { id }, message: result.message }
+}
+
+export async function deleteUserAction(userId: string): Promise<ActionResponse> {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) return { success: false, error: "No autenticado" }
+    if (ROLE_HIERARCHY[currentUser.rol] < 3) {
+      return { success: false, error: "No tienes permisos para eliminar usuarios" }
+    }
+    if (currentUser.id === userId) {
+      return { success: false, error: "No puedes eliminar tu propia cuenta" }
+    }
+
+    if (isLocalMode()) {
+      return { success: false, error: "Eliminación no disponible en modo local" }
+    }
+
+    if (isFirebaseMode()) {
+      const db = getAdminFirestore()
+      const auth = getAdminAuth()
+      const docRef = db.collection("users").doc(userId)
+      const userDoc = await docRef.get()
+      if (!userDoc.exists) return { success: false, error: "Usuario no encontrado" }
+
+      const userData = userDoc.data() || {}
+      const fotoPerfilPath = userData.foto_perfil_path as string | null | undefined
+      if (fotoPerfilPath) {
+        try { await deleteFileFromStorage(fotoPerfilPath) } catch {}
+      }
+
+      await docRef.delete()
+
+      try {
+        await auth.deleteUser(userId)
+      } catch {
+        // If the Firestore profile was orphaned, removing the document is enough
+      }
+
+      revalidatePath("/dashboard/usuarios")
+      return { success: true, message: "Usuario eliminado exitosamente" }
+    }
+
+    return { success: false, error: "Eliminación no soportada en el proveedor actual" }
+  } catch (error) {
+    return { success: false, error: "Error inesperado al eliminar usuario" }
+  }
 }

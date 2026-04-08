@@ -74,12 +74,11 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
   const canEdit = ROLE_HIERARCHY[user.rol] >= 3 || user.id === id
   const isTecnico = targetUser.rol === 'tecnico'
+  const ticketsTabLabel = isTecnico ? 'Tickets Asignados' : 'Tickets Creados'
 
   // Fetches paralelos
   const [ticketsResult, statsResult] = await Promise.all([
-    isTecnico
-      ? getTickets({ tecnicoId: id, pageSize: 20 })
-      : Promise.resolve({ success: true as const, data: { data: [] as TicketType[], total: 0, page: 1, pageSize: 20, totalPages: 0 } }),
+    getTickets(isTecnico ? { tecnicoId: id, pageSize: 20 } : { createdById: id, pageSize: 20 }),
     isTecnico
       ? getTechnicianStats(id)
       : Promise.resolve({ success: true as const, data: null }),
@@ -157,17 +156,15 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
             <User className="h-4 w-4 mr-2" />
             Perfil
           </TabsTrigger>
-          {isTecnico && (
-            <TabsTrigger value="tickets">
-              <Ticket className="h-4 w-4 mr-2" />
-              Tickets
-              {tickets.length > 0 && (
-                <span className="ml-1.5 text-xs bg-blue-500/20 text-blue-300 rounded-full px-1.5 py-0.5">
-                  {tickets.length}
-                </span>
-              )}
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="tickets">
+            <Ticket className="h-4 w-4 mr-2" />
+            Tickets
+            {tickets.length > 0 && (
+              <span className="ml-1.5 text-xs bg-blue-500/20 text-blue-300 rounded-full px-1.5 py-0.5">
+                {tickets.length}
+              </span>
+            )}
+          </TabsTrigger>
           {isTecnico && (
             <TabsTrigger value="rendimiento">
               <BarChart2 className="h-4 w-4 mr-2" />
@@ -218,54 +215,52 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
         </TabsContent>
 
         {/* ── Tab: Tickets ── */}
-        {isTecnico && (
-          <TabsContent value="tickets">
-            <Card variant="glass" className="animate-fade-in">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold text-slate-900">
-                  Tickets Asignados
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {tickets.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400">
-                    <Ticket className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                    <p>Sin tickets asignados</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {tickets.map((t) => (
-                      <Link
-                        key={t.id}
-                        href={`/dashboard/tickets/${t.id}`}
-                        className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <span className="text-xs text-blue-400 font-mono">
-                              {t.numero_ticket}
-                            </span>
-                            <Badge className={`text-xs ${STATUS_COLORS[t.estado]}`}>
-                              {STATUS_LABELS[t.estado]}
-                            </Badge>
-                            <Badge className={`text-xs ${PRIORITY_COLORS[t.prioridad]}`}>
-                              {PRIORITY_LABELS[t.prioridad]}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-slate-800 truncate">{t.asunto}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{t.cliente_nombre}</p>
+        <TabsContent value="tickets">
+          <Card variant="glass" className="animate-fade-in">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-slate-900">
+                {ticketsTabLabel}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {tickets.length === 0 ? (
+                <div className="p-8 text-center text-slate-400">
+                  <Ticket className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p>{isTecnico ? 'Sin tickets asignados' : 'Sin tickets creados'}</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {tickets.map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/dashboard/tickets/${t.id}`}
+                      className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <span className="text-xs text-blue-400 font-mono">
+                            {t.numero_ticket}
+                          </span>
+                          <Badge className={`text-xs ${STATUS_COLORS[t.estado]}`}>
+                            {STATUS_LABELS[t.estado]}
+                          </Badge>
+                          <Badge className={`text-xs ${PRIORITY_COLORS[t.prioridad]}`}>
+                            {PRIORITY_LABELS[t.prioridad]}
+                          </Badge>
                         </div>
-                        <span className="text-xs text-slate-400 shrink-0 mt-1">
-                          {new Date(t.created_at).toLocaleDateString('es-VE')}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
+                        <p className="text-sm text-slate-800 truncate">{t.asunto}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{t.cliente_nombre}</p>
+                      </div>
+                      <span className="text-xs text-slate-400 shrink-0 mt-1">
+                        {new Date(t.created_at).toLocaleDateString('es-VE')}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ── Tab: Rendimiento ── */}
         {isTecnico && (

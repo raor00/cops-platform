@@ -270,6 +270,7 @@ export function getDemoTicketsPage(
     status?: TicketStatus
     priority?: string
     tecnicoId?: string
+    createdById?: string
     search?: string
   } = {},
   user: User
@@ -289,6 +290,10 @@ export function getDemoTicketsPage(
 
   if (options.tecnicoId) {
     filtered = filtered.filter((ticket) => ticket.tecnico_id === options.tecnicoId)
+  }
+
+   if (options.createdById) {
+    filtered = filtered.filter((ticket) => ticket.creado_por === options.createdById)
   }
 
   if (options.search) {
