@@ -905,7 +905,8 @@ export interface UpdateLog {
   contenido: string
   tipo: 'nota' | 'cambio_estado'
   created_at: string
-  autor?: Pick<User, 'nombre' | 'apellido' | 'rol'>
+  updated_at?: string
+  autor?: Pick<User, 'nombre' | 'apellido' | 'rol' | 'cargo'>
 }
 
 // ─── Clientes DB (Sprint 7) ───────────────────────────────────────────────────

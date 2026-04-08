@@ -249,7 +249,7 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
                 <p className="text-sm font-semibold text-white truncate">
                   {userFullName}
                 </p>
-                <p className="text-xs text-white/50 truncate">{ROLE_LABELS[user.rol]}</p>
+                <p className="text-xs text-white/50 truncate">{user.cargo || ROLE_LABELS[user.rol]}</p>
               </div>
             )}
           </div>

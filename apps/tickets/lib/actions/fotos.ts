@@ -109,7 +109,7 @@ export async function uploadTicketFoto(
         autor_id: user.id,
         contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
         tipo: "nota",
-        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol, cargo: user.cargo ?? null },
       })
 
       revalidatePath(`/dashboard/tickets/${ticketId}`)
@@ -152,7 +152,7 @@ export async function uploadTicketFoto(
           contenido: `Foto subida: ${file.name}${descripcion ? ` — ${descripcion}` : ""}`,
           tipo: "nota" as const,
           created_at: now,
-          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+            autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol, cargo: user.cargo ?? null },
         })
         const logRef = db.collection("update-logs").doc()
         const ticketLogRef = db.collection("tickets").doc(ticketId).collection("update_logs").doc(logRef.id)
@@ -360,7 +360,7 @@ export async function deleteTicketFoto(
         autor_id: user.id,
         contenido: `Foto eliminada: ${foto.nombre_archivo}`,
         tipo: "nota",
-        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol, cargo: user.cargo ?? null },
       })
 
       revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
@@ -391,7 +391,7 @@ export async function deleteTicketFoto(
         contenido: `Foto eliminada: ${foto.nombre_archivo}`,
         tipo: "nota" as const,
         created_at: logNow,
-        autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol },
+          autor: { nombre: user.nombre, apellido: user.apellido, rol: user.rol, cargo: user.cargo ?? null },
       })
       const logRef = db.collection("update-logs").doc()
       const ticketLogRef = db.collection("tickets").doc(foto.ticket_id).collection("update_logs").doc(logRef.id)

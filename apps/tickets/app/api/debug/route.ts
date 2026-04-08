@@ -39,6 +39,15 @@ export async function GET(request: Request) {
       CLOUDINARY_URL: process.env.CLOUDINARY_URL
         ? `✓ definido`
         : "(no definido)",
+      NEXT_PUBLIC_CLOUDINARY_URL: process.env.NEXT_PUBLIC_CLOUDINARY_URL
+        ? "✓ definido"
+        : "(no definido)",
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+        ? `✓ "${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}"`
+        : "(no definido)",
+      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+        ? "✓ definido"
+        : "(no definido)",
       WEB_URL: process.env.WEB_URL ?? "(no definido, usando default)",
       NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY
         ? "✓ definido"

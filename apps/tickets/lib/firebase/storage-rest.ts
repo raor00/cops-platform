@@ -15,20 +15,50 @@ import { getAdminStorage } from "@/lib/firebase/admin"
 function parseCloudinaryUrl(url: string): { cloud: string; key: string; secret: string } | null {
   try {
     // cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-    const match = url.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/)
+    const normalized = url.trim().replace(/[<>]/g, "")
+    const match = normalized.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/)
     if (!match) return null
     return { key: match[1], secret: match[2], cloud: match[3] }
   } catch { return null }
 }
 
 function getCloudinaryConfig() {
-  const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL ?? "")
+  const parsed = parseCloudinaryUrl(process.env.CLOUDINARY_URL ?? process.env.NEXT_PUBLIC_CLOUDINARY_URL ?? "")
   return {
-    cloud: (process.env.CLOUDINARY_CLOUD_NAME ?? parsed?.cloud ?? "").trim(),
-    key: (process.env.CLOUDINARY_API_KEY ?? parsed?.key ?? "").trim(),
+    cloud: (
+      process.env.CLOUDINARY_CLOUD_NAME ??
+      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ??
+      process.env.CLOUDINARY_CLOUD ??
+      parsed?.cloud ??
+      ""
+    ).trim(),
+    key: (
+      process.env.CLOUDINARY_API_KEY ??
+      process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY ??
+      parsed?.key ??
+      ""
+    ).trim(),
     secret: (process.env.CLOUDINARY_API_SECRET ?? parsed?.secret ?? "").trim(),
-    preset: (process.env.CLOUDINARY_UPLOAD_PRESET ?? "").trim(),
+    preset: (
+      process.env.CLOUDINARY_UPLOAD_PRESET ??
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ??
+      ""
+    ).trim(),
   }
+}
+
+function hasAnyCloudinaryEnv() {
+  return Boolean(
+    process.env.CLOUDINARY_URL ||
+    process.env.NEXT_PUBLIC_CLOUDINARY_URL ||
+    process.env.CLOUDINARY_CLOUD_NAME ||
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+    process.env.CLOUDINARY_CLOUD ||
+    process.env.CLOUDINARY_API_KEY ||
+    process.env.CLOUDINARY_API_SECRET ||
+    process.env.CLOUDINARY_UPLOAD_PRESET ||
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+  )
 }
 
 function getFirebaseConfig() {
@@ -209,6 +239,12 @@ export async function uploadFileToStorage(
   if (cloud) {
     const { publicId, url } = await cloudinaryUpload(storagePath, buffer, contentType)
     return `${CLOUDINARY_PREFIX}${publicId}::${url}`
+  }
+
+  if (hasAnyCloudinaryEnv()) {
+    throw new Error(
+      "Cloudinary está configurado parcialmente. Verifica CLOUDINARY_CLOUD_NAME/CLOUDINARY_URL y sus credenciales o upload preset."
+    )
   }
 
   // Firebase Storage REST fallback

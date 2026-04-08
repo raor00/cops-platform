@@ -36,6 +36,7 @@ interface TicketDetailTabsProps {
   canDeleteDocumentos?: boolean
   userRole?: string
   currentUserId?: string
+  currentUserCanManageLogs?: boolean
 }
 
 export function TicketDetailTabs({
@@ -53,6 +54,7 @@ export function TicketDetailTabs({
   canDeleteDocumentos = false,
   userRole,
   currentUserId,
+  currentUserCanManageLogs = false,
 }: TicketDetailTabsProps) {
   const canAddLog =
     userRole === "tecnico"
@@ -187,6 +189,7 @@ export function TicketDetailTabs({
           initialLogs={updateLogs}
           canAdd={canAddLog}
           canUploadPhotos={canUploadFotos}
+          canManageLogs={currentUserCanManageLogs}
         />
       </TabsContent>
 

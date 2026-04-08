@@ -3,10 +3,10 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { MessageSquarePlus, Loader2, Clock, FileText, Camera } from "lucide-react"
+import { MessageSquarePlus, Loader2, Clock, FileText, Camera, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { addTicketUpdateLog } from "@/lib/actions/tickets"
+import { addTicketUpdateLog, deleteTicketUpdateLog, updateTicketUpdateLog } from "@/lib/actions/tickets"
 import { FotoUploadDialog } from "@/components/fotos/foto-upload-dialog"
 import { formatRelativeTime, getFullName, getInitials } from "@/lib/utils"
 import { ROLE_LABELS } from "@/types"
@@ -19,6 +19,7 @@ interface UpdateLogPanelProps {
   initialLogs: UpdateLog[]
   canAdd: boolean
   canUploadPhotos?: boolean
+  canManageLogs?: boolean
 }
 
 export function UpdateLogPanel({
@@ -27,11 +28,14 @@ export function UpdateLogPanel({
   initialLogs,
   canAdd,
   canUploadPhotos = false,
+  canManageLogs = false,
 }: UpdateLogPanelProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [contenido, setContenido] = useState("")
   const [logs, setLogs] = useState<UpdateLog[]>(initialLogs)
+  const [editingLogId, setEditingLogId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState("")
 
   const isActive = ticketStatus !== "finalizado" && ticketStatus !== "cancelado"
 
@@ -57,6 +61,41 @@ export function UpdateLogPanel({
 
   const handlePhotoUploadSuccess = () => {
     router.refresh()
+  }
+
+  const handleStartEdit = (log: UpdateLog) => {
+    setEditingLogId(log.id)
+    setEditingContent(log.contenido)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingLogId || !editingContent.trim()) return
+
+    startTransition(async () => {
+      const result = await updateTicketUpdateLog(ticketId, editingLogId, editingContent)
+      if (result.success && result.data) {
+        setLogs((prev) => prev.map((log) => (log.id === editingLogId ? result.data! : log)))
+        setEditingLogId(null)
+        setEditingContent("")
+        toast.success("Actualización editada")
+      } else {
+        toast.error("Error", { description: result.error })
+      }
+    })
+  }
+
+  const handleDelete = async (logId: string) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta actualización de la bitácora?")) return
+
+    startTransition(async () => {
+      const result = await deleteTicketUpdateLog(ticketId, logId)
+      if (result.success) {
+        setLogs((prev) => prev.filter((log) => log.id !== logId))
+        toast.success("Actualización eliminada")
+      } else {
+        toast.error("Error", { description: result.error })
+      }
+    })
   }
 
   return (
@@ -156,7 +195,7 @@ export function UpdateLogPanel({
                     </span>
                     {log.autor && (
                       <span className="text-[10px] text-slate-400 shrink-0">
-                        ({ROLE_LABELS[log.autor.rol]})
+                        ({log.autor.cargo || ROLE_LABELS[log.autor.rol]})
                       </span>
                     )}
                   </div>
@@ -165,7 +204,40 @@ export function UpdateLogPanel({
                     {formatRelativeTime(log.created_at)}
                   </div>
                 </div>
-                <p className="text-sm text-slate-800 leading-relaxed">{log.contenido}</p>
+                {editingLogId === log.id ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      rows={3}
+                      className="resize-none"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setEditingLogId(null)}>
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={handleSaveEdit} disabled={!editingContent.trim() || isPending}>
+                        Guardar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-800 leading-relaxed">{log.contenido}</p>
+                    {canManageLogs && log.tipo === "nota" && (
+                      <div className="mt-3 flex justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleStartEdit(log)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(log.id)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           ))}

@@ -63,6 +63,35 @@ async function fbGetUserMini(id: string): Promise<{ id: string; nombre: string; 
   return { id: doc.id, nombre: d.nombre, apellido: d.apellido, email: d.email, rol: d.rol, telefono: d.telefono }
 }
 
+async function fbHydrateUpdateLogs(logs: UpdateLog[]): Promise<UpdateLog[]> {
+  const db = getAdminFirestore()
+  const uniqueAuthorIds = [...new Set(logs.map((log) => log.autor_id).filter(Boolean))]
+  const authorMap = new Map<string, UpdateLog["autor"]>()
+
+  await Promise.all(
+    uniqueAuthorIds.map(async (authorId) => {
+      try {
+        const doc = await db.collection("users").doc(authorId).get()
+        if (!doc.exists) return
+        const data = doc.data() || {}
+        authorMap.set(authorId, {
+          nombre: String(data.nombre || ""),
+          apellido: String(data.apellido || ""),
+          rol: String(data.rol || "tecnico") as UpdateLog["autor"] extends infer T ? T extends { rol: infer R } ? R : never : never,
+          cargo: typeof data.cargo === "string" ? data.cargo : null,
+        })
+      } catch {
+        // ignore hydration errors
+      }
+    })
+  )
+
+  return logs.map((log) => ({
+    ...log,
+    autor: authorMap.get(log.autor_id) || log.autor,
+  }))
+}
+
 async function canAccessTicket(
   ticketId: string,
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
@@ -864,7 +893,7 @@ export async function getTicketUpdateLogs(ticketId: string): Promise<ActionRespo
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
 
-      return { success: true, data: logs }
+      return { success: true, data: await fbHydrateUpdateLogs(logs) }
     } catch (err) {
       return { success: false, error: (err as Error).message }
     }
@@ -911,7 +940,7 @@ export async function addTicketUpdateLog(
     if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
     const log = addDemoUpdateLog({
       ticket_id: ticketId, autor_id: currentUser.id, contenido: contenido.trim(), tipo: "nota",
-      autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
+      autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
     })
     return { success: true, data: log, message: "Actualización agregada" }
   }
@@ -937,7 +966,8 @@ export async function addTicketUpdateLog(
         contenido: contenido.trim(),
         tipo: "nota" as const,
         created_at: now,
-        autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
+        updated_at: now,
+        autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
       })
       await Promise.all([logRef.set(logData), ticketLogRef.set(logData)])
       revalidatePath(`/dashboard/tickets/${ticketId}`)
@@ -970,13 +1000,66 @@ export async function addTicketUpdateLog(
   const log: UpdateLog = {
     id: data.id, ticket_id: data.ticket_id, autor_id: data.usuario_id,
     contenido: data.observacion ?? "", tipo: "nota", created_at: data.created_at,
-    autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol },
+    updated_at: data.created_at,
+    autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
   }
 
   revalidatePath(`/dashboard/tickets/${ticketId}`)
   revalidatePath("/dashboard/tickets")
 
   return { success: true, data: log, message: "Actualización agregada" }
+}
+
+export async function updateTicketUpdateLog(ticketId: string, logId: string, contenido: string): Promise<ActionResponse<UpdateLog>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (!contenido.trim()) return { success: false, error: "El contenido no puede estar vacío" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 5) return { success: false, error: "Solo el super admin puede editar entradas de bitácora" }
+  if (!isFirebaseMode()) return { success: false, error: "La edición de bitácora está disponible en modo Firebase" }
+
+  try {
+    const db = getAdminFirestore()
+    const logRef = db.collection("update-logs").doc(logId)
+    const snap = await logRef.get()
+    if (!snap.exists) return { success: false, error: "Entrada de bitácora no encontrada" }
+
+    const existing = fromFirestoreDoc<UpdateLog>(snap.id, snap.data()!)
+    if (existing.ticket_id !== ticketId) return { success: false, error: "La entrada no pertenece a este ticket" }
+
+    const now = new Date().toISOString()
+    const updates = cleanForFirestore({ contenido: contenido.trim(), updated_at: now })
+    await Promise.all([
+      logRef.update(updates),
+      db.collection("tickets").doc(ticketId).collection("update_logs").doc(logId).set(updates, { merge: true }),
+    ])
+
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    revalidatePath("/dashboard/tickets")
+    return { success: true, data: { ...existing, contenido: contenido.trim(), updated_at: now }, message: "Entrada de bitácora actualizada" }
+  } catch (err) {
+    return { success: false, error: (err as Error).message }
+  }
+}
+
+export async function deleteTicketUpdateLog(ticketId: string, logId: string): Promise<ActionResponse<{ id: string }>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+  if (ROLE_HIERARCHY[currentUser.rol] < 5) return { success: false, error: "Solo el super admin puede eliminar entradas de bitácora" }
+  if (!isFirebaseMode()) return { success: false, error: "La eliminación de bitácora está disponible en modo Firebase" }
+
+  try {
+    const db = getAdminFirestore()
+    await Promise.all([
+      db.collection("update-logs").doc(logId).delete(),
+      db.collection("tickets").doc(ticketId).collection("update_logs").doc(logId).delete(),
+    ])
+
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    revalidatePath("/dashboard/tickets")
+    return { success: true, data: { id: logId }, message: "Entrada de bitácora eliminada" }
+  } catch (err) {
+    return { success: false, error: (err as Error).message }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
