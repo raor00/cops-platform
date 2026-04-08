@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { ArrowLeft, KeyRound, ShieldCheck, Wrench } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -114,6 +115,10 @@ export default async function PublicRepairCoordinationLoginPage({ searchParams }
 
       redirect(`/auth/repair-coordination-login?token=${encodeURIComponent(TEMP_REPAIR_TOKEN)}&status=success`)
     } catch (error) {
+      if (isRedirectError(error)) {
+        throw error
+      }
+
       const message = error instanceof Error ? error.message : "No se pudo reparar el login"
       redirect(`/auth/repair-coordination-login?token=${encodeURIComponent(TEMP_REPAIR_TOKEN)}&status=error&message=${encodeURIComponent(message)}`)
     }
