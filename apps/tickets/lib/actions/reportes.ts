@@ -105,8 +105,6 @@ function buildDetailedRows(tickets: Ticket[]): DetailedTicketReportRow[] {
 function applyPreset(filters: { month?: string; client?: string; agency?: string; technician?: string; preset?: string }) {
   const preset = filters.preset || ""
   if (preset === "bancaribe") return { ...filters, client: filters.client || "Bancaribe" }
-  if (preset === "cupones") return { ...filters, client: filters.client || "Bancaribe" }
-  if (preset === "finalizados") return filters
   return filters
 }
 

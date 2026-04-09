@@ -12,7 +12,7 @@ const COLUMN_LABELS: Record<ReportColumnKey, string> = {
   numero_ticket: "Ticket",
   asunto: "Asunto",
   cliente: "Cliente",
-  agencia: "Agencia",
+  agencia: "Sede / Agencia",
   tecnico: "Técnico",
   tipo: "Tipo",
   estado: "Estado",
@@ -93,7 +93,7 @@ export function ReportsWorkspace({ reports }: { reports: ReportsSummary }) {
         body{font-family:Arial,sans-serif;padding:24px;color:#0f172a} h1,h2{margin:0 0 12px} table{width:100%;border-collapse:collapse;margin-top:12px} th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;font-size:12px;vertical-align:top} .meta{margin:12px 0 20px;color:#475569;font-size:12px} .cards{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.card{border:1px solid #cbd5e1;border-radius:12px;padding:12px;min-width:140px}
       </style></head><body>
         <h1>Reporte operativo</h1>
-        <div class="meta">Preset: ${reports.filters.preset || "general"} · Mes: ${reports.filters.month || "Todos"} · Cliente: ${reports.filters.client || "Todos"} · Agencia: ${reports.filters.agency || "Todas"} · Técnico: ${reports.filters.technician || "Todos"}</div>
+        <div class="meta">Preset: ${reports.filters.preset || "general"} · Mes: ${reports.filters.month || "Todos"} · Cliente: ${reports.filters.client || "Todos"} · Sede/Agencia: ${reports.filters.agency || "Todas"} · Técnico: ${reports.filters.technician || "Todos"}</div>
         <div class="cards">
           <div class="card"><strong>Tickets</strong><div>${reports.totalTickets}</div></div>
           <div class="card"><strong>Finalizados</strong><div>${reports.totalFinalizados}</div></div>
@@ -126,7 +126,7 @@ export function ReportsWorkspace({ reports }: { reports: ReportsSummary }) {
       </style></head><body>
         <h1>Reporte mensual Bancaribe</h1>
         <div class="meta">Mes: ${reports.filters.month || "Todos"} · Cliente: Bancaribe</div>
-        <h2>Resumen por agencia</h2>
+        <h2>Resumen por sede/agencia</h2>
         <table><thead><tr><th>Agencia</th><th>Tickets</th><th>Servicios</th><th>Finalizados</th><th>Cupones</th><th>Horas</th></tr></thead><tbody>
           ${rows.map((row) => `<tr><td>${row.agencia}</td><td>${row.tickets}</td><td>${row.servicios}</td><td>${row.finalizados}</td><td>${row.cupones}</td><td>${row.horasTrabajadas}</td></tr>`).join("") || '<tr><td colspan="6">Sin datos</td></tr>'}
         </tbody></table>

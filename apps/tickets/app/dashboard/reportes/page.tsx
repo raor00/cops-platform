@@ -87,8 +87,8 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
               <Input name="client" placeholder="Ej: Bancaribe" defaultValue={filters.client || ''} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Agencia</label>
-              <Input name="agency" placeholder="Ej: Chacao" defaultValue={filters.agency || ''} />
+              <label className="mb-1 block text-xs font-medium text-slate-500">Sede / Agencia</label>
+              <Input name="agency" placeholder="Ej: Chacao / Sede Valencia" defaultValue={filters.agency || ''} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-500">Técnico</label>
@@ -101,7 +101,6 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
           <div className="mt-4 flex flex-wrap gap-2">
             <PresetLink href="/dashboard/reportes?preset=general" active={!filters.preset || filters.preset === 'general'}>General</PresetLink>
             <PresetLink href="/dashboard/reportes?preset=bancaribe&client=Bancaribe" active={filters.preset === 'bancaribe'}>Bancaribe</PresetLink>
-            <PresetLink href="/dashboard/reportes?preset=cupones&client=Bancaribe" active={filters.preset === 'cupones'}>Cupones Bancaribe</PresetLink>
             <PresetLink href="/dashboard/reportes?preset=tecnicos" active={filters.preset === 'tecnicos'}>Por técnico</PresetLink>
           </div>
         </CardContent>
@@ -113,19 +112,19 @@ export default async function ReportesPage({ searchParams }: { searchParams: Pro
             <KPICard icon={<TicketIcon className="h-5 w-5 text-blue-400" />} label="Tickets filtrados" value={reports.totalTickets} sub="según filtros actuales" color="blue" />
             <KPICard icon={<CheckCircle className="h-5 w-5 text-green-400" />} label="Finalizados" value={reports.totalFinalizados} sub="en el período seleccionado" color="green" />
             <KPICard icon={<BarChart2 className="h-5 w-5 text-yellow-400" />} label="Cupones usados" value={reports.totalCupones} sub="tickets con consumo registrado" color="yellow" />
-            <KPICard icon={<Clock className="h-5 w-5 text-purple-400" />} label="Horas trabajadas" value={reports.totalHoras} sub={`${reports.totalAgencias} agencia(s) involucradas`} color="purple" />
+            <KPICard icon={<Clock className="h-5 w-5 text-purple-400" />} label="Horas trabajadas" value={reports.totalHoras} sub={`${reports.totalAgencias} sede(s)/agencia(s) involucradas`} color="purple" />
           </div>
 
           <Card variant="glass" className="mb-6">
             <CardHeader>
-              <CardTitle className="text-base font-semibold text-slate-900">Resumen por cliente y agencia</CardTitle>
+              <CardTitle className="text-base font-semibold text-slate-900">Resumen por cliente y sede/agencia</CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
                     <th className="px-3 py-2">Cliente</th>
-                    <th className="px-3 py-2">Agencia</th>
+                    <th className="px-3 py-2">Sede / Agencia</th>
                     <th className="px-3 py-2">Tickets</th>
                     <th className="px-3 py-2">Servicios</th>
                     <th className="px-3 py-2">Proyectos</th>
