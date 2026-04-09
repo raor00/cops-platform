@@ -152,6 +152,14 @@ function extractCloudinaryParts(storagePath: string): { publicId: string; url: s
   }
 }
 
+function buildLegacyCloudinaryImageUrl(storagePath: string): string {
+  const { cloud } = getCloudinaryConfig()
+  if (!cloud || !storagePath.trim()) return ""
+
+  const publicId = encodeURIComponent(storagePath.replace(/\//g, "__"))
+  return `https://res.cloudinary.com/${cloud}/image/upload/${publicId}`
+}
+
 // ── Cloudinary upload ─────────────────────────────────────────────────────────
 
 async function cloudinaryUpload(
@@ -278,7 +286,7 @@ export async function getSignedDownloadUrl(storagePath: string): Promise<string>
       return url
     })
   } catch {
-    return ""
+    return buildLegacyCloudinaryImageUrl(storagePath)
   }
 }
 

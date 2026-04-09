@@ -14,23 +14,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { getCurrentUser } from '@/lib/actions/auth'
 import { getEnhancedDashboardStats } from '@/lib/actions/dashboard'
+import { getReportsSummary } from '@/lib/actions/reportes'
 import { STATUS_LABELS, STATUS_COLORS, ROLE_HIERARCHY } from '@/types'
 import type { EnhancedDashboardStats } from '@/types'
 import { formatCurrency } from '@/lib/utils'
-import { ReportExportButton } from './report-export-button'
 import { TechnicianStatsTable } from '@/components/reportes/technician-stats-table'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { ReportsWorkspace } from '@/components/reportes/reports-workspace'
 
 export const metadata = { title: 'Reportes' }
 
-export default async function ReportesPage() {
+export default async function ReportesPage({ searchParams }: { searchParams: Promise<{ month?: string; client?: string; agency?: string; technician?: string; preset?: string }> }) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+  const filters = await searchParams
 
   // Solo coordinador+
   if (ROLE_HIERARCHY[user.rol] < 2) redirect('/dashboard')
 
   const result = await getEnhancedDashboardStats()
   const stats = result.data
+  const reportsResult = await getReportsSummary(filters)
+  const reports = reportsResult.data
 
   if (!stats) {
     return (
@@ -62,9 +69,162 @@ export default async function ReportesPage() {
           <Badge variant="outline" className="text-slate-500 border-slate-200 bg-white text-xs">
             Solo lectura
           </Badge>
-          <ReportExportButton stats={stats} />
         </div>
       </div>
+
+      <Card variant="glass" className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-slate-900">Filtros analíticos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-3 md:grid-cols-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Mes</label>
+              <Input type="month" name="month" defaultValue={filters.month || ''} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Cliente / Empresa</label>
+              <Input name="client" placeholder="Ej: Bancaribe" defaultValue={filters.client || ''} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Agencia</label>
+              <Input name="agency" placeholder="Ej: Chacao" defaultValue={filters.agency || ''} />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Técnico</label>
+              <Input name="technician" placeholder="Ej: Rafael" defaultValue={filters.technician || ''} />
+            </div>
+            <div className="flex items-end gap-2">
+              <Button type="submit">Aplicar filtros</Button>
+            </div>
+          </form>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <PresetLink href="/dashboard/reportes?preset=general" active={!filters.preset || filters.preset === 'general'}>General</PresetLink>
+            <PresetLink href="/dashboard/reportes?preset=bancaribe&client=Bancaribe" active={filters.preset === 'bancaribe'}>Bancaribe</PresetLink>
+            <PresetLink href="/dashboard/reportes?preset=cupones&client=Bancaribe" active={filters.preset === 'cupones'}>Cupones Bancaribe</PresetLink>
+            <PresetLink href="/dashboard/reportes?preset=tecnicos" active={filters.preset === 'tecnicos'}>Por técnico</PresetLink>
+          </div>
+        </CardContent>
+      </Card>
+
+      {reports && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <KPICard icon={<TicketIcon className="h-5 w-5 text-blue-400" />} label="Tickets filtrados" value={reports.totalTickets} sub="según filtros actuales" color="blue" />
+            <KPICard icon={<CheckCircle className="h-5 w-5 text-green-400" />} label="Finalizados" value={reports.totalFinalizados} sub="en el período seleccionado" color="green" />
+            <KPICard icon={<BarChart2 className="h-5 w-5 text-yellow-400" />} label="Cupones usados" value={reports.totalCupones} sub="tickets con consumo registrado" color="yellow" />
+            <KPICard icon={<Clock className="h-5 w-5 text-purple-400" />} label="Horas trabajadas" value={reports.totalHoras} sub={`${reports.totalAgencias} agencia(s) involucradas`} color="purple" />
+          </div>
+
+          <Card variant="glass" className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-slate-900">Resumen por cliente y agencia</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <th className="px-3 py-2">Cliente</th>
+                    <th className="px-3 py-2">Agencia</th>
+                    <th className="px-3 py-2">Tickets</th>
+                    <th className="px-3 py-2">Servicios</th>
+                    <th className="px-3 py-2">Proyectos</th>
+                    <th className="px-3 py-2">Finalizados</th>
+                    <th className="px-3 py-2">Cupones</th>
+                    <th className="px-3 py-2">Horas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.clientRows.map((row) => (
+                    <tr key={`${row.cliente}-${row.agencia}`} className="border-b border-slate-100 text-slate-700">
+                      <td className="px-3 py-2 font-medium text-slate-900">{row.cliente}</td>
+                      <td className="px-3 py-2">{row.agencia}</td>
+                      <td className="px-3 py-2">{row.tickets}</td>
+                      <td className="px-3 py-2">{row.servicios}</td>
+                      <td className="px-3 py-2">{row.proyectos}</td>
+                      <td className="px-3 py-2">{row.finalizados}</td>
+                      <td className="px-3 py-2">{row.cupones}</td>
+                      <td className="px-3 py-2">{row.horasTrabajadas}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass" className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-slate-900">Detalle Bancaribe por agencia</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <th className="px-3 py-2">Agencia</th>
+                    <th className="px-3 py-2">Tickets</th>
+                    <th className="px-3 py-2">Servicios</th>
+                    <th className="px-3 py-2">Finalizados</th>
+                    <th className="px-3 py-2">Cupones</th>
+                    <th className="px-3 py-2">Horas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.bancaribeRows.length === 0 ? (
+                    <tr><td className="px-3 py-4 text-slate-500" colSpan={6}>No hay tickets Bancaribe para los filtros seleccionados.</td></tr>
+                  ) : reports.bancaribeRows.map((row) => (
+                    <tr key={`b-${row.cliente}-${row.agencia}`} className="border-b border-slate-100 text-slate-700">
+                      <td className="px-3 py-2 font-medium text-slate-900">{row.agencia}</td>
+                      <td className="px-3 py-2">{row.tickets}</td>
+                      <td className="px-3 py-2">{row.servicios}</td>
+                      <td className="px-3 py-2">{row.finalizados}</td>
+                      <td className="px-3 py-2">{row.cupones}</td>
+                      <td className="px-3 py-2">{row.horasTrabajadas}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass" className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-slate-900">Resumen por técnico</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                    <th className="px-3 py-2">Técnico</th>
+                    <th className="px-3 py-2">Tickets</th>
+                    <th className="px-3 py-2">Servicios</th>
+                    <th className="px-3 py-2">Proyectos</th>
+                    <th className="px-3 py-2">Finalizados</th>
+                    <th className="px-3 py-2">Cupones</th>
+                    <th className="px-3 py-2">Horas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.technicianRows.length === 0 ? (
+                    <tr><td className="px-3 py-4 text-slate-500" colSpan={7}>No hay datos por técnico para los filtros seleccionados.</td></tr>
+                  ) : reports.technicianRows.map((row) => (
+                    <tr key={row.tecnico} className="border-b border-slate-100 text-slate-700">
+                      <td className="px-3 py-2 font-medium text-slate-900">{row.tecnico}</td>
+                      <td className="px-3 py-2">{row.tickets}</td>
+                      <td className="px-3 py-2">{row.servicios}</td>
+                      <td className="px-3 py-2">{row.proyectos}</td>
+                      <td className="px-3 py-2">{row.finalizados}</td>
+                      <td className="px-3 py-2">{row.cupones}</td>
+                      <td className="px-3 py-2">{row.horasTrabajadas}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {reports && <ReportsWorkspace reports={reports} />}
 
       {/* ─── KPI Cards ─── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -199,6 +359,14 @@ export default async function ReportesPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+function PresetLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Button asChild size="sm" variant={active ? 'default' : 'outline'}>
+      <Link href={href}>{children}</Link>
+    </Button>
   )
 }
 

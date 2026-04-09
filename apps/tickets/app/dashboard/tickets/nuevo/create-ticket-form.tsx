@@ -130,12 +130,16 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
       origen: "email",
       monto_servicio: 0,
       tipo_mantenimiento: defaultTipo === "servicio" ? "correctivo" : undefined,
+      agencia_bancaribe: "",
+      cupones_bancaribe: undefined,
       fecha_servicio: "",
     },
   })
 
   const tipoTicket = watch("tipo")
   const origenTicket = watch("origen")
+  const clienteEmpresa = watch("cliente_empresa")
+  const isBancaribeTicket = (clienteEmpresa || selectedCliente?.empresa || "").toLowerCase().includes("bancaribe")
 
   // Reset monto when tipo changes
   useEffect(() => {
@@ -400,6 +404,8 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
         materiales_planificados: materials.length > 0 ? materials : undefined,
         ...(data.tecnico_id ? { tecnico_id: data.tecnico_id } : {}),
         monto_servicio: montoServicio,
+        agencia_bancaribe: isBancaribeTicket ? data.agencia_bancaribe || undefined : undefined,
+        cupones_bancaribe: isBancaribeTicket ? data.cupones_bancaribe : undefined,
         fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         estado: asBorrador ? ("borrador" as const) : undefined,
         facturacion_tipo: tipoTicket === "servicio" ? facturacionTipo : "fijo",
@@ -875,6 +881,42 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
             Información que el técnico necesita saber antes de la visita
           </p>
         </div>
+
+        {isBancaribeTicket && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4">
+            <h4 className="mb-3 text-sm font-semibold text-slate-900">Datos operativos Bancaribe</h4>
+            <div className="form-row">
+              <div className="form-group">
+                <Label>Agencia Bancaribe</Label>
+                <Input
+                  placeholder="Ej: Agencia Chacao"
+                  error={errors.agencia_bancaribe?.message}
+                  {...register("agencia_bancaribe")}
+                />
+              </div>
+              <div className="form-group">
+                <Label>Cupones usados</Label>
+                <Controller
+                  name="cupones_bancaribe"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
+                      error={errors.cupones_bancaribe?.message}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Estos datos alimentarán reportes mensuales por agencia y total de cupones consumidos.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* â"€â"€ Materiales Planificados â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
@@ -1057,8 +1099,8 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
             <span className="text-xs font-normal text-slate-400">(opcional)</span>
           </h3>
           <p className="mb-3 text-xs text-slate-500">
-            Adjunta planos, memorias técnicas, contratos o cualquier archivo relevante al {tipoTicket === "proyecto" ? "proyecto" : "servicio"}.
-            Los documentos se cargarán al crear el ticket.
+            Adjunta comprobantes, planos, notas de entrega, cartas de aceptación, órdenes de compra o cualquier archivo relevante al {tipoTicket === "proyecto" ? "proyecto" : "servicio"}.
+            Los documentos se cargarán al crear el ticket y podrás clasificarlos según el tipo correspondiente.
           </p>
 
           {/* File picker row */}

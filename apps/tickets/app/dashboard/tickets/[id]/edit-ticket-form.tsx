@@ -33,6 +33,7 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [materials, setMaterials] = useState<MaterialItem[]>(ticket.materiales_planificados ?? [])
+  const isBancaribeTicket = (ticket.cliente_empresa || "").toLowerCase().includes("bancaribe")
 
   const {
     register,
@@ -50,6 +51,8 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
       asunto: ticket.asunto,
       descripcion: ticket.descripcion,
       requerimientos: ticket.requerimientos ?? "",
+      agencia_bancaribe: ticket.agencia_bancaribe ?? "",
+      cupones_bancaribe: ticket.cupones_bancaribe ?? undefined,
       fecha_servicio: ticket.fecha_servicio ?? "",
       prioridad: ticket.prioridad,
       tecnico_id: ticket.tecnico_id ?? "",
@@ -80,6 +83,8 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
     try {
       const result = await updateTicket(ticket.id, {
         ...data,
+        agencia_bancaribe: isBancaribeTicket ? data.agencia_bancaribe || undefined : undefined,
+        cupones_bancaribe: isBancaribeTicket ? data.cupones_bancaribe : undefined,
         fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         tecnico_id: data.tecnico_id || undefined,
         materiales_planificados: materials.length > 0 ? materials : undefined,
@@ -181,6 +186,34 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
           <Label>Notas para el Técnico</Label>
           <Textarea className="min-h-[100px]" {...register("requerimientos")} error={errors.requerimientos?.message} />
         </div>
+        {isBancaribeTicket && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4">
+            <h4 className="mb-3 text-sm font-semibold text-slate-900">Datos operativos Bancaribe</h4>
+            <div className="form-row">
+              <div className="form-group">
+                <Label>Agencia Bancaribe</Label>
+                <Input {...register("agencia_bancaribe")} error={errors.agencia_bancaribe?.message} />
+              </div>
+              <div className="form-group">
+                <Label>Cupones usados</Label>
+                <Controller
+                  name="cupones_bancaribe"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
+                      error={errors.cupones_bancaribe?.message}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="form-section">

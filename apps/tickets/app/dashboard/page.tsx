@@ -223,9 +223,9 @@ async function DashboardContent() {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-400" />
-              <CardTitle className="text-base">Tickets por Mes</CardTitle>
+              <CardTitle className="text-base">Tickets creados por mes</CardTitle>
             </div>
-            <p className="text-xs text-slate-500">Últimos 6 meses</p>
+            <p className="text-xs text-slate-500">Basado en la fecha de creación del ticket durante los últimos 6 meses</p>
           </CardHeader>
           <CardContent>
             {stats.ticketsPorMes.length > 0 ? (

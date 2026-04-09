@@ -69,46 +69,46 @@ export function PipelineCalendarView({ tickets }: PipelineCalendarViewProps) {
   return (
     <div className="space-y-4">
       <Card variant="glass">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="capitalize">{calendarData.monthLabel}</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 sm:pb-6">
+          <CardTitle className="text-base capitalize sm:text-lg">{calendarData.monthLabel}</CardTitle>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="icon" onClick={() => setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>
+            <Button type="button" variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={() => setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button type="button" variant="outline" size="icon" onClick={() => setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
+            <Button type="button" variant="outline" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={() => setCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <CardContent className="px-2 pb-2 pt-0 sm:px-6 sm:pb-6">
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:gap-2 sm:text-xs">
             {WEEK_DAYS.map((day) => (
-              <div key={day} className="py-2">{day}</div>
+              <div key={day} className="py-1 sm:py-2">{day}</div>
             ))}
           </div>
 
-          <div className="mt-2 grid grid-cols-7 gap-2">
+          <div className="mt-1 grid grid-cols-7 gap-1 sm:mt-2 sm:gap-2">
             {calendarData.days.map((day) => (
               <div
                 key={day.key}
                 className={[
-                  "min-h-[140px] rounded-xl border p-2 align-top",
+                  "min-h-[76px] rounded-lg border p-1 align-top sm:min-h-[140px] sm:rounded-xl sm:p-2",
                   day.isCurrentMonth ? "border-slate-200 bg-white" : "border-slate-100 bg-slate-50/60 text-slate-400",
                 ].join(" ")}
               >
-                <div className="mb-2 text-right text-xs font-semibold">{day.date.getDate()}</div>
-                <div className="space-y-2">
-                  {day.tickets.slice(0, 3).map((ticket) => (
-                    <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`} className="block rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-left text-[11px] transition-colors hover:bg-slate-100">
+                <div className="mb-1 text-right text-[10px] font-semibold sm:mb-2 sm:text-xs">{day.date.getDate()}</div>
+                <div className="space-y-1 sm:space-y-2">
+                  {day.tickets.slice(0, 1).map((ticket) => (
+                    <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`} className="block rounded-md border border-slate-200 bg-slate-50 px-1 py-1 text-left text-[9px] transition-colors hover:bg-slate-100 sm:rounded-lg sm:px-2 sm:py-1.5 sm:text-[11px]">
                       <p className="truncate font-semibold text-slate-800">{ticket.numero_ticket}</p>
-                      <p className="truncate text-slate-600">{ticket.asunto}</p>
-                      <div className="mt-1 flex items-center gap-1">
+                      <p className="hidden truncate text-slate-600 sm:block">{ticket.asunto}</p>
+                      <div className="mt-0.5 flex items-center gap-1 sm:mt-1">
                         <Badge className={STATUS_COLORS[ticket.estado]}>{STATUS_LABELS[ticket.estado]}</Badge>
                       </div>
                     </Link>
                   ))}
-                  {day.tickets.length > 3 && (
-                    <p className="text-[11px] font-medium text-sky-600">+{day.tickets.length - 3} más</p>
+                  {day.tickets.length > 1 && (
+                    <p className="text-[9px] font-medium text-sky-600 sm:text-[11px]">+{day.tickets.length - 1} más</p>
                   )}
                 </div>
               </div>

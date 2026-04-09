@@ -140,6 +140,8 @@ export const ticketCreateSchema = z.object({
     .optional()
     .or(z.literal('')),
   tipo_mantenimiento: z.enum(['correctivo', 'preventivo']).optional(),
+  agencia_bancaribe: z.string().max(150, 'La agencia no puede exceder 150 caracteres').optional().or(z.literal('')),
+  cupones_bancaribe: z.number().int().min(0, 'Los cupones deben ser un número positivo').optional(),
   fecha_servicio: z.string().optional().or(z.literal('')),
   tecnico_id: z.string().min(1, 'Debes seleccionar un técnico'),
   monto_servicio: z
@@ -193,6 +195,8 @@ export const ticketUpdateSchema = z.object({
     .optional(),
   materiales_planificados: z.array(materialItemSchema).optional(),
   prioridad: z.enum(['baja', 'media', 'alta', 'urgente']).optional(),
+  agencia_bancaribe: z.string().max(150, 'La agencia no puede exceder 150 caracteres').optional().or(z.literal('')),
+  cupones_bancaribe: z.number().int().min(0, 'Los cupones deben ser un número positivo').optional(),
   fecha_servicio: z.string().optional().or(z.literal('')),
   tecnico_id: z.string().optional().or(z.literal('')),
   monto_servicio: z.number().min(0, 'El monto debe ser positivo').optional(),

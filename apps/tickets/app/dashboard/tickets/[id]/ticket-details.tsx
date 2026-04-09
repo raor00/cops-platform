@@ -143,6 +143,23 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
                 <p className="text-slate-700">{ticket.cliente_empresa}</p>
               </div>
             )}
+            {(ticket.agencia_bancaribe || ticket.cupones_bancaribe != null) && (
+              <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3 text-sm">
+                <p className="mb-2 font-medium text-slate-900">Datos Bancaribe</p>
+                {ticket.agencia_bancaribe && (
+                  <div className="flex items-start gap-3">
+                    <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />
+                    <p className="text-slate-700">Agencia: {ticket.agencia_bancaribe}</p>
+                  </div>
+                )}
+                {ticket.cupones_bancaribe != null && (
+                  <div className="mt-2 flex items-start gap-3">
+                    <FileText className="mt-0.5 h-4 w-4 text-slate-400" />
+                    <p className="text-slate-700">Cupones usados: {ticket.cupones_bancaribe}</p>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex items-start gap-3">
               <Phone className="mt-0.5 h-4 w-4 text-slate-400" />
               <p className="text-slate-700">{ticket.cliente_telefono}</p>

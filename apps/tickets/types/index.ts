@@ -195,6 +195,8 @@ export interface Ticket {
   origen: TicketOrigin
   numero_carta: string | null
   tipo_mantenimiento: 'correctivo' | 'preventivo' | null
+  agencia_bancaribe: string | null
+  cupones_bancaribe: number | null
   carta_aceptacion_path: string | null
   // Asignación y estados
   creado_por: string
@@ -256,6 +258,8 @@ export interface TicketCreateInput {
   origen: TicketOrigin
   numero_carta?: string
   tipo_mantenimiento?: 'correctivo' | 'preventivo'
+  agencia_bancaribe?: string
+  cupones_bancaribe?: number
   fecha_servicio?: string
   tecnico_id?: string
   monto_servicio?: number
@@ -276,6 +280,8 @@ export interface TicketUpdateInput {
   requerimientos?: string
   materiales_planificados?: MaterialItem[]
   prioridad?: TicketPriority
+  agencia_bancaribe?: string
+  cupones_bancaribe?: number
   fecha_servicio?: string
   tecnico_id?: string
   monto_servicio?: number
@@ -873,6 +879,69 @@ export interface EnhancedDashboardStats extends DashboardStats {
   technicianKPIs: TechnicianKPI[]
   ticketsPorMes: TicketsPorMes[]
   actividadReciente: ActivityFeedItem[]
+}
+
+export interface ClientReportRow {
+  cliente: string
+  agencia: string
+  tickets: number
+  servicios: number
+  proyectos: number
+  finalizados: number
+  cupones: number
+  horasTrabajadas: number
+}
+
+export interface TechnicianReportRow {
+  tecnico: string
+  tickets: number
+  servicios: number
+  proyectos: number
+  finalizados: number
+  cupones: number
+  horasTrabajadas: number
+}
+
+export interface DetailedTicketReportRow {
+  numero_ticket: string
+  asunto: string
+  cliente: string
+  agencia: string
+  tecnico: string
+  tipo: string
+  estado: string
+  prioridad: string
+  fecha_creacion: string
+  fecha_servicio: string
+  fecha_llegada: string
+  fecha_inicio: string
+  fecha_finalizacion: string
+  cupones: number
+  horas_trabajadas: number
+  tiempo_total_minutos: number
+}
+
+export type ReportColumnKey = keyof DetailedTicketReportRow
+
+export interface ReportsFilters {
+  month: string
+  client: string
+  agency: string
+  technician: string
+  preset: string
+}
+
+export interface ReportsSummary {
+  filters: ReportsFilters
+  totalTickets: number
+  totalFinalizados: number
+  totalCupones: number
+  totalHoras: number
+  totalAgencias: number
+  bancaribeRows: ClientReportRow[]
+  clientRows: ClientReportRow[]
+  technicianRows: TechnicianReportRow[]
+  ticketRows: DetailedTicketReportRow[]
 }
 
 // ─── Nómina / Payroll ─────────────────────────────────────────────────────────

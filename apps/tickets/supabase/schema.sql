@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS public.tickets (
   materiales_planificados JSONB,
   prioridad VARCHAR(10) NOT NULL DEFAULT 'media' CHECK (prioridad IN ('baja', 'media', 'alta', 'urgente')),
   origen VARCHAR(20) NOT NULL CHECK (origen IN ('email', 'telefono', 'carta_aceptacion')),
+  agencia_bancaribe VARCHAR(150),
+  cupones_bancaribe INTEGER CHECK (cupones_bancaribe >= 0),
   carta_aceptacion_path VARCHAR(255),
   
   -- Asignación y estados
