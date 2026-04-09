@@ -20,6 +20,7 @@ import {
   deleteProfilePhoto,
   updateUserProfile,
 } from "@/lib/actions/usuarios"
+import { completeUserAccessAction } from "@/lib/actions/auth"
 import type { UserProfile, UserRole } from "@/types"
 import { ROLE_LABELS } from "@/types"
 import { getInitials } from "@/lib/utils"
@@ -59,6 +60,9 @@ export function ProfileEditDialog({
   const [rol, setRol] = useState<UserRole>(user.rol)
   const [telefono, setTelefono] = useState(user.telefono || "")
   const [especialidad, setEspecialidad] = useState(user.especialidad || "")
+  const [email, setEmail] = useState(user.email || "")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
 
   useEffect(() => {
     if (open) {
@@ -69,6 +73,9 @@ export function ProfileEditDialog({
       setRol(user.rol)
       setTelefono(user.telefono || "")
       setEspecialidad(user.especialidad || "")
+      setEmail(user.email || "")
+      setNewPassword("")
+      setConfirmPassword("")
       setSelectedFile(null)
     }
   }, [open, user])
@@ -145,6 +152,11 @@ export function ProfileEditDialog({
       return
     }
 
+    if (newPassword && newPassword !== confirmPassword) {
+      toast.error("Las contraseñas no coinciden")
+      return
+    }
+
     if (selectedFile) {
       await handleUploadPhoto()
     }
@@ -160,12 +172,28 @@ export function ProfileEditDialog({
         especialidad: especialidad || undefined,
       })
 
+      if (!result.success) {
+        toast.error(result.error || "Error al actualizar perfil")
+        return
+      }
+
+      const accessChanged = email.trim().toLowerCase() !== (user.email || "").trim().toLowerCase() || Boolean(newPassword)
+      if (accessChanged) {
+        const accessResult = await completeUserAccessAction(user.id, {
+          email: email.trim(),
+          password: newPassword || undefined,
+        })
+
+        if (!accessResult.success) {
+          toast.error(accessResult.error || "Error al actualizar acceso")
+          return
+        }
+      }
+
       if (result.success) {
         toast.success(result.message || "Perfil actualizado exitosamente")
         setOpen(false)
         onSuccess?.()
-      } else {
-        toast.error(result.error || "Error al actualizar perfil")
       }
     } catch {
       toast.error("Error inesperado al actualizar perfil")
@@ -287,8 +315,40 @@ export function ProfileEditDialog({
             </div>
 
             <div>
-              <Label>Email</Label>
-              <Input value={user.email} disabled className="bg-slate-100 text-slate-500" />
+              <Label htmlFor="email">Correo de acceso</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tecnico@copselectronics.com"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Si el perfil fue creado sin acceso, al guardar junto con una contraseña se habilitará su cuenta.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="new-password">Nueva contraseña</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirm-password">Confirmar contraseña</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repite la contraseña"
+                />
+              </div>
             </div>
 
             <div>

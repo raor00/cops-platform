@@ -291,8 +291,8 @@ export async function getCurrentUser(): Promise<User | null> {
 // ─── Register user ────────────────────────────────────────────────────────────
 
 export async function registerUserAction(data: {
-  email: string
-  password: string
+  email?: string
+  password?: string
   nombre: string
   apellido: string
   rol: string
@@ -320,7 +320,45 @@ export async function registerUserAction(data: {
     try {
       const auth = getAdminAuth()
       const db = getAdminFirestore()
-      const normalizedEmail = data.email.trim().toLowerCase()
+      const normalizedEmail = data.email?.trim().toLowerCase() || ""
+      const normalizedPassword = data.password?.trim() || ""
+      const requiresCredentials = data.rol !== "tecnico"
+
+      if (requiresCredentials && (!normalizedEmail || !normalizedPassword)) {
+        return { success: false, error: "Los usuarios con este rol requieren correo y contraseña" }
+      }
+
+      if (!requiresCredentials && !normalizedEmail && !normalizedPassword) {
+        const profileRef = db.collection("users").doc()
+        const profile: Omit<User, "id"> = {
+          email: "",
+          nombre: data.nombre,
+          apellido: data.apellido,
+          rol: data.rol as User["rol"],
+          nivel_jerarquico: ROLE_HIERARCHY[data.rol as keyof typeof ROLE_HIERARCHY],
+          cedula: data.cedula,
+          telefono: data.telefono || null,
+          estado: "activo",
+          activo_desde: new Date().toISOString().split("T")[0],
+          foto_perfil_path: null,
+          especialidad: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+
+        await profileRef.set(profile)
+        revalidatePath("/dashboard/usuarios")
+
+        return {
+          success: true,
+          data: { user: { id: profileRef.id, ...profile } },
+          message: "Perfil técnico creado sin acceso. Luego podrás asignarle correo y contraseña desde su perfil.",
+        }
+      }
+
+      if ((!normalizedEmail && normalizedPassword) || (normalizedEmail && !normalizedPassword)) {
+        return { success: false, error: "Debes completar correo y contraseña para habilitar acceso" }
+      }
 
       try {
         await auth.getUserByEmail(normalizedEmail)
@@ -337,7 +375,7 @@ export async function registerUserAction(data: {
 
       const authUser = await auth.createUser({
         email: normalizedEmail,
-        password: data.password,
+        password: normalizedPassword,
         emailVerified: true,
       })
 
@@ -373,6 +411,83 @@ export async function registerUserAction(data: {
   }
 
   return { success: false, error: "La creación de usuarios requiere configuración Firebase válida" }
+}
+
+export async function completeUserAccessAction(
+  userId: string,
+  input: { email: string; password?: string }
+): Promise<ActionResponse> {
+  if (isLocalMode()) {
+    return { success: false, error: "Gestión de acceso no disponible en modo local" }
+  }
+
+  const currentUser = await getCurrentUser()
+  if (!currentUser || ROLE_HIERARCHY[currentUser.rol] < 3) {
+    return { success: false, error: "No tienes permisos para gestionar accesos" }
+  }
+
+  if (!isFirebaseMode()) {
+    return { success: false, error: "La gestión de acceso requiere configuración Firebase válida" }
+  }
+
+  try {
+    const auth = getAdminAuth()
+    const db = getAdminFirestore()
+    const normalizedEmail = input.email.trim().toLowerCase()
+    const normalizedPassword = input.password?.trim() || ""
+
+    if (!normalizedEmail) return { success: false, error: "El correo es requerido" }
+
+    const userDoc = await db.collection("users").doc(userId).get()
+    if (!userDoc.exists) return { success: false, error: "Usuario no encontrado" }
+
+    const profile = fromFirestoreDoc<Partial<User>>(userId, userDoc.data()!)
+    const hasAuthAccount = await auth.getUser(userId).then(() => true).catch(() => false)
+
+    if (!hasAuthAccount && !normalizedPassword) {
+      return { success: false, error: "Debes definir una contraseña para habilitar el acceso inicial" }
+    }
+
+    const existingByEmail = await auth.getUserByEmail(normalizedEmail).catch(() => null)
+    if (existingByEmail && existingByEmail.uid !== userId) {
+      return { success: false, error: "Ese correo ya está en uso por otra cuenta" }
+    }
+
+    if (hasAuthAccount) {
+      const payload: { email: string; password?: string; emailVerified: boolean } = {
+        email: normalizedEmail,
+        emailVerified: true,
+      }
+      if (normalizedPassword) payload.password = normalizedPassword
+      await auth.updateUser(userId, payload)
+    } else {
+      await auth.createUser({
+        uid: userId,
+        email: normalizedEmail,
+        password: normalizedPassword,
+        emailVerified: true,
+        displayName: `${profile.nombre || ""} ${profile.apellido || ""}`.trim() || normalizedEmail,
+      })
+    }
+
+    await db.collection("users").doc(userId).update({
+      email: normalizedEmail,
+      updated_at: new Date().toISOString(),
+    })
+
+    revalidatePath("/dashboard/usuarios")
+    revalidatePath(`/dashboard/usuarios/${userId}`)
+
+    return {
+      success: true,
+      message: hasAuthAccount
+        ? "Acceso actualizado correctamente"
+        : "Acceso habilitado correctamente para el técnico",
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error al actualizar acceso del usuario"
+    return { success: false, error: msg }
+  }
 }
 
 // ─── Update password ──────────────────────────────────────────────────────────

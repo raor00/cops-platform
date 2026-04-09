@@ -19,25 +19,38 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { registerUserAction } from "@/lib/actions/auth"
-import { userCreateSchema } from "@/lib/validations"
 import { ROLE_LABELS } from "@/types"
 import type { UserRole } from "@/types"
 
-// Extender el schema base con confirmación de contraseña y especialidad
-const nuevoUsuarioSchema = userCreateSchema
-  .extend({
-    confirmPassword: z
-      .string()
-      .min(1, "Confirma la contraseña"),
-    especialidad: z
-      .string()
-      .max(100, "La especialidad no puede exceder 100 caracteres")
-      .optional()
-      .or(z.literal("")),
+const nuevoUsuarioSchema = z
+  .object({
+    nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(100, "El nombre no puede exceder 100 caracteres"),
+    apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres").max(100, "El apellido no puede exceder 100 caracteres"),
+    email: z.string().email("Correo electrónico inválido").max(100, "El correo no puede exceder 100 caracteres").optional().or(z.literal("")),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(72, "La contraseña no puede exceder 72 caracteres").optional().or(z.literal("")),
+    confirmPassword: z.string().optional().or(z.literal("")),
+    rol: z.enum(["tecnico", "coordinador", "gerente", "vicepresidente", "presidente"]),
+    telefono: z.string().max(20, "El teléfono no puede exceder 20 caracteres").optional().or(z.literal("")),
+    cedula: z.string().min(1, "La cédula es requerida").max(20, "La cédula no puede exceder 20 caracteres"),
+    especialidad: z.string().max(100, "La especialidad no puede exceder 100 caracteres").optional().or(z.literal("")),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Las contraseñas no coinciden",
-    path: ["confirmPassword"],
+  .superRefine((data, ctx) => {
+    const requiresCredentials = data.rol !== "tecnico"
+    const hasEmail = Boolean(data.email?.trim())
+    const hasPassword = Boolean(data.password?.trim())
+
+    if (requiresCredentials && !hasEmail) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "El correo es requerido para este rol", path: ["email"] })
+    }
+    if (requiresCredentials && !hasPassword) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "La contraseña es requerida para este rol", path: ["password"] })
+    }
+    if ((hasEmail || hasPassword) && data.password !== data.confirmPassword) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Las contraseñas no coinciden", path: ["confirmPassword"] })
+    }
+    if ((hasEmail && !hasPassword) || (!hasEmail && hasPassword)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Debes completar correo y contraseña para habilitar acceso", path: [hasEmail ? "password" : "email"] })
+    }
   })
 
 type FormData = z.infer<typeof nuevoUsuarioSchema>
@@ -66,6 +79,8 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
       rol: "tecnico",
     },
   })
+  const selectedRole = watch("rol")
+  const credentialsOptional = selectedRole === "tecnico"
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
@@ -145,7 +160,7 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="email">
-            Correo electrónico <span className="text-red-400">*</span>
+            Correo electrónico {!credentialsOptional && <span className="text-red-400">*</span>}
           </Label>
           <Input
             id="email"
@@ -156,6 +171,11 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
           />
           {errors.email && (
             <p className="text-xs text-red-400">{errors.email.message}</p>
+          )}
+          {credentialsOptional && (
+            <p className="text-xs text-slate-500">
+              Opcional para técnicos. Si lo dejas vacío, se creará solo el perfil sin acceso.
+            </p>
           )}
         </div>
 
@@ -234,7 +254,7 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="password">
-            Contraseña <span className="text-red-400">*</span>
+            Contraseña {!credentialsOptional && <span className="text-red-400">*</span>}
           </Label>
           <div className="relative">
             <Input
@@ -257,11 +277,16 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
           {errors.password && (
             <p className="text-xs text-red-400">{errors.password.message}</p>
           )}
+          {credentialsOptional && (
+            <p className="text-xs text-slate-500">
+              Déjala vacía si todavía no quieres habilitarle el acceso al sistema.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">
-            Confirmar contraseña <span className="text-red-400">*</span>
+            Confirmar contraseña {!credentialsOptional && <span className="text-red-400">*</span>}
           </Label>
           <div className="relative">
             <Input
