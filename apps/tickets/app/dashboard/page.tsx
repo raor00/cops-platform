@@ -29,7 +29,7 @@ import { InspeccionQuickAction } from "@/components/dashboard/inspeccion-quick-a
 import { getEnhancedDashboardStats } from "@/lib/actions/dashboard"
 import { getTickets } from "@/lib/actions/tickets"
 import { getCurrentUser } from "@/lib/actions/auth"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, VENEZUELA_TIMEZONE } from "@/lib/utils"
 import { ROLE_HIERARCHY } from "@/types"
 
 // ─── Skeleton Components ────────────────────────────────────────────────────
@@ -80,10 +80,17 @@ async function DashboardContent() {
   const canViewTechKPIs = ROLE_HIERARCHY[user.rol] >= 2
   const isTecnico = user.rol === "tecnico"
 
+  const venezuelaHour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      hour12: false,
+      timeZone: VENEZUELA_TIMEZONE,
+    }).format(new Date())
+  )
+
   const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return "Buenos días"
-    if (h < 18) return "Buenas tardes"
+    if (venezuelaHour < 12) return "Buenos días"
+    if (venezuelaHour < 18) return "Buenas tardes"
     return "Buenas noches"
   }
 
@@ -92,6 +99,7 @@ async function DashboardContent() {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: VENEZUELA_TIMEZONE,
   })
 
   return (

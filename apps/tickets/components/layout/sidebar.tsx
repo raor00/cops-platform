@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
@@ -17,7 +18,6 @@ import {
   LayoutGrid,
   ChevronLeft,
   ChevronRight,
-  Zap,
   CalendarDays,
 } from "lucide-react"
 import { cn, getFullName, getInitials } from "@/lib/utils"
@@ -191,7 +191,13 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
           {!collapsed ? (
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/10 group-hover:border-sky-400/30 transition-colors">
-                <Zap className="h-5 w-5 text-sky-400" />
+                <Image
+                  src="/branding/cops.PNG"
+                  alt="COPS"
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 object-contain"
+                />
               </div>
               <div>
                 <span className="font-bold text-white text-sm">COPS</span>
@@ -200,7 +206,13 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
             </Link>
           ) : (
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500/20 to-slate-500/20 border border-white/20 mx-auto">
-              <Zap className="h-5 w-5 text-sky-400" />
+              <Image
+                src="/branding/cops.PNG"
+                alt="COPS"
+                width={24}
+                height={24}
+                className="h-6 w-6 object-contain"
+              />
             </div>
           )}
         </div>

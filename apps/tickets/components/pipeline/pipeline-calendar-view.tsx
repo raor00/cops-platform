@@ -11,26 +11,29 @@ interface PipelineCalendarViewProps {
 }
 
 function getDateKey(date: string | null) {
-  if (!date) return "Sin fecha"
+  if (!date) return "Sin fecha programada"
   return new Date(date).toISOString().slice(0, 10)
 }
 
 export function PipelineCalendarView({ tickets }: PipelineCalendarViewProps) {
-  const scheduled = tickets.filter((ticket) => ticket.fecha_servicio)
   const groups = Object.entries(
-    scheduled.reduce<Record<string, Ticket[]>>((acc, ticket) => {
+    tickets.reduce<Record<string, Ticket[]>>((acc, ticket) => {
       const key = getDateKey(ticket.fecha_servicio)
       acc[key] = [...(acc[key] || []), ticket]
       return acc
     }, {})
-  ).sort(([left], [right]) => left.localeCompare(right))
+  ).sort(([left], [right]) => {
+    if (left === "Sin fecha programada") return 1
+    if (right === "Sin fecha programada") return -1
+    return left.localeCompare(right)
+  })
 
   if (groups.length === 0) {
     return (
       <Card variant="glass">
         <CardContent className="py-12 text-center">
           <CalendarDays className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-          <p className="text-sm font-medium text-slate-700">Sin tickets programados</p>
+          <p className="text-sm font-medium text-slate-700">Sin tickets disponibles</p>
           <p className="mt-1 text-xs text-slate-500">Asigna una fecha de servicio al crear o editar el ticket para verlo aquí.</p>
         </CardContent>
       </Card>
@@ -44,7 +47,7 @@ export function PipelineCalendarView({ tickets }: PipelineCalendarViewProps) {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <CalendarDays className="h-4 w-4 text-sky-500" />
-              {dateKey === "Sin fecha" ? dateKey : formatDate(dateKey)}
+              {dateKey === "Sin fecha programada" ? dateKey : formatDate(dateKey)}
               <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700">
                 {dayTickets.length}
               </span>
