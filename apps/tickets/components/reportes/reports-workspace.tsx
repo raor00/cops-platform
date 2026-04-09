@@ -44,6 +44,34 @@ function formatCellValue(key: ReportColumnKey, value: DetailedTicketReportRow[Re
   if (["fecha_creacion", "fecha_servicio", "fecha_llegada", "fecha_inicio", "fecha_finalizacion"].includes(key)) {
     return value ? formatDateTimeExactVE(String(value)) : "—"
   }
+  if (key === "tipo") {
+    const labelMap: Record<string, string> = {
+      servicio: "Servicio",
+      proyecto: "Proyecto",
+      inspeccion: "Inspección",
+    }
+    return labelMap[String(value)] || String(value || "—")
+  }
+  if (key === "estado") {
+    const labelMap: Record<string, string> = {
+      asignado: "Asignado",
+      iniciado: "Iniciado",
+      en_progreso: "En progreso",
+      finalizado: "Finalizado",
+      cancelado: "Cancelado",
+      borrador: "Borrador",
+    }
+    return labelMap[String(value)] || String(value || "—")
+  }
+  if (key === "prioridad") {
+    const labelMap: Record<string, string> = {
+      baja: "Baja",
+      media: "Media",
+      alta: "Alta",
+      urgente: "Urgente",
+    }
+    return labelMap[String(value)] || String(value || "—")
+  }
   if (key === "horas_trabajadas") return Number(value) > 0 ? `${value} h` : "—"
   if (key === "tiempo_total_minutos") return Number(value) > 0 ? `${formatMinutesToDuration(Number(value))} (${value} min)` : "—"
   return String(value || "—")
