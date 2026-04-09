@@ -26,8 +26,6 @@ import {
   deleteFileFromStorage,
 } from "@/lib/firebase/storage-rest"
 
-const BUCKET_NAME = "ticket-fotos"
-
 async function canUploadFotoToTicket(
   ticketId: string,
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
@@ -56,7 +54,7 @@ async function canUploadFotoToTicket(
 }
 
 /**
- * Subir foto a Supabase Storage y crear registro en DB
+ * Subir foto a Cloudinary/Firebase Storage y crear registro en DB
  */
 export async function uploadTicketFoto(
   ticketId: string,
@@ -130,13 +128,13 @@ export async function uploadTicketFoto(
         const buffer = Buffer.from(await file.arrayBuffer())
         const now = new Date().toISOString()
 
-        await uploadFileToStorage(storagePath, buffer, file.type)
+        const savedStoragePath = await uploadFileToStorage(storagePath, buffer, file.type)
 
         const fotoRef = db.collection("ticket_fotos").doc()
         const fotoData = cleanForFirestore({
           ticket_id: ticketId,
           subido_por: user.id,
-          storage_path: storagePath,
+          storage_path: savedStoragePath,
           nombre_archivo: file.name,
           tipo_foto: tipoFoto,
           descripcion: descripcion || null,
@@ -175,21 +173,18 @@ export async function uploadTicketFoto(
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(7)
     const extension = file.name.split(".").pop()
-    const fileName = `${ticketId}/${timestamp}-${randomString}.${extension}`
+    const storagePath = `ticket-fotos/${ticketId}/${timestamp}-${randomString}.${extension}`
+    const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Subir archivo a Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: false,
-      })
+    let savedStoragePath = storagePath
 
-    if (uploadError) {
-      console.error("[v0] Error uploading file:", uploadError)
+    try {
+      savedStoragePath = await uploadFileToStorage(storagePath, buffer, file.type)
+    } catch (storageError) {
+      const msg = storageError instanceof Error ? storageError.message : String(storageError)
       return {
         success: false,
-        error: `Error al subir archivo: ${uploadError.message}`,
+        error: `Error al subir foto: ${msg}`,
       }
     }
 
@@ -199,7 +194,7 @@ export async function uploadTicketFoto(
       .insert({
         ticket_id: ticketId,
         subido_por: user.id,
-        storage_path: uploadData.path,
+        storage_path: savedStoragePath,
         nombre_archivo: file.name,
         tipo_foto: tipoFoto,
         descripcion: descripcion || null,
@@ -212,7 +207,9 @@ export async function uploadTicketFoto(
     if (dbError) {
       console.error("[v0] Error creating DB record:", dbError)
       // Intentar eliminar el archivo subido si falla el registro en DB
-      await supabase.storage.from(BUCKET_NAME).remove([uploadData.path])
+      try {
+        await deleteFileFromStorage(savedStoragePath)
+      } catch {}
       return {
         success: false,
         error: `Error al registrar foto: ${dbError.message}`,
@@ -310,13 +307,11 @@ export async function getTicketFotos(
     // Generar URLs firmadas para cada foto
     const fotosConUrls = await Promise.all(
       (fotos || []).map(async (foto) => {
-        const { data: signedUrl } = await supabase.storage
-          .from(BUCKET_NAME)
-          .createSignedUrl(foto.storage_path, 3600) // 1 hora de validez
+        const signedUrl = await getSignedDownloadUrl(foto.storage_path)
 
         return {
           ...foto,
-          url: signedUrl?.signedUrl || null,
+          url: signedUrl || null,
         } as TicketFoto
       })
     )
@@ -425,13 +420,10 @@ export async function deleteTicketFoto(
       return { success: false, error: "No tienes permisos para eliminar esta foto" }
     }
 
-    // Eliminar archivo de Storage
-    const { error: storageError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .remove([foto.storage_path])
-
-    if (storageError) {
-      console.error("[v0] Error deleting from storage:", storageError)
+    try {
+      await deleteFileFromStorage(foto.storage_path)
+    } catch (storageError) {
+      console.error("[fotos] Error deleting from storage:", storageError)
     }
 
     // Eliminar registro de la base de datos

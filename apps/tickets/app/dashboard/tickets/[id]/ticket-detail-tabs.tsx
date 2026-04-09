@@ -189,6 +189,7 @@ export function TicketDetailTabs({
           initialLogs={updateLogs}
           canAdd={canAddLog}
           canUploadPhotos={canUploadFotos}
+          currentUserId={currentUserId}
           canManageLogs={currentUserCanManageLogs}
         />
       </TabsContent>

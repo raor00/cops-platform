@@ -1082,6 +1082,25 @@ export function addDemoUpdateLog(
   return deepClone(entry)
 }
 
+export function updateDemoUpdateLog(ticketId: string, logId: string, contenido: string): UpdateLog | null {
+  const idx = demoUpdateLogs.findIndex((log) => log.id === logId && log.ticket_id === ticketId)
+  if (idx === -1) return null
+
+  demoUpdateLogs[idx] = {
+    ...demoUpdateLogs[idx]!,
+    contenido,
+    updated_at: new Date().toISOString(),
+  }
+
+  return deepClone(demoUpdateLogs[idx]!)
+}
+
+export function deleteDemoUpdateLog(ticketId: string, logId: string): boolean {
+  const prevLength = demoUpdateLogs.length
+  demoUpdateLogs = demoUpdateLogs.filter((log) => !(log.id === logId && log.ticket_id === ticketId))
+  return demoUpdateLogs.length < prevLength
+}
+
 // ─── Clientes DB (Sprint 7) ───────────────────────────────────────────────────
 
 let demoClientes: Cliente[] = []

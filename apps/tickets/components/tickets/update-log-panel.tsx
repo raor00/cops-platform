@@ -19,6 +19,7 @@ interface UpdateLogPanelProps {
   initialLogs: UpdateLog[]
   canAdd: boolean
   canUploadPhotos?: boolean
+  currentUserId?: string
   canManageLogs?: boolean
 }
 
@@ -28,6 +29,7 @@ export function UpdateLogPanel({
   initialLogs,
   canAdd,
   canUploadPhotos = false,
+  currentUserId,
   canManageLogs = false,
 }: UpdateLogPanelProps) {
   const router = useRouter()
@@ -167,6 +169,10 @@ export function UpdateLogPanel({
           <div className="absolute left-[15px] top-4 bottom-4 w-px bg-slate-200" />
 
           {logs.map((log, i) => (
+            (() => {
+              const canManageThisLog = log.tipo === "nota" && (canManageLogs || log.autor_id === currentUserId)
+
+              return (
             <div
               key={log.id}
               className={cn(
@@ -224,7 +230,7 @@ export function UpdateLogPanel({
                 ) : (
                   <>
                     <p className="text-sm text-slate-800 leading-relaxed">{log.contenido}</p>
-                    {canManageLogs && log.tipo === "nota" && (
+                    {canManageThisLog && (
                       <div className="mt-3 flex justify-end gap-2">
                         <Button size="sm" variant="outline" onClick={() => handleStartEdit(log)}>
                           <Pencil className="mr-2 h-4 w-4" />
@@ -240,6 +246,8 @@ export function UpdateLogPanel({
                 )}
               </div>
             </div>
+              )
+            })()
           ))}
         </div>
       )}

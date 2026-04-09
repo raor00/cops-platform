@@ -51,7 +51,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   coordinador: 'Coordinador de Servicios',
   gerente: 'Gerente',
   vicepresidente: 'Vicepresidente',
-  presidente: 'Presidente',
+  presidente: 'Desarrollador',
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────

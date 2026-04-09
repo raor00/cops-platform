@@ -37,6 +37,8 @@ import {
   updateDemoTicket,
   getDemoUpdateLogs,
   addDemoUpdateLog,
+  updateDemoUpdateLog,
+  deleteDemoUpdateLog,
 } from "@/lib/mock-data"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 
@@ -1014,52 +1016,165 @@ export async function updateTicketUpdateLog(ticketId: string, logId: string, con
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
   if (!contenido.trim()) return { success: false, error: "El contenido no puede estar vacío" }
-  if (ROLE_HIERARCHY[currentUser.rol] < 5) return { success: false, error: "Solo el super admin puede editar entradas de bitácora" }
-  if (!isFirebaseMode()) return { success: false, error: "La edición de bitácora está disponible en modo Firebase" }
 
-  try {
-    const db = getAdminFirestore()
-    const logRef = db.collection("update-logs").doc(logId)
-    const snap = await logRef.get()
-    if (!snap.exists) return { success: false, error: "Entrada de bitácora no encontrada" }
+  if (isLocalMode()) {
+    const existing = getDemoUpdateLogs(ticketId).find((log) => log.id === logId)
+    if (!existing) return { success: false, error: "Entrada de bitácora no encontrada" }
+    if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden editar notas manuales" }
 
-    const existing = fromFirestoreDoc<UpdateLog>(snap.id, snap.data()!)
-    if (existing.ticket_id !== ticketId) return { success: false, error: "La entrada no pertenece a este ticket" }
+    const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+    if (!canManage) return { success: false, error: "No tienes permiso para editar esta actualización" }
 
-    const now = new Date().toISOString()
-    const updates = cleanForFirestore({ contenido: contenido.trim(), updated_at: now })
-    await Promise.all([
-      logRef.update(updates),
-      db.collection("tickets").doc(ticketId).collection("update_logs").doc(logId).set(updates, { merge: true }),
-    ])
+    const updated = updateDemoUpdateLog(ticketId, logId, contenido.trim())
+    if (!updated) return { success: false, error: "No se pudo actualizar la entrada" }
 
     revalidatePath(`/dashboard/tickets/${ticketId}`)
     revalidatePath("/dashboard/tickets")
-    return { success: true, data: { ...existing, contenido: contenido.trim(), updated_at: now }, message: "Entrada de bitácora actualizada" }
-  } catch (err) {
-    return { success: false, error: (err as Error).message }
+    return { success: true, data: updated, message: "Entrada de bitácora actualizada" }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const logRef = db.collection("update-logs").doc(logId)
+      const snap = await logRef.get()
+      if (!snap.exists) return { success: false, error: "Entrada de bitácora no encontrada" }
+
+      const existing = fromFirestoreDoc<UpdateLog>(snap.id, snap.data()!)
+      if (existing.ticket_id !== ticketId) return { success: false, error: "La entrada no pertenece a este ticket" }
+      if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden editar notas manuales" }
+
+      const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+      if (!canManage) return { success: false, error: "No tienes permiso para editar esta actualización" }
+
+      const now = new Date().toISOString()
+      const updates = cleanForFirestore({ contenido: contenido.trim(), updated_at: now })
+      await Promise.all([
+        logRef.update(updates),
+        db.collection("tickets").doc(ticketId).collection("update_logs").doc(logId).set(updates, { merge: true }),
+      ])
+
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      revalidatePath("/dashboard/tickets")
+      return { success: true, data: { ...existing, contenido: contenido.trim(), updated_at: now }, message: "Entrada de bitácora actualizada" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  const supabase = await createClient()
+  const { data: existing, error: fetchError } = await supabase
+    .from("historial_cambios")
+    .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at")
+    .eq("id", logId)
+    .eq("ticket_id", ticketId)
+    .single()
+
+  if (fetchError || !existing) return { success: false, error: "Entrada de bitácora no encontrada" }
+  if (existing.tipo_cambio !== "sesion_trabajo") return { success: false, error: "Solo se pueden editar notas manuales" }
+
+  const canManage = existing.usuario_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+  if (!canManage) return { success: false, error: "No tienes permiso para editar esta actualización" }
+
+  const { error } = await supabase
+    .from("historial_cambios")
+    .update({ observacion: contenido.trim() })
+    .eq("id", logId)
+    .eq("ticket_id", ticketId)
+
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  revalidatePath("/dashboard/tickets")
+
+  return {
+    success: true,
+    data: {
+      id: existing.id,
+      ticket_id: existing.ticket_id,
+      autor_id: existing.usuario_id,
+      contenido: contenido.trim(),
+      tipo: "nota",
+      created_at: existing.created_at,
+      updated_at: new Date().toISOString(),
+      autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
+    },
+    message: "Entrada de bitácora actualizada",
   }
 }
 
 export async function deleteTicketUpdateLog(ticketId: string, logId: string): Promise<ActionResponse<{ id: string }>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (ROLE_HIERARCHY[currentUser.rol] < 5) return { success: false, error: "Solo el super admin puede eliminar entradas de bitácora" }
-  if (!isFirebaseMode()) return { success: false, error: "La eliminación de bitácora está disponible en modo Firebase" }
 
-  try {
-    const db = getAdminFirestore()
-    await Promise.all([
-      db.collection("update-logs").doc(logId).delete(),
-      db.collection("tickets").doc(ticketId).collection("update_logs").doc(logId).delete(),
-    ])
+  if (isLocalMode()) {
+    const existing = getDemoUpdateLogs(ticketId).find((log) => log.id === logId)
+    if (!existing) return { success: false, error: "Entrada de bitácora no encontrada" }
+    if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden eliminar notas manuales" }
+
+    const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+    if (!canManage) return { success: false, error: "No tienes permiso para eliminar esta actualización" }
+
+    const deleted = deleteDemoUpdateLog(ticketId, logId)
+    if (!deleted) return { success: false, error: "No se pudo eliminar la entrada" }
 
     revalidatePath(`/dashboard/tickets/${ticketId}`)
     revalidatePath("/dashboard/tickets")
     return { success: true, data: { id: logId }, message: "Entrada de bitácora eliminada" }
-  } catch (err) {
-    return { success: false, error: (err as Error).message }
   }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const logRef = db.collection("update-logs").doc(logId)
+      const snap = await logRef.get()
+      if (!snap.exists) return { success: false, error: "Entrada de bitácora no encontrada" }
+
+      const existing = fromFirestoreDoc<UpdateLog>(snap.id, snap.data()!)
+      if (existing.ticket_id !== ticketId) return { success: false, error: "La entrada no pertenece a este ticket" }
+      if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden eliminar notas manuales" }
+
+      const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+      if (!canManage) return { success: false, error: "No tienes permiso para eliminar esta actualización" }
+
+      await Promise.all([
+        logRef.delete(),
+        db.collection("tickets").doc(ticketId).collection("update_logs").doc(logId).delete(),
+      ])
+
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      revalidatePath("/dashboard/tickets")
+      return { success: true, data: { id: logId }, message: "Entrada de bitácora eliminada" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  const supabase = await createClient()
+  const { data: existing, error: fetchError } = await supabase
+    .from("historial_cambios")
+    .select("id, ticket_id, usuario_id, tipo_cambio")
+    .eq("id", logId)
+    .eq("ticket_id", ticketId)
+    .single()
+
+  if (fetchError || !existing) return { success: false, error: "Entrada de bitácora no encontrada" }
+  if (existing.tipo_cambio !== "sesion_trabajo") return { success: false, error: "Solo se pueden eliminar notas manuales" }
+
+  const canManage = existing.usuario_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+  if (!canManage) return { success: false, error: "No tienes permiso para eliminar esta actualización" }
+
+  const { error } = await supabase
+    .from("historial_cambios")
+    .delete()
+    .eq("id", logId)
+    .eq("ticket_id", ticketId)
+
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  revalidatePath("/dashboard/tickets")
+  return { success: true, data: { id: logId }, message: "Entrada de bitácora eliminada" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

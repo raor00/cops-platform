@@ -174,7 +174,7 @@ async function cloudinaryUpload(
     const timestamp = Math.floor(Date.now() / 1000)
     const paramsToSign = `public_id=${publicId}&timestamp=${timestamp}`
     const signature = crypto
-      .createHash("sha256")
+      .createHash("sha1")
       .update(paramsToSign + secret)
       .digest("hex")
 
