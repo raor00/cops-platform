@@ -76,7 +76,7 @@ export default async function PipelinePage({
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1">
             <Button asChild size="sm" variant={currentView === "board" ? "default" : "ghost"}>
-              <Link href={buildViewHref("board")}>Kanban</Link>
+              <Link href={buildViewHref("board")}>Tablero</Link>
             </Button>
             <Button asChild size="sm" variant={currentView === "calendar" ? "default" : "ghost"}>
               <Link href={buildViewHref("calendar")}>Calendario</Link>

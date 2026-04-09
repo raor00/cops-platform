@@ -305,17 +305,25 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
 
   async function handleCreateTechnician() {
     if (!techForm.nombre.trim()) { setTechError("El nombre es requerido"); return }
-    if (!techForm.email.trim()) { setTechError("El email es requerido"); return }
-    if (!techForm.password || techForm.password.length < 6) { setTechError("La contraseña debe tener al menos 6 caracteres"); return }
+    const hasEmail = Boolean(techForm.email.trim())
+    const hasPassword = Boolean(techForm.password.trim())
+    if ((hasEmail && !hasPassword) || (!hasEmail && hasPassword)) {
+      setTechError("Si vas a habilitar acceso, debes completar correo y contraseña")
+      return
+    }
+    if (hasPassword && techForm.password.trim().length < 6) {
+      setTechError("La contraseña debe tener al menos 6 caracteres")
+      return
+    }
     setTechLoading(true)
     setTechError("")
     try {
       const result = await createUser({
         nombre: techForm.nombre,
         apellido: techForm.apellido || undefined,
-        email: techForm.email,
+        email: techForm.email || undefined,
         telefono: techForm.telefono || "N/A",
-        password: techForm.password,
+        password: techForm.password || undefined,
         rol: "tecnico",
         cedula: undefined,
       })
@@ -328,7 +336,11 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
       setValue("tecnico_id", newTech.id)
       setShowTechDialog(false)
       setTechForm({ nombre: "", apellido: "", email: "", telefono: "", password: "" })
-      toast.success(`Técnico ${techForm.nombre} creado y asignado`)
+      toast.success(
+        hasEmail
+          ? `Técnico ${techForm.nombre} creado y asignado`
+          : `Perfil técnico ${techForm.nombre} creado y asignado sin acceso`
+      )
     } catch {
       setTechError("Error inesperado")
     } finally {
@@ -1188,7 +1200,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Email *</Label>
+              <Label className="text-xs">Email</Label>
               <Input
                 className="h-8 text-sm"
                 type="email"
@@ -1196,6 +1208,9 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                 value={techForm.email}
                 onChange={(e) => setTechForm({ ...techForm, email: e.target.value })}
               />
+              <p className="text-[11px] text-slate-500">
+                Opcional. Si lo dejas vacío, se crea solo el perfil sin acceso.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Teléfono</Label>
@@ -1207,7 +1222,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Contraseña temporal *</Label>
+              <Label className="text-xs">Contraseña temporal</Label>
               <Input
                 className="h-8 text-sm"
                 type="password"
@@ -1215,6 +1230,9 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                 value={techForm.password}
                 onChange={(e) => setTechForm({ ...techForm, password: e.target.value })}
               />
+              <p className="text-[11px] text-slate-500">
+                Opcional. Solo colócala si también vas a registrar el correo ahora.
+              </p>
             </div>
             {techError && <p className="text-xs text-red-400">{techError}</p>}
           </div>

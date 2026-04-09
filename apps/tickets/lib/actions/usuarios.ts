@@ -279,9 +279,9 @@ export async function deleteProfilePhoto(userId: string): Promise<ActionResponse
 export async function createUser(input: {
   nombre: string
   apellido?: string
-  email: string
-  telefono: string
-  password: string
+  email?: string
+  telefono?: string
+  password?: string
   rol: UserRole
   cedula?: string
 }): Promise<ActionResponse<{ id: string }>> {
