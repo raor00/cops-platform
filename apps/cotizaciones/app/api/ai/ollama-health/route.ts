@@ -2,6 +2,18 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
+function sanitizeOllamaBaseUrl(value: string | null | undefined): string {
+  const normalized = (value || "").trim().replace(/\/$/, "")
+  if (!normalized) return ""
+  try {
+    const parsed = new URL(normalized)
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return ""
+    return parsed.toString().replace(/\/$/, "")
+  } catch {
+    return ""
+  }
+}
+
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error("timeout")), timeoutMs)
@@ -29,8 +41,19 @@ function describeFetchError(err: unknown): string {
 }
 
 export async function GET() {
-  const baseUrlRaw = process.env.OLLAMA_BASE_URL || ""
+  const baseUrlRaw = sanitizeOllamaBaseUrl(process.env.OLLAMA_BASE_URL || "")
   const model = process.env.OLLAMA_MODEL || "qwen3.5:2b"
+
+  return NextResponse.json(
+    { ok: false, error: "method_not_allowed", message: "Usa POST para chequeo parametrizado de Ollama." },
+    { status: 405 },
+  )
+}
+
+export async function POST(req: Request) {
+  const body = (await req.json().catch(() => ({}))) as { baseUrl?: string; model?: string }
+  const baseUrlRaw = sanitizeOllamaBaseUrl(body.baseUrl || process.env.OLLAMA_BASE_URL || "")
+  const model = (body.model || process.env.OLLAMA_MODEL || "qwen3.5:2b").trim() || "qwen3.5:2b"
 
   if (!baseUrlRaw) {
     return NextResponse.json(
@@ -73,4 +96,3 @@ export async function GET() {
     )
   }
 }
-

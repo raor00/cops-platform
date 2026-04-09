@@ -9,6 +9,7 @@ import { LaborSection } from "./labor-section"
 import { SummaryPanel } from "./summary-panel"
 import { PDFPreview } from "./pdf-preview"
 import { QuotationAIAssistant } from "./quotation-ai-assistant"
+import { AutomationSuggestionsPanel } from "./automation-suggestions-panel"
 import { downloadPDF } from "@/lib/generate-pdf"
 import { saveQuotation, getCatalog, getCatalogDiscountConfig } from "@/lib/quotation-storage"
 import type { ClientInfo, QuotationItem, QuotationType, QuotationData, LaborItem, DiscountMode } from "@/lib/quotation-types"
@@ -95,6 +96,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   )
   const [activeTab, setActiveTab] = useState("editor")
   const [catalogSnapshot, setCatalogSnapshot] = useState(() => getCatalog())
+  const [aiDraftTrace, setAiDraftTrace] = useState(initialData?.aiDraftTrace)
+  const [automationTrace, setAutomationTrace] = useState(initialData?.automationTrace)
 
   const taxRate = companyFormat === "llc" ? llcTaxRate : 16
 
@@ -163,7 +166,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     return () => window.removeEventListener("catalog-updated", applyCatalogDiscounts)
   }, [])
 
-  const handleApplyAIDraft = useCallback((result: AIDraftResponse) => {
+  const handleApplyAIDraft = useCallback((result: AIDraftResponse, prompt: string) => {
     const patch = result.draftPatch
     let appliedCount = 0
     if (patch.clientInfo) {
@@ -245,11 +248,29 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
       return
     }
 
+    setAiDraftTrace({
+      prompt,
+      provider: result.metadata.provider,
+      model: result.metadata.model,
+      confidence: result.confidence,
+      fallbackUsed: result.metadata.fallbackUsed,
+      warningCount: result.warnings.length,
+      suggestionCount: result.suggestedItemsOutsideCatalog.length,
+      generatedAt: new Date().toISOString(),
+    })
+
     toast.success(
       companyFormat === "llc"
         ? `Draft applied (${appliedCount} sections updated)`
         : `Borrador aplicado (${appliedCount} secciones actualizadas)`,
     )
+  }, [companyFormat])
+
+  const handleApplyAutomation = useCallback((payload: { materialItems: QuotationItem[]; laborItems: LaborItem[]; trace: NonNullable<QuotationData["automationTrace"]> }) => {
+    setMaterialItems(payload.materialItems)
+    setLaborItems(payload.laborItems)
+    setAutomationTrace(payload.trace)
+    toast.success(companyFormat === "llc" ? "Automation suggestions applied" : "Sugerencias automáticas aplicadas")
   }, [companyFormat])
 
   const handleTypeChange = useCallback((type: QuotationType) => {
@@ -283,7 +304,9 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     total: calculations.total,
     createdAt: initialData?.createdAt || new Date().toISOString(),
     status: initialData?.status || "borrador",
-  }), [quotationId, quotationCode, quotationType, companyFormat, discountMode, discountValue, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, taxRate, initialData])
+    aiDraftTrace,
+    automationTrace,
+  }), [quotationId, quotationCode, quotationType, companyFormat, discountMode, discountValue, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, taxRate, initialData, aiDraftTrace, automationTrace])
 
   const handleSave = () => {
     const clientName = companyFormat === "llc" ? (clientInfo.billToName || clientInfo.name) : clientInfo.name
@@ -358,6 +381,8 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     setSaPayment(PAYMENT_CONDITIONS[0])
     setLlcPayment(PAYMENT_CONDITIONS_LLC[0])
     setActiveTab("editor")
+    setAiDraftTrace(undefined)
+    setAutomationTrace(undefined)
     toast.info(companyFormat === "llc" ? "Form reset" : "Formulario reiniciado")
   }
 
@@ -476,6 +501,47 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             onApplyDraft={handleApplyAIDraft}
           />
 
+          <AutomationSuggestionsPanel
+            companyFormat={companyFormat}
+            quotationType={quotationType}
+            equipmentItems={equipmentItems}
+            materialItems={materialItems}
+            laborItems={laborItems}
+            catalog={catalogSnapshot}
+            onApply={handleApplyAutomation}
+          />
+
+          {(aiDraftTrace || automationTrace) && (
+            <div className="rounded-2xl border border-border bg-card p-4">
+              <h3 className="text-sm font-semibold text-foreground">{companyFormat === "llc" ? "Automation trace" : "Trazabilidad de automatización"}</h3>
+              <div className="mt-3 grid gap-3 text-xs text-muted-foreground sm:grid-cols-2">
+                <div className="rounded-lg border border-border bg-muted/20 p-3">
+                  <p className="font-medium text-foreground">{companyFormat === "llc" ? "AI draft" : "Borrador IA"}</p>
+                  {aiDraftTrace ? (
+                    <>
+                      <p className="mt-1">{aiDraftTrace.provider} · {aiDraftTrace.model}</p>
+                      <p>Confianza: {Math.round(aiDraftTrace.confidence * 100)}%</p>
+                      <p>Warnings: {aiDraftTrace.warningCount} · Suggestions: {aiDraftTrace.suggestionCount}</p>
+                    </>
+                  ) : (
+                    <p className="mt-1">{companyFormat === "llc" ? "No AI draft applied yet." : "Aún no se ha aplicado un borrador IA."}</p>
+                  )}
+                </div>
+                <div className="rounded-lg border border-border bg-muted/20 p-3">
+                  <p className="font-medium text-foreground">{companyFormat === "llc" ? "Rule engine" : "Motor de reglas"}</p>
+                  {automationTrace ? (
+                    <>
+                      <p className="mt-1">{automationTrace.summary}</p>
+                      <p>{automationTrace.quotationType}</p>
+                    </>
+                  ) : (
+                    <p className="mt-1">{companyFormat === "llc" ? "No rule-based automation applied yet." : "Aún no se han aplicado sugerencias por reglas."}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <ClientInfoForm
             clientInfo={clientInfo}
             quotationCode={quotationCode}
@@ -548,7 +614,5 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     </div>
   )
 }
-
-
 
 

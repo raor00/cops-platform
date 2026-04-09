@@ -47,6 +47,24 @@ export interface LaborItem {
   cost: number
 }
 
+export interface QuotationAIDraftTrace {
+  prompt: string
+  provider: "ollama" | "gemini"
+  model: string
+  confidence: number
+  fallbackUsed: boolean
+  warningCount: number
+  suggestionCount: number
+  generatedAt: string
+}
+
+export interface QuotationAutomationTrace {
+  source: "rule-engine"
+  generatedAt: string
+  quotationType: QuotationType
+  summary: string
+}
+
 export interface ClientInfo {
   name: string
   attention: string
@@ -93,6 +111,8 @@ export interface QuotationData {
   total: number
   createdAt: string
   status: "borrador" | "enviada" | "aprobada" | "rechazada" | "anulado"
+  aiDraftTrace?: QuotationAIDraftTrace
+  automationTrace?: QuotationAutomationTrace
 }
 
 export const CATALOG_CATEGORIES: CatalogCategory[] = [
@@ -229,6 +249,5 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })
 }
-
 
 

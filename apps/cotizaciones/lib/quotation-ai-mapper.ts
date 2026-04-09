@@ -57,7 +57,7 @@ function findCatalogMatch(item: AIDraftLineItem, catalog: CatalogLike[]): Catalo
   }
 
   const itemTokens = textTokens(`${item.description} ${item.code || ""}`)
-  let best: CatalogItem | null = null
+  let best: CatalogLike | null = null
   let bestScore = 0
 
   for (const c of catalog) {

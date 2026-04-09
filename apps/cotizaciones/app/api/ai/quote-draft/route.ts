@@ -6,6 +6,24 @@ import { isAIResponseInvalidError } from "@/lib/ai/ai-errors"
 
 export const runtime = "nodejs"
 
+function sanitizeOllamaBaseUrl(value: string | null): string | undefined {
+  if (!value) return undefined
+  const normalized = value.trim().replace(/\/$/, "")
+  if (!normalized) return undefined
+  try {
+    const parsed = new URL(normalized)
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return undefined
+    return parsed.toString().replace(/\/$/, "")
+  } catch {
+    return undefined
+  }
+}
+
+function sanitizeOllamaModel(value: string | null): string | undefined {
+  const normalized = (value || "").trim()
+  return normalized || undefined
+}
+
 const ipRequests = new Map<string, number[]>()
 
 function getClientIp(req: NextRequest): string {
@@ -58,8 +76,10 @@ export async function POST(req: NextRequest) {
         ? (modeHeader as "ollama" | "gemini" | "hybrid")
         : undefined
     const disableFallback = (req.headers.get("x-ai-disable-fallback") || "").toLowerCase() === "true"
+    const ollamaBaseUrl = sanitizeOllamaBaseUrl(req.headers.get("x-ollama-base-url"))
+    const ollamaModel = sanitizeOllamaModel(req.headers.get("x-ollama-model"))
 
-    const result = await generateQuoteDraft(input as any, { mode, disableFallback })
+    const result = await generateQuoteDraft(input as any, { mode, disableFallback, ollamaBaseUrl, ollamaModel })
     return NextResponse.json(result, { status: 200 })
   } catch (err) {
     if (isAIResponseInvalidError(err)) {

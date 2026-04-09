@@ -246,7 +246,13 @@ export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: Quo
                 {filteredQuotes.map((q) => (
                   <tr key={q.id} className="hover:bg-muted/40">
                     <td className="px-4 py-3 font-mono text-xs font-semibold text-[#4a72ef]">{q.code}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{q.clientInfo.billToName || q.clientInfo.name}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">
+                      <div className="flex items-center gap-2">
+                        <span>{q.clientInfo.billToName || q.clientInfo.name}</span>
+                        {q.aiDraftTrace && <Badge variant="outline" className="text-[10px]">IA</Badge>}
+                        {q.automationTrace && <Badge variant="secondary" className="text-[10px]">Reglas</Badge>}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-right font-mono text-sm text-foreground">${formatCurrency(q.total)}</td>
                     <td className="px-4 py-3 text-center">
                       <Select value={q.status} onValueChange={(v) => handleStatusChange(q.id, v as QuotationData["status"])}>
@@ -385,7 +391,6 @@ export function QuotationHistory({ onEdit, refreshKey, selectMode = false }: Quo
     </div>
   )
 }
-
 
 
 

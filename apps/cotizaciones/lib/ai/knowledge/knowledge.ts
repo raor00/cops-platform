@@ -41,7 +41,7 @@ export async function retrieveKnowledgeContext(params: { input: AIDraftRequest; 
     timeoutMs: getEmbeddingTimeoutMs(),
   })
 
-  const { data, error } = await supabase.rpc("match_ai_knowledge_chunks", {
+  const { data, error } = await (supabase as any).rpc("match_ai_knowledge_chunks", {
     query_embedding: embeddingToSqlLiteral(queryEmbedding),
     match_count: params.topK,
     min_similarity: 0.45,
@@ -73,7 +73,7 @@ export async function ingestKnowledgeDocument(params: {
   if (cleaned.length < 50) throw new Error("knowledge_text_too_short")
   if (cleaned.length > 300_000) throw new Error("knowledge_text_too_large")
 
-  const { data: docRow, error: docErr } = await supabase
+  const { data: docRow, error: docErr } = await (supabase as any)
     .from("ai_knowledge_documents")
     .insert({
       source_type: params.sourceType,
@@ -104,7 +104,7 @@ export async function ingestKnowledgeDocument(params: {
   const batchSize = 50
   for (let i = 0; i < rows.length; i += batchSize) {
     const batch = rows.slice(i, i + batchSize)
-    const { error } = await supabase.from("ai_knowledge_chunks").insert(batch)
+    const { error } = await (supabase as any).from("ai_knowledge_chunks").insert(batch)
     if (error) throw new Error("knowledge_chunks_insert_failed")
   }
 

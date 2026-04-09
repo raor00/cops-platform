@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import type { AIDraftRequest, AIDraftResponse } from "@/lib/quotation-ai-types"
@@ -9,13 +10,14 @@ import type { CatalogItem, QuotationType } from "@/lib/quotation-types"
 import { Bot, Loader2, Sparkles, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 import { saveAIEvent } from "@/lib/quotation-ai-storage"
+import { buildAIRequestHeaders, getClientAIConfig, saveClientAIConfig, type ClientAIConfig } from "@/lib/ai/runtime-config"
 
 interface QuotationAIAssistantProps {
   companyFormat: "sa" | "llc"
   quotationType: QuotationType
   currentDraft: AIDraftRequest["currentDraft"]
   catalog: CatalogItem[]
-  onApplyDraft: (result: AIDraftResponse) => void
+  onApplyDraft: (result: AIDraftResponse, prompt: string) => void
 }
 
 export function QuotationAIAssistant({
@@ -29,7 +31,7 @@ export function QuotationAIAssistant({
   const [loading, setLoading] = useState(false)
   const [lastResult, setLastResult] = useState<AIDraftResponse | null>(null)
   const [lastError, setLastError] = useState<null | { message: string; error?: string; details?: unknown }>(null)
-  const [forceOllama, setForceOllama] = useState(false)
+  const [runtimeConfig, setRuntimeConfig] = useState<ClientAIConfig>(() => getClientAIConfig())
 
   const language = companyFormat === "llc" ? "en" : "es"
   const hasResult = Boolean(lastResult)
@@ -41,7 +43,11 @@ export function QuotationAIAssistant({
 
   async function handleOllamaHealth() {
     try {
-      const res = await fetch("/api/ai/ollama-health", { method: "GET" })
+      const res = await fetch("/api/ai/ollama-health", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ baseUrl: runtimeConfig.baseUrl, model: runtimeConfig.model }),
+      })
       const data = (await res.json().catch(() => ({}))) as any
       if (!res.ok || !data?.ok) {
         toast.error(companyFormat === "llc" ? "Ollama health check failed" : "Fallo el chequeo de Ollama", {
@@ -87,7 +93,7 @@ export function QuotationAIAssistant({
         method: "POST",
         headers: {
           "content-type": "application/json",
-          ...(forceOllama ? { "x-ai-provider-mode": "ollama", "x-ai-disable-fallback": "true" } : {}),
+          ...buildAIRequestHeaders(runtimeConfig),
         },
         body: JSON.stringify(payload),
       })
@@ -127,7 +133,12 @@ export function QuotationAIAssistant({
 
   function applyDraft() {
     if (!lastResult) return
-    onApplyDraft(lastResult)
+    onApplyDraft(lastResult, prompt.trim())
+  }
+
+  function updateRuntimeConfig(patch: Partial<ClientAIConfig>) {
+    const next = saveClientAIConfig({ ...runtimeConfig, ...patch })
+    setRuntimeConfig(next)
   }
 
   return (
@@ -148,6 +159,9 @@ export function QuotationAIAssistant({
           <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
             {companyFormat === "llc" ? "Provider used" : "Proveedor usado"}: {providerLabel}
           </Badge>
+          <Badge variant="outline" className="text-[10px]">
+            {runtimeConfig.providerMode === "ollama" ? "Ollama remoto" : runtimeConfig.providerMode}
+          </Badge>
           {lastResult && (
             <Badge variant="outline" className="text-[10px]">
               {modelLabel}
@@ -158,6 +172,29 @@ export function QuotationAIAssistant({
       </div>
 
       <div className="space-y-3">
+        <div className="grid gap-2 rounded-md border border-border bg-muted/20 p-3 sm:grid-cols-2">
+          <Input
+            value={runtimeConfig.baseUrl}
+            onChange={(e) => updateRuntimeConfig({ baseUrl: e.target.value })}
+            placeholder="http://tu-vps:11434"
+          />
+          <Input
+            value={runtimeConfig.model}
+            onChange={(e) => updateRuntimeConfig({ model: e.target.value })}
+            placeholder="qwen3.5:4b o gemma4:e4b"
+          />
+          <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
+            <Button size="sm" variant={runtimeConfig.providerMode === "ollama" ? "default" : "outline"} onClick={() => updateRuntimeConfig({ providerMode: "ollama" })} disabled={loading}>
+              Ollama
+            </Button>
+            <Button size="sm" variant={runtimeConfig.providerMode === "hybrid" ? "default" : "outline"} onClick={() => updateRuntimeConfig({ providerMode: "hybrid", disableFallback: false })} disabled={loading}>
+              Hybrid
+            </Button>
+            <Button size="sm" variant={runtimeConfig.disableFallback ? "default" : "outline"} onClick={() => updateRuntimeConfig({ disableFallback: !runtimeConfig.disableFallback })} disabled={loading}>
+              {runtimeConfig.disableFallback ? (companyFormat === "llc" ? "Fallback OFF" : "Fallback OFF") : (companyFormat === "llc" ? "Fallback ON" : "Fallback ON")}
+            </Button>
+          </div>
+        </div>
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -171,15 +208,6 @@ export function QuotationAIAssistant({
           <Button size="sm" onClick={handleGenerate} disabled={!canGenerate}>
             {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
             {companyFormat === "llc" ? "Generate draft" : "Generar borrador"}
-          </Button>
-          <Button
-            size="sm"
-            variant={forceOllama ? "default" : "outline"}
-            onClick={() => setForceOllama((v) => !v)}
-            disabled={loading}
-            className={forceOllama ? "bg-[#111827] hover:bg-[#0b1220]" : ""}
-          >
-            {companyFormat === "llc" ? "Ollama only" : "Solo Ollama (Qwen)"}
           </Button>
           <Button size="sm" variant="ghost" onClick={handleOllamaHealth} disabled={loading}>
             {companyFormat === "llc" ? "Check Ollama" : "Chequear Ollama"}
@@ -260,7 +288,7 @@ export function QuotationAIAssistant({
             {companyFormat === "llc" ? "Request failed" : "No se pudo generar el borrador"}
           </p>
           <p className="mt-1">{lastError.message}</p>
-          {process.env.NODE_ENV !== "production" && lastError.details && (
+          {process.env.NODE_ENV !== "production" && Boolean(lastError.details) && (
             <details className="mt-2">
               <summary className="cursor-pointer select-none font-medium">
                 {companyFormat === "llc" ? "Technical details" : "Detalles tecnicos"}
@@ -275,4 +303,3 @@ export function QuotationAIAssistant({
     </div>
   )
 }
-

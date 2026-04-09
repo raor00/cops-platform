@@ -66,12 +66,14 @@ export type AIProviderMode = "hybrid" | "ollama" | "gemini"
 export interface GenerateQuoteDraftOptions {
   mode?: AIProviderMode
   disableFallback?: boolean
+  ollamaBaseUrl?: string
+  ollamaModel?: string
 }
 
 export async function generateQuoteDraft(input: AIDraftRequest, options?: GenerateQuoteDraftOptions): Promise<AIDraftResponse> {
   const mode: AIProviderMode = options?.mode || (process.env.AI_PROVIDER_MODE as AIProviderMode) || "hybrid"
-  const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || ""
-  const ollamaModel = process.env.OLLAMA_MODEL || "qwen3.5:2b"
+  const ollamaBaseUrl = options?.ollamaBaseUrl || process.env.OLLAMA_BASE_URL || ""
+  const ollamaModel = options?.ollamaModel || process.env.OLLAMA_MODEL || "qwen3.5:2b"
   const ollamaTimeoutMs = Number(process.env.OLLAMA_TIMEOUT_MS || 120000)
   const geminiApiKey = process.env.GEMINI_API_KEY || ""
   const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash"

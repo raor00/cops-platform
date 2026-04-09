@@ -113,7 +113,7 @@ export const aiLaborItemSchema = z.object({
   cost: z.coerce.number().min(0),
 })
 
-export const aiDraftPatchSchema: z.ZodType<AIDraftPatch> = z.object({
+export const aiDraftPatchSchema = z.object({
   subject: z.string().optional(),
   issueDate: z.string().optional(),
   validUntil: z.string().optional(),
@@ -128,18 +128,18 @@ export const aiDraftPatchSchema: z.ZodType<AIDraftPatch> = z.object({
   laborItems: z.array(aiLaborItemSchema).optional(),
 })
 
-export const aiSuggestedItemSchema: z.ZodType<AISuggestedItem> = aiDraftLineItemSchema.extend({
+export const aiSuggestedItemSchema = aiDraftLineItemSchema.extend({
   reason: z.string().min(1),
 })
 
-export const aiDraftResponseSchema: z.ZodType<Omit<AIDraftResponse, "metadata">> = z.object({
+export const aiDraftResponseSchema = z.object({
   draftPatch: aiDraftPatchSchema,
   suggestedItemsOutsideCatalog: z.array(aiSuggestedItemSchema).default([]),
   warnings: z.array(z.string()).default([]),
   confidence: z.coerce.number().min(0).max(1).default(0.6),
 })
 
-export const aiDraftRequestSchema: z.ZodType<AIDraftRequest> = z.object({
+export const aiDraftRequestSchema = z.object({
   message: z.string().min(5).max(4000),
   currentDraft: z.object({
     subject: z.string().optional(),
