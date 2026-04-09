@@ -39,6 +39,11 @@ import {
   addDemoUpdateLog,
   updateDemoUpdateLog,
   deleteDemoUpdateLog,
+  markDemoTicketArrival,
+  pauseDemoTicketUntilTomorrow,
+  resumeDemoTicketWork,
+  getDemoSesionesByTicket,
+  finalizarDemoSesion,
 } from "@/lib/mock-data"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 
@@ -113,6 +118,77 @@ async function canAccessTicket(
   const supabase = await createClient()
   const { data } = await supabase.from("tickets").select("tecnico_id").eq("id", ticketId).single()
   return data?.tecnico_id === user.id
+}
+
+async function getTotalWorkedMinutes(ticketId: string): Promise<number> {
+  if (isLocalMode()) {
+    return getDemoSesionesByTicket(ticketId).reduce((sum, sesion) => sum + (sesion.duracion_minutos || 0), 0)
+  }
+
+  if (isFirebaseMode()) {
+    const db = getAdminFirestore()
+    const snap = await db.collection("ticket_sesiones_trabajo").where("ticket_id", "==", ticketId).get()
+    return snap.docs.reduce((sum, doc) => sum + Number(doc.data().duracion_minutos || 0), 0)
+  }
+
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("ticket_sesiones_trabajo")
+    .select("duracion_minutos")
+    .eq("ticket_id", ticketId)
+    .not("duracion_minutos", "is", null)
+
+  return (data || []).reduce((sum, row) => sum + Number(row.duracion_minutos || 0), 0)
+}
+
+async function closeOpenWorkSession(ticketId: string, tecnicoId: string, notas?: string): Promise<void> {
+  if (isLocalMode()) {
+    const openSesion = getDemoSesionesByTicket(ticketId).find((sesion) => sesion.tecnico_id === tecnicoId && !sesion.fecha_fin)
+    if (openSesion) finalizarDemoSesion(openSesion.id, notas)
+    return
+  }
+
+  if (isFirebaseMode()) {
+    const db = getAdminFirestore()
+    const snap = await db.collection("ticket_sesiones_trabajo")
+      .where("ticket_id", "==", ticketId)
+      .where("tecnico_id", "==", tecnicoId)
+      .where("fecha_fin", "==", null)
+      .limit(1)
+      .get()
+
+    if (snap.empty) return
+
+    const doc = snap.docs[0]!
+    const current = doc.data()
+    const end = new Date()
+    const start = new Date(String(current.fecha_inicio))
+    const duration = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000))
+    await doc.ref.update(cleanForFirestore({ fecha_fin: end.toISOString(), duracion_minutos: duration, notas: notas || current.notas || null }))
+    return
+  }
+
+  const supabase = await createClient()
+  const { data: openSesion } = await supabase
+    .from("ticket_sesiones_trabajo")
+    .select("id, fecha_inicio, notas")
+    .eq("ticket_id", ticketId)
+    .eq("tecnico_id", tecnicoId)
+    .is("fecha_fin", null)
+    .order("fecha_inicio", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!openSesion) return
+
+  const end = new Date()
+  const start = new Date(openSesion.fecha_inicio)
+  const duration = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000))
+
+  await supabase
+    .from("ticket_sesiones_trabajo")
+    .update({ fecha_fin: end.toISOString(), duracion_minutos: duration, notas: notas || openSesion.notas || null })
+    .eq("id", openSesion.id)
 }
 
 async function fbEnrichTicket(ticket: Ticket): Promise<Ticket> {
@@ -343,7 +419,13 @@ export async function createTicket(
         creado_por: currentUser.id,
         tecnico_id: input.tecnico_id || null,
         estado: input.estado === "borrador" ? "borrador" : "asignado",
+        estado_operativo: input.estado === "borrador" ? null : "programado",
         fecha_asignacion: input.estado === "borrador" ? null : now,
+        fecha_servicio: input.fecha_servicio || null,
+        fecha_llegada: null,
+        fecha_ultima_pausa: null,
+        fecha_ultima_reanudacion: null,
+        motivo_pausa: null,
         monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
         facturacion_tipo: input.facturacion_tipo ?? "fijo",
         tarifa_hora: input.tarifa_hora ?? null,
@@ -403,7 +485,13 @@ export async function createTicket(
       creado_por: currentUser.id,
       tecnico_id: input.tecnico_id || null,
       estado: input.estado === "borrador" ? "borrador" : "asignado",
+      estado_operativo: input.estado === "borrador" ? null : "programado",
       fecha_asignacion: input.estado === "borrador" ? null : new Date().toISOString(),
+      fecha_servicio: input.fecha_servicio || null,
+      fecha_llegada: null,
+      fecha_ultima_pausa: null,
+      fecha_ultima_reanudacion: null,
+      motivo_pausa: null,
       monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
       facturacion_tipo: input.facturacion_tipo ?? "fijo",
       tarifa_hora: input.tarifa_hora ?? null,
@@ -521,6 +609,8 @@ export async function changeTicketStatus(
     tiempo_trabajado?: number
     observaciones_tecnico?: string
     solucion_aplicada?: string
+    motivo_pausa?: string
+    fecha_servicio?: string
     monto_servicio_final?: number
   }
 ): Promise<ActionResponse<Ticket>> {
@@ -566,10 +656,23 @@ export async function changeTicketStatus(
       const updateData: Record<string, unknown> = { estado: newStatus, updated_at: now }
 
       if (newStatus === "iniciado" && !ticket.fecha_inicio) updateData.fecha_inicio = now
-      if (newStatus === "finalizado") updateData.fecha_finalizacion = now
+      if (newStatus === "iniciado") updateData.estado_operativo = "trabajando"
+      if (newStatus === "en_progreso") updateData.estado_operativo = "trabajando"
+      if (newStatus === "cancelado") updateData.estado_operativo = "reprogramado"
+      if (newStatus === "finalizado") {
+        await closeOpenWorkSession(id, currentUser.id, additionalData?.observaciones_tecnico)
+        updateData.fecha_finalizacion = now
+        updateData.estado_operativo = "finalizado"
+        const computedMinutes = await getTotalWorkedMinutes(id)
+        if (computedMinutes > 0 && additionalData?.tiempo_trabajado === undefined) {
+          updateData.tiempo_trabajado = computedMinutes
+        }
+      }
 
       if (additionalData?.materiales_usados) updateData.materiales_usados = additionalData.materiales_usados
       if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
+      if (additionalData?.motivo_pausa !== undefined) updateData.motivo_pausa = additionalData.motivo_pausa
+      if (additionalData?.fecha_servicio !== undefined) updateData.fecha_servicio = additionalData.fecha_servicio
       if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
       if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
       // If hourly billing, update monto_servicio with calculated amount
@@ -625,9 +728,22 @@ export async function changeTicketStatus(
 
   const updateData: Record<string, unknown> = { estado: newStatus }
   if (newStatus === "iniciado" && !ticket.fecha_inicio) updateData.fecha_inicio = new Date().toISOString()
-  if (newStatus === "finalizado") updateData.fecha_finalizacion = new Date().toISOString()
+  if (newStatus === "iniciado") updateData.estado_operativo = "trabajando"
+  if (newStatus === "en_progreso") updateData.estado_operativo = "trabajando"
+  if (newStatus === "cancelado") updateData.estado_operativo = "reprogramado"
+  if (newStatus === "finalizado") {
+    await closeOpenWorkSession(id, currentUser.id, additionalData?.observaciones_tecnico)
+    updateData.fecha_finalizacion = new Date().toISOString()
+    updateData.estado_operativo = "finalizado"
+    const computedMinutes = await getTotalWorkedMinutes(id)
+    if (computedMinutes > 0 && additionalData?.tiempo_trabajado === undefined) {
+      updateData.tiempo_trabajado = computedMinutes
+    }
+  }
   if (additionalData?.materiales_usados) updateData.materiales_usados = additionalData.materiales_usados
   if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
+  if (additionalData?.motivo_pausa !== undefined) updateData.motivo_pausa = additionalData.motivo_pausa
+  if (additionalData?.fecha_servicio !== undefined) updateData.fecha_servicio = additionalData.fecha_servicio
   if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
   if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
   if (additionalData?.monto_servicio_final !== undefined) updateData.monto_servicio = additionalData.monto_servicio_final
@@ -656,6 +772,224 @@ export async function changeTicketStatus(
   revalidatePath(`/dashboard/tickets/${id}`)
   revalidatePath("/dashboard/pagos")
   return { success: true, data: data as Ticket, message: `Estado cambiado a ${newStatus}` }
+}
+
+export async function registerTicketArrival(ticketId: string): Promise<ActionResponse<Ticket>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+
+  if (isLocalMode()) {
+    const ticket = getDemoTicketById(ticketId, currentUser)
+    if (!ticket) return { success: false, error: "Ticket no encontrado" }
+    if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) {
+      return { success: false, error: "No tienes permiso para registrar llegada en este ticket" }
+    }
+
+    const updated = markDemoTicketArrival(ticketId)
+    if (!updated) return { success: false, error: "No se pudo registrar la llegada" }
+    addDemoUpdateLog({
+      ticket_id: ticketId,
+      autor_id: currentUser.id,
+      contenido: "Llegó al sitio de servicio.",
+      tipo: "nota",
+      autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
+    })
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    return { success: true, data: updated, message: "Llegada al sitio registrada" }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("tickets").doc(ticketId)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Ticket no encontrado" }
+      const ticket = fromFirestoreDoc<Ticket>(ticketId, snap.data()!)
+      if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) {
+        return { success: false, error: "No tienes permiso para registrar llegada en este ticket" }
+      }
+
+      const now = new Date().toISOString()
+      const updates = cleanForFirestore({ fecha_llegada: ticket.fecha_llegada ?? now, estado_operativo: "en_sitio", updated_at: now })
+      await ref.update(updates)
+
+      const logRef = db.collection("update-logs").doc()
+      const logData = cleanForFirestore({ ticket_id: ticketId, autor_id: currentUser.id, contenido: "Llegó al sitio de servicio.", tipo: "nota", created_at: now, updated_at: now, autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null } })
+      await Promise.all([
+        logRef.set(logData),
+        db.collection("tickets").doc(ticketId).collection("update_logs").doc(logRef.id).set(logData),
+      ])
+
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return { success: true, data: { ...ticket, ...updates } as Ticket, message: "Llegada al sitio registrada" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  const supabase = await createClient()
+  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
+  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
+  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para registrar llegada en este ticket" }
+
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from("tickets")
+    .update({ fecha_llegada: ticket.fecha_llegada ?? now, estado_operativo: "en_sitio", updated_at: now })
+    .eq("id", ticketId)
+    .select()
+    .single()
+
+  if (error) return { success: false, error: error.message }
+  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: "Llegó al sitio de servicio." })
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  return { success: true, data: data as Ticket, message: "Llegada al sitio registrada" }
+}
+
+export async function resumeTicketWork(ticketId: string): Promise<ActionResponse<Ticket>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+
+  if (isLocalMode()) {
+    const ticket = getDemoTicketById(ticketId, currentUser)
+    if (!ticket) return { success: false, error: "Ticket no encontrado" }
+    if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para reanudar este ticket" }
+    const updated = resumeDemoTicketWork(ticketId, currentUser)
+    if (!updated) return { success: false, error: "No se pudo reanudar el trabajo" }
+    addDemoUpdateLog({ ticket_id: ticketId, autor_id: currentUser.id, contenido: "Trabajo reanudado.", tipo: "nota", autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null } })
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    return { success: true, data: updated, message: "Trabajo reanudado" }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("tickets").doc(ticketId)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Ticket no encontrado" }
+      const ticket = fromFirestoreDoc<Ticket>(ticketId, snap.data()!)
+      if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para reanudar este ticket" }
+
+      const now = new Date().toISOString()
+      const openSesion = await db.collection("ticket_sesiones_trabajo")
+        .where("ticket_id", "==", ticketId)
+        .where("tecnico_id", "==", currentUser.id)
+        .where("fecha_fin", "==", null)
+        .limit(1)
+        .get()
+
+      if (openSesion.empty) {
+        await db.collection("ticket_sesiones_trabajo").add(cleanForFirestore({ ticket_id: ticketId, tecnico_id: currentUser.id, fecha_inicio: now, fecha_fin: null, duracion_minutos: null, notas: null, estado_al_inicio: ticket.estado, created_at: now }))
+      }
+
+      const updates = cleanForFirestore({ estado: ticket.estado === "asignado" ? "en_progreso" : ticket.estado, estado_operativo: "trabajando", fecha_inicio: ticket.fecha_inicio ?? now, fecha_ultima_reanudacion: now, motivo_pausa: null, updated_at: now })
+      await ref.update(updates)
+      const logRef = db.collection("update-logs").doc()
+      const logData = cleanForFirestore({ ticket_id: ticketId, autor_id: currentUser.id, contenido: "Trabajo reanudado.", tipo: "nota", created_at: now, updated_at: now, autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null } })
+      await Promise.all([logRef.set(logData), db.collection("tickets").doc(ticketId).collection("update_logs").doc(logRef.id).set(logData)])
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      return { success: true, data: { ...ticket, ...updates } as Ticket, message: "Trabajo reanudado" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  const supabase = await createClient()
+  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
+  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
+  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para reanudar este ticket" }
+
+  const now = new Date().toISOString()
+  const { data: openSession } = await supabase
+    .from("ticket_sesiones_trabajo")
+    .select("id")
+    .eq("ticket_id", ticketId)
+    .eq("tecnico_id", currentUser.id)
+    .is("fecha_fin", null)
+    .limit(1)
+    .maybeSingle()
+
+  if (!openSession) {
+    await supabase.from("ticket_sesiones_trabajo").insert({ ticket_id: ticketId, tecnico_id: currentUser.id, fecha_inicio: now, fecha_fin: null, duracion_minutos: null, notas: null, estado_al_inicio: ticket.estado })
+  }
+
+  const { data, error } = await supabase
+    .from("tickets")
+    .update({ estado: ticket.estado === "asignado" ? "en_progreso" : ticket.estado, estado_operativo: "trabajando", fecha_inicio: ticket.fecha_inicio ?? now, fecha_ultima_reanudacion: now, motivo_pausa: null, updated_at: now })
+    .eq("id", ticketId)
+    .select()
+    .single()
+
+  if (error) return { success: false, error: error.message }
+  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: "Trabajo reanudado." })
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  revalidatePath("/dashboard/pipeline")
+  return { success: true, data: data as Ticket, message: "Trabajo reanudado" }
+}
+
+export async function pauseTicketUntilTomorrow(ticketId: string, motivo: string, fechaServicio?: string): Promise<ActionResponse<Ticket>> {
+  const currentUser = await getCurrentUser()
+  if (!currentUser) return { success: false, error: "No autenticado" }
+
+  if (!motivo.trim()) return { success: false, error: "Debes indicar el motivo" }
+
+  if (isLocalMode()) {
+    const ticket = getDemoTicketById(ticketId, currentUser)
+    if (!ticket) return { success: false, error: "Ticket no encontrado" }
+    if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para pausar este ticket" }
+    const updated = pauseDemoTicketUntilTomorrow(ticketId, currentUser, motivo.trim(), fechaServicio)
+    if (!updated) return { success: false, error: "No se pudo pausar el ticket" }
+    addDemoUpdateLog({ ticket_id: ticketId, autor_id: currentUser.id, contenido: `Trabajo pausado. Motivo: ${motivo.trim()}`, tipo: "nota", autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null } })
+    revalidatePath(`/dashboard/tickets/${ticketId}`)
+    revalidatePath("/dashboard/pipeline")
+    return { success: true, data: updated, message: "Ticket pausado y reprogramado" }
+  }
+
+  if (isFirebaseMode()) {
+    try {
+      const db = getAdminFirestore()
+      const ref = db.collection("tickets").doc(ticketId)
+      const snap = await ref.get()
+      if (!snap.exists) return { success: false, error: "Ticket no encontrado" }
+      const ticket = fromFirestoreDoc<Ticket>(ticketId, snap.data()!)
+      if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para pausar este ticket" }
+
+      const now = new Date().toISOString()
+      await closeOpenWorkSession(ticketId, currentUser.id, motivo.trim())
+      const workedMinutes = await getTotalWorkedMinutes(ticketId)
+      const updates = cleanForFirestore({ estado: ticket.estado === "asignado" ? "en_progreso" : ticket.estado, estado_operativo: fechaServicio ? "reprogramado" : "pausado", fecha_ultima_pausa: now, fecha_servicio: fechaServicio || ticket.fecha_servicio || null, motivo_pausa: motivo.trim(), tiempo_trabajado: workedMinutes || ticket.tiempo_trabajado || null, updated_at: now })
+      await ref.update(updates)
+      const logRef = db.collection("update-logs").doc()
+      const logData = cleanForFirestore({ ticket_id: ticketId, autor_id: currentUser.id, contenido: `Trabajo pausado. Motivo: ${motivo.trim()}`, tipo: "nota", created_at: now, updated_at: now, autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null } })
+      await Promise.all([logRef.set(logData), db.collection("tickets").doc(ticketId).collection("update_logs").doc(logRef.id).set(logData)])
+      revalidatePath(`/dashboard/tickets/${ticketId}`)
+      revalidatePath("/dashboard/pipeline")
+      return { success: true, data: { ...ticket, ...updates } as Ticket, message: "Ticket pausado y reprogramado" }
+    } catch (err) {
+      return { success: false, error: (err as Error).message }
+    }
+  }
+
+  const supabase = await createClient()
+  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
+  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
+  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para pausar este ticket" }
+
+  const now = new Date().toISOString()
+  await closeOpenWorkSession(ticketId, currentUser.id, motivo.trim())
+  const workedMinutes = await getTotalWorkedMinutes(ticketId)
+  const { data, error } = await supabase
+    .from("tickets")
+    .update({ estado: ticket.estado === "asignado" ? "en_progreso" : ticket.estado, estado_operativo: fechaServicio ? "reprogramado" : "pausado", fecha_ultima_pausa: now, fecha_servicio: fechaServicio || ticket.fecha_servicio || null, motivo_pausa: motivo.trim(), tiempo_trabajado: workedMinutes || ticket.tiempo_trabajado || null, updated_at: now })
+    .eq("id", ticketId)
+    .select()
+    .single()
+
+  if (error) return { success: false, error: error.message }
+  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: `Trabajo pausado. Motivo: ${motivo.trim()}` })
+  revalidatePath(`/dashboard/tickets/${ticketId}`)
+  revalidatePath("/dashboard/pipeline")
+  return { success: true, data: data as Ticket, message: "Ticket pausado y reprogramado" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

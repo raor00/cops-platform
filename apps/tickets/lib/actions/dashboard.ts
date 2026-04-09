@@ -2,6 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "./auth"
+
+function getTotalElapsedMinutes(ticket: Pick<Ticket, "fecha_inicio" | "fecha_finalizacion">): number {
+  if (!ticket.fecha_inicio || !ticket.fecha_finalizacion) return 0
+  return Math.max(0, Math.round((new Date(ticket.fecha_finalizacion).getTime() - new Date(ticket.fecha_inicio).getTime()) / 60000))
+}
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getDemoDashboardStats, getDemoEnhancedStats } from "@/lib/mock-data"
 import { getAdminFirestore } from "@/lib/firebase/admin"
@@ -137,7 +142,7 @@ export async function getTechnicianStats(tecnicoId?: string): Promise<ActionResp
   if (user.id !== targetId && !canViewAllTickets(user.rol)) return { success: false, error: "No autorizado" }
 
   if (isLocalMode()) {
-    return { success: true, data: { ticketsAsignados: 0, ticketsCompletados: 0, ticketsEnProgreso: 0, pagosPendientes: 0, montoPendiente: 0, tiempoPromedioMinutos: 0 } }
+    return { success: true, data: { ticketsAsignados: 0, ticketsCompletados: 0, ticketsEnProgreso: 0, pagosPendientes: 0, montoPendiente: 0, tiempoPromedioMinutos: 0, tiempoPromedioTotalMinutos: 0 } }
   }
 
   if (isFirebaseMode()) {
@@ -158,8 +163,12 @@ export async function getTechnicianStats(tecnicoId?: string): Promise<ActionResp
       const tiempoPromedioMinutos = finalizados.length > 0
         ? Math.round(finalizados.reduce((sum, t) => sum + (t.tiempo_trabajado || 0), 0) / finalizados.length)
         : 0
+      const totalFinalizados = tickets.filter((t) => t.estado === "finalizado" && t.fecha_inicio && t.fecha_finalizacion)
+      const tiempoPromedioTotalMinutos = totalFinalizados.length > 0
+        ? Math.round(totalFinalizados.reduce((sum, t) => sum + getTotalElapsedMinutes(t), 0) / totalFinalizados.length)
+        : 0
 
-      return { success: true, data: { ticketsAsignados, ticketsCompletados, ticketsEnProgreso, pagosPendientes, montoPendiente, tiempoPromedioMinutos } }
+      return { success: true, data: { ticketsAsignados, ticketsCompletados, ticketsEnProgreso, pagosPendientes, montoPendiente, tiempoPromedioMinutos, tiempoPromedioTotalMinutos } }
     } catch (e: unknown) {
       return { success: false, error: (e as Error).message }
     }
@@ -174,11 +183,15 @@ export async function getTechnicianStats(tecnicoId?: string): Promise<ActionResp
   const pagosPendientes = pagos?.length || 0
   const montoPendiente = pagos?.reduce((sum, p) => sum + Number(p.monto_a_pagar), 0) || 0
   const { data: ticketsConTiempo } = await supabase.from("tickets").select("tiempo_trabajado").eq("tecnico_id", targetId).eq("estado", "finalizado").not("tiempo_trabajado", "is", null)
+  const { data: ticketsConTiempoTotal } = await supabase.from("tickets").select("fecha_inicio, fecha_finalizacion").eq("tecnico_id", targetId).eq("estado", "finalizado").not("fecha_inicio", "is", null).not("fecha_finalizacion", "is", null)
   const tiempoPromedioMinutos = ticketsConTiempo && ticketsConTiempo.length > 0
     ? ticketsConTiempo.reduce((sum, t) => sum + (t.tiempo_trabajado || 0), 0) / ticketsConTiempo.length
     : 0
+  const tiempoPromedioTotalMinutos = ticketsConTiempoTotal && ticketsConTiempoTotal.length > 0
+    ? ticketsConTiempoTotal.reduce((sum, t) => sum + getTotalElapsedMinutes(t as Ticket), 0) / ticketsConTiempoTotal.length
+    : 0
 
-  return { success: true, data: { ticketsAsignados: ticketsAsignados || 0, ticketsCompletados: ticketsCompletados || 0, ticketsEnProgreso: ticketsEnProgreso || 0, pagosPendientes, montoPendiente, tiempoPromedioMinutos: Math.round(tiempoPromedioMinutos) } }
+  return { success: true, data: { ticketsAsignados: ticketsAsignados || 0, ticketsCompletados: ticketsCompletados || 0, ticketsEnProgreso: ticketsEnProgreso || 0, pagosPendientes, montoPendiente, tiempoPromedioMinutos: Math.round(tiempoPromedioMinutos), tiempoPromedioTotalMinutos: Math.round(tiempoPromedioTotalMinutos) } }
 }
 
 export async function getRecentTickets(limit = 5): Promise<ActionResponse<RecentTicket[]>> {
@@ -249,6 +262,7 @@ export async function getEnhancedDashboardStats(): Promise<ActionResponse<Enhanc
           const tTickets = allTickets.filter((t) => t.tecnico_id === tDoc.id)
           const tFinalizados = tTickets.filter((t) => t.estado === "finalizado")
           const tiempos = tFinalizados.filter((t) => t.tiempo_trabajado).map((t) => t.tiempo_trabajado || 0)
+          const tiemposTotales = tFinalizados.filter((t) => t.fecha_inicio && t.fecha_finalizacion).map((t) => getTotalElapsedMinutes(t))
           const tPagosSnap = await db.collection("pagos").where("tecnico_id", "==", tDoc.id).where("estado_pago", "==", "pendiente").get()
 
           return {
@@ -258,6 +272,7 @@ export async function getEnhancedDashboardStats(): Promise<ActionResponse<Enhanc
             ticketsCompletados: tFinalizados.length,
             ticketsActivos: tTickets.filter((t) => t.estado !== "finalizado" && t.estado !== "cancelado").length,
             tiempoPromedioMinutos: tiempos.length > 0 ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : 0,
+            tiempoPromedioTotalMinutos: tiemposTotales.length > 0 ? Math.round(tiemposTotales.reduce((a, b) => a + b, 0) / tiemposTotales.length) : 0,
             montoTotal: tFinalizados.reduce((sum, t) => sum + Number(t.monto_servicio || 0), 0),
             montoPendiente: tPagosSnap.docs.reduce((sum, d) => sum + Number(d.data().monto_a_pagar || 0), 0),
           }
@@ -317,11 +332,13 @@ export async function getEnhancedDashboardStats(): Promise<ActionResponse<Enhanc
       const { count: completados } = await supabase.from("tickets").select("*", { count: "exact", head: true }).eq("tecnico_id", tec.id).eq("estado", "finalizado")
       const { count: activos } = await supabase.from("tickets").select("*", { count: "exact", head: true }).eq("tecnico_id", tec.id).not("estado", "in", '("finalizado","cancelado")')
       const { data: tiempos } = await supabase.from("tickets").select("tiempo_trabajado").eq("tecnico_id", tec.id).eq("estado", "finalizado").not("tiempo_trabajado", "is", null)
+      const { data: tiemposTotales } = await supabase.from("tickets").select("fecha_inicio, fecha_finalizacion").eq("tecnico_id", tec.id).eq("estado", "finalizado").not("fecha_inicio", "is", null).not("fecha_finalizacion", "is", null)
       const { data: montos } = await supabase.from("tickets").select("monto_servicio").eq("tecnico_id", tec.id).eq("estado", "finalizado")
       const { data: pendientePago } = await supabase.from("pagos_tecnicos").select("monto_a_pagar").eq("tecnico_id", tec.id).eq("estado_pago", "pendiente")
       const tiempoArr = (tiempos || []).map((t) => t.tiempo_trabajado || 0)
       const tiempoPromedio = tiempoArr.length > 0 ? Math.round(tiempoArr.reduce((a, b) => a + b, 0) / tiempoArr.length) : 0
-      return { id: tec.id, nombre: tec.nombre, apellido: tec.apellido, ticketsCompletados: completados || 0, ticketsActivos: activos || 0, tiempoPromedioMinutos: tiempoPromedio, montoTotal: (montos || []).reduce((sum, m) => sum + Number(m.monto_servicio), 0), montoPendiente: (pendientePago || []).reduce((sum, p) => sum + Number(p.monto_a_pagar), 0) }
+      const totalPromedio = (tiemposTotales || []).length > 0 ? Math.round((tiemposTotales || []).reduce((sum, t) => sum + getTotalElapsedMinutes(t as Ticket), 0) / (tiemposTotales || []).length) : 0
+      return { id: tec.id, nombre: tec.nombre, apellido: tec.apellido, ticketsCompletados: completados || 0, ticketsActivos: activos || 0, tiempoPromedioMinutos: tiempoPromedio, tiempoPromedioTotalMinutos: totalPromedio, montoTotal: (montos || []).reduce((sum, m) => sum + Number(m.monto_servicio), 0), montoPendiente: (pendientePago || []).reduce((sum, p) => sum + Number(p.monto_a_pagar), 0) }
     })
   )
 

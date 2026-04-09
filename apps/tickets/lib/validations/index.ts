@@ -140,6 +140,7 @@ export const ticketCreateSchema = z.object({
     .optional()
     .or(z.literal('')),
   tipo_mantenimiento: z.enum(['correctivo', 'preventivo']).optional(),
+  fecha_servicio: z.string().optional().or(z.literal('')),
   tecnico_id: z.string().min(1, 'Debes seleccionar un técnico'),
   monto_servicio: z
     .number()
@@ -192,6 +193,7 @@ export const ticketUpdateSchema = z.object({
     .optional(),
   materiales_planificados: z.array(materialItemSchema).optional(),
   prioridad: z.enum(['baja', 'media', 'alta', 'urgente']).optional(),
+  fecha_servicio: z.string().optional().or(z.literal('')),
   tecnico_id: z.string().optional().or(z.literal('')),
   monto_servicio: z.number().min(0, 'El monto debe ser positivo').optional(),
 })
@@ -203,6 +205,12 @@ export const ticketTechnicianSchema = z.object({
     .number()
     .min(0, 'El tiempo debe ser positivo')
     .optional(),
+  motivo_pausa: z
+    .string()
+    .max(500, 'El motivo no puede exceder 500 caracteres')
+    .optional()
+    .or(z.literal('')),
+  fecha_servicio: z.string().optional().or(z.literal('')),
   observaciones_tecnico: z
     .string()
     .max(5000, 'Las observaciones no pueden exceder 5000 caracteres')
@@ -345,4 +353,3 @@ export type RutinaCreateValidationInput = z.infer<typeof rutinaCreateSchema>
 export type AssignVisitaValidationInput = z.infer<typeof assignVisitaSchema>
 export type BitacoraVisitaValidationInput = z.infer<typeof bitacoraVisitaSchema>
 export type ViaticoCreateValidationInput = z.infer<typeof viaticoCreateSchema>
-

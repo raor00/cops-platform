@@ -42,6 +42,9 @@ export function TechnicianStatsTable({ kpis }: TechnicianStatsTableProps) {
               <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
                 Tiempo Prom.
               </th>
+              <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 xl:table-cell">
+                Tiempo Total Prom.
+              </th>
               <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 lg:table-cell">
                 Monto Total
               </th>
@@ -107,6 +110,16 @@ export function TechnicianStatsTable({ kpis }: TechnicianStatsTableProps) {
                       </span>
                     </div>
                   </td>
+                  <td className="hidden px-4 py-3 text-center xl:table-cell">
+                    <div className="flex items-center justify-center gap-1 text-slate-600">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span className="text-xs">
+                        {kpi.tiempoPromedioTotalMinutos > 0
+                          ? formatMinutesToDuration(kpi.tiempoPromedioTotalMinutos)
+                          : "—"}
+                      </span>
+                    </div>
+                  </td>
                   <td className="hidden px-4 py-3 text-right lg:table-cell">
                     <span className="text-sm font-medium text-slate-700">
                       {formatCurrency(kpi.montoTotal)}
@@ -162,7 +175,7 @@ export function TechnicianStatsTable({ kpis }: TechnicianStatsTableProps) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
               <p className="mb-1 text-xs text-slate-500">Completados</p>
               <p className="text-xl font-bold text-green-600">
@@ -178,6 +191,14 @@ export function TechnicianStatsTable({ kpis }: TechnicianStatsTableProps) {
               <p className="text-base font-bold text-slate-800">
                 {selected.tiempoPromedioMinutos > 0
                   ? formatMinutesToDuration(selected.tiempoPromedioMinutos)
+                  : "—"}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
+              <p className="mb-1 text-xs text-slate-500">Tiempo total prom.</p>
+              <p className="text-base font-bold text-slate-800">
+                {selected.tiempoPromedioTotalMinutos > 0
+                  ? formatMinutesToDuration(selected.tiempoPromedioTotalMinutos)
                   : "—"}
               </p>
             </div>

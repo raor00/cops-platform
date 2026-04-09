@@ -43,9 +43,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { getTicketDocumentos, uploadTicketDocumento, deleteTicketDocumento } from "@/lib/actions/documentos"
-import { TIPO_DOCUMENTO_LABELS, DOCUMENTO_UPLOAD_CONFIG } from "@/types"
+import { TIPO_DOCUMENTO_LABELS, DOCUMENTO_TIPO_OPTIONS, DOCUMENTO_UPLOAD_CONFIG } from "@/types"
 import type { TicketDocumento, TipoDocumento } from "@/types"
-import { cn } from "@/lib/utils"
+import { cn, formatDateTimeExactVE } from "@/lib/utils"
 
 interface DocumentosSectionProps {
   ticketId: string
@@ -82,7 +82,7 @@ export function DocumentosSection({
   const [uploadOpen, setUploadOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("otro")
+  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("comprobante_servicio")
   const [descripcion, setDescripcion] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -127,7 +127,7 @@ export function DocumentosSection({
         setUploadOpen(false)
         setSelectedFile(null)
         setDescripcion("")
-        setTipoDocumento("otro")
+        setTipoDocumento("comprobante_servicio")
         toast.success("Documento subido exitosamente")
       } else {
         toast.error(result.error || "Error al subir el documento")
@@ -230,8 +230,8 @@ export function DocumentosSection({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(TIPO_DOCUMENTO_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      {DOCUMENTO_TIPO_OPTIONS.map((key) => (
+                        <SelectItem key={key} value={key}>{TIPO_DOCUMENTO_LABELS[key]}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -306,7 +306,7 @@ export function DocumentosSection({
                 </div>
                 {doc.subidor && (
                   <p className="mt-0.5 text-[10px] text-slate-400">
-                    {doc.subidor.nombre} {doc.subidor.apellido}
+                    {doc.subidor.nombre} {doc.subidor.apellido} · {formatDateTimeExactVE(doc.created_at)} VE
                   </p>
                 )}
               </div>

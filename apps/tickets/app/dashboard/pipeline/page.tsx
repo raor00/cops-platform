@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { Kanban } from "lucide-react"
+import Link from "next/link"
 import { getCurrentUser } from "@/lib/actions/auth"
 import { getTickets } from "@/lib/actions/tickets"
 import { getAllUsers } from "@/lib/actions/usuarios"
@@ -9,6 +10,8 @@ import { getDemoUsers } from "@/lib/mock-data"
 import { ROLE_HIERARCHY } from "@/types"
 import { PipelineFilters } from "@/components/pipeline/pipeline-filters"
 import { PipelinePageBoard } from "@/components/pipeline/pipeline-page-board"
+import { PipelineCalendarView } from "@/components/pipeline/pipeline-calendar-view"
+import { Button } from "@/components/ui/button"
 import type { TicketPriority } from "@/types"
 
 export const metadata = {
@@ -18,7 +21,7 @@ export const metadata = {
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tecnico?: string; prioridad?: string }>
+  searchParams: Promise<{ tecnico?: string; prioridad?: string; view?: string }>
 }) {
   const [user, params] = await Promise.all([getCurrentUser(), searchParams])
   if (!user) redirect("/login")
@@ -46,6 +49,16 @@ export default async function PipelinePage({
   }
 
   const activeTickets = tickets.filter((t) => t.estado !== "cancelado")
+  const currentView = params.view === "calendar" ? "calendar" : "board"
+
+  const buildViewHref = (view: "board" | "calendar") => {
+    const query = new URLSearchParams()
+    if (params.tecnico) query.set("tecnico", params.tecnico)
+    if (params.prioridad) query.set("prioridad", params.prioridad)
+    if (view === "calendar") query.set("view", "calendar")
+    const qs = query.toString()
+    return qs ? `/dashboard/pipeline?${qs}` : "/dashboard/pipeline"
+  }
 
   return (
     <div className="page-container">
@@ -60,19 +73,29 @@ export default async function PipelinePage({
             {activeTickets.length} ticket{activeTickets.length !== 1 ? "s" : ""} activo{activeTickets.length !== 1 ? "s" : ""}
           </p>
         </div>
-        {ROLE_HIERARCHY[user.rol] >= 2 && (
-          <Suspense>
-            <PipelineFilters
-              technicians={technicians}
-              currentTechId={params.tecnico}
-              currentPriority={params.prioridad}
-            />
-          </Suspense>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1">
+            <Button asChild size="sm" variant={currentView === "board" ? "default" : "ghost"}>
+              <Link href={buildViewHref("board")}>Kanban</Link>
+            </Button>
+            <Button asChild size="sm" variant={currentView === "calendar" ? "default" : "ghost"}>
+              <Link href={buildViewHref("calendar")}>Calendario</Link>
+            </Button>
+          </div>
+          {ROLE_HIERARCHY[user.rol] >= 2 && (
+            <Suspense>
+              <PipelineFilters
+                technicians={technicians}
+                currentTechId={params.tecnico}
+                currentPriority={params.prioridad}
+              />
+            </Suspense>
+          )}
+        </div>
       </div>
 
       {/* Board */}
-      <PipelinePageBoard tickets={tickets} />
+      {currentView === "calendar" ? <PipelineCalendarView tickets={tickets} /> : <PipelinePageBoard tickets={tickets} />}
     </div>
   )
 }

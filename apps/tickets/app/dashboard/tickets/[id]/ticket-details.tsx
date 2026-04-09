@@ -17,6 +17,8 @@ import {
   formatDateTime,
   formatCurrency,
   formatMinutesToDuration,
+  formatMinutesAndHours,
+  getElapsedMinutes,
   getInitials,
 } from "@/lib/utils"
 import { ROLE_LABELS } from "@/types"
@@ -27,6 +29,8 @@ interface TicketDetailsProps {
 }
 
 export function TicketDetails({ ticket }: TicketDetailsProps) {
+  const totalElapsedMinutes = getElapsedMinutes(ticket.fecha_inicio, ticket.fecha_finalizacion)
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
@@ -174,6 +178,20 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
               </span>
             </div>
             <div className="space-y-2 border-t border-slate-200 pt-4">
+              {ticket.fecha_servicio && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-sky-500" />
+                  <span className="text-slate-600">Servicio:</span>
+                  <span className="text-slate-700">{formatDateTime(ticket.fecha_servicio)}</span>
+                </div>
+              )}
+              {ticket.fecha_llegada && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-blue-500" />
+                  <span className="text-slate-600">Llegada:</span>
+                  <span className="text-slate-700">{formatDateTime(ticket.fecha_llegada)}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-slate-400" />
                 <span className="text-slate-600">Creado:</span>
@@ -197,6 +215,25 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
                   </span>
                 </div>
               )}
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                <p className="font-medium text-slate-800">Métricas del servicio</p>
+                <div className="mt-2 space-y-1.5 text-xs text-slate-600">
+                  <p>
+                    Tiempo trabajado: <span className="font-medium text-slate-800">{formatMinutesAndHours(ticket.tiempo_trabajado)}</span>
+                  </p>
+                  <p>
+                    Tiempo total transcurrido: <span className="font-medium text-slate-800">{totalElapsedMinutes ? `${formatMinutesToDuration(totalElapsedMinutes)} (${totalElapsedMinutes} min)` : "—"}</span>
+                  </p>
+                  <p>
+                    Estado operativo: <span className="font-medium capitalize text-slate-800">{ticket.estado_operativo?.replace(/_/g, " ") ?? "—"}</span>
+                  </p>
+                  {ticket.motivo_pausa && (
+                    <p>
+                      Último motivo de pausa: <span className="font-medium text-slate-800">{ticket.motivo_pausa}</span>
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { updateTicket } from "@/lib/actions/tickets"
 import { ticketUpdateSchema, type TicketUpdateInput } from "@/lib/validations"
-import { generateId } from "@/lib/utils"
+import { generateId, formatDateTimeInputValue, parseDateTimeLocalToISO } from "@/lib/utils"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS, type MaterialItem, type Ticket } from "@/types"
 
 interface EditTicketFormProps {
@@ -50,6 +50,7 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
       asunto: ticket.asunto,
       descripcion: ticket.descripcion,
       requerimientos: ticket.requerimientos ?? "",
+      fecha_servicio: ticket.fecha_servicio ?? "",
       prioridad: ticket.prioridad,
       tecnico_id: ticket.tecnico_id ?? "",
       monto_servicio: ticket.monto_servicio,
@@ -79,6 +80,7 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
     try {
       const result = await updateTicket(ticket.id, {
         ...data,
+        fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         tecnico_id: data.tecnico_id || undefined,
         materiales_planificados: materials.length > 0 ? materials : undefined,
       })
@@ -129,6 +131,22 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
           <div className="form-group">
             <Label>Empresa</Label>
             <Input {...register("cliente_empresa")} error={errors.cliente_empresa?.message} />
+          </div>
+
+          <div className="form-group">
+            <Label>Fecha y hora del servicio</Label>
+            <Controller
+              name="fecha_servicio"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="datetime-local"
+                  value={formatDateTimeInputValue(field.value)}
+                  onChange={(event) => field.onChange(event.target.value)}
+                  error={errors.fecha_servicio?.message}
+                />
+              )}
+            />
           </div>
         </div>
 

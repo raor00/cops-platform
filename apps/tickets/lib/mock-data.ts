@@ -163,8 +163,14 @@ function buildTicket(partial: Partial<Ticket> & Pick<Ticket, "id" | "numero_tick
     creado_por: partial.creado_por ?? createdBy.id,
     tecnico_id: partial.tecnico_id ?? null,
     estado: partial.estado ?? "asignado",
+    estado_operativo: partial.estado_operativo ?? "programado",
     fecha_asignacion: partial.fecha_asignacion ?? createdAt,
+    fecha_servicio: partial.fecha_servicio ?? null,
+    fecha_llegada: partial.fecha_llegada ?? null,
     fecha_inicio: partial.fecha_inicio ?? null,
+    fecha_ultima_pausa: partial.fecha_ultima_pausa ?? null,
+    fecha_ultima_reanudacion: partial.fecha_ultima_reanudacion ?? null,
+    motivo_pausa: partial.motivo_pausa ?? null,
     fecha_finalizacion: partial.fecha_finalizacion ?? null,
     materiales_usados: partial.materiales_usados ?? null,
     tiempo_trabajado: partial.tiempo_trabajado ?? null,
@@ -419,7 +425,9 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
     tecnico_id: input.tecnico_id || null,
     tecnico,
     estado: input.estado === "borrador" ? "borrador" : "asignado",
+    estado_operativo: input.estado === "borrador" ? null : "programado",
     fecha_asignacion: input.estado === "borrador" ? undefined : nowIso,
+    fecha_servicio: input.fecha_servicio || null,
     monto_servicio: input.monto_servicio ?? (input.tipo === 'inspeccion' ? 20 : 40),
     ticket_origen_id: input.ticket_origen_id || null,
     ticket_derivado_id: null,
@@ -507,6 +515,7 @@ export function updateDemoTicket(
   const updated: Ticket = {
     ...current,
     ...input,
+    fecha_servicio: input.fecha_servicio === undefined ? current.fecha_servicio : input.fecha_servicio || null,
     tecnico_id: input.tecnico_id === undefined ? current.tecnico_id : input.tecnico_id || null,
     tecnico: tecnico ?? undefined,
     modificado_por: currentUser.id,
@@ -527,6 +536,8 @@ export function changeDemoTicketStatus(
     tiempo_trabajado?: number
     observaciones_tecnico?: string
     solucion_aplicada?: string
+    motivo_pausa?: string
+    fecha_servicio?: string
     monto_servicio_final?: number
   },
   userRole?: UserRole
@@ -551,10 +562,16 @@ export function changeDemoTicketStatus(
 
   if (newStatus === "iniciado" && !current.fecha_inicio) {
     updateData.fecha_inicio = new Date().toISOString()
+    updateData.estado_operativo = "trabajando"
   }
 
   if (newStatus === "finalizado") {
     updateData.fecha_finalizacion = new Date().toISOString()
+    updateData.estado_operativo = "finalizado"
+  }
+
+  if (newStatus === "en_progreso") {
+    updateData.estado_operativo = "trabajando"
   }
 
   if (additionalData?.materiales_usados) {
@@ -567,6 +584,14 @@ export function changeDemoTicketStatus(
 
   if (additionalData?.observaciones_tecnico) {
     updateData.observaciones_tecnico = additionalData.observaciones_tecnico
+  }
+
+  if (additionalData?.motivo_pausa !== undefined) {
+    updateData.motivo_pausa = additionalData.motivo_pausa
+  }
+
+  if (additionalData?.fecha_servicio !== undefined) {
+    updateData.fecha_servicio = additionalData.fecha_servicio
   }
 
   if (additionalData?.solucion_aplicada) {
@@ -587,6 +612,82 @@ export function changeDemoTicketStatus(
   }
 
   return { ticket: deepClone(updated) }
+}
+
+function getOpenDemoSesion(ticketId: string, tecnicoId: string) {
+  return demoSesiones.find((sesion) => sesion.ticket_id === ticketId && sesion.tecnico_id === tecnicoId && !sesion.fecha_fin)
+}
+
+function getTicketWorkedMinutes(ticketId: string) {
+  return demoSesiones
+    .filter((sesion) => sesion.ticket_id === ticketId && typeof sesion.duracion_minutos === "number")
+    .reduce((sum, sesion) => sum + (sesion.duracion_minutos || 0), 0)
+}
+
+export function markDemoTicketArrival(ticketId: string): Ticket | null {
+  const index = demoTickets.findIndex((ticket) => ticket.id === ticketId)
+  if (index < 0) return null
+
+  const current = demoTickets[index]!
+  const updated: Ticket = {
+    ...current,
+    fecha_llegada: current.fecha_llegada ?? new Date().toISOString(),
+    estado_operativo: "en_sitio",
+    updated_at: new Date().toISOString(),
+  }
+
+  demoTickets[index] = updated
+  return deepClone(updated)
+}
+
+export function resumeDemoTicketWork(ticketId: string, currentUser: User): Ticket | null {
+  const index = demoTickets.findIndex((ticket) => ticket.id === ticketId)
+  if (index < 0) return null
+  const current = demoTickets[index]!
+
+  if (!getOpenDemoSesion(ticketId, currentUser.id)) {
+    iniciarDemoSesion(ticketId, currentUser)
+  }
+
+  const nowIso = new Date().toISOString()
+  const updated: Ticket = {
+    ...current,
+    estado: current.estado === "asignado" ? "en_progreso" : current.estado,
+    estado_operativo: "trabajando",
+    fecha_inicio: current.fecha_inicio ?? nowIso,
+    fecha_ultima_reanudacion: nowIso,
+    motivo_pausa: null,
+    updated_at: nowIso,
+  }
+
+  demoTickets[index] = updated
+  return deepClone(updated)
+}
+
+export function pauseDemoTicketUntilTomorrow(ticketId: string, currentUser: User, motivo?: string, fechaServicio?: string): Ticket | null {
+  const index = demoTickets.findIndex((ticket) => ticket.id === ticketId)
+  if (index < 0) return null
+
+  const openSesion = getOpenDemoSesion(ticketId, currentUser.id)
+  if (openSesion) {
+    finalizarDemoSesion(openSesion.id, motivo)
+  }
+
+  const current = demoTickets[index]!
+  const nowIso = new Date().toISOString()
+  const updated: Ticket = {
+    ...current,
+    estado: current.estado === "asignado" ? "en_progreso" : current.estado,
+    estado_operativo: fechaServicio ? "reprogramado" : "pausado",
+    fecha_ultima_pausa: nowIso,
+    fecha_servicio: fechaServicio || current.fecha_servicio,
+    motivo_pausa: motivo || null,
+    tiempo_trabajado: getTicketWorkedMinutes(ticketId) || current.tiempo_trabajado,
+    updated_at: nowIso,
+  }
+
+  demoTickets[index] = updated
+  return deepClone(updated)
 }
 
 export function assignDemoTechnician(ticketId: string, tecnicoId: string): Ticket | null {
@@ -904,7 +1005,11 @@ export function getDemoEnhancedStats(user: User): EnhancedDashboardStats {
     const completados = tecTickets.filter((t) => t.estado === "finalizado")
     const activos = tecTickets.filter((t) => !["finalizado", "cancelado"].includes(t.estado))
     const tiempos = completados.filter((t) => t.tiempo_trabajado).map((t) => t.tiempo_trabajado!)
+    const tiemposTotales = completados
+      .filter((t) => t.fecha_inicio && t.fecha_finalizacion)
+      .map((t) => Math.max(0, Math.round((new Date(t.fecha_finalizacion!).getTime() - new Date(t.fecha_inicio!).getTime()) / 60000)))
     const tiempoPromedio = tiempos.length > 0 ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : 0
+    const tiempoPromedioTotal = tiemposTotales.length > 0 ? Math.round(tiemposTotales.reduce((a, b) => a + b, 0) / tiemposTotales.length) : 0
     const montoTotal = completados.reduce((sum, t) => sum + t.monto_servicio, 0)
     const pagTec = demoPayments.filter((p) => p.tecnico_id === tec.id)
     const montoPendiente = pagTec.filter((p) => p.estado_pago === "pendiente").reduce((sum, p) => sum + p.monto_a_pagar, 0)
@@ -915,6 +1020,7 @@ export function getDemoEnhancedStats(user: User): EnhancedDashboardStats {
       ticketsCompletados: completados.length,
       ticketsActivos: activos.length,
       tiempoPromedioMinutos: tiempoPromedio,
+      tiempoPromedioTotalMinutos: tiempoPromedioTotal,
       montoTotal,
       montoPendiente,
     }

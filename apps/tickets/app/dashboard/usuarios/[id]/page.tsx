@@ -326,11 +326,18 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                     />
                   </div>
                   {stats.tiempoPromedioMinutos > 0 && (
-                    <p className="text-xs text-slate-400 mt-3 flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      Tiempo promedio: {Math.floor(stats.tiempoPromedioMinutos / 60)}h{' '}
-                      {stats.tiempoPromedioMinutos % 60}min por ticket
-                    </p>
+                    <div className="mt-3 space-y-1.5 text-xs text-slate-400">
+                      <p className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        Tiempo trabajado promedio: {Math.floor(stats.tiempoPromedioMinutos / 60)}h{' '}
+                        {stats.tiempoPromedioMinutos % 60}min por ticket
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        Tiempo total promedio: {Math.floor(stats.tiempoPromedioTotalMinutos / 60)}h{' '}
+                        {stats.tiempoPromedioTotalMinutos % 60}min por ticket
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>

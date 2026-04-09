@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Play, CheckCircle, XCircle, Loader2, Plus, Trash2, RotateCcw, GitMerge } from "lucide-react"
+import { Play, CheckCircle, XCircle, Loader2, Plus, Trash2, RotateCcw, GitMerge, MapPin, PauseCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,8 +17,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { changeTicketStatus, convertirInspeccion } from "@/lib/actions/tickets"
-import { cn, formatMinutesToDuration } from "@/lib/utils"
+import { changeTicketStatus, convertirInspeccion, pauseTicketUntilTomorrow, registerTicketArrival, resumeTicketWork } from "@/lib/actions/tickets"
+import { cn, formatDateTimeInputValue, formatMinutesToDuration, parseDateTimeLocalToISO } from "@/lib/utils"
 import type { MaterialItem, Ticket, TicketStatus, UserRole } from "@/types"
 import { VALID_TRANSITIONS, ADMIN_REVERSE_TRANSITIONS, ROLE_HIERARCHY, STATUS_LABELS } from "@/types"
 
@@ -43,6 +43,9 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
   const [tiempoTrabajado, setTiempoTrabajado] = useState("")
   const [solucion, setSolucion] = useState("")
   const [observaciones, setObservaciones] = useState("")
+  const [pauseDialogOpen, setPauseDialogOpen] = useState(false)
+  const [pauseReason, setPauseReason] = useState("")
+  const [nextServiceDate, setNextServiceDate] = useState(formatDateTimeInputValue(ticket.fecha_servicio))
 
   // Convert inspection state
   const [convertLoading, setConvertLoading] = useState(false)
@@ -77,6 +80,14 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
   const handleDialogChange = (open: boolean) => {
     if (!open) resetWizard()
     setDialogOpen(open)
+  }
+
+  const handlePauseDialogChange = (open: boolean) => {
+    if (!open) {
+      setPauseReason("")
+      setNextServiceDate(formatDateTimeInputValue(ticket.fecha_servicio))
+    }
+    setPauseDialogOpen(open)
   }
 
   // Simple single-click status change (no dialog)
@@ -128,6 +139,63 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
       if (result.success) {
         toast.success("Ticket finalizado", { description: result.message })
         setDialogOpen(false)
+        router.refresh()
+      } else {
+        toast.error("Error", { description: result.error })
+      }
+    } catch {
+      toast.error("Error", { description: "Ocurrió un error inesperado" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleArrival = async () => {
+    setIsLoading(true)
+    try {
+      const result = await registerTicketArrival(ticket.id)
+      if (result.success) {
+        toast.success("Llegada registrada", { description: result.message })
+        router.refresh()
+      } else {
+        toast.error("Error", { description: result.error })
+      }
+    } catch {
+      toast.error("Error", { description: "Ocurrió un error inesperado" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResume = async () => {
+    setIsLoading(true)
+    try {
+      const result = await resumeTicketWork(ticket.id)
+      if (result.success) {
+        toast.success("Trabajo actualizado", { description: result.message })
+        router.refresh()
+      } else {
+        toast.error("Error", { description: result.error })
+      }
+    } catch {
+      toast.error("Error", { description: "Ocurrió un error inesperado" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePause = async () => {
+    if (!pauseReason.trim()) {
+      toast.error("Debes indicar el motivo de la pausa")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const result = await pauseTicketUntilTomorrow(ticket.id, pauseReason, parseDateTimeLocalToISO(nextServiceDate))
+      if (result.success) {
+        toast.success("Ticket pausado", { description: result.message })
+        setPauseDialogOpen(false)
         router.refresh()
       } else {
         toast.error("Error", { description: result.error })
@@ -196,24 +264,16 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
       )}
 
       <div className="flex items-center gap-2">
-        {validTransitions.includes("iniciado") && (
-          <Button
-            onClick={() => handleStatusChange("iniciado")}
-            disabled={isLoading}
-            variant="outline"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Play className="h-4 w-4 mr-2" />
-            )}
-            Iniciar
+        {!ticket.fecha_llegada && ticket.estado !== "finalizado" && ticket.estado !== "cancelado" && (
+          <Button onClick={handleArrival} disabled={isLoading} variant="outline">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <MapPin className="h-4 w-4 mr-2" />}
+            Llegué al sitio
           </Button>
         )}
 
-        {validTransitions.includes("en_progreso") && (
+        {(validTransitions.includes("iniciado") || validTransitions.includes("en_progreso") || ticket.estado_operativo === "pausado" || ticket.estado_operativo === "reprogramado") && (
           <Button
-            onClick={() => handleStatusChange("en_progreso")}
+            onClick={handleResume}
             disabled={isLoading}
             variant="outline"
           >
@@ -222,7 +282,14 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
             ) : (
               <Play className="h-4 w-4 mr-2" />
             )}
-            {ticket.estado === "asignado" || ticket.estado === "iniciado" ? "Iniciar" : "En Progreso"}
+            {ticket.estado_operativo === "pausado" || ticket.estado_operativo === "reprogramado" ? "Reanudar trabajo" : "Iniciar trabajo"}
+          </Button>
+        )}
+
+        {ticket.estado !== "finalizado" && ticket.estado !== "cancelado" && ticket.estado_operativo === "trabajando" && (
+          <Button onClick={() => setPauseDialogOpen(true)} disabled={isLoading} variant="outline">
+            <PauseCircle className="h-4 w-4 mr-2" />
+            Continuar mañana
           </Button>
         )}
 
@@ -482,6 +549,51 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
                 Finalizar Ticket
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pauseDialogOpen} onOpenChange={handlePauseDialogChange}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Pausar y continuar otro día</DialogTitle>
+            <DialogDescription>
+              Registra el motivo y la nueva fecha de servicio para mantener el control operativo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="pause-reason">Motivo</Label>
+              <Textarea
+                id="pause-reason"
+                value={pauseReason}
+                onChange={(event) => setPauseReason(event.target.value)}
+                placeholder="Ej: falta de material, cliente solicitó continuar mañana, acceso restringido..."
+                className="mt-1 min-h-[110px]"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="next-service-date">Nueva fecha y hora de servicio</Label>
+              <Input
+                id="next-service-date"
+                type="datetime-local"
+                value={nextServiceDate}
+                onChange={(event) => setNextServiceDate(event.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => handlePauseDialogChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handlePause} disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PauseCircle className="h-4 w-4 mr-2" />}
+              Guardar pausa
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

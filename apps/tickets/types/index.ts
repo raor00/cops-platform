@@ -32,7 +32,28 @@ export type InspeccionEstado = 'borrador' | 'completada' | 'reportada'
 
 export type TipoBloqueador = 'material' | 'acceso' | 'tecnico' | 'otro'
 
-export type TipoDocumento = 'plano' | 'memoria_tecnica' | 'contrato' | 'presupuesto' | 'especificacion' | 'otro'
+export type TicketOperationalStatus =
+  | 'programado'
+  | 'en_camino'
+  | 'en_sitio'
+  | 'trabajando'
+  | 'pausado'
+  | 'reprogramado'
+  | 'finalizado'
+
+export type TipoDocumento =
+  | 'comprobante_servicio'
+  | 'comprobante_mantenimiento'
+  | 'plano'
+  | 'nota_entrega'
+  | 'carta_aceptacion'
+  | 'orden_compra'
+  // Legacy values kept for backwards compatibility with existing records
+  | 'memoria_tecnica'
+  | 'contrato'
+  | 'presupuesto'
+  | 'especificacion'
+  | 'otro'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // JERARQUÍA DE ROLES - Sistema RBAC
@@ -51,7 +72,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   coordinador: 'Coordinador de Servicios',
   gerente: 'Gerente',
   vicepresidente: 'Vicepresidente',
-  presidente: 'Desarrollador',
+  presidente: 'Presidente',
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -179,8 +200,14 @@ export interface Ticket {
   creado_por: string
   tecnico_id: string | null
   estado: TicketStatus
+  estado_operativo: TicketOperationalStatus | null
   fecha_asignacion: string
+  fecha_servicio: string | null
+  fecha_llegada: string | null
   fecha_inicio: string | null
+  fecha_ultima_pausa: string | null
+  fecha_ultima_reanudacion: string | null
+  motivo_pausa: string | null
   fecha_finalizacion: string | null
   // Datos del técnico (al finalizar)
   materiales_usados: MaterialItem[] | null
@@ -229,6 +256,7 @@ export interface TicketCreateInput {
   origen: TicketOrigin
   numero_carta?: string
   tipo_mantenimiento?: 'correctivo' | 'preventivo'
+  fecha_servicio?: string
   tecnico_id?: string
   monto_servicio?: number
   ticket_origen_id?: string
@@ -248,6 +276,7 @@ export interface TicketUpdateInput {
   requerimientos?: string
   materiales_planificados?: MaterialItem[]
   prioridad?: TicketPriority
+  fecha_servicio?: string
   tecnico_id?: string
   monto_servicio?: number
 }
@@ -258,6 +287,8 @@ export interface TicketTechnicianInput {
   tiempo_trabajado?: number
   observaciones_tecnico?: string
   solucion_aplicada?: string
+  motivo_pausa?: string
+  fecha_servicio?: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -357,6 +388,7 @@ export interface TechnicianStats {
   pagosPendientes: number
   montoPendiente: number
   tiempoPromedioMinutos: number
+  tiempoPromedioTotalMinutos: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -679,13 +711,27 @@ export interface TicketDocumento {
 }
 
 export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
+  comprobante_servicio: 'Comprobante de servicio',
+  comprobante_mantenimiento: 'Comprobante de mantenimiento',
   plano: 'Plano',
+  nota_entrega: 'Nota de entrega',
+  carta_aceptacion: 'Carta de aceptación',
+  orden_compra: 'Orden de compra',
   memoria_tecnica: 'Memoria Técnica',
   contrato: 'Contrato',
   presupuesto: 'Presupuesto',
   especificacion: 'Especificación Técnica',
   otro: 'Otro',
 } as const
+
+export const DOCUMENTO_TIPO_OPTIONS = [
+  'comprobante_servicio',
+  'comprobante_mantenimiento',
+  'plano',
+  'nota_entrega',
+  'carta_aceptacion',
+  'orden_compra',
+] as const satisfies readonly TipoDocumento[]
 
 export const DOCUMENTO_UPLOAD_CONFIG = {
   maxSizeBytes: 25 * 1024 * 1024, // 25 MB — documentos pueden ser más pesados
@@ -799,6 +845,7 @@ export interface TechnicianKPI {
   ticketsCompletados: number
   ticketsActivos: number
   tiempoPromedioMinutos: number
+  tiempoPromedioTotalMinutos: number
   montoTotal: number
   montoPendiente: number
 }

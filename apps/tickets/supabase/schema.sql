@@ -57,8 +57,15 @@ CREATE TABLE IF NOT EXISTS public.tickets (
   creado_por UUID NOT NULL REFERENCES public.users(id),
   tecnico_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
   estado VARCHAR(15) NOT NULL DEFAULT 'asignado' CHECK (estado IN ('asignado', 'iniciado', 'en_progreso', 'finalizado', 'cancelado')),
+  estado_operativo VARCHAR(20)
+    CHECK (estado_operativo IN ('programado', 'en_camino', 'en_sitio', 'trabajando', 'pausado', 'reprogramado', 'finalizado')),
   fecha_asignacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  fecha_servicio TIMESTAMPTZ,
+  fecha_llegada TIMESTAMPTZ,
   fecha_inicio TIMESTAMPTZ,
+  fecha_ultima_pausa TIMESTAMPTZ,
+  fecha_ultima_reanudacion TIMESTAMPTZ,
+  motivo_pausa TEXT,
   fecha_finalizacion TIMESTAMPTZ,
   
   -- Datos del técnico (al finalizar)
@@ -83,6 +90,7 @@ CREATE TABLE IF NOT EXISTS public.tickets (
 CREATE INDEX IF NOT EXISTS idx_tickets_tipo ON public.tickets(tipo);
 CREATE INDEX IF NOT EXISTS idx_tickets_estado ON public.tickets(estado);
 CREATE INDEX IF NOT EXISTS idx_tickets_tecnico ON public.tickets(tecnico_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_fecha_servicio ON public.tickets(fecha_servicio);
 CREATE INDEX IF NOT EXISTS idx_tickets_prioridad ON public.tickets(prioridad);
 CREATE INDEX IF NOT EXISTS idx_tickets_creado_por ON public.tickets(creado_por);
 CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON public.tickets(created_at DESC);

@@ -73,7 +73,7 @@ export default async function UsuariosPage() {
                     </Badge>
                   </div>
                   <p className="text-sm text-slate-600 truncate">{u.email}</p>
-                  <p className="text-xs text-blue-400 mt-1">{ROLE_LABELS[u.rol]}</p>
+                  <p className="text-xs text-blue-400 mt-1">{u.cargo || ROLE_LABELS[u.rol]}</p>
                 </div>
               </div>
               {u.telefono && (

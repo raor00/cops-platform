@@ -20,13 +20,13 @@ interface TechnicianPerformanceChartProps {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-white/20 bg-[#0e2f6f]/95 backdrop-blur-xl p-3 shadow-xl min-w-[160px]">
-      <p className="mb-2 text-xs font-semibold text-slate-600 truncate">{label}</p>
+    <div className="min-w-[180px] rounded-xl border border-white/20 bg-[#17346f]/95 p-3 shadow-xl backdrop-blur-xl">
+      <p className="mb-2 text-xs font-semibold text-white/90">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 text-sm">
           <span className="h-2 w-2 rounded-full" style={{ background: entry.color }} />
-          <span className="text-slate-600">{entry.name}:</span>
-          <span className="font-semibold text-slate-800">{entry.value}</span>
+          <span className="text-white/75">{entry.name}:</span>
+          <span className="font-semibold text-white">{entry.value}</span>
         </div>
       ))}
     </div>
@@ -35,9 +35,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 export function TechnicianPerformanceChart({ data }: TechnicianPerformanceChartProps) {
   const chartData = data.map((tec) => ({
-    nombre: tec.apellido?.trim()
-      ? `${getFullName(tec.nombre)} ${tec.apellido.trim().charAt(0)}.`
-      : getFullName(tec.nombre, tec.apellido),
+    nombre: getFullName(tec.nombre, tec.apellido),
     Completados: tec.ticketsCompletados,
     Activos: tec.ticketsActivos,
   }))

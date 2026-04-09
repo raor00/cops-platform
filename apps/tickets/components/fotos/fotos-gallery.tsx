@@ -26,8 +26,7 @@ import { FotoUploadDialog } from "./foto-upload-dialog"
 import { FotoEditDialog } from "./foto-edit-dialog"
 import type { TicketFoto } from "@/types"
 import { TIPO_FOTO_LABELS } from "@/types"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
+import { formatDateTimeExactVE } from "@/lib/utils"
 
 interface FotosGalleryProps {
   ticketId: string
@@ -258,12 +257,7 @@ export function FotosGallery({
                     {TIPO_FOTO_LABELS[selectedFoto.tipo_foto]}
                   </Badge>
                   <span className="text-xs text-slate-500">
-                    Subida el{" "}
-                    {format(
-                      new Date(selectedFoto.created_at),
-                      "d 'de' MMMM yyyy 'a las' HH:mm",
-                      { locale: es }
-                    )}
+                    Subida el {formatDateTimeExactVE(selectedFoto.created_at)} hora Venezuela
                   </span>
                 </div>
                 {selectedFoto.descripcion && (

@@ -30,10 +30,10 @@ import { ticketCreateSchema, type TicketCreateInput } from "@/lib/validations"
 import { createTicket } from "@/lib/actions/tickets"
 import { uploadTicketDocumento } from "@/lib/actions/documentos"
 import { createUser } from "@/lib/actions/usuarios"
-import { generateId } from "@/lib/utils"
+import { generateId, formatDateTimeInputValue, parseDateTimeLocalToISO } from "@/lib/utils"
 import { TICKET_CATALOG, type CatalogEntry } from "@/lib/catalog-data"
 import { getCatalogIdentifier, getCatalogSegment } from "@/lib/catalog-rules"
-import { TIPO_DOCUMENTO_LABELS, DOCUMENTO_UPLOAD_CONFIG } from "@/types"
+import { TIPO_DOCUMENTO_LABELS, DOCUMENTO_TIPO_OPTIONS, DOCUMENTO_UPLOAD_CONFIG } from "@/types"
 import type { MaterialItem, Cliente, ClienteContacto, TipoDocumento } from "@/types"
 
 type CatalogFilter = "all" | "equipos" | "materiales"
@@ -130,6 +130,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
       origen: "email",
       monto_servicio: 0,
       tipo_mantenimiento: defaultTipo === "servicio" ? "correctivo" : undefined,
+      fecha_servicio: "",
     },
   })
 
@@ -387,6 +388,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
         materiales_planificados: materials.length > 0 ? materials : undefined,
         ...(data.tecnico_id ? { tecnico_id: data.tecnico_id } : {}),
         monto_servicio: montoServicio,
+        fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         estado: asBorrador ? ("borrador" as const) : undefined,
         facturacion_tipo: tipoTicket === "servicio" ? facturacionTipo : "fijo",
         tarifa_hora: tipoTicket === "servicio" && facturacionTipo === "por_hora" ? tarifaHora : null,
@@ -491,6 +493,25 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="form-group">
+          <Label>Fecha y hora del servicio</Label>
+          <Controller
+            name="fecha_servicio"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="datetime-local"
+                value={formatDateTimeInputValue(field.value)}
+                onChange={(event) => field.onChange(event.target.value)}
+                error={errors.fecha_servicio?.message}
+              />
+            )}
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Esta fecha alimenta la vista calendario del pipeline y la programación operativa.
+          </p>
         </div>
 
         {/* Número de carta condicional */}
@@ -981,7 +1002,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
         <h3 className="form-section-title">Asignación</h3>
         <div className="form-group">
           <div className="flex items-center justify-between mb-1.5">
-            <Label>Técnico Asignado *</Label>
+            <Label>Técnico principal asignado *</Label>
             <button
               type="button"
               onClick={() => setShowTechDialog(true)}
@@ -1057,7 +1078,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                   })
                   setPendingDocumentos((prev) => [
                     ...prev,
-                    ...valid.map((file) => ({ file, tipo: "otro" as TipoDocumento, descripcion: "" })),
+                    ...valid.map((file) => ({ file, tipo: "comprobante_servicio" as TipoDocumento, descripcion: "" })),
                   ])
                   // Reset input so the same file can be added again
                   e.target.value = ""
@@ -1081,8 +1102,8 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                         )
                       }}
                     >
-                      {Object.entries(TIPO_DOCUMENTO_LABELS).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
+                      {DOCUMENTO_TIPO_OPTIONS.map((key) => (
+                        <option key={key} value={key}>{TIPO_DOCUMENTO_LABELS[key]}</option>
                       ))}
                     </select>
                     <button
