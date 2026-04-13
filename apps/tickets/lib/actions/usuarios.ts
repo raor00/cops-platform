@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache"
 import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/types"
 import { getCurrentUser, registerUserAction } from "./auth"
-import { ROLE_HIERARCHY } from "@/types"
+import { hasPermission, ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminAuth, getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 import { uploadFileToStorage, getSignedDownloadUrl, deleteFileFromStorage } from "@/lib/firebase/storage-rest"
@@ -76,7 +76,7 @@ export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    if (ROLE_HIERARCHY[user.rol] < 3) return { success: false, error: "No tienes permisos para ver usuarios" }
+    if (!hasPermission(user.rol, "users:view")) return { success: false, error: "No tienes permisos para ver usuarios" }
 
     if (isLocalMode()) {
       const allUsers = getDemoUsers().map((u) => ({ ...u, foto_perfil_url: null }) as UserProfile)
@@ -97,7 +97,7 @@ export async function getUserById(userId: string): Promise<ActionResponse<UserPr
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    if (user.id !== userId && ROLE_HIERARCHY[user.rol] < 3) return { success: false, error: "Sin permisos" }
+    if (user.id !== userId && !hasPermission(user.rol, "users:view")) return { success: false, error: "Sin permisos" }
 
     if (isLocalMode()) {
       const demoUser = getDemoUsers().find((u) => u.id === userId) ?? getDemoCurrentUser()
@@ -120,7 +120,7 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    const canUpdate = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
+    const canUpdate = user.id === userId || hasPermission(user.rol, "users:edit")
     if (!canUpdate) return { success: false, error: "No tienes permisos para editar este usuario" }
 
     // Solo presidente puede cambiar roles
@@ -151,7 +151,7 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
       revalidatePath("/dashboard/usuarios")
       revalidatePath(`/dashboard/usuarios/${userId}`)
 
-      if (ROLE_HIERARCHY[user.rol] >= 3 && user.id !== userId) {
+      if (hasPermission(user.rol, "users:edit") && user.id !== userId) {
         const target = await fbGetUserWithPhoto(userId)
         if (target) {
           const roleChanged = previousRole && updates.rol && previousRole !== updates.rol
@@ -187,7 +187,7 @@ export async function setUserStatusAction(userId: string, estado: "activo" | "in
   try {
     const currentUser = await getCurrentUser()
     if (!currentUser) return { success: false, error: "No autenticado" }
-    if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "No tienes permisos para cambiar el estado de usuarios" }
+    if (!hasPermission(currentUser.rol, "users:edit")) return { success: false, error: "No tienes permisos para cambiar el estado de usuarios" }
     if (currentUser.id === userId && estado === "inactivo") return { success: false, error: "No puedes desactivar tu propia cuenta" }
 
     return await updateUserProfile(userId, { estado })
@@ -200,7 +200,7 @@ export async function uploadProfilePhoto(userId: string, file: File): Promise<Ac
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    const canUpload = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
+    const canUpload = user.id === userId || hasPermission(user.rol, "users:edit")
     if (!canUpload) return { success: false, error: "No tienes permisos para subir foto" }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
@@ -243,7 +243,7 @@ export async function deleteProfilePhoto(userId: string): Promise<ActionResponse
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    const canDelete = user.id === userId || ROLE_HIERARCHY[user.rol] >= 3
+    const canDelete = user.id === userId || hasPermission(user.rol, "users:delete")
     if (!canDelete) return { success: false, error: "No tienes permisos para eliminar esta foto" }
 
     if (isLocalMode()) return { success: false, error: "No disponible en modo local" }
@@ -317,7 +317,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResponse> 
   try {
     const currentUser = await getCurrentUser()
     if (!currentUser) return { success: false, error: "No autenticado" }
-    if (ROLE_HIERARCHY[currentUser.rol] < 3) {
+    if (!hasPermission(currentUser.rol, "users:delete")) {
       return { success: false, error: "No tienes permisos para eliminar usuarios" }
     }
     if (currentUser.id === userId) {

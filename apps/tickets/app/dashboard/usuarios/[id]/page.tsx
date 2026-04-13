@@ -33,6 +33,7 @@ import {
   STATUS_COLORS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
+  hasPermission,
 } from '@/types'
 import type { UserProfile, Ticket as TicketType, TechnicianStats } from '@/types'
 import { getInitials } from '@/lib/utils'
@@ -56,7 +57,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
   if (!user) redirect('/login')
 
   // Solo gerente+ o el propio usuario
-  const canViewOthers = ROLE_HIERARCHY[user.rol] >= 3
+  const canViewOthers = hasPermission(user.rol, 'users:view')
   if (!canViewOthers && user.id !== id) redirect('/dashboard')
 
   // Obtener datos del usuario objetivo
@@ -73,7 +74,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
   if (!targetUser) notFound()
 
-  const canEdit = ROLE_HIERARCHY[user.rol] >= 3 || user.id === id
+  const canEdit = hasPermission(user.rol, 'users:edit') || user.id === id
   const isTecnico = targetUser.rol === 'tecnico'
   const ticketsTabLabel = isTecnico ? 'Tickets Asignados' : 'Tickets Creados'
 
@@ -143,7 +144,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
           {canEdit && (
             <div className="flex flex-wrap gap-2">
-              {ROLE_HIERARCHY[user.rol] >= 3 && user.id !== targetUser.id && (
+              {hasPermission(user.rol, 'users:edit') && user.id !== targetUser.id && (
                 <UserStatusToggleButton userId={targetUser.id} currentStatus={targetUser.estado} />
               )}
               <ProfileEditDialog

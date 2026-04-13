@@ -435,6 +435,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'tickets:view_all',
     'tickets:create',
     'tickets:assign',
+    'users:view',
+    'users:create',
     'reports:view',
     'reports:export',
     'audit:view',
@@ -543,8 +545,18 @@ export function canProcessPayments(role: UserRole): boolean {
 }
 
 export function canManageUsers(role: UserRole): boolean {
-  // Solo Gerente o superior puede gestionar usuarios
-  return hasMinimumLevel(role, 3)
+  return hasPermission(role, 'users:view')
+}
+
+export function canCreateUserRole(actorRole: UserRole, targetRole: UserRole): boolean {
+  if (!hasPermission(actorRole, 'users:create')) return false
+
+  if (actorRole === 'coordinador') return targetRole === 'tecnico'
+  if (actorRole === 'gerente') return targetRole === 'tecnico' || targetRole === 'coordinador'
+  if (actorRole === 'vicepresidente') return targetRole !== 'presidente'
+  if (actorRole === 'presidente') return true
+
+  return false
 }
 
 export function canChangeTicketStatus(

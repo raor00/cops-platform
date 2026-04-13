@@ -10,7 +10,7 @@ import { getCurrentUser } from "@/lib/actions/auth"
 import { getAllUsers } from "@/lib/actions/usuarios"
 import { isLocalMode } from "@/lib/local-mode"
 import { getDemoUsers } from "@/lib/mock-data"
-import { ROLE_HIERARCHY, ROLE_LABELS } from "@/types"
+import { hasPermission, ROLE_LABELS } from "@/types"
 import { getInitials } from "@/lib/utils"
 import type { User, UserProfile } from "@/types"
 import { AvatarImage } from "@/components/ui/avatar"
@@ -31,7 +31,7 @@ async function getUsers(): Promise<UserProfile[]> {
 export default async function UsuariosPage() {
   const user = await getCurrentUser()
 
-  if (!user || ROLE_HIERARCHY[user.rol] < 3) {
+  if (!user || !hasPermission(user.rol, "users:view")) {
     redirect("/dashboard")
   }
 

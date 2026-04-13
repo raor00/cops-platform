@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentUser } from "@/lib/actions/auth"
 import { isLocalMode } from "@/lib/local-mode"
-import { ROLE_HIERARCHY } from "@/types"
+import { hasPermission } from "@/types"
 import { NuevoUsuarioForm } from "./nuevo-usuario-form"
 
 export const metadata = { title: "Nuevo Usuario" }
@@ -14,7 +14,7 @@ export const metadata = { title: "Nuevo Usuario" }
 export default async function NuevoUsuarioPage() {
   const user = await getCurrentUser()
 
-  if (!user || ROLE_HIERARCHY[user.rol] < 3) {
+  if (!user || !hasPermission(user.rol, "users:create")) {
     redirect("/dashboard")
   }
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import type { ActionResponse, User } from "@/types"
-import { ROLE_HIERARCHY } from "@/types"
+import { canCreateUserRole, hasPermission, ROLE_HIERARCHY } from "@/types"
 import type { LoginInput } from "@/lib/validations"
 import {
   BRIDGE_SESSION_COOKIE,
@@ -304,8 +304,12 @@ export async function registerUserAction(data: {
   }
 
   const currentUser = await getCurrentUser()
-  if (!currentUser || ROLE_HIERARCHY[currentUser.rol] < 3) {
+  if (!currentUser || !hasPermission(currentUser.rol, "users:create")) {
     return { success: false, error: "No tienes permisos para crear usuarios" }
+  }
+
+  if (!canCreateUserRole(currentUser.rol, data.rol as User["rol"])) {
+    return { success: false, error: "Tu rol no puede crear usuarios con ese nivel de acceso" }
   }
 
   // ── Firebase mode ────────────────────────────────────────────────────────────
@@ -422,7 +426,7 @@ export async function completeUserAccessAction(
   }
 
   const currentUser = await getCurrentUser()
-  if (!currentUser || ROLE_HIERARCHY[currentUser.rol] < 3) {
+  if (!currentUser || !hasPermission(currentUser.rol, "users:edit")) {
     return { success: false, error: "No tienes permisos para gestionar accesos" }
   }
 
@@ -508,7 +512,7 @@ export async function updatePasswordAction(
   }
 
   const currentUser = await getCurrentUser()
-  if (!currentUser || ROLE_HIERARCHY[currentUser.rol] < 3) {
+  if (!currentUser || !hasPermission(currentUser.rol, "users:edit")) {
     return { success: false, error: "No tienes permisos para cambiar contraseñas" }
   }
 
