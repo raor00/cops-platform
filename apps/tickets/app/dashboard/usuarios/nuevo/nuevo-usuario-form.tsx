@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createUser } from "@/lib/actions/usuarios"
-import { ROLE_LABELS } from "@/types"
-import type { UserRole } from "@/types"
+import { ROLE_LABELS, VISIBLE_USER_ROLES } from "@/types"
+import type { UserRole, VisibleUserRole } from "@/types"
 
 const nuevoUsuarioSchema = z
   .object({
@@ -29,7 +29,7 @@ const nuevoUsuarioSchema = z
     email: z.string().email("Correo electrónico inválido").max(100, "El correo no puede exceder 100 caracteres").optional().or(z.literal("")),
     password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(72, "La contraseña no puede exceder 72 caracteres").optional().or(z.literal("")),
     confirmPassword: z.string().optional().or(z.literal("")),
-    rol: z.enum(["tecnico", "coordinador", "gerente", "vicepresidente", "presidente"]),
+    rol: z.enum(VISIBLE_USER_ROLES),
     telefono: z.string().max(20, "El teléfono no puede exceder 20 caracteres").optional().or(z.literal("")),
     cedula: z.string().min(1, "La cédula es requerida").max(20, "La cédula no puede exceder 20 caracteres"),
     especialidad: z.string().max(100, "La especialidad no puede exceder 100 caracteres").optional().or(z.literal("")),
@@ -59,7 +59,7 @@ interface NuevoUsuarioFormProps {
   isLocalMode: boolean
 }
 
-const ROLES: UserRole[] = ["tecnico", "coordinador", "gerente", "vicepresidente", "presidente"]
+const ROLES: VisibleUserRole[] = [...VISIBLE_USER_ROLES]
 
 export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
   const router = useRouter()
@@ -218,7 +218,7 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
           </Label>
           <Select
             defaultValue="tecnico"
-            onValueChange={(value) => setValue("rol", value as UserRole)}
+              onValueChange={(value) => setValue("rol", value as VisibleUserRole)}
             disabled={isLoading}
           >
             <SelectTrigger>

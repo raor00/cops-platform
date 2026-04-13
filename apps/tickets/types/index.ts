@@ -6,7 +6,11 @@
 // ENUMS - Estados y Roles del Sistema
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'tecnico' | 'coordinador' | 'gerente' | 'vicepresidente' | 'presidente'
+export type UserRole = 'tecnico' | 'coordinador' | 'gerente' | 'vicepresidente' | 'presidente' | 'desarrollador'
+
+export const VISIBLE_USER_ROLES = ['tecnico', 'coordinador', 'gerente', 'vicepresidente', 'presidente'] as const satisfies readonly UserRole[]
+
+export type VisibleUserRole = (typeof VISIBLE_USER_ROLES)[number]
 
 export type UserStatus = 'activo' | 'inactivo'
 
@@ -65,6 +69,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   gerente: 3,
   vicepresidente: 4,
   presidente: 5,
+  desarrollador: 6,
 } as const
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -73,6 +78,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   gerente: 'Gerente',
   vicepresidente: 'Vicepresidente',
   presidente: 'Presidente',
+  desarrollador: 'Desarrollador',
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -515,6 +521,30 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'clients:create',
     'clients:edit',
   ],
+  desarrollador: [
+    'tickets:view_own',
+    'tickets:view_all',
+    'tickets:create',
+    'tickets:edit',
+    'tickets:delete',
+    'tickets:change_status',
+    'tickets:assign',
+    'tickets:reassign',
+    'users:view',
+    'users:create',
+    'users:edit',
+    'users:delete',
+    'payments:view',
+    'payments:process',
+    'reports:view',
+    'reports:export',
+    'config:view',
+    'config:edit',
+    'audit:view',
+    'clients:view',
+    'clients:create',
+    'clients:edit',
+  ],
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -553,10 +583,24 @@ export function canCreateUserRole(actorRole: UserRole, targetRole: UserRole): bo
 
   if (actorRole === 'coordinador') return targetRole === 'tecnico'
   if (actorRole === 'gerente') return targetRole === 'tecnico' || targetRole === 'coordinador'
-  if (actorRole === 'vicepresidente') return targetRole !== 'presidente'
-  if (actorRole === 'presidente') return true
+  if (actorRole === 'vicepresidente') return targetRole !== 'presidente' && targetRole !== 'desarrollador'
+  if (actorRole === 'presidente') return targetRole !== 'desarrollador'
+  if (actorRole === 'desarrollador') return true
 
   return false
+}
+
+export function canEditUserProfile(actorRole: UserRole, targetRole: UserRole): boolean {
+  if (actorRole === 'desarrollador') return true
+  if (hasPermission(actorRole, 'users:edit')) return true
+  if (actorRole === 'coordinador') return targetRole === 'tecnico'
+  return false
+}
+
+export function isDeveloperUser(user?: { email?: string | null; rol?: UserRole | null } | null): boolean {
+  if (!user) return false
+  const email = user.email?.trim().toLowerCase()
+  return user.rol === 'desarrollador' || email === 'operations@copselectronics.com'
 }
 
 export function canChangeTicketStatus(

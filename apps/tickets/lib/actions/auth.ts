@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import type { ActionResponse, User } from "@/types"
-import { canCreateUserRole, hasPermission, ROLE_HIERARCHY } from "@/types"
+import { canCreateUserRole, canEditUserProfile, hasPermission, isDeveloperUser, ROLE_HIERARCHY } from "@/types"
 import type { LoginInput } from "@/lib/validations"
 import {
   BRIDGE_SESSION_COOKIE,
@@ -28,14 +28,17 @@ import {
 
 function normalizeAuthUser(uid: string, rawUser: Partial<User> & { email?: string | null }): User {
   const fallbackName = rawUser.email?.split("@")[0]?.trim() || "Usuario"
+  const resolvedRole = isDeveloperUser({ email: rawUser.email, rol: rawUser.rol as User["rol"] | null })
+    ? "desarrollador"
+    : (rawUser.rol || "tecnico")
 
   return {
     id: uid,
     email: rawUser.email?.trim() || "",
     nombre: rawUser.nombre?.trim() || fallbackName,
     apellido: rawUser.apellido?.trim() || "",
-    rol: rawUser.rol || "tecnico",
-    nivel_jerarquico: rawUser.nivel_jerarquico ?? ROLE_HIERARCHY[rawUser.rol || "tecnico"],
+    rol: resolvedRole,
+    nivel_jerarquico: rawUser.nivel_jerarquico ?? ROLE_HIERARCHY[resolvedRole],
     telefono: rawUser.telefono ?? null,
     cedula: rawUser.cedula ?? "",
     estado: rawUser.estado || "activo",
@@ -304,11 +307,12 @@ export async function registerUserAction(data: {
   }
 
   const currentUser = await getCurrentUser()
+  const targetRole = isDeveloperUser({ email: data.email, rol: data.rol as User["rol"] }) ? "desarrollador" : (data.rol as User["rol"])
   if (!currentUser || !hasPermission(currentUser.rol, "users:create")) {
     return { success: false, error: "No tienes permisos para crear usuarios" }
   }
 
-  if (!canCreateUserRole(currentUser.rol, data.rol as User["rol"])) {
+  if (!canCreateUserRole(currentUser.rol, targetRole)) {
     return { success: false, error: "Tu rol no puede crear usuarios con ese nivel de acceso" }
   }
 
@@ -326,7 +330,7 @@ export async function registerUserAction(data: {
       const db = getAdminFirestore()
       const normalizedEmail = data.email?.trim().toLowerCase() || ""
       const normalizedPassword = data.password?.trim() || ""
-      const requiresCredentials = data.rol !== "tecnico"
+      const requiresCredentials = targetRole !== "tecnico"
 
       if (requiresCredentials && (!normalizedEmail || !normalizedPassword)) {
         return { success: false, error: "Los usuarios con este rol requieren correo y contraseña" }
@@ -338,8 +342,8 @@ export async function registerUserAction(data: {
           email: "",
           nombre: data.nombre,
           apellido: data.apellido,
-          rol: data.rol as User["rol"],
-          nivel_jerarquico: ROLE_HIERARCHY[data.rol as keyof typeof ROLE_HIERARCHY],
+          rol: targetRole,
+          nivel_jerarquico: ROLE_HIERARCHY[targetRole],
           cedula: data.cedula,
           telefono: data.telefono || null,
           estado: "activo",
@@ -387,8 +391,8 @@ export async function registerUserAction(data: {
         email: normalizedEmail,
         nombre: data.nombre,
         apellido: data.apellido,
-        rol: data.rol as User["rol"],
-        nivel_jerarquico: ROLE_HIERARCHY[data.rol as keyof typeof ROLE_HIERARCHY],
+        rol: targetRole,
+        nivel_jerarquico: ROLE_HIERARCHY[targetRole],
         cedula: data.cedula,
         telefono: data.telefono || null,
         estado: "activo",
@@ -426,7 +430,7 @@ export async function completeUserAccessAction(
   }
 
   const currentUser = await getCurrentUser()
-  if (!currentUser || !hasPermission(currentUser.rol, "users:edit")) {
+  if (!currentUser) {
     return { success: false, error: "No tienes permisos para gestionar accesos" }
   }
 
@@ -446,6 +450,9 @@ export async function completeUserAccessAction(
     if (!userDoc.exists) return { success: false, error: "Usuario no encontrado" }
 
     const profile = fromFirestoreDoc<Partial<User>>(userId, userDoc.data()!)
+    if (!canEditUserProfile(currentUser.rol, (profile.rol as User["rol"] | undefined) ?? "tecnico")) {
+      return { success: false, error: "No tienes permisos para gestionar el acceso de este usuario" }
+    }
     const hasAuthAccount = await auth.getUser(userId).then(() => true).catch(() => false)
 
     if (!hasAuthAccount && !normalizedPassword) {
@@ -512,7 +519,7 @@ export async function updatePasswordAction(
   }
 
   const currentUser = await getCurrentUser()
-  if (!currentUser || !hasPermission(currentUser.rol, "users:edit")) {
+  if (!currentUser) {
     return { success: false, error: "No tienes permisos para cambiar contraseñas" }
   }
 
@@ -520,6 +527,13 @@ export async function updatePasswordAction(
   if (isFirebaseMode()) {
     try {
       const auth = getAdminAuth()
+      const db = getAdminFirestore()
+      const userDoc = await db.collection("users").doc(userId).get()
+      if (!userDoc.exists) return { success: false, error: "Usuario no encontrado" }
+      const profile = fromFirestoreDoc<Partial<User>>(userId, userDoc.data()!)
+      if (!canEditUserProfile(currentUser.rol, (profile.rol as User["rol"] | undefined) ?? "tecnico")) {
+        return { success: false, error: "No tienes permisos para cambiar la contraseña de este usuario" }
+      }
       await auth.updateUser(userId, { password: newPassword })
       return { success: true, message: "Contraseña actualizada exitosamente" }
     } catch (err: unknown) {

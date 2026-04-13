@@ -33,7 +33,9 @@ import {
   STATUS_COLORS,
   PRIORITY_LABELS,
   PRIORITY_COLORS,
+  canEditUserProfile,
   hasPermission,
+  isDeveloperUser,
 } from '@/types'
 import type { UserProfile, Ticket as TicketType, TechnicianStats } from '@/types'
 import { getInitials } from '@/lib/utils'
@@ -74,7 +76,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
   if (!targetUser) notFound()
 
-  const canEdit = hasPermission(user.rol, 'users:edit') || user.id === id
+  const canEdit = user.id === id || canEditUserProfile(user.rol, targetUser.rol)
   const isTecnico = targetUser.rol === 'tecnico'
   const ticketsTabLabel = isTecnico ? 'Tickets Asignados' : 'Tickets Creados'
 
@@ -149,7 +151,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
               )}
               <ProfileEditDialog
                 user={targetUser}
-                canEditRole={ROLE_HIERARCHY[user.rol] >= 5}
+                canEditRole={isDeveloperUser(user)}
               />
             </div>
           )}
@@ -207,7 +209,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 <InfoRow label="Rol" value={ROLE_LABELS[targetUser.rol]} />
-                <InfoRow label="Nivel" value={`${ROLE_HIERARCHY[targetUser.rol]} de 5`} />
+                <InfoRow label="Nivel" value={`${ROLE_HIERARCHY[targetUser.rol]} de 6`} />
                 <InfoRow
                   label="Estado"
                   value={targetUser.estado === 'activo' ? 'Activo' : 'Inactivo'}

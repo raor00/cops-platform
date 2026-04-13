@@ -22,7 +22,7 @@ import {
 } from "@/lib/actions/usuarios"
 import { completeUserAccessAction } from "@/lib/actions/auth"
 import type { UserProfile, UserRole } from "@/types"
-import { ROLE_LABELS } from "@/types"
+import { ROLE_LABELS, VISIBLE_USER_ROLES } from "@/types"
 import { getInitials } from "@/lib/utils"
 import {
   Select,
@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const ALL_ROLES: UserRole[] = ["tecnico", "coordinador", "gerente", "vicepresidente", "presidente"]
+const ALL_ROLES: UserRole[] = [...VISIBLE_USER_ROLES]
 
 interface ProfileEditDialogProps {
   user: UserProfile

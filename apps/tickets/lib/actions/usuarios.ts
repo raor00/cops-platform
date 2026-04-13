@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache"
 import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/types"
 import { getCurrentUser, registerUserAction } from "./auth"
-import { hasPermission, ROLE_HIERARCHY } from "@/types"
+import { canEditUserProfile, hasPermission, isDeveloperUser, ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminAuth, getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 import { uploadFileToStorage, getSignedDownloadUrl, deleteFileFromStorage } from "@/lib/firebase/storage-rest"
@@ -120,12 +120,18 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    const canUpdate = user.id === userId || hasPermission(user.rol, "users:edit")
+
+    const targetResult = await getUserById(userId)
+    if (!targetResult.success || !targetResult.data) {
+      return { success: false, error: targetResult.error || "Usuario no encontrado" }
+    }
+
+    const canUpdate = user.id === userId || canEditUserProfile(user.rol, targetResult.data.rol)
     if (!canUpdate) return { success: false, error: "No tienes permisos para editar este usuario" }
 
     // Solo presidente puede cambiar roles
-    if (updates.rol && ROLE_HIERARCHY[user.rol] < 5) {
-      return { success: false, error: "Solo el presidente puede cambiar roles" }
+    if (updates.rol && !isDeveloperUser(user)) {
+      return { success: false, error: "Solo el desarrollador puede cambiar roles del sistema" }
     }
 
     // Sincronizar nivel_jerarquico cuando cambia el rol
@@ -151,7 +157,7 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
       revalidatePath("/dashboard/usuarios")
       revalidatePath(`/dashboard/usuarios/${userId}`)
 
-      if (hasPermission(user.rol, "users:edit") && user.id !== userId) {
+      if (canEditUserProfile(user.rol, targetResult.data.rol) && user.id !== userId) {
         const target = await fbGetUserWithPhoto(userId)
         if (target) {
           const roleChanged = previousRole && updates.rol && previousRole !== updates.rol
