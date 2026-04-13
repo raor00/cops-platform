@@ -206,7 +206,10 @@ export async function uploadProfilePhoto(userId: string, file: File): Promise<Ac
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    const canUpload = user.id === userId || hasPermission(user.rol, "users:edit")
+    const targetResult = await getUserById(userId)
+    if (!targetResult.success || !targetResult.data) return { success: false, error: targetResult.error || "Usuario no encontrado" }
+
+    const canUpload = user.id === userId || canEditUserProfile(user.rol, targetResult.data.rol)
     if (!canUpload) return { success: false, error: "No tienes permisos para subir foto" }
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
@@ -249,7 +252,10 @@ export async function deleteProfilePhoto(userId: string): Promise<ActionResponse
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    const canDelete = user.id === userId || hasPermission(user.rol, "users:delete")
+    const targetResult = await getUserById(userId)
+    if (!targetResult.success || !targetResult.data) return { success: false, error: targetResult.error || "Usuario no encontrado" }
+
+    const canDelete = user.id === userId || canEditUserProfile(user.rol, targetResult.data.rol)
     if (!canDelete) return { success: false, error: "No tienes permisos para eliminar esta foto" }
 
     if (isLocalMode()) return { success: false, error: "No disponible en modo local" }
