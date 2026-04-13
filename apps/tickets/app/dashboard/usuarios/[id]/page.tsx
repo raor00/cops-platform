@@ -37,6 +37,7 @@ import {
 import type { UserProfile, Ticket as TicketType, TechnicianStats } from '@/types'
 import { getInitials } from '@/lib/utils'
 import { ProfileEditDialog } from '@/components/usuarios/profile-edit-dialog'
+import { UserStatusToggleButton } from '@/components/usuarios/user-status-toggle-button'
 
 interface UsuarioPageProps {
   params: Promise<{ id: string }>
@@ -141,10 +142,15 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
           </div>
 
           {canEdit && (
-            <ProfileEditDialog
-              user={targetUser}
-              canEditRole={ROLE_HIERARCHY[user.rol] >= 5}
-            />
+            <div className="flex flex-wrap gap-2">
+              {ROLE_HIERARCHY[user.rol] >= 3 && user.id !== targetUser.id && (
+                <UserStatusToggleButton userId={targetUser.id} currentStatus={targetUser.estado} />
+              )}
+              <ProfileEditDialog
+                user={targetUser}
+                canEditRole={ROLE_HIERARCHY[user.rol] >= 5}
+              />
+            </div>
           )}
         </div>
       </div>

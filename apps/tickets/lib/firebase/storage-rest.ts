@@ -142,6 +142,10 @@ function isCloudinaryPath(storagePath: string): boolean {
   return storagePath.startsWith(CLOUDINARY_PREFIX)
 }
 
+function isDirectHttpUrl(storagePath: string): boolean {
+  return /^https?:\/\//i.test(storagePath.trim())
+}
+
 function extractCloudinaryParts(storagePath: string): { publicId: string; url: string } {
   const withoutPrefix = storagePath.replace(CLOUDINARY_PREFIX, "")
   const sepIdx = withoutPrefix.indexOf("::")
@@ -278,6 +282,10 @@ export async function uploadFileToStorage(
 }
 
 export async function getSignedDownloadUrl(storagePath: string): Promise<string> {
+  if (isDirectHttpUrl(storagePath)) {
+    return storagePath
+  }
+
   if (isCloudinaryPath(storagePath)) {
     const { publicId, url } = extractCloudinaryParts(storagePath)
     return url || buildCloudinaryUrlFromPublicId(publicId)
@@ -298,6 +306,10 @@ export async function getSignedDownloadUrl(storagePath: string): Promise<string>
 }
 
 export async function deleteFileFromStorage(storagePath: string): Promise<void> {
+  if (isDirectHttpUrl(storagePath)) {
+    return
+  }
+
   if (isCloudinaryPath(storagePath)) {
     await cloudinaryDelete(extractCloudinaryParts(storagePath).publicId)
     return

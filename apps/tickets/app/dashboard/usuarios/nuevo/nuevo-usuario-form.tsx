@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { registerUserAction } from "@/lib/actions/auth"
+import { createUser } from "@/lib/actions/usuarios"
 import { ROLE_LABELS } from "@/types"
 import type { UserRole } from "@/types"
 
@@ -85,7 +85,7 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
-      const result = await registerUserAction({
+      const result = await createUser({
         email: data.email,
         password: data.password,
         nombre: data.nombre,
@@ -101,8 +101,10 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
       } else {
         toast.error("Error al crear usuario", { description: result.error })
       }
-    } catch {
-      toast.error("Error inesperado", { description: "Ocurrió un error al procesar la solicitud" })
+    } catch (error) {
+      toast.error("Error inesperado", {
+        description: error instanceof Error ? error.message : "Ocurrió un error al procesar la solicitud",
+      })
     } finally {
       setIsLoading(false)
     }

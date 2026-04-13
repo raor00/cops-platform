@@ -595,6 +595,20 @@ export interface UserProfile extends User {
   foto_perfil_url?: string | null
 }
 
+export type AppNotificationType = 'user_created' | 'user_updated' | 'user_status_changed' | 'user_role_changed' | 'user_deleted'
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  title: string
+  message: string
+  type: AppNotificationType
+  entity_type: 'user'
+  entity_id: string
+  read_at: string | null
+  created_at: string
+}
+
 // ─── Fases de Proyecto ───────────────────────────────────────────────────────
 
 export interface TicketFase {

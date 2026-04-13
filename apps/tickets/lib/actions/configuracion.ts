@@ -14,6 +14,7 @@ const DEFAULT_CONFIG_DATA = [
   { clave: 'comision_tecnico', valor: '50', descripcion: 'Porcentaje de comision tecnico (%)', tipo_dato: 'number' as const },
   { clave: 'monto_servicio_base', valor: '50', descripcion: 'Monto base por servicio', tipo_dato: 'number' as const },
   { clave: 'monto_inspeccion', valor: '20', descripcion: 'Monto por inspeccion', tipo_dato: 'number' as const },
+  { clave: 'notif_user_admin_recipient_ids', valor: '', descripcion: 'IDs de usuarios a notificar por cambios administrativos (separados por coma)', tipo_dato: 'string' as const },
 ]
 
 export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>> {

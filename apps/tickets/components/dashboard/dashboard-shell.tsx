@@ -34,6 +34,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         {/* Header */}
         <Header
           user={user}
+          initialNotifications={[]}
           onLogout={handleLogout}
           onMenuClick={() => setSidebarCollapsed(!sidebarCollapsed)}
         />

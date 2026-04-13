@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useMemo, useState } from "react"
 import { Bell, Search, Menu, LayoutGrid } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,22 +14,32 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { getFullName, getInitials } from "@/lib/utils"
-import type { User } from "@/types"
+import { markMyNotificationsRead } from "@/lib/actions/notificaciones"
+import type { AppNotification, User } from "@/types"
 import { ROLE_LABELS } from "@/types"
 
 interface HeaderProps {
   user: User
+  initialNotifications: AppNotification[]
   onMenuClick?: () => void
   onLogout: () => void
 }
 
-export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
+export function Header({ user, initialNotifications, onMenuClick, onLogout }: HeaderProps) {
   const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
   const userFullName = getFullName(user.nombre, user.apellido)
   const userInitials = getInitials(user.nombre, user.apellido)
+  const [notifications, setNotifications] = useState(initialNotifications)
+  const unreadCount = useMemo(() => notifications.filter((notification) => !notification.read_at).length, [notifications])
 
   const goToModuleSelector = () => {
     window.location.href = `${webAppUrl}/panel`
+  }
+
+  const handleNotificationOpen = async (open: boolean) => {
+    if (!open || unreadCount === 0) return
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read_at: notification.read_at ?? new Date().toISOString() })))
+    await markMyNotificationsRead()
   }
 
   return (
@@ -55,7 +65,7 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={handleNotificationOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -63,15 +73,34 @@ export function Header({ user, onMenuClick, onLogout }: HeaderProps) {
                 className="relative text-slate-500 hover:text-slate-900"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 animate-pulse" />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <div className="py-4 text-center text-sm text-slate-500">
-                No hay notificaciones nuevas
-              </div>
+              {notifications.length === 0 ? (
+                <div className="py-4 text-center text-sm text-slate-500">
+                  No hay notificaciones nuevas
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto py-1">
+                  {notifications.map((notification) => (
+                    <DropdownMenuItem key={notification.id} className="items-start whitespace-normal py-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-800">{notification.title}</span>
+                          {!notification.read_at && <span className="h-2 w-2 rounded-full bg-blue-500" />}
+                        </div>
+                        <p className="text-xs leading-relaxed text-slate-500">{notification.message}</p>
+                        <p className="text-[11px] text-slate-400">
+                          {new Date(notification.created_at).toLocaleString("es-VE")}
+                        </p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 

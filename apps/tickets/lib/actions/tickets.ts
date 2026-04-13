@@ -539,6 +539,9 @@ export async function changeTicketStatus(
     if (!currentTicket) return { success: false, error: "Ticket no encontrado" }
     if (currentUser.rol === "tecnico" && currentTicket.tecnico_id !== currentUser.id)
       return { success: false, error: "No tienes permiso para modificar este ticket" }
+    if (currentUser.rol === "tecnico" && newStatus === "finalizado") {
+      return { success: false, error: "Los técnicos no pueden finalizar tickets. Deben dejar bitácora y notificar a coordinación." }
+    }
 
     const result = changeDemoTicketStatusMock(id, newStatus, additionalData, currentUser.rol)
     if (result.error || !result.ticket)
@@ -561,6 +564,9 @@ export async function changeTicketStatus(
 
       if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
         return { success: false, error: "No tienes permiso para modificar este ticket" }
+      if (currentUser.rol === "tecnico" && newStatus === "finalizado") {
+        return { success: false, error: "Los técnicos no pueden finalizar tickets. Deben dejar bitácora y notificar a coordinación." }
+      }
 
       const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
       const forwardOk = VALID_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)

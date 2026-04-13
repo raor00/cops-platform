@@ -6,7 +6,8 @@ import { ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminAuth, getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 import { uploadFileToStorage, getSignedDownloadUrl, deleteFileFromStorage } from "@/lib/firebase/storage-rest"
-import { getDemoCurrentUser, getDemoUsers } from "@/lib/mock-data"
+import { getDemoCurrentUser, getDemoUsers, updateDemoUser } from "@/lib/mock-data"
+import { notifyAdministrativeUserEvent } from "./notificaciones"
 
 function normalizeEmail(email?: string | null): string {
   return email?.trim().toLowerCase() || ""
@@ -133,19 +134,65 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
       finalUpdates.nivel_jerarquico = ROLE_HIERARCHY[updates.rol]
     }
 
-    if (isLocalMode()) return { success: true, message: "Perfil actualizado (modo local)" }
+    if (isLocalMode()) {
+      const updated = updateDemoUser(userId, cleanForFirestore(finalUpdates) as Partial<UserProfile>)
+      if (!updated) return { success: false, error: "Usuario no encontrado" }
+      revalidatePath("/dashboard/usuarios")
+      revalidatePath(`/dashboard/usuarios/${userId}`)
+      return { success: true, message: "Perfil actualizado (modo local)" }
+    }
 
     if (isFirebaseMode()) {
       const db = getAdminFirestore()
+      const existingDoc = await db.collection("users").doc(userId).get()
+      const previousRole = existingDoc.exists ? existingDoc.data()?.rol : null
+      const previousState = existingDoc.exists ? existingDoc.data()?.estado : null
       await db.collection("users").doc(userId).update(cleanForFirestore({ ...finalUpdates, updated_at: new Date().toISOString() }))
       revalidatePath("/dashboard/usuarios")
       revalidatePath(`/dashboard/usuarios/${userId}`)
+
+      if (ROLE_HIERARCHY[user.rol] >= 3 && user.id !== userId) {
+        const target = await fbGetUserWithPhoto(userId)
+        if (target) {
+          const roleChanged = previousRole && updates.rol && previousRole !== updates.rol
+          const statusChanged = previousState && updates.estado && previousState !== updates.estado
+          await notifyAdministrativeUserEvent({
+            actor: user,
+            affectedUser: target,
+            type: roleChanged ? "user_role_changed" : statusChanged ? "user_status_changed" : "user_updated",
+            title: roleChanged
+              ? "Rol de usuario actualizado"
+              : statusChanged
+                ? `Usuario ${updates.estado === "activo" ? "activado" : "desactivado"}`
+                : "Perfil de usuario actualizado",
+            message: roleChanged
+              ? `${user.nombre} ${user.apellido} cambió el rol de ${target.nombre} ${target.apellido} a ${target.rol}.`
+              : statusChanged
+                ? `${user.nombre} ${user.apellido} cambió el estado de ${target.nombre} ${target.apellido} a ${target.estado}.`
+                : `${user.nombre} ${user.apellido} actualizó la información administrativa de ${target.nombre} ${target.apellido}.`,
+          })
+        }
+      }
+
       return { success: true, message: "Perfil actualizado exitosamente" }
     }
 
     return { success: false, error: "Usuarios requiere configuración Firebase válida" }
   } catch (error) {
     return { success: false, error: "Error inesperado al actualizar perfil" }
+  }
+}
+
+export async function setUserStatusAction(userId: string, estado: "activo" | "inactivo"): Promise<ActionResponse> {
+  try {
+    const currentUser = await getCurrentUser()
+    if (!currentUser) return { success: false, error: "No autenticado" }
+    if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "No tienes permisos para cambiar el estado de usuarios" }
+    if (currentUser.id === userId && estado === "inactivo") return { success: false, error: "No puedes desactivar tu propia cuenta" }
+
+    return await updateUserProfile(userId, { estado })
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Error inesperado al cambiar el estado del usuario" }
   }
 }
 
@@ -234,18 +281,36 @@ export async function createUser(input: {
   rol: UserRole
   cedula?: string
 }): Promise<ActionResponse<{ id: string }>> {
-  const result = await registerUserAction({
-    nombre: input.nombre,
-    apellido: input.apellido ?? "",
-    email: input.email,
-    telefono: input.telefono,
-    password: input.password,
-    rol: input.rol,
-    cedula: input.cedula ?? "",
-  })
-  if (!result.success) return { success: false, error: result.error }
-  const id = result.data?.user.id ?? ""
-  return { success: true, data: { id }, message: result.message }
+  try {
+    const result = await registerUserAction({
+      nombre: input.nombre,
+      apellido: input.apellido ?? "",
+      email: input.email,
+      telefono: input.telefono,
+      password: input.password,
+      rol: input.rol,
+      cedula: input.cedula ?? "",
+    })
+    if (!result.success) return { success: false, error: result.error }
+    const id = result.data?.user.id ?? ""
+    const currentUser = await getCurrentUser()
+    const createdUser = result.data?.user
+    if (currentUser && createdUser) {
+      await notifyAdministrativeUserEvent({
+        actor: currentUser,
+        affectedUser: createdUser,
+        type: "user_created",
+        title: "Nuevo usuario creado",
+        message: `${currentUser.nombre} ${currentUser.apellido} creó el usuario ${createdUser.nombre} ${createdUser.apellido} con rol ${createdUser.rol}.`,
+      })
+    }
+    return { success: true, data: { id }, message: result.message }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Error inesperado al crear usuario",
+    }
+  }
 }
 
 export async function deleteUserAction(userId: string): Promise<ActionResponse> {
@@ -269,6 +334,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResponse> 
       const docRef = db.collection("users").doc(userId)
       const userDoc = await docRef.get()
       if (!userDoc.exists) return { success: false, error: "Usuario no encontrado" }
+      const targetUser = fromFirestoreDoc<UserProfile>(userId, userDoc.data()!)
 
       const userData = userDoc.data() || {}
       const fotoPerfilPath = userData.foto_perfil_path as string | null | undefined
@@ -285,6 +351,15 @@ export async function deleteUserAction(userId: string): Promise<ActionResponse> 
       }
 
       revalidatePath("/dashboard/usuarios")
+
+       await notifyAdministrativeUserEvent({
+        actor: currentUser,
+        affectedUser: targetUser,
+        type: "user_deleted",
+        title: "Usuario eliminado",
+        message: `${currentUser.nombre} ${currentUser.apellido} eliminó el usuario ${targetUser.nombre} ${targetUser.apellido}.`,
+      })
+
       return { success: true, message: "Usuario eliminado exitosamente" }
     }
 

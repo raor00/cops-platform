@@ -345,8 +345,8 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
           ? `Técnico ${techForm.nombre} creado y asignado`
           : `Perfil técnico ${techForm.nombre} creado y asignado sin acceso`
       )
-    } catch {
-      setTechError("Error inesperado")
+    } catch (error) {
+      setTechError(error instanceof Error ? error.message : "Error inesperado")
     } finally {
       setTechLoading(false)
     }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/actions/auth"
+import { getMyNotifications } from "@/lib/actions/notificaciones"
 import { DashboardLayoutClient } from "./layout-client"
 
 export const dynamic = "force-dynamic"
@@ -15,5 +16,7 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
-  return <DashboardLayoutClient user={user}>{children}</DashboardLayoutClient>
+  const notifications = (await getMyNotifications()).data ?? []
+
+  return <DashboardLayoutClient user={user} initialNotifications={notifications}>{children}</DashboardLayoutClient>
 }

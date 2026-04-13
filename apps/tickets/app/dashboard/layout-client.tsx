@@ -5,15 +5,16 @@ import { usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { logoutAction } from "@/lib/actions/auth"
-import type { User } from "@/types"
+import type { AppNotification, User } from "@/types"
 import { cn } from "@/lib/utils"
 
 interface DashboardLayoutClientProps {
   user: User
+  initialNotifications: AppNotification[]
   children: React.ReactNode
 }
 
-export function DashboardLayoutClient({ user, children }: DashboardLayoutClientProps) {
+export function DashboardLayoutClient({ user, initialNotifications, children }: DashboardLayoutClientProps) {
   const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -58,6 +59,7 @@ export function DashboardLayoutClient({ user, children }: DashboardLayoutClientP
       >
         <Header 
           user={user} 
+          initialNotifications={initialNotifications}
           onMenuClick={() => setMobileMenuOpen(true)}
           onLogout={handleLogout}
         />

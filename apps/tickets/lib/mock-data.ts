@@ -6,6 +6,7 @@ import {
   generateTicketNumber,
 } from "@/types"
 import type {
+  AppNotification,
   Agencia,
   AgenciaCreateInput,
   AgenciaUpdateInput,
@@ -249,6 +250,17 @@ export function getDemoUsers(): User[] {
   return deepClone(DEMO_USERS).sort(
     (a, b) => ROLE_HIERARCHY[b.rol] - ROLE_HIERARCHY[a.rol]
   )
+}
+
+export function updateDemoUser(id: string, updates: Partial<User>): User | null {
+  const index = DEMO_USERS.findIndex((user) => user.id === id)
+  if (index === -1) return null
+  DEMO_USERS[index] = {
+    ...DEMO_USERS[index]!,
+    ...updates,
+    updated_at: new Date().toISOString(),
+  }
+  return deepClone(DEMO_USERS[index]!)
 }
 
 export function getDemoTechnicians(): Array<{ id: string; nombre: string; apellido: string }> {
@@ -1157,7 +1169,10 @@ let demoConfig: SystemConfig[] = [
   { id: 12, clave: "notif_email_nuevo_ticket", valor: "true", descripcion: "Notificar por email al crear ticket", tipo_dato: "boolean", updated_at: new Date().toISOString() },
   { id: 13, clave: "notif_email_cambio_estado", valor: "true", descripcion: "Notificar cambios de estado por email", tipo_dato: "boolean", updated_at: new Date().toISOString() },
   { id: 14, clave: "notif_slack_webhook", valor: "", descripcion: "Webhook de Slack (vacío = desactivado)", tipo_dato: "string", updated_at: new Date().toISOString() },
+  { id: 15, clave: "notif_user_admin_recipient_ids", valor: "", descripcion: "IDs de usuarios a notificar por cambios administrativos (separados por coma)", tipo_dato: "string", updated_at: new Date().toISOString() },
 ]
+
+let demoNotifications: AppNotification[] = []
 
 export function getDemoConfig(): SystemConfig[] {
   return deepClone(demoConfig)
@@ -1168,6 +1183,34 @@ export function updateDemoConfig(clave: string, valor: string): SystemConfig | n
   if (idx === -1) return null
   demoConfig[idx] = { ...demoConfig[idx]!, valor, updated_at: new Date().toISOString() }
   return deepClone(demoConfig[idx]!)
+}
+
+export function getDemoNotificationsByUser(userId: string): AppNotification[] {
+  return deepClone(
+    demoNotifications
+      .filter((notification) => notification.user_id === userId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  )
+}
+
+export function addDemoNotification(notification: Omit<AppNotification, "id" | "created_at" | "read_at"> & { created_at?: string; read_at?: string | null }): AppNotification {
+  const created: AppNotification = {
+    id: crypto.randomUUID(),
+    created_at: notification.created_at ?? new Date().toISOString(),
+    read_at: notification.read_at ?? null,
+    ...notification,
+  }
+  demoNotifications = [created, ...demoNotifications]
+  return deepClone(created)
+}
+
+export function markDemoNotificationsRead(userId: string): void {
+  const nowIso = new Date().toISOString()
+  demoNotifications = demoNotifications.map((notification) => (
+    notification.user_id === userId && !notification.read_at
+      ? { ...notification, read_at: nowIso }
+      : notification
+  ))
 }
 
 // ─── Update Logs (Timeline de actualizaciones) ────────────────────────────────

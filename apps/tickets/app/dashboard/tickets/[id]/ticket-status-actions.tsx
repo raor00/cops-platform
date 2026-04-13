@@ -55,6 +55,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
   const validTransitions = VALID_TRANSITIONS[ticket.estado]
   const canRevert = userRole ? ROLE_HIERARCHY[userRole] >= 3 : false
   const reverseTransitions = ADMIN_REVERSE_TRANSITIONS[ticket.estado]
+  const canFinalize = validTransitions.includes("finalizado") && userRole !== "tecnico"
   // Hide all buttons if finalized/cancelled AND admin has no reverse transitions
   const isFinalized =
     (ticket.estado === "finalizado" || ticket.estado === "cancelado") &&
@@ -293,7 +294,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
           </Button>
         )}
 
-        {validTransitions.includes("finalizado") && (
+        {canFinalize && (
           <Button onClick={() => handleStatusChange("finalizado")} disabled={isLoading}>
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
