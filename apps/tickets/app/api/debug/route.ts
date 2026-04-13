@@ -67,9 +67,6 @@ export async function GET(request: Request) {
       FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY
         ? `✓ definido (${process.env.FIREBASE_PRIVATE_KEY.length} chars)`
         : "(no definido)",
-      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL
-        ? "✓ definido"
-        : "(no definido)",
     },
     mode: {
       resolved: resolveTicketsDataMode(),

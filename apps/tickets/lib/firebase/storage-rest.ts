@@ -160,6 +160,12 @@ function buildLegacyCloudinaryImageUrl(storagePath: string): string {
   return `https://res.cloudinary.com/${cloud}/image/upload/${publicId}`
 }
 
+function buildCloudinaryUrlFromPublicId(publicId: string): string {
+  const { cloud } = getCloudinaryConfig()
+  if (!cloud || !publicId.trim()) return ""
+  return `https://res.cloudinary.com/${cloud}/image/upload/${encodeURIComponent(publicId)}`
+}
+
 // ── Cloudinary upload ─────────────────────────────────────────────────────────
 
 async function cloudinaryUpload(
@@ -273,7 +279,8 @@ export async function uploadFileToStorage(
 
 export async function getSignedDownloadUrl(storagePath: string): Promise<string> {
   if (isCloudinaryPath(storagePath)) {
-    return extractCloudinaryParts(storagePath).url
+    const { publicId, url } = extractCloudinaryParts(storagePath)
+    return url || buildCloudinaryUrlFromPublicId(publicId)
   }
 
   try {

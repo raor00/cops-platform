@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "./auth"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminFirestore, cleanForFirestore, fromFirestoreDoc } from "@/lib/firebase/admin"
@@ -75,25 +74,7 @@ async function canAccessVisita(
     return doc.exists && doc.data()?.tecnico_id === user.id
   }
 
-  const supabase = await createClient()
-  const { data } = await supabase.from("visitas_mantenimiento").select("tecnico_id").eq("id", visitaId).single()
-  return data?.tecnico_id === user.id
-}
-
-async function getSupabaseTechnicians() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, nombre, apellido")
-    .eq("rol", "tecnico")
-    .eq("estado", "activo")
-    .order("nombre", { ascending: true })
-
-  if (error) {
-    return { success: false as const, error: error.message }
-  }
-
-  return { success: true as const, data: data ?? [] }
+  return false
 }
 
 async function getFirebaseTechnicians(): Promise<Array<{ id: string; nombre: string; apellido: string }>> {
@@ -127,9 +108,7 @@ export async function getMaintenanceTechnicians(): Promise<ActionResponse<Array<
     }
   }
 
-  const result = await getSupabaseTechnicians()
-  if (!result.success) return { success: false, error: result.error }
-  return { success: true, data: result.data }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 function revalidateMantenimiento() {
@@ -166,17 +145,7 @@ export async function getAgencias(search = ""): Promise<ActionResponse<Agencia[]
     }
   }
 
-  const supabase = await createClient()
-  let query = supabase.from("agencias").select("*").order("nombre", { ascending: true })
-
-  if (search.trim()) {
-    const q = search.trim().replace(/[,().%\\]/g, "")
-    query = query.or(`nombre.ilike.%${q}%,ciudad.ilike.%${q}%,region.ilike.%${q}%`)
-  }
-
-  const { data, error } = await query
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as Agencia[] }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function createAgencia(input: AgenciaCreateInput): Promise<ActionResponse<Agencia>> {
@@ -214,21 +183,7 @@ export async function createAgencia(input: AgenciaCreateInput): Promise<ActionRe
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("agencias")
-    .insert({
-      ...parsed.data,
-      direccion: parsed.data.direccion || null,
-      contacto: parsed.data.contacto || null,
-      estado_operativo: parsed.data.estado_operativo || "activa",
-    })
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as Agencia, message: "Agencia creada" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function updateAgencia(id: number, input: AgenciaUpdateInput): Promise<ActionResponse<Agencia>> {
@@ -270,22 +225,7 @@ export async function updateAgencia(id: number, input: AgenciaUpdateInput): Prom
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("agencias")
-    .update({
-      ...parsed.data,
-      direccion: parsed.data.direccion === undefined ? undefined : parsed.data.direccion || null,
-      contacto: parsed.data.contacto === undefined ? undefined : parsed.data.contacto || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as Agencia, message: "Agencia actualizada" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function deleteAgencia(id: number): Promise<ActionResponse<void>> {
@@ -310,11 +250,7 @@ export async function deleteAgencia(id: number): Promise<ActionResponse<void>> {
     }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.from("agencias").delete().eq("id", id)
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, message: "Agencia eliminada" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getRutinas(): Promise<ActionResponse<RutinaMantenimiento[]>> {
@@ -341,15 +277,7 @@ export async function getRutinas(): Promise<ActionResponse<RutinaMantenimiento[]
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("rutinas_mantenimiento")
-    .select("*, creador:users!rutinas_mantenimiento_creado_por_fkey(id, nombre, apellido, rol)")
-    .order("anio", { ascending: false })
-    .order("trimestre", { ascending: false })
-
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as RutinaMantenimiento[] }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function createRutinaConVisitas(input: RutinaCreateInput): Promise<ActionResponse<{ rutina: RutinaMantenimiento; visitas: VisitaMantenimiento[] }>> {
@@ -452,65 +380,7 @@ export async function createRutinaConVisitas(input: RutinaCreateInput): Promise<
     }
   }
 
-  const supabase = await createClient()
-
-  const { data: agencias, error: agenciaError } = await (async () => {
-    let query = supabase.from("agencias").select("*")
-    if (parsed.data.agencia_ids && parsed.data.agencia_ids.length > 0) {
-      query = query.in("id", parsed.data.agencia_ids)
-    } else {
-      query = query.in("region", parsed.data.regiones as string[])
-    }
-    return query.neq("estado_operativo", "inactiva")
-  })()
-
-  if (agenciaError) return { success: false, error: agenciaError.message }
-  if (!agencias || agencias.length === 0) return { success: false, error: "No hay agencias objetivo para esta rutina" }
-
-  const { data: rutina, error: rutinaError } = await supabase
-    .from("rutinas_mantenimiento")
-    .insert({
-      titulo: parsed.data.titulo,
-      trimestre: parsed.data.trimestre,
-      anio: parsed.data.anio,
-      fecha_inicio: parsed.data.fecha_inicio,
-      fecha_fin: parsed.data.fecha_fin,
-      regiones: parsed.data.regiones,
-      equipos_objetivo: parsed.data.equipos_objetivo,
-      presupuesto_viaticos: parsed.data.presupuesto_viaticos ?? null,
-      creado_por: user.id,
-      estado: parsed.data.estado || "programada",
-    })
-    .select("*, creador:users!rutinas_mantenimiento_creado_por_fkey(id, nombre, apellido, rol)")
-    .single()
-
-  if (rutinaError || !rutina) return { success: false, error: rutinaError?.message ?? "No se pudo crear la rutina" }
-
-  const visitasPayload = agencias.map((agencia) => ({
-    rutina_id: rutina.id,
-    agencia_id: agencia.id,
-    tecnico_id: null,
-    fecha_programada: null,
-    fecha_realizada: null,
-    estado: "pendiente",
-    equipos_asignados: parsed.data.equipos_objetivo,
-    observaciones_programacion: null,
-  }))
-
-  const { data: visitas, error: visitasError } = await supabase
-    .from("visitas_mantenimiento")
-    .insert(visitasPayload)
-    .select(`
-      *,
-      agencia:agencias(*),
-      tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-      rutina:rutinas_mantenimiento(*)
-    `)
-
-  if (visitasError) return { success: false, error: visitasError.message }
-
-  revalidateMantenimiento()
-  return { success: true, data: { rutina: rutina as RutinaMantenimiento, visitas: (visitas ?? []) as VisitaMantenimiento[] }, message: "Rutina creada" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function updateRutinaEstado(id: string, estado: RutinaEstado): Promise<ActionResponse<RutinaMantenimiento>> {
@@ -544,17 +414,7 @@ export async function updateRutinaEstado(id: string, estado: RutinaEstado): Prom
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("rutinas_mantenimiento")
-    .update({ estado, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select("*, creador:users!rutinas_mantenimiento_creado_por_fkey(id, nombre, apellido, rol)")
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as RutinaMantenimiento, message: "Estado actualizado" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getRutinaDetalle(id: string): Promise<ActionResponse<{ rutina: RutinaMantenimiento; visitas: VisitaMantenimiento[]; resumen: { total: number; completadas: number; pendientes: number; asignadas: number } }>> {
@@ -599,41 +459,7 @@ export async function getRutinaDetalle(id: string): Promise<ActionResponse<{ rut
     }
   }
 
-  const supabase = await createClient()
-  const { data: rutina, error: rutinaError } = await supabase
-    .from("rutinas_mantenimiento")
-    .select("*, creador:users!rutinas_mantenimiento_creado_por_fkey(id, nombre, apellido, rol)")
-    .eq("id", id)
-    .single()
-
-  if (rutinaError || !rutina) return { success: false, error: rutinaError?.message ?? "Rutina no encontrada" }
-
-  const { data: visitas, error: visitasError } = await supabase
-    .from("visitas_mantenimiento")
-    .select(`
-      *,
-      agencia:agencias(*),
-      tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-      rutina:rutinas_mantenimiento(*)
-    `)
-    .eq("rutina_id", id)
-
-  if (visitasError) return { success: false, error: visitasError.message }
-  const items = (visitas ?? []) as VisitaMantenimiento[]
-
-  return {
-    success: true,
-    data: {
-      rutina: rutina as RutinaMantenimiento,
-      visitas: items,
-      resumen: {
-        total: items.length,
-        completadas: items.filter((item) => item.estado === "completada").length,
-        pendientes: items.filter((item) => item.estado === "pendiente").length,
-        asignadas: items.filter((item) => item.tecnico_id && item.fecha_programada).length,
-      },
-    },
-  }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getVisitasMantenimiento(filters: {
@@ -688,24 +514,7 @@ export async function getVisitasMantenimiento(filters: {
     }
   }
 
-  const supabase = await createClient()
-  let query = supabase
-    .from("visitas_mantenimiento")
-    .select(`
-      *,
-      agencia:agencias(*),
-      tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-      rutina:rutinas_mantenimiento(*)
-    `)
-
-  if (filters.rutinaId) query = query.eq("rutina_id", filters.rutinaId)
-  if (filters.tecnicoId) query = query.eq("tecnico_id", filters.tecnicoId)
-  if (filters.estado) query = query.eq("estado", filters.estado)
-  if (filters.region) query = query.eq("agencia.region", filters.region)
-
-  const { data, error } = await query.order("fecha_programada", { ascending: true, nullsFirst: false })
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as VisitaMantenimiento[] }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function assignVisita(input: AssignVisitaInput): Promise<ActionResponse<VisitaMantenimiento[]>> {
@@ -755,26 +564,7 @@ export async function assignVisita(input: AssignVisitaInput): Promise<ActionResp
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("visitas_mantenimiento")
-    .update({
-      tecnico_id: parsed.data.tecnico_id,
-      fecha_programada: parsed.data.fecha_programada,
-      observaciones_programacion: parsed.data.observaciones_programacion || null,
-      updated_at: new Date().toISOString(),
-    })
-    .in("id", parsed.data.visita_ids)
-    .select(`
-      *,
-      agencia:agencias(*),
-      tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-      rutina:rutinas_mantenimiento(*)
-    `)
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: (data ?? []) as VisitaMantenimiento[], message: "Visitas asignadas" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function updateVisitaEstado(visitaId: string, estado: VisitaEstado): Promise<ActionResponse<VisitaMantenimiento>> {
@@ -817,28 +607,7 @@ export async function updateVisitaEstado(visitaId: string, estado: VisitaEstado)
     }
   }
 
-  const supabase = await createClient()
-  const payload: Record<string, unknown> = {
-    estado,
-    updated_at: new Date().toISOString(),
-  }
-  if (estado === "completada") payload.fecha_realizada = new Date().toISOString()
-
-  const { data, error } = await supabase
-    .from("visitas_mantenimiento")
-    .update(payload)
-    .eq("id", visitaId)
-    .select(`
-      *,
-      agencia:agencias(*),
-      tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-      rutina:rutinas_mantenimiento(*)
-    `)
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as VisitaMantenimiento, message: "Estado actualizado" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getMisVisitas(): Promise<ActionResponse<VisitaMantenimiento[]>> {
@@ -869,20 +638,7 @@ export async function getMisVisitas(): Promise<ActionResponse<VisitaMantenimient
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("visitas_mantenimiento")
-    .select(`
-      *,
-      agencia:agencias(*),
-      tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-      rutina:rutinas_mantenimiento(*)
-    `)
-    .eq("tecnico_id", user.id)
-    .order("fecha_programada", { ascending: true, nullsFirst: false })
-
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as VisitaMantenimiento[] }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getBitacoraByVisita(visitaId: string): Promise<ActionResponse<BitacoraVisita | null>> {
@@ -910,15 +666,7 @@ export async function getBitacoraByVisita(visitaId: string): Promise<ActionRespo
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("bitacora_visita")
-    .select("*, creador:users!bitacora_visita_creado_por_fkey(id, nombre, apellido, rol)")
-    .eq("visita_id", visitaId)
-    .maybeSingle()
-
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? null) as BitacoraVisita | null }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function saveBitacoraVisita(input: BitacoraVisitaInput): Promise<ActionResponse<BitacoraVisita>> {
@@ -982,52 +730,7 @@ export async function saveBitacoraVisita(input: BitacoraVisitaInput): Promise<Ac
     }
   }
 
-  const supabase = await createClient()
-  const { data: existing } = await supabase
-    .from("bitacora_visita")
-    .select("id")
-    .eq("visita_id", parsed.data.visita_id)
-    .maybeSingle()
-
-  if (existing?.id) {
-    const { data, error } = await supabase
-      .from("bitacora_visita")
-      .update({
-        log: parsed.data.log,
-        checklist: parsed.data.checklist,
-        fotos: parsed.data.fotos ?? [],
-        repuestos_usados: parsed.data.repuestos_usados ?? [],
-        repuestos_devueltos: parsed.data.repuestos_devueltos ?? [],
-        repuestos_pendientes: parsed.data.repuestos_pendientes ?? [],
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing.id)
-      .select("*, creador:users!bitacora_visita_creado_por_fkey(id, nombre, apellido, rol)")
-      .single()
-
-    if (error) return { success: false, error: error.message }
-    revalidateMantenimiento()
-    return { success: true, data: data as BitacoraVisita, message: "Bitácora actualizada" }
-  }
-
-  const { data, error } = await supabase
-    .from("bitacora_visita")
-    .insert({
-      visita_id: parsed.data.visita_id,
-      log: parsed.data.log,
-      checklist: parsed.data.checklist,
-      fotos: parsed.data.fotos ?? [],
-      repuestos_usados: parsed.data.repuestos_usados ?? [],
-      repuestos_devueltos: parsed.data.repuestos_devueltos ?? [],
-      repuestos_pendientes: parsed.data.repuestos_pendientes ?? [],
-      creado_por: user.id,
-    })
-    .select("*, creador:users!bitacora_visita_creado_por_fkey(id, nombre, apellido, rol)")
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as BitacoraVisita, message: "Bitácora guardada" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getViaticos(): Promise<ActionResponse<Viatico[]>> {
@@ -1053,29 +756,7 @@ export async function getViaticos(): Promise<ActionResponse<Viatico[]>> {
     }
   }
 
-  const supabase = await createClient()
-  let query = supabase
-    .from("viaticos")
-    .select(`
-      *,
-      visita:visitas_mantenimiento(
-        *,
-        agencia:agencias(*),
-        tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-        rutina:rutinas_mantenimiento(*)
-      ),
-      tecnico:users!viaticos_tecnico_id_fkey(id, nombre, apellido, rol),
-      aprobador:users!viaticos_aprobado_por_fkey(id, nombre, apellido, rol)
-    `)
-    .order("created_at", { ascending: false })
-
-  if (!canCoordinate(user.rol)) {
-    query = query.eq("tecnico_id", user.id)
-  }
-
-  const { data, error } = await query
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as Viatico[] }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function createViatico(input: ViaticoCreateInput): Promise<ActionResponse<Viatico>> {
@@ -1132,49 +813,7 @@ export async function createViatico(input: ViaticoCreateInput): Promise<ActionRe
     }
   }
 
-  const supabase = await createClient()
-  let visita: VisitaMantenimiento | null = null
-  if (parsed.data.visita_id) {
-    const { data } = await supabase
-      .from("visitas_mantenimiento")
-      .select("*")
-      .eq("id", parsed.data.visita_id)
-      .single()
-    visita = (data as VisitaMantenimiento | null) ?? null
-  }
-
-  const tecnicoId = visita?.tecnico_id || parsed.data.tecnico_id || user.id
-  const rutinaId = visita?.rutina_id || parsed.data.rutina_id || null
-
-  const { data, error } = await supabase
-    .from("viaticos")
-    .insert({
-      visita_id: parsed.data.visita_id || null,
-      tecnico_id: tecnicoId,
-      rutina_id: rutinaId,
-      ruta: parsed.data.ruta,
-      monto: parsed.data.monto,
-      detalle: parsed.data.detalle || null,
-      observaciones: parsed.data.observaciones || null,
-      estado: "enviado",
-      fecha_envio: new Date().toISOString(),
-    })
-    .select(`
-      *,
-      visita:visitas_mantenimiento(
-        *,
-        agencia:agencias(*),
-        tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-        rutina:rutinas_mantenimiento(*)
-      ),
-      tecnico:users!viaticos_tecnico_id_fkey(id, nombre, apellido, rol),
-      aprobador:users!viaticos_aprobado_por_fkey(id, nombre, apellido, rol)
-    `)
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as Viatico, message: "Viático enviado" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function updateViaticoEstado(id: string, estado: ViaticoEstado): Promise<ActionResponse<Viatico>> {
@@ -1213,36 +852,7 @@ export async function updateViaticoEstado(id: string, estado: ViaticoEstado): Pr
     }
   }
 
-  const payload: Record<string, unknown> = {
-    estado,
-    updated_at: new Date().toISOString(),
-  }
-  if (estado === "aprobado" || estado === "rechazado") {
-    payload.fecha_aprobacion = new Date().toISOString()
-    payload.aprobado_por = user.id
-  }
-
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("viaticos")
-    .update(payload)
-    .eq("id", id)
-    .select(`
-      *,
-      visita:visitas_mantenimiento(
-        *,
-        agencia:agencias(*),
-        tecnico:users!visitas_mantenimiento_tecnico_id_fkey(id, nombre, apellido, rol),
-        rutina:rutinas_mantenimiento(*)
-      ),
-      tecnico:users!viaticos_tecnico_id_fkey(id, nombre, apellido, rol),
-      aprobador:users!viaticos_aprobado_por_fkey(id, nombre, apellido, rol)
-    `)
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidateMantenimiento()
-  return { success: true, data: data as Viatico, message: "Estado de viático actualizado" }
+  return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
 }
 
 export async function getMantenimientoReportes(): Promise<ActionResponse<MantenimientoReportes>> {
@@ -1286,17 +896,7 @@ export async function getMantenimientoReportes(): Promise<ActionResponse<Manteni
       return { success: false, error: (err as Error).message }
     }
   } else {
-    const supabase = await createClient()
-    const { data: bitacorasData, error: bitacoraError } = await supabase
-      .from("bitacora_visita")
-      .select("*, creador:users!bitacora_visita_creado_por_fkey(id, nombre, apellido, rol)")
-      .order("created_at", { ascending: false })
-      .limit(10)
-
-    if (bitacoraError) return { success: false, error: bitacoraError.message }
-    bitacoras = (bitacorasData ?? []) as BitacoraVisita[]
-    const tecnicosResult = await getSupabaseTechnicians()
-    tecnicos = tecnicosResult.success ? tecnicosResult.data : []
+    return { success: false, error: "Mantenimiento requiere configuración Firebase válida" }
   }
 
   const agenciasAtendidas = new Set(visitas.filter((visita) => visita.estado === "completada").map((visita) => visita.agencia_id)).size

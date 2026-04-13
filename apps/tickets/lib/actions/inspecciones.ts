@@ -1,6 +1,4 @@
 "use server"
-
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { ActionResponse, Inspeccion, InspeccionCreateInput } from "@/types"
 import { ROLE_HIERARCHY } from "@/types"
@@ -28,13 +26,7 @@ export async function getInspeccionByTicket(ticketId: string): Promise<ActionRes
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("inspecciones")
-    .select(`*, tecnico:users!inspecciones_realizado_por_fkey(id, nombre, apellido, cedula, rol)`)
-    .eq("ticket_id", ticketId).order("created_at", { ascending: false }).limit(1).single()
-  if (error && error.code !== "PGRST116") return { success: false, error: error.message }
-  return { success: true, data: data as Inspeccion | null }
+  return { success: false, error: "Inspecciones requiere configuración Firebase válida" }
 }
 
 export async function createInspeccion(ticketId: string, input: InspeccionCreateInput): Promise<ActionResponse<Inspeccion>> {
@@ -70,21 +62,7 @@ export async function createInspeccion(ticketId: string, input: InspeccionCreate
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const supabase = await createClient()
-  const { data: ticket, error: ticketError } = await supabase.from("tickets").select("id, tipo").eq("id", ticketId).single()
-  if (ticketError || !ticket) return { success: false, error: "Ticket no encontrado" }
-  if (ticket.tipo !== "inspeccion") return { success: false, error: "Solo los tickets tipo inspeccion permiten crear inspeccion" }
-  const { data: existing } = await supabase.from("inspecciones").select("id").eq("ticket_id", ticketId).single()
-  if (existing) return { success: false, error: "Ya existe una inspeccion para este ticket" }
-  const { data, error } = await supabase.from("inspecciones").insert({
-    ticket_id: ticketId, realizado_por: currentUser.id, fecha_inspeccion: new Date().toISOString(),
-    datos_checklist: input.datos_checklist, observaciones_generales: input.observaciones_generales || null,
-    recomendaciones: input.recomendaciones || null, materiales_requeridos: input.materiales_requeridos || [], estado: "borrador",
-  }).select(`*, tecnico:users!inspecciones_realizado_por_fkey(id, nombre, apellido, cedula, rol)`).single()
-  if (error) return { success: false, error: error.message }
-  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "inspeccion", descripcion: "Inspeccion tecnica creada" })
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  return { success: true, data: data as Inspeccion, message: "Inspeccion creada exitosamente" }
+  return { success: false, error: "Inspecciones requiere configuración Firebase válida" }
 }
 
 export async function updateInspeccion(inspeccionId: string, input: Partial<InspeccionCreateInput>): Promise<ActionResponse<Inspeccion>> {
@@ -118,17 +96,7 @@ export async function updateInspeccion(inspeccionId: string, input: Partial<Insp
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const supabase = await createClient()
-  const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  if (input.datos_checklist !== undefined) updateData.datos_checklist = input.datos_checklist
-  if (input.observaciones_generales !== undefined) updateData.observaciones_generales = input.observaciones_generales
-  if (input.recomendaciones !== undefined) updateData.recomendaciones = input.recomendaciones
-  if (input.materiales_requeridos !== undefined) updateData.materiales_requeridos = input.materiales_requeridos
-  const { data, error } = await supabase.from("inspecciones").update(updateData).eq("id", inspeccionId)
-    .select(`*, tecnico:users!inspecciones_realizado_por_fkey(id, nombre, apellido, cedula, rol)`).single()
-  if (error) return { success: false, error: error.message }
-  revalidatePath(`/dashboard/tickets/${data.ticket_id}`)
-  return { success: true, data: data as Inspeccion, message: "Inspeccion actualizada exitosamente" }
+  return { success: false, error: "Inspecciones requiere configuración Firebase válida" }
 }
 
 export async function completarInspeccion(inspeccionId: string): Promise<ActionResponse<Inspeccion>> {
@@ -159,15 +127,7 @@ export async function completarInspeccion(inspeccionId: string): Promise<ActionR
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase.from("inspecciones")
-    .update({ estado: "completada", updated_at: new Date().toISOString() }).eq("id", inspeccionId).eq("estado", "borrador")
-    .select(`*, tecnico:users!inspecciones_realizado_por_fkey(id, nombre, apellido, cedula, rol)`).single()
-  if (error) return { success: false, error: error.message }
-  if (!data) return { success: false, error: "Inspeccion no encontrada o ya completada" }
-  await supabase.from("historial_cambios").insert({ ticket_id: data.ticket_id, usuario_id: currentUser.id, tipo_cambio: "inspeccion", descripcion: "Inspeccion tecnica completada" })
-  revalidatePath(`/dashboard/tickets/${data.ticket_id}`)
-  return { success: true, data: data as Inspeccion, message: "Inspeccion completada exitosamente" }
+  return { success: false, error: "Inspecciones requiere configuración Firebase válida" }
 }
 
 export async function deleteInspeccion(inspeccionId: string): Promise<ActionResponse<void>> {
@@ -193,11 +153,5 @@ export async function deleteInspeccion(inspeccionId: string): Promise<ActionResp
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const supabase = await createClient()
-  const { data: inspeccion } = await supabase.from("inspecciones").select("ticket_id").eq("id", inspeccionId).single()
-  if (!inspeccion) return { success: false, error: "Inspeccion no encontrada" }
-  const { error } = await supabase.from("inspecciones").delete().eq("id", inspeccionId)
-  if (error) return { success: false, error: error.message }
-  revalidatePath(`/dashboard/tickets/${inspeccion.ticket_id}`)
-  return { success: true, message: "Inspeccion eliminada exitosamente" }
+  return { success: false, error: "Inspecciones requiere configuración Firebase válida" }
 }

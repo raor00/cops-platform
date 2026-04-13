@@ -47,16 +47,7 @@ export async function getFasesByTicket(ticketId: string): Promise<ActionResponse
     }
   }
 
-  const { createClient } = await import("@/lib/supabase/server")
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("ticket_fases")
-    .select("*")
-    .eq("ticket_id", ticketId)
-    .order("orden", { ascending: true })
-
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as TicketFase[] }
+  return { success: false, error: "Fases requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,38 +107,7 @@ export async function createFase(input: FaseCreateInput): Promise<ActionResponse
     }
   }
 
-  const { createClient } = await import("@/lib/supabase/server")
-  const supabase = await createClient()
-
-  // Obtener el siguiente orden
-  const { data: existing } = await supabase
-    .from("ticket_fases")
-    .select("orden")
-    .eq("ticket_id", input.ticket_id)
-    .order("orden", { ascending: false })
-    .limit(1)
-
-  const nextOrden = existing && existing.length > 0 ? (existing[0]!.orden as number) + 1 : 1
-
-  const { data, error } = await supabase
-    .from("ticket_fases")
-    .insert({
-      ticket_id: input.ticket_id,
-      nombre: input.nombre,
-      descripcion: input.descripcion || null,
-      orden: input.orden ?? nextOrden,
-      estado: "pendiente",
-      progreso_porcentaje: 0,
-      fecha_inicio_estimada: input.fecha_inicio_estimada || null,
-      fecha_fin_estimada: input.fecha_fin_estimada || null,
-    })
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-
-  revalidatePath(`/dashboard/tickets/${input.ticket_id}`)
-  return { success: true, data: data as TicketFase, message: "Fase creada exitosamente" }
+  return { success: false, error: "Fases requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -215,31 +175,7 @@ export async function updateFase(
     }
   }
 
-  const { createClient } = await import("@/lib/supabase/server")
-  const supabase = await createClient()
-
-  const updatePayload: Record<string, unknown> = { ...safeInput, updated_at: new Date().toISOString() }
-
-  // Auto-completar fechas según estado
-  if (safeInput.estado === "en_progreso" && !safeInput.fecha_inicio_real) {
-    updatePayload.fecha_inicio_real = new Date().toISOString()
-  }
-  if (safeInput.estado === "completada") {
-    updatePayload.fecha_fin_real = new Date().toISOString()
-    updatePayload.progreso_porcentaje = 100
-  }
-
-  const { data, error } = await supabase
-    .from("ticket_fases")
-    .update(updatePayload)
-    .eq("id", id)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  return { success: true, data: data as TicketFase, message: "Fase actualizada" }
+  return { success: false, error: "Fases requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,12 +204,5 @@ export async function deleteFase(id: string, ticketId: string): Promise<ActionRe
     }
   }
 
-  const { createClient } = await import("@/lib/supabase/server")
-  const supabase = await createClient()
-  const { error } = await supabase.from("ticket_fases").delete().eq("id", id)
-
-  if (error) return { success: false, error: error.message }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  return { success: true, message: "Fase eliminada" }
+  return { success: false, error: "Fases requiere configuración Firebase válida" }
 }

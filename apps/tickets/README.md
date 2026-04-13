@@ -59,7 +59,6 @@ apps/tickets/
 ├── lib/
 │   ├── actions/            # Server Actions por dominio
 │   ├── firebase/           # Integración Firebase/Auth/Firestore
-│   ├── supabase/           # Integración Supabase
 │   ├── mock-data.ts        # Datos demo y helpers de modo local
 │   ├── local-mode.ts       # Selección de proveedor de datos
 │   ├── utils/              # Utilidades
@@ -74,17 +73,14 @@ apps/tickets/
 ### 1. Requisitos previos
 - Node.js 18+
 - pnpm 10+
-- Cuenta en Supabase
+- Proyecto Firebase
 
 ### 2. Configurar proveedor de datos
 
-Este módulo soporta tres modos:
+Este módulo soporta dos modos:
 
-- **Local/demo**: se activa automáticamente si no hay credenciales de Supabase.
+- **Local/demo**: se activa automáticamente si no hay credenciales de Firebase.
 - **Firebase**: requiere `FIREBASE_PROJECT_ID` y credenciales de servicio.
-- **Supabase**: requiere URL y anon key.
-
-> Importante: actualmente este módulo **no versiona un `schema.sql` dentro de `apps/tickets`**. Si vas a usar Supabase debes aprovisionar el esquema desde la fuente operativa del proyecto o documentarlo aparte.
 
 ### 3. Variables de entorno
 
@@ -94,14 +90,18 @@ cp .env.example .env.local
 
 Editar `.env.local` según el modo:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=tu_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+NEXT_PUBLIC_FIREBASE_API_KEY=tu_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tu-proyecto.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=tu_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tu-proyecto.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
+FIREBASE_PROJECT_ID=tu_project_id
+FIREBASE_CLIENT_EMAIL=tu_service_account_email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
 # Opcional: forzar modo local/demo
 TICKETS_LOCAL_MODE=true
-
-# Opcional: modo Firebase
-FIREBASE_PROJECT_ID=tu_project_id
 ```
 
 ### 4. Instalar dependencias

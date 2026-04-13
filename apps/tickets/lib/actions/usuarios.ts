@@ -1,6 +1,4 @@
 "use server"
-
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/types"
 import { getCurrentUser, registerUserAction } from "./auth"
@@ -9,8 +7,6 @@ import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import { getAdminAuth, getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
 import { uploadFileToStorage, getSignedDownloadUrl, deleteFileFromStorage } from "@/lib/firebase/storage-rest"
 import { getDemoCurrentUser, getDemoUsers } from "@/lib/mock-data"
-
-const BUCKET_NAME = "user-profiles"
 
 function normalizeEmail(email?: string | null): string {
   return email?.trim().toLowerCase() || ""
@@ -90,19 +86,7 @@ export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
       return { success: true, data: await fbGetCanonicalUsers() }
     }
 
-    const supabase = await createClient()
-    const { data: users, error } = await supabase.from("users").select("*").order("nombre", { ascending: true })
-    if (error) return { success: false, error: `Error al obtener usuarios: ${error.message}` }
-    const usersWithUrls = await Promise.all(
-      (users || []).map(async (u) => {
-        if (u.foto_perfil_path) {
-          const { data: signedUrl } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(u.foto_perfil_path, 3600)
-          return { ...u, foto_perfil_url: signedUrl?.signedUrl || null } as UserProfile
-        }
-        return { ...u, foto_perfil_url: null } as UserProfile
-      })
-    )
-    return { success: true, data: usersWithUrls }
+    return { success: false, error: "Usuarios requiere configuración Firebase válida" }
   } catch (error) {
     return { success: false, error: "Error inesperado al obtener usuarios" }
   }
@@ -125,15 +109,7 @@ export async function getUserById(userId: string): Promise<ActionResponse<UserPr
       return { success: true, data: profile }
     }
 
-    const supabase = await createClient()
-    const { data: targetUser, error } = await supabase.from("users").select("*").eq("id", userId).single()
-    if (error || !targetUser) return { success: false, error: "Usuario no encontrado" }
-    let fotoPerfilUrl = null
-    if (targetUser.foto_perfil_path) {
-      const { data: signedUrl } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(targetUser.foto_perfil_path, 3600)
-      fotoPerfilUrl = signedUrl?.signedUrl || null
-    }
-    return { success: true, data: { ...targetUser, foto_perfil_url: fotoPerfilUrl } as UserProfile }
+    return { success: false, error: "Usuarios requiere configuración Firebase válida" }
   } catch (error) {
     return { success: false, error: "Error inesperado al obtener usuario" }
   }
@@ -167,12 +143,7 @@ export async function updateUserProfile(userId: string, updates: UserUpdateInput
       return { success: true, message: "Perfil actualizado exitosamente" }
     }
 
-    const supabase = await createClient()
-    const { error } = await supabase.from("users").update(finalUpdates).eq("id", userId)
-    if (error) return { success: false, error: `Error al actualizar perfil: ${error.message}` }
-    revalidatePath("/dashboard/usuarios")
-    revalidatePath(`/dashboard/usuarios/${userId}`)
-    return { success: true, message: "Perfil actualizado exitosamente" }
+    return { success: false, error: "Usuarios requiere configuración Firebase válida" }
   } catch (error) {
     return { success: false, error: "Error inesperado al actualizar perfil" }
   }
@@ -215,22 +186,7 @@ export async function uploadProfilePhoto(userId: string, file: File): Promise<Ac
       return { success: true, data: savedPath, message: "Foto de perfil subida exitosamente" }
     }
 
-    const supabase = await createClient()
-    const { data: targetUser } = await supabase.from("users").select("foto_perfil_path").eq("id", userId).single()
-    if (targetUser?.foto_perfil_path) await supabase.storage.from(BUCKET_NAME).remove([targetUser.foto_perfil_path])
-    const timestamp = Date.now()
-    const extension = file.name.split(".").pop()
-    const fileName = `${userId}/profile-${timestamp}.${extension}`
-    const { data: uploadData, error: uploadError } = await supabase.storage.from(BUCKET_NAME).upload(fileName, file, { cacheControl: "3600", upsert: true })
-    if (uploadError) return { success: false, error: `Error al subir foto: ${uploadError.message}` }
-    const { error: dbError } = await supabase.from("users").update({ foto_perfil_path: uploadData.path }).eq("id", userId)
-    if (dbError) {
-      await supabase.storage.from(BUCKET_NAME).remove([uploadData.path])
-      return { success: false, error: `Error al actualizar perfil: ${dbError.message}` }
-    }
-    revalidatePath("/dashboard/usuarios")
-    revalidatePath(`/dashboard/usuarios/${userId}`)
-    return { success: true, data: uploadData.path, message: "Foto de perfil subida exitosamente" }
+    return { success: false, error: "Usuarios requiere configuración Firebase válida" }
   } catch (error) {
     return { success: false, error: "Error inesperado al subir foto de perfil" }
   }
@@ -259,14 +215,7 @@ export async function deleteProfilePhoto(userId: string): Promise<ActionResponse
       return { success: true, message: "Foto de perfil eliminada" }
     }
 
-    const supabase = await createClient()
-    const { data: targetUser } = await supabase.from("users").select("foto_perfil_path").eq("id", userId).single()
-    if (!targetUser?.foto_perfil_path) return { success: false, error: "No hay foto de perfil para eliminar" }
-    await supabase.storage.from(BUCKET_NAME).remove([targetUser.foto_perfil_path])
-    await supabase.from("users").update({ foto_perfil_path: null }).eq("id", userId)
-    revalidatePath("/dashboard/usuarios")
-    revalidatePath(`/dashboard/usuarios/${userId}`)
-    return { success: true, message: "Foto de perfil eliminada" }
+    return { success: false, error: "Usuarios requiere configuración Firebase válida" }
   } catch (error) {
     return { success: false, error: "Error inesperado al eliminar foto" }
   }

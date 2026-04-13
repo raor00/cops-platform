@@ -46,10 +46,12 @@
 
 | Categoría | Tecnología | Versión | Por qué se usa |
 |---|---|---|---|
-| Framework web | **Next.js** | 16 (App Router) | Full-stack React con Server Components y routing basado en archivos |
+| Framework web | **Next.js** | 15 (App Router) | Full-stack React con Server Components y routing basado en archivos |
 | Lenguaje | **TypeScript** | 5 | Tipado estático que previene errores en tiempo de compilación |
-| Base de datos | **Supabase** (PostgreSQL) | — | BaaS con autenticación, RLS y API REST automática |
-| ORM/Cliente DB | **Supabase JS Client** | 2 | Cliente tipado para queries a PostgreSQL |
+| Autenticación | **Firebase Authentication** | — | Login con email/password, sesiones con cookies firmadas de servidor |
+| Base de datos | **Firestore (Firebase)** | — | Base de datos NoSQL orientada a documentos, sin servidor que administrar |
+| Almacenamiento archivos | **Firebase Storage** | — | Almacenamiento de fotos e imágenes (accedido vía REST API) |
+| Admin SDK | **firebase-admin** | — | SDK de servidor para operar Firestore y Auth desde Server Actions |
 | Estilos | **Tailwind CSS** | 3 | Utilidades CSS sin hojas de estilo separadas |
 | Componentes UI | **Radix UI** | — | Componentes accesibles sin estilos (headless) |
 | Formularios | **React Hook Form** | — | Gestión de estado de formularios de alto rendimiento |
@@ -107,18 +109,23 @@ cops-platform/
     │       │   │   ├── tickets.ts      ← CRUD de tickets + historial
     │       │   │   ├── fases.ts        ← NUEVO Sprint 2: CRUD de fases
     │       │   │   └── pagos.ts        ← NUEVO Sprint 2: procesar pagos
-    │       │   ├── supabase/           ← Configuración del cliente Supabase
-    │       │   │   ├── client.ts       ← Cliente para componentes Client
-    │       │   │   └── server.ts       ← Cliente para Server Components
+    │       │   ├── firebase/           ← Clientes Firebase (Auth, Firestore, Storage)
+    │       │   │   ├── client.ts       ← Firebase Auth para el browser (signIn)
+    │       │   │   ├── admin.ts        ← Firebase Admin SDK (Firestore + Auth + Storage en servidor)
+    │       │   │   ├── session.ts      ← Crear/verificar/limpiar cookie de sesión Firebase
+    │       │   │   └── storage-rest.ts ← Subida/descarga de archivos vía REST API de Firebase Storage
+    │       │   ├── supabase/           ← [LEGACY] Cliente Supabase (no se usa en producción)
+    │       │   │   ├── client.ts
+    │       │   │   └── server.ts
     │       │   ├── utils/              ← Funciones de utilidad (formateo, etc.)
     │       │   │   └── index.ts
     │       │   ├── validations/        ← Schemas Zod de validación
     │       │   │   └── index.ts
     │       │   ├── mock-data.ts        ← Datos de demostración en memoria
-    │       │   └── local-mode.ts       ← Detección del modo demo
+    │       │   └── local-mode.ts       ← Detección del modo (local / firebase)
     │       ├── types/                  ← Definiciones de tipos TypeScript
     │       │   └── index.ts
-    │       ├── supabase/               ← Schema SQL de la base de datos
+    │       ├── supabase/               ← [LEGACY] Schema SQL original (referencia histórica)
     │       │   └── schema.sql
     │       └── public/                 ← Archivos estáticos
     └── packages/                       ← Paquetes compartidos del monorepo
@@ -199,7 +206,7 @@ const [fasesResult, historialResult] = await Promise.all([
 Los **Server Actions** son funciones marcadas con `"use server"` que el browser puede llamar directamente, pero que se ejecutan en el servidor. Son el mecanismo de Next.js para hacer mutaciones (crear, actualizar, eliminar datos) sin necesidad de crear una API REST manualmente.
 
 ```typescript
-// libs/actions/tickets.ts
+// lib/actions/tickets.ts
 "use server"
 
 export async function changeTicketStatus(
@@ -207,11 +214,11 @@ export async function changeTicketStatus(
   nuevoEstado: TicketStatus
 ): Promise<ActionResponse<Ticket>> {
   // Este código SIEMPRE ejecuta en el servidor, aunque lo llame un componente del browser
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("tickets")
-    .update({ estado: nuevoEstado })
-    .eq("id", ticketId)
+  const db = getAdminFirestore()
+  await db.collection("tickets").doc(ticketId).update({
+    estado: nuevoEstado,
+    updated_at: new Date().toISOString(),
+  })
   // ...
 }
 ```
@@ -227,15 +234,35 @@ const result = await changeTicketStatus(ticket.id, "finalizado")
 
 ## 5. Base de Datos y Tipos
 
-### 5.1 Tablas principales en Supabase (PostgreSQL)
+### 5.1 Colecciones en Firestore
 
-| Tabla | Propósito | Archivo de tipos |
+Firestore organiza los datos en **colecciones de documentos** (equivalente a tablas de filas). Cada documento es un objeto JSON con un ID único.
+
+| Colección | Propósito | Archivo de tipos |
 |---|---|---|
 | `users` | Usuarios del sistema con roles | `types/index.ts → User` |
 | `tickets` | Tickets de servicio y proyectos | `types/index.ts → Ticket` |
 | `ticket_fases` | Fases/hitos de proyectos | `types/index.ts → TicketFase` |
 | `pagos_tecnicos` | Registro de pagos por comisión | `types/index.ts → TechnicianPayment` |
-| `historial_cambios` | Auditoría de cambios en tickets | `types/index.ts → ChangeHistory` |
+| `ticket_fotos` | Metadata de fotos subidas | `types/index.ts → TicketFoto` |
+| `update_logs` | Notas manuales del coordinador | `types/index.ts → UpdateLog` |
+| `ticket_sesiones_trabajo` | Sesiones de trabajo del técnico | — |
+
+**Diferencia clave con SQL**: Firestore **no tiene JOINs**. Para obtener un ticket con su técnico asignado se hacen dos lecturas separadas y se combinan en código:
+
+```typescript
+// Firestore: dos reads separados
+const ticketDoc = await db.collection("tickets").doc(id).get()
+const ticket = fromFirestoreDoc<Ticket>(ticketDoc.id, ticketDoc.data()!)
+
+if (ticket.tecnico_id) {
+  const userDoc = await db.collection("users").doc(ticket.tecnico_id).get()
+  ticket.tecnico = fromFirestoreDoc<User>(userDoc.id, userDoc.data()!)
+}
+
+// SQL equivalente (un solo query):
+// SELECT t.*, u.nombre FROM tickets t LEFT JOIN users u ON t.tecnico_id = u.id
+```
 
 ### 5.2 El archivo de tipos: `types/index.ts`
 
@@ -247,7 +274,7 @@ Este archivo centraliza **todas las definiciones de tipos** del sistema. Es fund
 **Ejemplo del tipo Ticket:**
 ```typescript
 export interface Ticket {
-  id: string                          // UUID generado por Supabase
+  id: string                          // ID del documento en Firestore (string auto-generado)
   numero_ticket: string               // Ej: "TKT-2026-0001"
   tipo: TicketType                    // "servicio" | "proyecto"
 
@@ -262,24 +289,39 @@ export interface Ticket {
   tiempo_trabajado: number | null     // en minutos
   solucion_aplicada: string | null
 
-  // Relaciones (JOIN de otras tablas)
+  // Relaciones (lecturas adicionales a Firestore — no hay JOINs)
   tecnico?: User                      // El ? significa "puede no estar presente"
   creador?: User
 }
 ```
 
-### 5.3 Row Level Security (RLS) en Supabase
+### 5.3 Firebase Security Rules
 
-Supabase permite definir **políticas de seguridad directamente en la base de datos**. Así, aunque alguien acceda a la API de Supabase directamente, las políticas garantizan que solo vea los datos que le corresponden.
+Firebase permite definir **reglas de seguridad declarativas** que la base de datos aplica independientemente de la aplicación. Equivalen al RLS de PostgreSQL pero con sintaxis propia de Firebase.
 
-```sql
--- Solo técnicos ven sus propios tickets
-CREATE POLICY "tecnico_sees_own_tickets" ON tickets
-  FOR SELECT USING (
-    auth.uid() = tecnico_id
-    OR nivel_jerarquico >= 3  -- gerentes ven todos
-  );
 ```
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Solo técnicos ven sus propios tickets; gerentes ven todos
+    match /tickets/{ticketId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.tecnico_id ||
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.nivel_jerarquico >= 3);
+    }
+
+    // Solo gerentes+ pueden leer todos los usuarios
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.nivel_jerarquico >= 3;
+    }
+  }
+}
+```
+
+**Nota importante**: aunque las Security Rules estén activas en Firebase, el sistema utiliza el **Firebase Admin SDK** desde los Server Actions (ejecutados en el servidor), lo cual **bypassa** las Security Rules. Las reglas aplican a accesos directos desde el cliente. La seguridad en este sistema se garantiza principalmente en los Server Actions verificando `getCurrentUser()` + `ROLE_HIERARCHY`.
 
 ---
 
@@ -327,16 +369,37 @@ const canViewComprobante = ticket.estado === "finalizado"
   && ROLE_HIERARCHY[user.rol] >= 2                      // coordinador+
 ```
 
-### 6.3 Flujo de autenticación
+### 6.3 Flujo de autenticación con Firebase
+
+El login usa un proceso en dos pasos: el cliente firma con Firebase, el servidor crea una cookie segura.
 
 ```
-1. Usuario ingresa email y contraseña en /login
-2. loginAction() llama a Supabase Auth → verifica credenciales
-3. Supabase devuelve JWT (token de sesión)
-4. getUser() en Server Components lee ese JWT → obtiene perfil del usuario
-5. Cada página protegida llama getCurrentUser() al inicio
-   → si devuelve null → redirect("/login")
+BROWSER (FirebaseLoginForm — Client Component)
+│
+│  1. Usuario ingresa email y contraseña
+│  2. signInWithEmailAndPassword(auth, email, password)
+│     → Firebase Auth verifica credenciales
+│     → Devuelve un ID Token (JWT firmado por Firebase, válido 1h)
+│  3. Se llama a setFirebaseSessionAction(idToken) — Server Action
+│
+SERVER (setFirebaseSessionAction)
+│  4. getAdminAuth().verifyIdToken(idToken)  → verifica la firma del JWT
+│  5. db.collection("users").doc(uid).get() → obtiene el perfil del usuario de Firestore
+│  6. getAdminAuth().createSessionCookie(idToken, { expiresIn: 7 días })
+│     → Crea una cookie de sesión de larga duración
+│  7. cookieStore.set("tickets_firebase_session", sessionCookie) → cookie httpOnly en el browser
+│
+BROWSER → siguiente request
+│  8. El browser envía la cookie en cada request automáticamente
+│  9. getCurrentUser() llama a verifyFirebaseSession()
+│     → getAdminAuth().verifySessionCookie(cookie) → obtiene uid
+│     → db.collection("users").doc(uid).get() → obtiene perfil actualizado
+│  10. Si devuelve null → redirect("/login")
 ```
+
+**Por qué cookie httpOnly y no localStorage:**
+- `httpOnly` = JavaScript del browser no puede leerla → protegida contra XSS
+- La cookie la gestiona el servidor, no el cliente
 
 ---
 
@@ -394,10 +457,80 @@ Al confirmar, llama a `changeTicketStatus(ticket.id, "finalizado", { materiales_
 |---|---|---|
 | Detalle | Datos completos del ticket + barra de progreso (proyectos) | Siempre |
 | Fases | Lista de fases del proyecto | Solo si `ticket.tipo === "proyecto"` |
-| Historial | Timeline de todos los cambios | Siempre |
+| Fotos | Galería de fotos subidas por el técnico | Siempre |
+| Historial | Timeline de cambios de estado + notas UpdateLog | Siempre |
 | Inspección | Datos del levantamiento o link para crear uno | Siempre |
 
 El componente es **Client** porque gestiona el estado de qué tab está activa (usa `Tabs` de Radix UI).
+
+### 7.5 Campos extendidos del ticket (Sprint 8)
+
+Los tickets de tipo `servicio` y los originados por `carta_aceptacion` tienen campos adicionales opcionales:
+
+```typescript
+interface Ticket {
+  // ... campos base ...
+  tipo_mantenimiento: 'correctivo' | 'preventivo' | null  // solo cuando tipo === 'servicio'
+  numero_carta: string | null                              // solo cuando origen === 'carta_aceptacion'
+  notas_tecnico: string | null                             // reemplaza "requerimientos técnicos"
+}
+```
+
+En el formulario de creación (`create-ticket-form.tsx`) estos campos se muestran/ocultan con lógica condicional:
+
+```typescript
+// Visible solo cuando tipo === "servicio"
+{watchTipo === "servicio" && (
+  <Select name="tipo_mantenimiento">
+    <SelectItem value="correctivo">Correctivo</SelectItem>
+    <SelectItem value="preventivo">Preventivo</SelectItem>
+  </Select>
+)}
+
+// Visible solo cuando origen === "carta_aceptacion"
+{watchOrigen === "carta_aceptacion" && (
+  <Input name="numero_carta" placeholder="Nº de la carta" />
+)}
+```
+
+### 7.6 Estados bidireccionales (Sprint 6)
+
+El flujo estándar de tickets es lineal (hacia adelante). Sin embargo, la gerencia necesita poder corregir errores operativos. Se definen dos constantes en `types/index.ts`:
+
+```typescript
+// Transiciones hacia adelante — cualquier usuario autorizado
+export const VALID_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  asignado:    ['iniciado', 'cancelado'],
+  iniciado:    ['en_progreso', 'cancelado'],
+  en_progreso: ['finalizado', 'cancelado'],
+  finalizado:  [],
+  cancelado:   [],
+}
+
+// Transiciones hacia atrás — solo gerente+ (nivel >= 3)
+export const ADMIN_REVERSE_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  asignado:    [],
+  iniciado:    ['asignado'],
+  en_progreso: ['iniciado'],
+  finalizado:  ['en_progreso'],
+  cancelado:   ['asignado'],
+}
+```
+
+En `ticket-status-actions.tsx`, los botones de reversión aparecen solo si el usuario tiene nivel 3+:
+
+```typescript
+const canRevert = ROLE_HIERARCHY[userRole] >= 3
+const reverseTransitions = ADMIN_REVERSE_TRANSITIONS[ticket.estado]
+
+// En la action, se valida que la transición sea legal:
+const forwardOk = VALID_TRANSITIONS[ticket.estado].includes(newStatus)
+const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado].includes(newStatus)
+
+if (!forwardOk && !reverseOk) {
+  return { success: false, error: "Transición no permitida" }
+}
+```
 
 ---
 
@@ -476,13 +609,24 @@ Al confirmar, llama a `processPaymentAction()` que:
 
 ### 9.4 Protección contra doble pago
 
-En Supabase se usa un filtro doble:
+En Firestore se usa una **transacción atómica**: se verifica que el estado sea "pendiente" ANTES de actualizar, y si ya fue pagado se aborta la operación:
+
 ```typescript
-await supabase
-  .from("pagos_tecnicos")
-  .update({ estado_pago: "pagado", ... })
-  .eq("id", paymentId)
-  .eq("estado_pago", "pendiente")  // ← si ya está pagado, no actualiza nada
+// lib/actions/pagos.ts — modo Firebase
+await db.runTransaction(async (tx) => {
+  const pagoDoc = await tx.get(db.collection("pagos_tecnicos").doc(paymentId))
+  if (!pagoDoc.exists) throw new Error("Pago no encontrado")
+  if (pagoDoc.data()!.estado_pago !== "pendiente") throw new Error("El pago ya fue procesado")
+
+  tx.update(pagoDoc.ref, {
+    estado_pago: "pagado",
+    metodo_pago: metodo,
+    referencia_pago: referencia,
+    fecha_pago: new Date().toISOString(),
+    pagado_por: currentUser.id,
+  })
+})
+// Si la transacción falla (pago ya procesado), lanza error y no actualiza nada
 ```
 
 ---
@@ -568,7 +712,7 @@ Muestra una tabla de todos los usuarios del sistema con: nombre, email, rol, est
 {isLocalMode && (
   <div className="... bg-yellow-500/10 border-yellow-500/30">
     <AlertTriangle />
-    <p>Modo de demostración activo — No disponible sin Supabase</p>
+    <p>Modo de demostración activo — No disponible sin Firebase</p>
   </div>
 )}
 ```
@@ -577,10 +721,10 @@ Muestra una tabla de todos los usuarios del sistema con: nombre, email, rol, est
 1. Usuario completa el form y hace submit
 2. `handleSubmit` de React Hook Form valida con Zod
 3. Si pasa validación, llama a `registerUserAction()` (Server Action)
-4. Supabase crea el usuario en Auth (email + password)
-5. Supabase crea el perfil en la tabla `users` (nombre, rol, cédula, etc.)
+4. Firebase Admin crea la cuenta en Firebase Auth: `getAdminAuth().createUser({ email, password })`
+5. Firebase Admin crea el perfil en Firestore: `db.collection("users").doc(authUser.uid).set(profile)`
 6. Si exitoso: toast de éxito + redirect a `/dashboard/usuarios`
-7. Si falla: toast de error con el mensaje de Supabase
+7. Si falla: toast de error con el mensaje de Firebase
 
 ---
 
@@ -622,26 +766,41 @@ El valor es un string y el ícono es JSX porque **no se pueden pasar funciones d
 
 ### 13.1 Por qué existe
 
-Durante el desarrollo (o en una demo sin Supabase), el sistema necesita funcionar con datos de prueba sin base de datos real. El modo local simula toda la aplicación usando datos en memoria.
+Durante el desarrollo (o en una demo sin Firebase), el sistema necesita funcionar con datos de prueba sin base de datos real. El modo local simula toda la aplicación usando datos en memoria.
 
 ### 13.2 Cómo funciona
 
 ```typescript
 // lib/local-mode.ts
+export type TicketsDataMode = "local" | "firebase"
+
+export function resolveTicketsDataMode(): TicketsDataMode {
+  const explicitFlag = process.env.TICKETS_LOCAL_MODE
+
+  if (explicitFlag === "true") return "local"
+  if (hasFirebaseConfig()) return "firebase"
+  if (process.env.NODE_ENV === "production") return "firebase"
+  return "local"  // default en desarrollo sin Firebase
+}
+
 export function isLocalMode(): boolean {
-  return process.env.NEXT_PUBLIC_LOCAL_MODE === "true"
+  return resolveTicketsDataMode() === "local"
+}
+
+export function isFirebaseMode(): boolean {
+  return resolveTicketsDataMode() === "firebase"
 }
 ```
 
-Cuando está activo:
-- La autenticación usa un usuario demo predefinido (admin@copselectronics.com)
+Cuando el modo local está activo:
+- La autenticación usa un usuario demo predefinido (usuario: `admin`)
 - Los datos vienen de `lib/mock-data.ts` (arrays JavaScript en memoria)
 - Las mutaciones (crear, editar, eliminar) modifican esos arrays en memoria
 - **Los cambios NO persisten** entre reinicios del servidor de desarrollo
 
 ### 13.3 El patrón de doble rama en cada Server Action
 
-Cada action sigue este patrón obligatorio:
+Cada action sigue este patrón:
 ```typescript
 export async function miAction(input): Promise<ActionResponse<T>> {
   const currentUser = await getCurrentUser()
@@ -649,21 +808,29 @@ export async function miAction(input): Promise<ActionResponse<T>> {
   if (ROLE_HIERARCHY[currentUser.rol] < nivelRequerido)
     return { success: false, error: "Sin permisos" }
 
+  // ─── RAMA 1: Datos en memoria (modo local/demo) ────────────────
   if (isLocalMode()) {
-    // ─── RAMA 1: Datos en memoria (mock-data.ts) ───────────────────
     const result = funcionDemoCorrespondiente(input)
     revalidatePath("/dashboard/ruta")
     return { success: true, data: result, message: "Hecho (demo)" }
   }
 
-  // ─── RAMA 2: Base de datos real (Supabase) ─────────────────────
-  const supabase = await createClient()
-  const { data, error } = await supabase.from("tabla").insert(input)
-  if (error) return { success: false, error: error.message }
-  revalidatePath("/dashboard/ruta")
-  return { success: true, data, message: "Hecho" }
+  // ─── RAMA 2: Firebase / Firestore (modo producción) ───────────
+  if (isFirebaseMode()) {
+    const db = getAdminFirestore()
+    const docRef = db.collection("tickets").doc()
+    await docRef.set(cleanForFirestore(input))  // cleanForFirestore elimina undefined
+    revalidatePath("/dashboard/ruta")
+    return { success: true, data: { id: docRef.id, ...input }, message: "Hecho" }
+  }
+
+  return { success: false, error: "Modo de datos no configurado" }
 }
 ```
+
+**`cleanForFirestore()`**: Firestore lanza error si algún campo tiene valor `undefined` (a diferencia de `null` que sí acepta). Esta función serializa y deserializa el objeto con `JSON.parse(JSON.stringify(obj))`, eliminando automáticamente todos los campos `undefined`.
+
+**`fromFirestoreDoc()`**: Firestore almacena fechas como objetos `Timestamp` propios, no como strings ISO. Esta función convierte todos los Timestamps a ISO strings al leer, manteniendo los tipos de TypeScript consistentes.
 
 ---
 
@@ -779,6 +946,250 @@ Capa 2: Backend (Server Action)
 
 ---
 
+## 17. Documentación Fotográfica
+
+### 17.1 Almacenamiento
+
+Las fotos se guardan en **Firebase Storage**, no en la base de datos. La colección `ticket_fotos` en Firestore guarda la metadata:
+
+```typescript
+interface TicketFoto {
+  id: string
+  ticket_id: string
+  path: string           // ruta en Firebase Storage
+  tipo: TipoFoto         // 'progreso' | 'inspeccion' | 'documento' | 'antes' | 'despues'
+  descripcion?: string
+  subida_por: string     // usuario_id
+  created_at: string
+  url?: string           // URL firmada generada por Firebase (expira en X horas)
+}
+```
+
+### 17.2 Flujo de subida
+
+```
+BROWSER (FotosGallery — Client Component)
+│
+│  1. Usuario selecciona archivo con <input type="file">
+│  2. Se llama a uploadTicketFoto(ticketId, file, tipo)
+│
+SERVER ACTION (lib/actions/fotos.ts)
+│  3. Genera nombre único: `tickets/${ticketId}/${uuid}.${extension}`
+│  4. uploadFileToStorage(path, file) → lib/firebase/storage-rest.ts
+│     (Firebase Storage REST API — no el SDK del cliente, que no funciona en el servidor)
+│  5. getSignedDownloadUrl(path) → genera URL firmada de acceso temporal
+│  6. db.collection("ticket_fotos").add({ path, url, tipo, ... })
+│  7. revalidatePath() para refrescar la galería
+```
+
+**¿Por qué `storage-rest.ts` en lugar del SDK estándar?**
+Firebase Storage SDK (web) no funciona en Server Components porque asume entorno de browser. El sistema usa la REST API de Firebase Storage directamente desde el servidor con las credenciales del Admin SDK.
+
+### 17.3 Componente FotosGallery
+
+**Ubicación**: `components/fotos/fotos-gallery.tsx`
+
+Este componente es **autónomo**: recibe solo el `ticketId` y carga sus propias fotos internamente. No necesita que el componente padre le pase las fotos.
+
+```typescript
+// Autónomo: lo único que necesita es el ID del ticket
+<FotosGallery ticketId={ticket.id} />
+```
+
+Internamente hace el fetch al montar el componente usando `useEffect` + `getTicketFotos(ticketId)`.
+
+---
+
+## 18. Inspecciones Técnicas
+
+### 18.1 Concepto
+
+Una **inspección** es un levantamiento técnico previo al trabajo. El técnico visita el sitio, evalúa las condiciones y llena un checklist de 25 ítems antes de que se ejecute el servicio.
+
+### 18.2 Estructura del ChecklistItem
+
+```typescript
+// IMPORTANTE: NO usar campos de versiones anteriores (cumple/observacion/item)
+interface ChecklistItem {
+  id: string
+  categoria: string           // 'electrica' | 'red' | 'seguridad' | 'ambiental' | 'equipos'
+  descripcion: string         // Texto del ítem: "¿Hay toma de tierra en el rack?"
+  aplica: boolean             // false = excluido de la inspección (No Aplica)
+  estado: 'ok' | 'falla' | 'pendiente' | 'na'
+  notas: string               // observación libre del inspector
+  foto_ids: string[]          // fotos vinculadas a este ítem
+}
+```
+
+### 18.3 Flujo de estados de la inspección
+
+```
+borrador ──→ completada ──→ reportada
+```
+
+- **borrador**: se está llenando el formulario (editable)
+- **completada**: inspector marcó todos los ítems y confirma (ya no editable)
+- **reportada**: gerencia tomó acción con base en la inspección
+
+### 18.4 Archivos
+
+| Archivo | Tipo | Función |
+|---|---|---|
+| `app/dashboard/tickets/[id]/inspeccion/page.tsx` | Server Page | Carga inspección existente o crea una nueva |
+| `components/inspecciones/inspeccion-form.tsx` | Client Component | Checklist interactivo con 25 ítems en 5 categorías |
+| `app/dashboard/tickets/[id]/inspeccion/view/page.tsx` | Server Page | Vista imprimible del informe de inspección |
+| `components/inspecciones/inspeccion-view.tsx` | Client Component | Renderiza el informe con CSS print |
+| `lib/actions/inspecciones.ts` | Server Action | CRUD: `getInspeccionByTicket`, `createInspeccion`, `completarInspeccion` |
+
+### 18.5 Vista imprimible
+
+Similar al comprobante de servicio, la vista de inspección usa `window.print()` + `@media print`. El resultado es un informe formal con los resultados del checklist, clasificado por categoría, con las notas del inspector.
+
+---
+
+## 19. Timeline de Actualizaciones — UpdateLog
+
+### 19.1 Propósito
+
+El historial de cambios (`historial_cambios`) registra eventos del sistema (cambios de estado, asignaciones). El **UpdateLog** es diferente: son **notas manuales** que el coordinador agrega para documentar lo que ocurrió entre estados.
+
+Ejemplo: "El técnico llama desde el campo para avisar que necesita piezas adicionales. No cambia el estado pero se deja nota para trazabilidad."
+
+### 19.2 Tipos de entrada
+
+```typescript
+interface UpdateLog {
+  id: string
+  ticket_id: string
+  autor_id: string
+  contenido: string
+  tipo: 'nota' | 'cambio_estado'   // 'nota' = manual, 'cambio_estado' = automático
+  created_at: string
+  autor?: User                      // JOIN para mostrar nombre del autor
+}
+```
+
+### 19.3 Componente UpdateLogPanel
+
+**Ubicación**: `components/tickets/update-log-panel.tsx`
+
+```typescript
+// Recibe:
+interface UpdateLogPanelProps {
+  ticketId: string
+  logs: UpdateLog[]
+  userRole: string
+  ticketActivo: boolean   // si false, oculta el textarea (no se agregan notas a tickets cerrados)
+}
+```
+
+El panel muestra:
+- Lista de notas en orden cronológico (timeline)
+- Textarea para agregar nueva nota (solo si el ticket está activo y el usuario tiene permiso)
+- Al enviar, llama a `addTicketUpdateLog(ticketId, contenido)` (Server Action)
+
+### 19.4 Separación del Historial
+
+En la pestaña **Historial** del ticket (`ticket-detail-tabs.tsx`), se muestran ambas fuentes mezcladas por fecha:
+- Entradas de `historial_cambios` (eventos automáticos del sistema)
+- Entradas de `update_logs` tipo `nota` (notas manuales del coordinador)
+
+Esta separación de fuentes permite que el historial sea completo sin contaminar la tabla de cambios de estado con texto libre.
+
+---
+
+## 20. Guía de Presentación — Demo 12 Minutos
+
+### Flujo recomendado para la defensa
+
+**Minutos 1-2: Contexto**
+- Abrir el dashboard `/dashboard`
+- Señalar los KPIs: "Aquí respondo la pregunta que un gerente se hace cada mañana: ¿cuántos servicios están activos?"
+- Mencionar que el sistema tiene modo demo sin necesidad de base de datos real
+
+**Minutos 2-5: Crear un ticket**
+- Ir a `/dashboard/tickets/nuevo`
+- Buscar cliente en el selector → mostrar el auto-relleno de campos
+- Cambiar tipo a "servicio" → aparece "tipo de mantenimiento" (campo condicional)
+- Cambiar origen a "carta de aceptación" → aparece "número de carta" (campo condicional)
+- Crear el ticket
+
+**Minutos 5-7: Vista del técnico**
+- Ir a `/dashboard/tickets` con ventana reducida a tamaño móvil
+- Mostrar las tarjetas con borde de color por estado
+- "El técnico lo ve desde su teléfono sin instalar ninguna app"
+
+**Minutos 7-9: Flujo de trabajo completo**
+- Abrir el ticket creado
+- Cambiar estado a "Iniciado" → un clic
+- Mostrar la pestaña Fotos
+- Agregar una nota en la pestaña Historial (UpdateLog)
+- Cambiar a "Finalizar" → mostrar el wizard en 3 pasos
+- Mostrar el comprobante generado
+
+**Minutos 9-11: Control de acceso**
+- Abrir la misma sesión en un browser diferente como "técnico"
+- Mostrar que solo ve sus tickets
+- Mostrar que no puede acceder a `/dashboard/pagos`
+
+**Minutos 11-12: Cierre**
+- Volver al pipeline `/dashboard/pipeline`
+- "Todo el ciclo queda trazado: solicitud → campo → comprobante → pago"
+
+---
+
+## 21. Temas Clave para la Defensa
+
+### Preguntas que el jurado probablemente hará
+
+**"¿Por qué Next.js y no otro framework?"**
+
+Next.js 15 con App Router combina rendering del servidor (menor JS en el cliente, carga más rápida) con componentes interactivos en el browser cuando se necesitan. La alternativa más común es una SPA (React puro + API separada), pero eso requiere mantener dos proyectos separados (frontend + API), exponiendo endpoints que hay que asegurar. Con Server Actions, la lógica de negocio nunca llega al browser y no hay API REST que asegurar.
+
+**"¿Por qué Firebase/Firestore en lugar de una base de datos relacional?"**
+
+Firebase provee en un solo servicio: Firestore (base de datos NoSQL), Firebase Auth (login y sesiones) y Firebase Storage (archivos). Esto reduce la infraestructura a un único proveedor sin servidor que administrar y con escalabilidad automática. Firestore es especialmente eficiente para lecturas de documentos individuales — el patrón dominante en una app de tickets donde se consulta un ticket a la vez. La contrapartida es que no tiene JOINs: lo que en SQL es un query, en Firestore son múltiples lecturas combinadas en código.
+
+**"¿Qué diferencia hay entre Firebase Auth y las sesiones tradicionales?"**
+
+Firebase Auth usa JWT (JSON Web Tokens) firmados por Google. El flujo es: el cliente hace `signInWithEmailAndPassword` → Firebase devuelve un ID Token (válido 1h) → el servidor lo verifica con `getAdminAuth().verifyIdToken()` → crea una cookie de sesión de 7 días con `createSessionCookie()`. La ventaja de la cookie de servidor (httpOnly) sobre guardar el token en localStorage es que JavaScript del browser nunca puede leerla, protegiéndola de ataques XSS.
+
+**"¿Qué es un Server Action y por qué lo usaste?"**
+
+Función marcada con `"use server"` que siempre ejecuta en el servidor aunque la llame código del browser. Es el mecanismo de Next.js para mutaciones sin API REST manual. El framework serializa los argumentos, los envía al servidor vía HTTP POST, ejecuta la función y devuelve el resultado. Ventaja: el código de Firestore y las credenciales de Firebase Admin nunca llegan al cliente.
+
+**"¿Cómo garantizas seguridad con múltiples roles?"**
+
+Tres capas:
+1. Middleware de Next.js: redirige a login si no hay sesión (verifica la cookie de Firebase)
+2. Server Components y Server Actions: verifican `getCurrentUser()` y `ROLE_HIERARCHY` en cada operación
+3. Firebase Security Rules: Firestore rechaza accesos directos desde el cliente que no cumplan las reglas, independientemente de la aplicación
+
+**"¿Qué es TypeScript strict y por qué importa?"**
+
+En modo strict, TypeScript no permite valores `null` o `undefined` sin verificación explícita. Esto fuerza al desarrollador a manejar casos edge. En un sistema con documentos de Firestore donde cualquier campo puede no existir, esto previene crashes en producción cuando un campo opcional no está presente en el documento.
+
+**"¿Por qué Zod además de TypeScript?"**
+
+TypeScript valida en tiempo de compilación (mientras se escribe código), pero en runtime los datos vienen de fuentes externas (forms, API) y TypeScript no puede verificarlos. Zod valida en runtime y además genera los tipos TypeScript automáticamente: un solo schema define tanto la validación como el tipo.
+
+**"¿Cómo funciona la máquina de estados del ticket?"**
+
+Es una FSM (Finite State Machine): un conjunto finito de estados y transiciones legales entre ellos. `VALID_TRANSITIONS` es el mapa de transiciones. Antes de cambiar estado, la Server Action verifica que la transición sea válida. Esto previene inconsistencias como finalizar un ticket que ni siquiera fue iniciado.
+
+**"¿Por qué Firebase Storage para las fotos y no guardarlas en Firestore?"**
+
+Los archivos binarios (imágenes) no deben guardarse en bases de datos NoSQL: Firestore tiene un límite de 1MB por documento y no está optimizado para binarios. Firebase Storage (equivalente a S3 de Amazon) está diseñado para archivos: entrega a través de CDN de Google, URLs firmadas con expiración temporal, políticas de acceso independientes. Firestore solo guarda la ruta (`path`) y la URL firmada, no el archivo en sí.
+
+**"¿Qué harías diferente si lo volvieras a construir?"**
+
+Respuesta honesta preparada:
+- Pruebas automatizadas (Vitest para unit, Playwright para E2E) desde el sprint 1
+- Notificaciones en tiempo real con Firestore listeners (`onSnapshot`) desde el inicio, no como feature futura
+- Separar la lógica de negocio de las Server Actions en una capa de servicios independiente para facilitar el testing
+
+---
+
 ## GLOSARIO TÉCNICO
 
 | Término | Definición |
@@ -788,8 +1199,15 @@ Capa 2: Backend (Server Action)
 | **Server Action** | Función con `"use server"` que el browser llama como si fuera local pero ejecuta en el servidor |
 | **RBAC** | Role-Based Access Control — control de acceso por jerarquía de roles |
 | **JWT** | JSON Web Token — token firmado que prueba la identidad del usuario |
-| **RLS** | Row Level Security — políticas de seguridad a nivel de fila en PostgreSQL |
-| **Supabase** | Backend-as-a-Service basado en PostgreSQL con Auth, Storage y API automática |
+| **Firebase Auth** | Servicio de autenticación de Google; maneja login, tokens y sesiones |
+| **Firestore** | Base de datos NoSQL orientada a documentos de Google Firebase |
+| **Firebase Storage** | Servicio de almacenamiento de archivos de Google Firebase |
+| **Firebase Admin SDK** | SDK de servidor para operar Firebase con privilegios de administrador (sin restricciones de Security Rules) |
+| **Firebase Security Rules** | Reglas declarativas en Firebase que controlan quién puede leer/escribir qué datos desde el cliente |
+| **ID Token** | JWT de corta duración (1h) emitido por Firebase Auth tras el login en el cliente |
+| **Session Cookie** | Cookie httpOnly de larga duración (7 días) creada por el servidor tras verificar el ID Token |
+| **cleanForFirestore()** | Helper que elimina campos `undefined` de un objeto antes de escribirlo en Firestore |
+| **fromFirestoreDoc()** | Helper que convierte Timestamps de Firestore a ISO strings al leer documentos |
 | **revalidatePath()** | Función de Next.js que invalida el caché de una ruta, forzando re-fetch del servidor |
 | **Zod** | Biblioteca de validación que genera tipos TypeScript automáticamente desde los schemas |
 | **React Hook Form** | Librería de gestión de formularios que minimiza re-renders |
@@ -802,4 +1220,4 @@ Capa 2: Backend (Server Action)
 
 ---
 
-*Documentación generada para defensa de Trabajo de Grado — COPS Platform v2.0 (Sprint 2)*
+*Documentación generada para defensa de Trabajo de Grado — COPS Platform v2.0 (Sprint 8)*

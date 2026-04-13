@@ -1,6 +1,4 @@
 "use server"
-
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { ActionResponse, TicketFoto, TipoFoto } from "@/types"
 import { getCurrentUser } from "./auth"
@@ -43,14 +41,7 @@ async function canUploadFotoToTicket(
     return doc.exists && doc.data()?.tecnico_id === user.id
   }
 
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("tickets")
-    .select("tecnico_id")
-    .eq("id", ticketId)
-    .single()
-
-  return data?.tecnico_id === user.id
+  return false
 }
 
 /**
@@ -129,12 +120,14 @@ export async function uploadTicketFoto(
         const now = new Date().toISOString()
 
         const savedStoragePath = await uploadFileToStorage(storagePath, buffer, file.type)
+        const resolvedUrl = await getSignedDownloadUrl(savedStoragePath).catch(() => null)
 
         const fotoRef = db.collection("ticket_fotos").doc()
         const fotoData = cleanForFirestore({
           ticket_id: ticketId,
           subido_por: user.id,
           storage_path: savedStoragePath,
+          url: resolvedUrl,
           nombre_archivo: file.name,
           tipo_foto: tipoFoto,
           descripcion: descripcion || null,
@@ -169,68 +162,7 @@ export async function uploadTicketFoto(
       }
     }
 
-    const supabase = await createClient()
-    const timestamp = Date.now()
-    const randomString = Math.random().toString(36).substring(7)
-    const extension = file.name.split(".").pop()
-    const storagePath = `ticket-fotos/${ticketId}/${timestamp}-${randomString}.${extension}`
-    const buffer = Buffer.from(await file.arrayBuffer())
-
-    let savedStoragePath = storagePath
-
-    try {
-      savedStoragePath = await uploadFileToStorage(storagePath, buffer, file.type)
-    } catch (storageError) {
-      const msg = storageError instanceof Error ? storageError.message : String(storageError)
-      return {
-        success: false,
-        error: `Error al subir foto: ${msg}`,
-      }
-    }
-
-    // Crear registro en la base de datos
-    const { data: fotoData, error: dbError } = await supabase
-      .from("ticket_fotos")
-      .insert({
-        ticket_id: ticketId,
-        subido_por: user.id,
-        storage_path: savedStoragePath,
-        nombre_archivo: file.name,
-        tipo_foto: tipoFoto,
-        descripcion: descripcion || null,
-        tamanio_bytes: file.size,
-        mime_type: file.type,
-      })
-      .select("*")
-      .single()
-
-    if (dbError) {
-      console.error("[v0] Error creating DB record:", dbError)
-      // Intentar eliminar el archivo subido si falla el registro en DB
-      try {
-        await deleteFileFromStorage(savedStoragePath)
-      } catch {}
-      return {
-        success: false,
-        error: `Error al registrar foto: ${dbError.message}`,
-      }
-    }
-
-    // Registrar en historial
-    await supabase.from("historial_cambios").insert({
-      ticket_id: ticketId,
-      usuario_id: user.id,
-      tipo_cambio: "foto_subida",
-      observacion: `Foto de tipo "${tipoFoto}" subida: ${file.name}`,
-    })
-
-    revalidatePath(`/dashboard/tickets/${ticketId}`)
-
-    return {
-      success: true,
-      data: fotoData as TicketFoto,
-      message: "Foto subida exitosamente",
-    }
+    return { success: false, error: "Fotos requiere configuración Firebase válida" }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error("[fotos] Upload exception:", msg)
@@ -265,10 +197,10 @@ export async function getTicketFotos(
       const db = getAdminFirestore()
       const snap = await db.collection("ticket_fotos").where("ticket_id", "==", ticketId).get()
 
-      const fotosConUrls = await Promise.all(
+        const fotosConUrls = await Promise.all(
         snap.docs.map(async (doc) => {
           const foto = fromFirestoreDoc<TicketFoto>(doc.id, doc.data())
-          const url = await getSignedDownloadUrl(foto.storage_path).catch(() => undefined)
+          const url = foto.url || await getSignedDownloadUrl(foto.storage_path).catch(() => undefined)
           return { ...foto, url }
         })
       )
@@ -280,46 +212,7 @@ export async function getTicketFotos(
       return { success: true, data: fotosConUrls }
     }
 
-    const supabase = await createClient()
-
-    // Obtener fotos de la base de datos
-    const { data: fotos, error } = await supabase
-      .from("ticket_fotos")
-      .select(`
-        *,
-        subidor:subido_por (
-          id,
-          nombre,
-          apellido,
-          rol
-        )
-      `)
-      .eq("ticket_id", ticketId)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      return {
-        success: false,
-        error: `Error al obtener fotos: ${error.message}`,
-      }
-    }
-
-    // Generar URLs firmadas para cada foto
-    const fotosConUrls = await Promise.all(
-      (fotos || []).map(async (foto) => {
-        const signedUrl = await getSignedDownloadUrl(foto.storage_path)
-
-        return {
-          ...foto,
-          url: signedUrl || null,
-        } as TicketFoto
-      })
-    )
-
-    return {
-      success: true,
-      data: fotosConUrls,
-    }
+    return { success: false, error: "Fotos requiere configuración Firebase válida" }
   } catch (error) {
     console.error("[v0] Get fotos exception:", error)
     return {
@@ -399,60 +292,7 @@ export async function deleteTicketFoto(
       }
     }
 
-    const supabase = await createClient()
-
-    // Obtener información de la foto
-    const { data: foto, error: fetchError } = await supabase
-      .from("ticket_fotos")
-      .select("*")
-      .eq("id", fotoId)
-      .single()
-
-    if (fetchError || !foto) {
-      return { success: false, error: "Foto no encontrada" }
-    }
-
-    // Verificar permisos: solo el que la subió o gerente+
-    const canDelete =
-      foto.subido_por === user.id || ROLE_HIERARCHY[user.rol] >= 3
-
-    if (!canDelete) {
-      return { success: false, error: "No tienes permisos para eliminar esta foto" }
-    }
-
-    try {
-      await deleteFileFromStorage(foto.storage_path)
-    } catch (storageError) {
-      console.error("[fotos] Error deleting from storage:", storageError)
-    }
-
-    // Eliminar registro de la base de datos
-    const { error: dbError } = await supabase
-      .from("ticket_fotos")
-      .delete()
-      .eq("id", fotoId)
-
-    if (dbError) {
-      return {
-        success: false,
-        error: `Error al eliminar foto: ${dbError.message}`,
-      }
-    }
-
-    // Registrar en historial
-    await supabase.from("historial_cambios").insert({
-      ticket_id: foto.ticket_id,
-      usuario_id: user.id,
-      tipo_cambio: "modificacion",
-      observacion: `Foto eliminada: ${foto.nombre_archivo}`,
-    })
-
-    revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
-
-    return {
-      success: true,
-      message: "Foto eliminada exitosamente",
-    }
+    return { success: false, error: "Fotos requiere configuración Firebase válida" }
   } catch (error) {
     console.error("[v0] Delete foto exception:", error)
     return {
@@ -513,46 +353,7 @@ export async function updateTicketFoto(
       }
     }
 
-    const supabase = await createClient()
-
-    // Obtener información de la foto
-    const { data: foto, error: fetchError } = await supabase
-      .from("ticket_fotos")
-      .select("*")
-      .eq("id", fotoId)
-      .single()
-
-    if (fetchError || !foto) {
-      return { success: false, error: "Foto no encontrada" }
-    }
-
-    // Verificar permisos
-    const canUpdate =
-      foto.subido_por === user.id || ROLE_HIERARCHY[user.rol] >= 3
-
-    if (!canUpdate) {
-      return { success: false, error: "No tienes permisos para modificar esta foto" }
-    }
-
-    // Actualizar foto
-    const { error: updateError } = await supabase
-      .from("ticket_fotos")
-      .update(updates)
-      .eq("id", fotoId)
-
-    if (updateError) {
-      return {
-        success: false,
-        error: `Error al actualizar foto: ${updateError.message}`,
-      }
-    }
-
-    revalidatePath(`/dashboard/tickets/${foto.ticket_id}`)
-
-    return {
-      success: true,
-      message: "Foto actualizada exitosamente",
-    }
+    return { success: false, error: "Fotos requiere configuración Firebase válida" }
   } catch (error) {
     console.error("[v0] Update foto exception:", error)
     return {

@@ -1,6 +1,4 @@
 "use server"
-
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type {
   ActionResponse,
@@ -72,33 +70,7 @@ export async function getClientes(
     }
   }
 
-  const supabase = await createClient()
-  const page = options.page || 1
-  const pageSize = options.pageSize || 20
-  const from = (page - 1) * pageSize
-  const to = from + pageSize - 1
-
-  let query = supabase.from("clientes").select("*", { count: "exact" })
-  if (options.search) {
-    const s = options.search.replace(/[,().%\\]/g, "")
-    query = query.or(`nombre.ilike.%${s}%,empresa.ilike.%${s}%,rif_cedula.ilike.%${s}%`)
-  }
-  if (options.estado) query = query.eq("estado", options.estado)
-  query = query.order("created_at", { ascending: false }).range(from, to)
-
-  const { data, error, count } = await query
-  if (error) return { success: false, error: error.message }
-
-  return {
-    success: true,
-    data: {
-      data: (data ?? []) as Cliente[],
-      total: count ?? 0,
-      page,
-      pageSize,
-      totalPages: Math.ceil((count ?? 0) / pageSize),
-    },
-  }
+  return { success: false, error: "Clientes requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -127,10 +99,7 @@ export async function getClienteById(id: string): Promise<ActionResponse<Cliente
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase.from("clientes").select("*").eq("id", id).single()
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: data as Cliente }
+  return { success: false, error: "Clientes requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,27 +144,7 @@ export async function createCliente(input: ClienteCreateInput): Promise<ActionRe
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("clientes")
-    .insert({
-      nombre: input.nombre,
-      apellido: input.apellido || null,
-      empresa: input.empresa || null,
-      email: input.email || null,
-      telefono: input.telefono,
-      direccion: input.direccion,
-      rif_cedula: input.rif_cedula || null,
-      observaciones: input.observaciones || null,
-      contactos: (input.contactos ?? []).map((ct) => ({ ...ct, id: crypto.randomUUID() })),
-      estado: "activo",
-    })
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidatePath("/dashboard/clientes")
-  return { success: true, data: data as Cliente, message: "Cliente creado exitosamente" }
+  return { success: false, error: "Clientes requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -236,17 +185,7 @@ export async function updateCliente(
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("clientes")
-    .update({ ...input, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  revalidatePath("/dashboard/clientes")
-  return { success: true, data: data as Cliente, message: "Cliente actualizado" }
+  return { success: false, error: "Clientes requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -275,11 +214,7 @@ export async function deleteCliente(id: string): Promise<ActionResponse<void>> {
     }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.from("clientes").delete().eq("id", id)
-  if (error) return { success: false, error: error.message }
-  revalidatePath("/dashboard/clientes")
-  return { success: true, message: "Cliente eliminado" }
+  return { success: false, error: "Clientes requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -311,14 +246,5 @@ export async function searchClientes(query: string): Promise<ActionResponse<Clie
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("clientes")
-    .select("*")
-    .or(`nombre.ilike.%${query.replace(/[,().%\\]/g, "")}%,empresa.ilike.%${query.replace(/[,().%\\]/g, "")}%`)
-    .eq("estado", "activo")
-    .limit(10)
-
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as Cliente[] }
+  return { success: false, error: "Clientes requiere configuración Firebase válida" }
 }

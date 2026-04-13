@@ -43,11 +43,7 @@ export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabase = await createClient()
-  const { data, error } = await supabase.from('system_config').select('*').order('clave')
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: data as SystemConfig[] }
+  return { success: false, error: 'Configuración requiere Firebase válido' }
 }
 
 export async function updateConfigValue(clave: string, valor: string): Promise<ActionResponse<SystemConfig>> {
@@ -80,10 +76,5 @@ export async function updateConfigValue(clave: string, valor: string): Promise<A
     } catch (err) { return { success: false, error: (err as Error).message } }
   }
 
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabase = await createClient()
-  const { data, error } = await supabase.from('system_config').update({ valor, updated_at: new Date().toISOString() }).eq('clave', clave).select().single()
-  if (error) return { success: false, error: error.message }
-  revalidatePath('/dashboard/configuracion')
-  return { success: true, data: data as SystemConfig, message: 'Configuracion actualizada' }
+  return { success: false, error: 'Configuración requiere Firebase válido' }
 }

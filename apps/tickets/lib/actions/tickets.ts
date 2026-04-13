@@ -1,6 +1,4 @@
 "use server"
-
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type {
   ActionResponse,
@@ -28,13 +26,16 @@ import {
   assignDemoTechnician,
   changeDemoTicketStatus as changeDemoTicketStatusMock,
   createDemoTicket,
+  createDemoCliente,
   createDemoConvertirInspeccion,
   deleteDemoTicket,
   getDemoDashboardStats,
+  getDemoClientes,
   getDemoTechnicians,
   getDemoTicketById,
   getDemoTicketsPage,
   updateDemoTicket,
+  updateDemoCliente,
   getDemoUpdateLogs,
   addDemoUpdateLog,
   updateDemoUpdateLog,
@@ -46,6 +47,97 @@ import {
   finalizarDemoSesion,
 } from "@/lib/mock-data"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+
+function normalizeClientValue(value?: string | null): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .toLowerCase()
+}
+
+function splitClientName(fullName: string): { nombre: string; apellido?: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (parts.length <= 1) return { nombre: fullName.trim() }
+  return {
+    nombre: parts[0]!,
+    apellido: parts.slice(1).join(" "),
+  }
+}
+
+async function ensureClientRecordFromTicketInput(input: TicketCreateInput): Promise<void> {
+  const clienteNombre = input.cliente_nombre.trim()
+  const clienteTelefono = input.cliente_telefono.trim()
+  const clienteDireccion = input.cliente_direccion.trim()
+  if (!clienteNombre || !clienteTelefono || !clienteDireccion) return
+
+  const { nombre, apellido } = splitClientName(clienteNombre)
+  const empresa = input.cliente_empresa?.trim() || undefined
+  const email = input.cliente_email?.trim() || undefined
+
+  if (isLocalMode()) {
+    const existing = getDemoClientes({ page: 1, pageSize: 500 }).data.find((cliente) => {
+      const samePhone = normalizeClientValue(cliente.telefono) === normalizeClientValue(clienteTelefono)
+      const sameName = normalizeClientValue(`${cliente.nombre} ${cliente.apellido ?? ""}`) === normalizeClientValue(clienteNombre)
+      const sameCompany = normalizeClientValue(cliente.empresa) === normalizeClientValue(empresa)
+      return samePhone || (sameName && sameCompany)
+    })
+
+    if (!existing) {
+      createDemoCliente({
+        nombre,
+        apellido,
+        empresa,
+        email,
+        telefono: clienteTelefono,
+        direccion: clienteDireccion,
+      })
+      return
+    }
+
+    updateDemoCliente(existing.id, {
+      nombre,
+      apellido,
+      empresa,
+      email,
+      telefono: clienteTelefono,
+      direccion: clienteDireccion,
+      estado: "activo",
+    })
+    return
+  }
+
+  if (isFirebaseMode()) {
+    const db = getAdminFirestore()
+    const allClientes = await db.collection("clientes").get()
+    const existing = allClientes.docs.find((doc) => {
+      const cliente = doc.data()
+      const samePhone = normalizeClientValue(cliente.telefono) === normalizeClientValue(clienteTelefono)
+      const sameName = normalizeClientValue(`${cliente.nombre ?? ""} ${cliente.apellido ?? ""}`) === normalizeClientValue(clienteNombre)
+      const sameCompany = normalizeClientValue(cliente.empresa) === normalizeClientValue(empresa)
+      return samePhone || (sameName && sameCompany)
+    })
+
+    const now = new Date().toISOString()
+    const payload = cleanForFirestore({
+      nombre,
+      apellido: apellido || null,
+      empresa: empresa || null,
+      email: email || null,
+      telefono: clienteTelefono,
+      direccion: clienteDireccion,
+      estado: "activo",
+      updated_at: now,
+    })
+
+    if (!existing) {
+      const ref = db.collection("clientes").doc()
+      await ref.set({ ...payload, created_at: now, observaciones: null, rif_cedula: null, contactos: [] })
+      return
+    }
+
+    await db.collection("clientes").doc(existing.id).set(payload, { merge: true })
+  }
+}
 
 // ─── Firebase helpers ─────────────────────────────────────────────────────────
 
@@ -115,9 +207,7 @@ async function canAccessTicket(
     return ticket?.tecnico_id === user.id
   }
 
-  const supabase = await createClient()
-  const { data } = await supabase.from("tickets").select("tecnico_id").eq("id", ticketId).single()
-  return data?.tecnico_id === user.id
+  return false
 }
 
 async function getTotalWorkedMinutes(ticketId: string): Promise<number> {
@@ -131,14 +221,7 @@ async function getTotalWorkedMinutes(ticketId: string): Promise<number> {
     return snap.docs.reduce((sum, doc) => sum + Number(doc.data().duracion_minutos || 0), 0)
   }
 
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("ticket_sesiones_trabajo")
-    .select("duracion_minutos")
-    .eq("ticket_id", ticketId)
-    .not("duracion_minutos", "is", null)
-
-  return (data || []).reduce((sum, row) => sum + Number(row.duracion_minutos || 0), 0)
+  return 0
 }
 
 async function closeOpenWorkSession(ticketId: string, tecnicoId: string, notas?: string): Promise<void> {
@@ -168,27 +251,7 @@ async function closeOpenWorkSession(ticketId: string, tecnicoId: string, notas?:
     return
   }
 
-  const supabase = await createClient()
-  const { data: openSesion } = await supabase
-    .from("ticket_sesiones_trabajo")
-    .select("id, fecha_inicio, notas")
-    .eq("ticket_id", ticketId)
-    .eq("tecnico_id", tecnicoId)
-    .is("fecha_fin", null)
-    .order("fecha_inicio", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (!openSesion) return
-
-  const end = new Date()
-  const start = new Date(openSesion.fecha_inicio)
-  const duration = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000))
-
-  await supabase
-    .from("ticket_sesiones_trabajo")
-    .update({ fecha_fin: end.toISOString(), duracion_minutos: duration, notas: notas || openSesion.notas || null })
-    .eq("id", openSesion.id)
+  return
 }
 
 async function fbEnrichTicket(ticket: Ticket): Promise<Ticket> {
@@ -277,48 +340,7 @@ export async function getTickets(options?: {
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const page = options?.page || 1
-  const pageSize = options?.pageSize || 10
-  const offset = (page - 1) * pageSize
-
-  let query = supabase
-    .from("tickets")
-    .select(
-      `*, creador:users!tickets_creado_por_fkey(id, nombre, apellido, email),
-       tecnico:users!tickets_tecnico_id_fkey(id, nombre, apellido, email),
-       modificador:users!tickets_modificado_por_fkey(id, nombre, apellido)`,
-      { count: "exact" }
-    )
-
-  if (currentUser.rol === "tecnico") query = query.eq("tecnico_id", currentUser.id)
-  if (options?.status) query = query.eq("estado", options.status)
-  if (options?.priority) query = query.eq("prioridad", options.priority)
-  if (options?.tecnicoId) query = query.eq("tecnico_id", options.tecnicoId)
-  if (options?.createdById) query = query.eq("creado_por", options.createdById)
-  if (options?.search) {
-    const sanitizedSearch = options.search.replace(/[,().%\\]/g, "")
-    query = query.or(
-      `numero_ticket.ilike.%${sanitizedSearch}%,cliente_nombre.ilike.%${sanitizedSearch}%,asunto.ilike.%${sanitizedSearch}%`
-    )
-  }
-
-  query = query.order("created_at", { ascending: false }).range(offset, offset + pageSize - 1)
-
-  const { data, error, count } = await query
-  if (error) return { success: false, error: error.message }
-
-  return {
-    success: true,
-    data: {
-      data: data as Ticket[],
-      total: count || 0,
-      page,
-      pageSize,
-      totalPages: Math.ceil((count || 0) / pageSize),
-    },
-  }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function getTicketById(id: string): Promise<ActionResponse<Ticket>> {
@@ -343,22 +365,7 @@ export async function getTicketById(id: string): Promise<ActionResponse<Ticket>>
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("tickets")
-    .select(
-      `*, creador:users!tickets_creado_por_fkey(id, nombre, apellido, email, rol),
-       tecnico:users!tickets_tecnico_id_fkey(id, nombre, apellido, email, telefono),
-       modificador:users!tickets_modificado_por_fkey(id, nombre, apellido)`
-    )
-    .eq("id", id)
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  if (currentUser.rol === "tecnico" && data.tecnico_id !== currentUser.id)
-    return { success: false, error: "No tienes permiso para ver este ticket" }
-
-  return { success: true, data: data as Ticket }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -375,8 +382,10 @@ export async function createTicket(
 
   if (isLocalMode()) {
     const ticket = createDemoTicket(input, currentUser)
+    await ensureClientRecordFromTicketInput(input)
     revalidatePath("/dashboard/tickets")
     revalidatePath("/dashboard")
+    revalidatePath("/dashboard/clientes")
     return { success: true, data: ticket, message: `Ticket ${ticket.numero_ticket} creado exitosamente` }
   }
 
@@ -438,11 +447,13 @@ export async function createTicket(
       })
 
       await newDoc.set(ticketData)
+      await ensureClientRecordFromTicketInput(input)
 
       const ticket: Ticket = { id: newDoc.id, ...ticketData } as Ticket
 
       revalidatePath("/dashboard/tickets")
       revalidatePath("/dashboard")
+      revalidatePath("/dashboard/clientes")
 
       return { success: true, data: ticket, message: `Ticket ${numeroTicket} creado exitosamente` }
     } catch (err) {
@@ -450,73 +461,7 @@ export async function createTicket(
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const { data: lastTicket } = await supabase
-    .from("tickets")
-    .select("numero_ticket")
-    .eq("tipo", input.tipo)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single()
-
-  let sequence = 1
-  if (lastTicket) {
-    const match = lastTicket.numero_ticket.match(/\d{4}$/)
-    if (match) sequence = parseInt(match[0]) + 1
-  }
-
-  const numeroTicket = generateTicketNumber(input.tipo, sequence)
-
-  const { data, error } = await supabase
-    .from("tickets")
-    .insert({
-      numero_ticket: numeroTicket,
-      tipo: input.tipo,
-      cliente_nombre: input.cliente_nombre,
-      cliente_empresa: input.cliente_empresa || null,
-      cliente_email: input.cliente_email || null,
-      cliente_telefono: input.cliente_telefono,
-      cliente_direccion: input.cliente_direccion,
-      asunto: input.asunto,
-      descripcion: input.descripcion,
-      requerimientos: input.requerimientos,
-      materiales_planificados: input.materiales_planificados || null,
-      prioridad: input.prioridad,
-      origen: input.origen,
-      agencia_bancaribe: input.agencia_bancaribe || null,
-      cupones_bancaribe: input.cupones_bancaribe ?? null,
-      creado_por: currentUser.id,
-      tecnico_id: input.tecnico_id || null,
-      estado: input.estado === "borrador" ? "borrador" : "asignado",
-      estado_operativo: input.estado === "borrador" ? null : "programado",
-      fecha_asignacion: input.estado === "borrador" ? null : new Date().toISOString(),
-      fecha_servicio: input.fecha_servicio || null,
-      fecha_llegada: null,
-      fecha_ultima_pausa: null,
-      fecha_ultima_reanudacion: null,
-      motivo_pausa: null,
-      monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
-      facturacion_tipo: input.facturacion_tipo ?? "fijo",
-      tarifa_hora: input.tarifa_hora ?? null,
-    })
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-
-  await supabase.from("historial_cambios").insert({
-    ticket_id: data.id,
-    usuario_id: currentUser.id,
-    tipo_cambio: "creacion",
-    valor_nuevo: JSON.stringify({ numero_ticket: numeroTicket, tipo: input.tipo }),
-    observacion: `Ticket creado: ${input.asunto}`,
-  })
-
-  revalidatePath("/dashboard/tickets")
-  revalidatePath("/dashboard")
-
-  return { success: true, data: data as Ticket, message: `Ticket ${numeroTicket} creado exitosamente` }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -566,39 +511,7 @@ export async function updateTicket(
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const { data: currentTicket, error: fetchError } = await supabase
-    .from("tickets").select("*").eq("id", id).single()
-  if (fetchError || !currentTicket) return { success: false, error: "Ticket no encontrado" }
-
-  const { data, error } = await supabase
-    .from("tickets")
-    .update({ ...input, modificado_por: currentUser.id, fecha_ultima_modificacion: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-
-  const changedFields = Object.keys(input).filter(
-    (key) => input[key as keyof TicketUpdateInput] !== currentTicket[key as keyof typeof currentTicket]
-  )
-  for (const field of changedFields) {
-    await supabase.from("historial_cambios").insert({
-      ticket_id: id,
-      usuario_id: currentUser.id,
-      tipo_cambio: "modificacion",
-      campo_modificado: field,
-      valor_anterior: String(currentTicket[field as keyof typeof currentTicket] || ""),
-      valor_nuevo: String(input[field as keyof TicketUpdateInput] || ""),
-    })
-  }
-
-  revalidatePath("/dashboard/tickets")
-  revalidatePath(`/dashboard/tickets/${id}`)
-
-  return { success: true, data: data as Ticket, message: "Ticket actualizado exitosamente" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -716,66 +629,7 @@ export async function changeTicketStatus(
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", id).single()
-  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
-
-  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
-    return { success: false, error: "No tienes permiso para modificar este ticket" }
-
-  const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
-  const forwardOk = VALID_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
-  const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
-  if (!forwardOk && !reverseOk)
-    return { success: false, error: `No se puede cambiar de ${ticket.estado} a ${newStatus}` }
-
-  const updateData: Record<string, unknown> = { estado: newStatus }
-  if (newStatus === "iniciado" && !ticket.fecha_inicio) updateData.fecha_inicio = new Date().toISOString()
-  if (newStatus === "iniciado") updateData.estado_operativo = "trabajando"
-  if (newStatus === "en_progreso") updateData.estado_operativo = "trabajando"
-  if (newStatus === "cancelado") updateData.estado_operativo = "reprogramado"
-  if (newStatus === "finalizado") {
-    await closeOpenWorkSession(id, currentUser.id, additionalData?.observaciones_tecnico)
-    updateData.fecha_finalizacion = new Date().toISOString()
-    updateData.estado_operativo = "finalizado"
-    const computedMinutes = await getTotalWorkedMinutes(id)
-    if (computedMinutes > 0 && additionalData?.tiempo_trabajado === undefined) {
-      updateData.tiempo_trabajado = computedMinutes
-    }
-  }
-  if (additionalData?.materiales_usados) updateData.materiales_usados = additionalData.materiales_usados
-  if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
-  if (additionalData?.motivo_pausa !== undefined) updateData.motivo_pausa = additionalData.motivo_pausa
-  if (additionalData?.fecha_servicio !== undefined) updateData.fecha_servicio = additionalData.fecha_servicio
-  if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
-  if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
-  if (additionalData?.monto_servicio_final !== undefined) updateData.monto_servicio = additionalData.monto_servicio_final
-
-  const { data, error } = await supabase.from("tickets").update(updateData).eq("id", id).select().single()
-  if (error) return { success: false, error: error.message }
-
-  await supabase.from("historial_cambios").insert({
-    ticket_id: id, usuario_id: currentUser.id, tipo_cambio: "cambio_estado",
-    campo_modificado: "estado", valor_anterior: ticket.estado, valor_nuevo: newStatus,
-    observacion: additionalData?.observaciones_tecnico || null,
-  })
-
-  if (newStatus === "finalizado" && ticket.tecnico_id) {
-    const montoTicket = additionalData?.monto_servicio_final ?? ticket.monto_servicio
-    const montoAPagar = montoTicket * (DEFAULT_COMMISSION_PERCENTAGE / 100)
-    await supabase.from("pagos_tecnicos").insert({
-      ticket_id: id, tecnico_id: ticket.tecnico_id, monto_ticket: montoTicket,
-      porcentaje_comision: DEFAULT_COMMISSION_PERCENTAGE, monto_a_pagar: montoAPagar,
-      facturacion_tipo: ticket.facturacion_tipo ?? "fijo",
-      estado_pago: "pendiente", fecha_habilitacion: new Date().toISOString(),
-    })
-  }
-
-  revalidatePath("/dashboard/tickets")
-  revalidatePath(`/dashboard/tickets/${id}`)
-  revalidatePath("/dashboard/pagos")
-  return { success: true, data: data as Ticket, message: `Estado cambiado a ${newStatus}` }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function registerTicketArrival(ticketId: string): Promise<ActionResponse<Ticket>> {
@@ -831,23 +685,7 @@ export async function registerTicketArrival(ticketId: string): Promise<ActionRes
     }
   }
 
-  const supabase = await createClient()
-  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
-  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
-  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para registrar llegada en este ticket" }
-
-  const now = new Date().toISOString()
-  const { data, error } = await supabase
-    .from("tickets")
-    .update({ fecha_llegada: ticket.fecha_llegada ?? now, estado_operativo: "en_sitio", updated_at: now })
-    .eq("id", ticketId)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: "Llegó al sitio de servicio." })
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  return { success: true, data: data as Ticket, message: "Llegada al sitio registrada" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function resumeTicketWork(ticketId: string): Promise<ActionResponse<Ticket>> {
@@ -898,37 +736,7 @@ export async function resumeTicketWork(ticketId: string): Promise<ActionResponse
     }
   }
 
-  const supabase = await createClient()
-  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
-  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
-  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para reanudar este ticket" }
-
-  const now = new Date().toISOString()
-  const { data: openSession } = await supabase
-    .from("ticket_sesiones_trabajo")
-    .select("id")
-    .eq("ticket_id", ticketId)
-    .eq("tecnico_id", currentUser.id)
-    .is("fecha_fin", null)
-    .limit(1)
-    .maybeSingle()
-
-  if (!openSession) {
-    await supabase.from("ticket_sesiones_trabajo").insert({ ticket_id: ticketId, tecnico_id: currentUser.id, fecha_inicio: now, fecha_fin: null, duracion_minutos: null, notas: null, estado_al_inicio: ticket.estado })
-  }
-
-  const { data, error } = await supabase
-    .from("tickets")
-    .update({ estado: ticket.estado === "asignado" ? "en_progreso" : ticket.estado, estado_operativo: "trabajando", fecha_inicio: ticket.fecha_inicio ?? now, fecha_ultima_reanudacion: now, motivo_pausa: null, updated_at: now })
-    .eq("id", ticketId)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: "Trabajo reanudado." })
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  revalidatePath("/dashboard/pipeline")
-  return { success: true, data: data as Ticket, message: "Trabajo reanudado" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function pauseTicketUntilTomorrow(ticketId: string, motivo: string, fechaServicio?: string): Promise<ActionResponse<Ticket>> {
@@ -974,26 +782,7 @@ export async function pauseTicketUntilTomorrow(ticketId: string, motivo: string,
     }
   }
 
-  const supabase = await createClient()
-  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("*").eq("id", ticketId).single()
-  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
-  if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id) return { success: false, error: "No tienes permiso para pausar este ticket" }
-
-  const now = new Date().toISOString()
-  await closeOpenWorkSession(ticketId, currentUser.id, motivo.trim())
-  const workedMinutes = await getTotalWorkedMinutes(ticketId)
-  const { data, error } = await supabase
-    .from("tickets")
-    .update({ estado: ticket.estado === "asignado" ? "en_progreso" : ticket.estado, estado_operativo: fechaServicio ? "reprogramado" : "pausado", fecha_ultima_pausa: now, fecha_servicio: fechaServicio || ticket.fecha_servicio || null, motivo_pausa: motivo.trim(), tiempo_trabajado: workedMinutes || ticket.tiempo_trabajado || null, updated_at: now })
-    .eq("id", ticketId)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  await supabase.from("historial_cambios").insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: `Trabajo pausado. Motivo: ${motivo.trim()}` })
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  revalidatePath("/dashboard/pipeline")
-  return { success: true, data: data as Ticket, message: "Ticket pausado y reprogramado" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1057,41 +846,7 @@ export async function assignTechnician(
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const { data: ticket, error: fetchError } = await supabase
-    .from("tickets").select("tecnico_id, estado").eq("id", ticketId).single()
-  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
-
-  const isReassignment = ticket.tecnico_id !== null
-  if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3)
-    return { success: false, error: "Solo Gerente o superior puede reasignar técnicos" }
-  if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2)
-    return { success: false, error: "No tienes permisos para asignar técnicos" }
-
-  const { data, error } = await supabase
-    .from("tickets")
-    .update({ tecnico_id: tecnicoId, fecha_asignacion: new Date().toISOString() })
-    .eq("id", ticketId)
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-
-  await supabase.from("historial_cambios").insert({
-    ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "asignacion",
-    campo_modificado: "tecnico_id",
-    valor_anterior: ticket.tecnico_id || "Sin asignar", valor_nuevo: tecnicoId,
-  })
-
-  revalidatePath("/dashboard/tickets")
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-
-  return {
-    success: true,
-    data: data as Ticket,
-    message: isReassignment ? "Técnico reasignado" : "Técnico asignado",
-  }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1123,13 +878,7 @@ export async function deleteTicket(id: string): Promise<ActionResponse> {
     }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.from("tickets").delete().eq("id", id)
-  if (error) return { success: false, error: error.message }
-
-  revalidatePath("/dashboard/tickets")
-  revalidatePath("/dashboard")
-  return { success: true, message: "Ticket eliminado exitosamente" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1161,12 +910,7 @@ export async function getTechnicians(): Promise<ActionResponse<Array<{ id: strin
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("users").select("id, nombre, apellido")
-    .eq("rol", "tecnico").eq("estado", "activo").order("nombre")
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: data || [] }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1185,15 +929,7 @@ export async function getTicketHistory(ticketId: string): Promise<ActionResponse
     return { success: true, data: [] }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("historial_cambios")
-    .select("*, usuario:users(nombre, apellido)")
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: false })
-    .limit(50)
-  if (error) return { success: false, error: error.message }
-  return { success: true, data: (data ?? []) as ChangeHistory[] }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1239,28 +975,7 @@ export async function getTicketUpdateLogs(ticketId: string): Promise<ActionRespo
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("historial_cambios")
-    .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at, usuario:users(nombre, apellido, rol)")
-    .eq("ticket_id", ticketId)
-    .in("tipo_cambio", ["sesion_trabajo", "cambio_estado", "foto_subida"])
-    .order("created_at", { ascending: false })
-    .limit(100)
-
-  if (error) return { success: false, error: error.message }
-
-  const logs: UpdateLog[] = (data ?? []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    ticket_id: row.ticket_id as string,
-    autor_id: row.usuario_id as string,
-    contenido: (row.observacion as string) || (row.tipo_cambio === "cambio_estado" ? "Cambio de estado" : "Actualización"),
-    tipo: row.tipo_cambio === "cambio_estado" ? "cambio_estado" : ("nota" as "nota" | "cambio_estado"),
-    created_at: row.created_at as string,
-    autor: row.usuario as UpdateLog["autor"],
-  }))
-
-  return { success: true, data: logs }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function addTicketUpdateLog(
@@ -1320,34 +1035,7 @@ export async function addTicketUpdateLog(
     }
   }
 
-  const supabase = await createClient()
-  const { data: ticket, error: fetchError } = await supabase.from("tickets").select("tecnico_id").eq("id", ticketId).single()
-  if (fetchError || !ticket) return { success: false, error: "Ticket no encontrado" }
-
-  const canAdd = currentUser.rol === "tecnico"
-    ? ticket.tecnico_id === currentUser.id
-    : ROLE_HIERARCHY[currentUser.rol] >= 2
-  if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
-
-  const { data, error } = await supabase
-    .from("historial_cambios")
-    .insert({ ticket_id: ticketId, usuario_id: currentUser.id, tipo_cambio: "sesion_trabajo", observacion: contenido.trim() })
-    .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at")
-    .single()
-
-  if (error) return { success: false, error: error.message }
-
-  const log: UpdateLog = {
-    id: data.id, ticket_id: data.ticket_id, autor_id: data.usuario_id,
-    contenido: data.observacion ?? "", tipo: "nota", created_at: data.created_at,
-    updated_at: data.created_at,
-    autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
-  }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  revalidatePath("/dashboard/tickets")
-
-  return { success: true, data: log, message: "Actualización agregada" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function updateTicketUpdateLog(ticketId: string, logId: string, contenido: string): Promise<ActionResponse<UpdateLog>> {
@@ -1400,45 +1088,7 @@ export async function updateTicketUpdateLog(ticketId: string, logId: string, con
     }
   }
 
-  const supabase = await createClient()
-  const { data: existing, error: fetchError } = await supabase
-    .from("historial_cambios")
-    .select("id, ticket_id, usuario_id, observacion, tipo_cambio, created_at")
-    .eq("id", logId)
-    .eq("ticket_id", ticketId)
-    .single()
-
-  if (fetchError || !existing) return { success: false, error: "Entrada de bitácora no encontrada" }
-  if (existing.tipo_cambio !== "sesion_trabajo") return { success: false, error: "Solo se pueden editar notas manuales" }
-
-  const canManage = existing.usuario_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
-  if (!canManage) return { success: false, error: "No tienes permiso para editar esta actualización" }
-
-  const { error } = await supabase
-    .from("historial_cambios")
-    .update({ observacion: contenido.trim() })
-    .eq("id", logId)
-    .eq("ticket_id", ticketId)
-
-  if (error) return { success: false, error: error.message }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  revalidatePath("/dashboard/tickets")
-
-  return {
-    success: true,
-    data: {
-      id: existing.id,
-      ticket_id: existing.ticket_id,
-      autor_id: existing.usuario_id,
-      contenido: contenido.trim(),
-      tipo: "nota",
-      created_at: existing.created_at,
-      updated_at: new Date().toISOString(),
-      autor: { nombre: currentUser.nombre, apellido: currentUser.apellido, rol: currentUser.rol, cargo: currentUser.cargo ?? null },
-    },
-    message: "Entrada de bitácora actualizada",
-  }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 export async function deleteTicketUpdateLog(ticketId: string, logId: string): Promise<ActionResponse<{ id: string }>> {
@@ -1488,31 +1138,7 @@ export async function deleteTicketUpdateLog(ticketId: string, logId: string): Pr
     }
   }
 
-  const supabase = await createClient()
-  const { data: existing, error: fetchError } = await supabase
-    .from("historial_cambios")
-    .select("id, ticket_id, usuario_id, tipo_cambio")
-    .eq("id", logId)
-    .eq("ticket_id", ticketId)
-    .single()
-
-  if (fetchError || !existing) return { success: false, error: "Entrada de bitácora no encontrada" }
-  if (existing.tipo_cambio !== "sesion_trabajo") return { success: false, error: "Solo se pueden eliminar notas manuales" }
-
-  const canManage = existing.usuario_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
-  if (!canManage) return { success: false, error: "No tienes permiso para eliminar esta actualización" }
-
-  const { error } = await supabase
-    .from("historial_cambios")
-    .delete()
-    .eq("id", logId)
-    .eq("ticket_id", ticketId)
-
-  if (error) return { success: false, error: error.message }
-
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-  revalidatePath("/dashboard/tickets")
-  return { success: true, data: { id: logId }, message: "Entrada de bitácora eliminada" }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1604,53 +1230,5 @@ export async function convertirInspeccion(
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const { data: inspeccion, error: fetchError } = await supabase
-    .from("tickets")
-    .select("id, tipo, estado, ticket_derivado_id, cliente_nombre, cliente_empresa, cliente_email, cliente_telefono, cliente_direccion, prioridad, origen, tecnico_id, descripcion, requerimientos, asunto")
-    .eq("id", ticketId)
-    .single()
-
-  if (fetchError || !inspeccion) return { success: false, error: "Ticket no encontrado" }
-  if (inspeccion.tipo !== "inspeccion") return { success: false, error: "El ticket no es una inspección" }
-  if (inspeccion.ticket_derivado_id) return { success: false, error: "Esta inspección ya fue convertida" }
-
-  const { data: countData } = await supabase
-    .from("tickets").select("numero_ticket").eq("tipo", tipo).order("created_at", { ascending: false }).limit(1)
-  const lastNum = countData?.[0]?.numero_ticket?.match(/(\d{4})$/)
-  const nextSeq = lastNum ? Number(lastNum[1]) + 1 : 1
-  const nuevoNumero = generateTicketNumber(tipo, nextSeq)
-
-  const { data: nuevoTicket, error: insertError } = await supabase
-    .from("tickets")
-    .insert({
-      tipo, numero_ticket: nuevoNumero,
-      cliente_nombre: inspeccion.cliente_nombre, cliente_empresa: inspeccion.cliente_empresa,
-      cliente_email: inspeccion.cliente_email, cliente_telefono: inspeccion.cliente_telefono,
-      cliente_direccion: inspeccion.cliente_direccion,
-      asunto: tipo === "servicio" ? "Servicio derivado de inspección" : "Proyecto derivado de inspección",
-      descripcion: inspeccion.descripcion, requerimientos: inspeccion.requerimientos,
-      prioridad: inspeccion.prioridad, origen: inspeccion.origen, tecnico_id: inspeccion.tecnico_id,
-      creado_por: currentUser.id, estado: "asignado",
-      monto_servicio: tipo === "servicio" ? DEFAULT_SERVICE_AMOUNT : 0,
-      ticket_origen_id: ticketId,
-    })
-    .select("id, numero_ticket")
-    .single()
-
-  if (insertError || !nuevoTicket) return { success: false, error: insertError?.message ?? "Error al crear ticket" }
-
-  await supabase.from("tickets")
-    .update({ ticket_derivado_id: nuevoTicket.id, updated_at: new Date().toISOString() })
-    .eq("id", ticketId)
-
-  revalidatePath("/dashboard/tickets")
-  revalidatePath(`/dashboard/tickets/${ticketId}`)
-
-  return {
-    success: true,
-    data: { ticketId: nuevoTicket.id, numero: nuevoTicket.numero_ticket },
-    message: `Inspección convertida a ${tipo}: ${nuevoTicket.numero_ticket}`,
-  }
+  return { success: false, error: "Tickets requiere configuración Firebase válida" }
 }

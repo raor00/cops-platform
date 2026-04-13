@@ -1,6 +1,4 @@
 "use server"
-
-import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type {
   ActionResponse,
@@ -176,27 +174,7 @@ export async function processPaymentAction(
     }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("pagos_tecnicos")
-    .update({
-      estado_pago: "pagado",
-      fecha_pago: new Date().toISOString(),
-      metodo_pago: input.metodo_pago,
-      referencia_pago: input.referencia_pago || null,
-      pagado_por: currentUser.id,
-      observaciones: input.observaciones || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", paymentId)
-    .eq("estado_pago", "pendiente")
-    .select()
-    .single()
-
-  if (error) return { success: false, error: error.message }
-  if (!data) return { success: false, error: "Pago no encontrado o ya procesado" }
-  revalidatePath("/dashboard/pagos")
-  return { success: true, data: data as TechnicianPayment, message: "Pago procesado exitosamente" }
+  return { success: false, error: "Pagos requiere configuración Firebase válida" }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -333,44 +311,5 @@ export async function generatePaymentSchedule(params: {
     }
   }
 
-  // Supabase
-  const supabase = await createClient()
-  const { data: payments, error } = await supabase
-    .from("pagos_tecnicos")
-    .select("*, ticket:tickets(*), tecnico:users!tecnico_id(*)")
-    .gte("tickets.fecha_finalizacion", desdeDate.toISOString())
-    .lte("tickets.fecha_finalizacion", hasta.toISOString())
-
-  if (error) return { success: false, error: error.message }
-
-  const tecnicoMap2 = new Map<string, TechnicianPaymentSchedule>()
-  for (const payment of payments ?? []) {
-    const ticket = payment.ticket
-    const tecnico = payment.tecnico
-    if (!ticket || !tecnico) continue
-    if (params.tecnicoId && tecnico.id !== params.tecnicoId) continue
-    const key = tecnico.id
-    if (!tecnicoMap2.has(key)) {
-      tecnicoMap2.set(key, { tecnico_id: key, tecnico_nombre: `${tecnico.nombre} ${tecnico.apellido}`, rows: [], subtotal_servicio: 0, subtotal_comision: 0, pagados: 0, pendientes: 0 })
-    }
-    const schedule = tecnicoMap2.get(key)!
-    schedule.rows.push({ fecha_finalizacion: ticket.fecha_finalizacion, ticket_numero: ticket.numero_ticket, cliente_nombre: ticket.cliente_nombre, cliente_empresa: ticket.cliente_empresa, descripcion: ticket.asunto, monto_servicio: ticket.monto_servicio, porcentaje_comision: payment.porcentaje_comision, monto_a_pagar: payment.monto_a_pagar, estado_pago: payment.estado_pago, metodo_pago: payment.metodo_pago, referencia_pago: payment.referencia_pago })
-    schedule.subtotal_servicio += ticket.monto_servicio
-    schedule.subtotal_comision += payment.monto_a_pagar
-    if (payment.estado_pago === "pagado") schedule.pagados += payment.monto_a_pagar
-    else schedule.pendientes += payment.monto_a_pagar
-  }
-  const tecnicos2 = Array.from(tecnicoMap2.values())
-  return {
-    success: true,
-    data: {
-      periodo_desde: desdeDate.toISOString(), periodo_hasta: hasta.toISOString(),
-      generado_en: new Date().toISOString(), generado_por: `${currentUser.nombre} ${currentUser.apellido}`,
-      tecnicos: tecnicos2,
-      total_servicio: tecnicos2.reduce((s, t) => s + t.subtotal_servicio, 0),
-      total_comision: tecnicos2.reduce((s, t) => s + t.subtotal_comision, 0),
-      total_pagado: tecnicos2.reduce((s, t) => s + t.pagados, 0),
-      total_pendiente: tecnicos2.reduce((s, t) => s + t.pendientes, 0),
-    },
-  }
+  return { success: false, error: "Pagos requiere configuración Firebase válida" }
 }
