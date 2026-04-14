@@ -42,6 +42,7 @@ import {
 import type { UserProfile, Ticket as TicketType, TechnicianStats } from '@/types'
 import { getInitials } from '@/lib/utils'
 import { ProfileEditDialog } from '@/components/usuarios/profile-edit-dialog'
+import { AccessRoleDialog } from '@/components/usuarios/access-role-dialog'
 import { UserStatusToggleButton } from '@/components/usuarios/user-status-toggle-button'
 
 interface UsuarioPageProps {
@@ -152,11 +153,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
               {hasPermission(user, 'users:edit') && user.id !== targetUser.id && (
                 <UserStatusToggleButton userId={targetUser.id} currentStatus={targetUser.estado} />
               )}
-              <ProfileEditDialog
-                user={targetUser}
-                canEditRole={isDeveloperUser(user)}
-                canEditPermissions={canEditUserProfile(user.rol, targetUser.rol)}
-              />
+              <ProfileEditDialog user={targetUser} />
             </div>
           )}
         </div>
@@ -207,9 +204,18 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
             <Card variant="glass" className="stagger-3 animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
-                  Acceso y Rol
-                </CardTitle>
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                    Acceso y Rol
+                  </CardTitle>
+                  {canEdit && (
+                    <AccessRoleDialog
+                      user={targetUser}
+                      canEditRole={isDeveloperUser(user)}
+                      canEditPermissions={canEditUserProfile(user.rol, targetUser.rol)}
+                    />
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <InfoRow label="Rol" value={ROLE_LABELS[targetUser.rol]} />

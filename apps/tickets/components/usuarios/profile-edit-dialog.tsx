@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { PermissionsEditor } from "@/components/usuarios/permissions-editor"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import {
@@ -22,31 +21,18 @@ import {
   updateUserProfile,
 } from "@/lib/actions/usuarios"
 import { completeUserAccessAction } from "@/lib/actions/auth"
-import type { Permission, UserProfile, UserRole } from "@/types"
-import { ROLE_LABELS, VISIBLE_USER_ROLES } from "@/types"
+import type { UserProfile } from "@/types"
+import { ROLE_LABELS } from "@/types"
 import { getInitials } from "@/lib/utils"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-
-const ALL_ROLES: UserRole[] = [...VISIBLE_USER_ROLES]
 
 interface ProfileEditDialogProps {
   user: UserProfile
-  canEditRole?: boolean
-  canEditPermissions?: boolean
   onSuccess?: () => void
   trigger?: React.ReactNode
 }
 
 export function ProfileEditDialog({
   user,
-  canEditRole = false,
-  canEditPermissions = false,
   onSuccess,
   trigger,
 }: ProfileEditDialogProps) {
@@ -60,14 +46,11 @@ export function ProfileEditDialog({
   const [nombre, setNombre] = useState(user.nombre)
   const [apellido, setApellido] = useState(user.apellido)
   const [cargo, setCargo] = useState(user.cargo || "")
-  const [rol, setRol] = useState<UserRole>(user.rol)
   const [telefono, setTelefono] = useState(user.telefono || "")
   const [especialidad, setEspecialidad] = useState(user.especialidad || "")
   const [email, setEmail] = useState(user.email || "")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [extraPermissions, setExtraPermissions] = useState<Permission[]>(user.permisos_extra ?? [])
-  const [deniedPermissions, setDeniedPermissions] = useState<Permission[]>(user.permisos_denegados ?? [])
 
   useEffect(() => {
     if (open) {
@@ -75,27 +58,14 @@ export function ProfileEditDialog({
       setNombre(user.nombre)
       setApellido(user.apellido)
       setCargo(user.cargo || "")
-      setRol(user.rol)
       setTelefono(user.telefono || "")
       setEspecialidad(user.especialidad || "")
       setEmail(user.email || "")
       setNewPassword("")
       setConfirmPassword("")
-      setExtraPermissions(user.permisos_extra ?? [])
-      setDeniedPermissions(user.permisos_denegados ?? [])
       setSelectedFile(null)
     }
   }, [open, user])
-
-  const toggleExtra = (permission: Permission, checked: boolean) => {
-    setExtraPermissions((prev) => checked ? [...new Set([...prev, permission])] : prev.filter((item) => item !== permission))
-    if (checked) setDeniedPermissions((prev) => prev.filter((item) => item !== permission))
-  }
-
-  const toggleDenied = (permission: Permission, checked: boolean) => {
-    setDeniedPermissions((prev) => checked ? [...new Set([...prev, permission])] : prev.filter((item) => item !== permission))
-    if (checked) setExtraPermissions((prev) => prev.filter((item) => item !== permission))
-  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -184,10 +154,8 @@ export function ProfileEditDialog({
         nombre: nombre.trim(),
         apellido: apellido.trim(),
         cargo: cargo.trim() || null,
-        ...(canEditRole && rol !== user.rol ? { rol } : {}),
         telefono: telefono || undefined,
         especialidad: especialidad || undefined,
-        ...(canEditPermissions ? { permisos_extra: extraPermissions, permisos_denegados: deniedPermissions } : {}),
       })
 
       if (!result.success) {
@@ -370,26 +338,6 @@ export function ProfileEditDialog({
             </div>
 
             <div>
-              <Label htmlFor="rol">Rol del sistema</Label>
-              {canEditRole ? (
-                <Select value={rol} onValueChange={(v) => setRol(v as UserRole)}>
-                  <SelectTrigger id="rol">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ALL_ROLES.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {ROLE_LABELS[r]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input value={ROLE_LABELS[user.rol]} disabled className="bg-slate-100 text-slate-500" />
-              )}
-            </div>
-
-            <div>
               <Label htmlFor="telefono">Teléfono</Label>
               <Input
                 id="telefono"
@@ -409,16 +357,6 @@ export function ProfileEditDialog({
                 onChange={(e) => setEspecialidad(e.target.value)}
               />
             </div>
-
-            {canEditPermissions && (
-              <PermissionsEditor
-                role={rol}
-                extraPermissions={extraPermissions}
-                deniedPermissions={deniedPermissions}
-                onToggleExtra={toggleExtra}
-                onToggleDenied={toggleDenied}
-              />
-            )}
           </div>
 
           {/* Botones */}
