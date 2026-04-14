@@ -1,6 +1,6 @@
 "use client"
 
-import { ALL_PERMISSIONS, ROLE_PERMISSIONS, ROLE_LABELS, type Permission, type UserRole } from "@/types"
+import { ALL_PERMISSIONS, PERMISSION_LABELS, ROLE_PERMISSIONS, ROLE_LABELS, type Permission, type UserRole } from "@/types"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
@@ -31,9 +31,13 @@ export function PermissionsEditor({ role, extraPermissions, deniedPermissions, o
           return (
             <div key={permission} className="grid gap-2 rounded-lg border border-slate-100 bg-slate-50/60 p-3 md:grid-cols-[1fr_auto_auto] md:items-center">
               <div>
-                <p className="text-sm font-medium text-slate-800">{permission}</p>
+                <p className="text-sm font-medium text-slate-800">{PERMISSION_LABELS[permission].label}</p>
+                <p className="text-xs font-medium text-blue-600">{PERMISSION_LABELS[permission].category}</p>
                 <p className="text-xs text-slate-500">
-                  {isBase ? "Heredado por rol" : "No incluido en el rol base"}
+                  {PERMISSION_LABELS[permission].description}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {isBase ? "Heredado por rol" : "Disponible como permiso adicional"}
                 </p>
               </div>
 

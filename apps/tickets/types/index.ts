@@ -464,6 +464,119 @@ export const ALL_PERMISSIONS: Permission[] = [
   'clients:edit',
 ]
 
+export const PERMISSION_LABELS: Record<Permission, { category: string; label: string; description: string }> = {
+  'tickets:view_own': {
+    category: 'Tickets',
+    label: 'Ver tickets propios',
+    description: 'Permite ver únicamente los tickets asignados o relacionados con el usuario.',
+  },
+  'tickets:view_all': {
+    category: 'Tickets',
+    label: 'Ver todos los tickets',
+    description: 'Permite consultar todos los tickets del módulo.',
+  },
+  'tickets:create': {
+    category: 'Tickets',
+    label: 'Crear tickets',
+    description: 'Permite registrar nuevos tickets en el sistema.',
+  },
+  'tickets:edit': {
+    category: 'Tickets',
+    label: 'Editar tickets',
+    description: 'Permite modificar datos administrativos y operativos del ticket.',
+  },
+  'tickets:delete': {
+    category: 'Tickets',
+    label: 'Eliminar tickets',
+    description: 'Permite borrar tickets del sistema.',
+  },
+  'tickets:change_status': {
+    category: 'Tickets',
+    label: 'Cambiar estado de tickets',
+    description: 'Permite iniciar, pausar, reanudar o mover tickets entre estados válidos.',
+  },
+  'tickets:assign': {
+    category: 'Tickets',
+    label: 'Asignar tickets',
+    description: 'Permite asignar tickets a técnicos.',
+  },
+  'tickets:reassign': {
+    category: 'Tickets',
+    label: 'Reasignar tickets',
+    description: 'Permite cambiar un ticket de un técnico a otro.',
+  },
+  'users:view': {
+    category: 'Usuarios',
+    label: 'Ver usuarios',
+    description: 'Permite acceder al listado y detalle de usuarios.',
+  },
+  'users:create': {
+    category: 'Usuarios',
+    label: 'Crear usuarios',
+    description: 'Permite registrar nuevos usuarios.',
+  },
+  'users:edit': {
+    category: 'Usuarios',
+    label: 'Editar usuarios',
+    description: 'Permite modificar perfiles, accesos y datos administrativos de usuarios.',
+  },
+  'users:delete': {
+    category: 'Usuarios',
+    label: 'Eliminar usuarios',
+    description: 'Permite eliminar usuarios del sistema.',
+  },
+  'payments:view': {
+    category: 'Pagos',
+    label: 'Ver pagos',
+    description: 'Permite consultar pagos y cuadros de pago.',
+  },
+  'payments:process': {
+    category: 'Pagos',
+    label: 'Procesar pagos',
+    description: 'Permite registrar y procesar pagos a técnicos.',
+  },
+  'reports:view': {
+    category: 'Reportes',
+    label: 'Ver reportes',
+    description: 'Permite consultar reportes y métricas.',
+  },
+  'reports:export': {
+    category: 'Reportes',
+    label: 'Exportar reportes',
+    description: 'Permite exportar reportes y datos analíticos.',
+  },
+  'config:view': {
+    category: 'Configuración',
+    label: 'Ver configuración',
+    description: 'Permite consultar parámetros globales del sistema.',
+  },
+  'config:edit': {
+    category: 'Configuración',
+    label: 'Editar configuración',
+    description: 'Permite actualizar parámetros globales del sistema.',
+  },
+  'audit:view': {
+    category: 'Auditoría',
+    label: 'Ver auditoría',
+    description: 'Permite revisar actividad y trazabilidad del sistema.',
+  },
+  'clients:view': {
+    category: 'Clientes',
+    label: 'Ver clientes',
+    description: 'Permite consultar el módulo de clientes.',
+  },
+  'clients:create': {
+    category: 'Clientes',
+    label: 'Crear clientes',
+    description: 'Permite registrar nuevos clientes.',
+  },
+  'clients:edit': {
+    category: 'Clientes',
+    label: 'Editar clientes',
+    description: 'Permite actualizar la información de clientes.',
+  },
+}
+
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   tecnico: [
     'tickets:view_own',

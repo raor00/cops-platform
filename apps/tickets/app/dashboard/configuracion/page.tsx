@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getCurrentUser } from "@/lib/actions/auth"
 import { getConfiguracion } from "@/lib/actions/configuracion"
-import { hasPermission, ROLE_LABELS, ROLE_PERMISSIONS, type UserRole } from "@/types"
+import { hasPermission, PERMISSION_LABELS, ROLE_LABELS, ROLE_PERMISSIONS, type UserRole } from "@/types"
 import { ConfigSection } from "@/components/configuracion/config-section"
 import type { LucideIcon } from "lucide-react"
 import type { SystemConfig } from "@/types"
@@ -130,9 +130,10 @@ export default async function ConfiguracionPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ROLE_PERMISSIONS[role].map((permission) => (
-                    <Badge key={permission} variant="outline" className="text-xs">
-                      {permission}
-                    </Badge>
+                    <div key={permission} className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs">
+                      <p className="font-medium text-slate-800">{PERMISSION_LABELS[permission].label}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">{PERMISSION_LABELS[permission].category}</p>
+                    </div>
                   ))}
                   {role === "tecnico" && (
                     <Badge variant="outline" className="text-xs border-red-200 text-red-500">

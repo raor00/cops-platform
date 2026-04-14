@@ -37,6 +37,7 @@ import {
   getEffectivePermissions,
   hasPermission,
   isDeveloperUser,
+  PERMISSION_LABELS,
 } from '@/types'
 import type { UserProfile, Ticket as TicketType, TechnicianStats } from '@/types'
 import { getInitials } from '@/lib/utils'
@@ -232,9 +233,10 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 {effectivePermissions.map((permission) => (
-                  <Badge key={permission} variant="outline" className="text-xs">
-                    {permission}
-                  </Badge>
+                  <div key={permission} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+                    <p className="font-medium text-slate-800">{PERMISSION_LABELS[permission].label}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">{PERMISSION_LABELS[permission].category}</p>
+                  </div>
                 ))}
               </CardContent>
             </Card>
