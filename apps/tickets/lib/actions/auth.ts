@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
-import type { ActionResponse, User } from "@/types"
+import type { ActionResponse, Permission, User } from "@/types"
 import { canCreateUserRole, canEditUserProfile, hasPermission, isDeveloperUser, ROLE_HIERARCHY } from "@/types"
 import type { LoginInput } from "@/lib/validations"
 import {
@@ -38,6 +38,7 @@ function normalizeAuthUser(uid: string, rawUser: Partial<User> & { email?: strin
     nombre: rawUser.nombre?.trim() || fallbackName,
     apellido: rawUser.apellido?.trim() || "",
     rol: resolvedRole,
+    rol_base: (rawUser.rol_base as User["rol"] | undefined) ?? rawUser.rol ?? resolvedRole,
     nivel_jerarquico: rawUser.nivel_jerarquico ?? ROLE_HIERARCHY[resolvedRole],
     telefono: rawUser.telefono ?? null,
     cedula: rawUser.cedula ?? "",
@@ -46,6 +47,8 @@ function normalizeAuthUser(uid: string, rawUser: Partial<User> & { email?: strin
     foto_perfil_path: rawUser.foto_perfil_path ?? null,
     especialidad: rawUser.especialidad ?? null,
     cargo: rawUser.cargo ?? null,
+    permisos_extra: rawUser.permisos_extra ?? [],
+    permisos_denegados: rawUser.permisos_denegados ?? [],
     created_at: rawUser.created_at || new Date().toISOString(),
     updated_at: rawUser.updated_at || new Date().toISOString(),
   }
@@ -299,6 +302,8 @@ export async function registerUserAction(data: {
   nombre: string
   apellido: string
   rol: string
+  permisos_extra?: Permission[]
+  permisos_denegados?: Permission[]
   cedula: string
   telefono?: string
 }): Promise<ActionResponse<{ user: User }>> {
@@ -308,7 +313,7 @@ export async function registerUserAction(data: {
 
   const currentUser = await getCurrentUser()
   const targetRole = isDeveloperUser({ email: data.email, rol: data.rol as User["rol"] }) ? "desarrollador" : (data.rol as User["rol"])
-  if (!currentUser || !hasPermission(currentUser.rol, "users:create")) {
+  if (!currentUser || !hasPermission(currentUser, "users:create")) {
     return { success: false, error: "No tienes permisos para crear usuarios" }
   }
 
@@ -343,6 +348,7 @@ export async function registerUserAction(data: {
           nombre: data.nombre,
           apellido: data.apellido,
           rol: targetRole,
+          rol_base: targetRole,
           nivel_jerarquico: ROLE_HIERARCHY[targetRole],
           cedula: data.cedula,
           telefono: data.telefono || null,
@@ -350,6 +356,8 @@ export async function registerUserAction(data: {
           activo_desde: new Date().toISOString().split("T")[0],
           foto_perfil_path: null,
           especialidad: null,
+          permisos_extra: data.permisos_extra ?? [],
+          permisos_denegados: data.permisos_denegados ?? [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }
@@ -392,6 +400,7 @@ export async function registerUserAction(data: {
         nombre: data.nombre,
         apellido: data.apellido,
         rol: targetRole,
+        rol_base: targetRole,
         nivel_jerarquico: ROLE_HIERARCHY[targetRole],
         cedula: data.cedula,
         telefono: data.telefono || null,
@@ -399,6 +408,8 @@ export async function registerUserAction(data: {
         activo_desde: new Date().toISOString().split("T")[0],
         foto_perfil_path: null,
         especialidad: null,
+        permisos_extra: data.permisos_extra ?? [],
+        permisos_denegados: data.permisos_denegados ?? [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }

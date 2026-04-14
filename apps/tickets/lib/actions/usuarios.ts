@@ -1,6 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
-import type { ActionResponse, UserProfile, UserUpdateInput, UserRole } from "@/types"
+import type { ActionResponse, Permission, UserProfile, UserUpdateInput, UserRole } from "@/types"
 import { getCurrentUser, registerUserAction } from "./auth"
 import { canEditUserProfile, hasPermission, isDeveloperUser, ROLE_HIERARCHY } from "@/types"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
@@ -76,7 +76,7 @@ export async function getAllUsers(): Promise<ActionResponse<UserProfile[]>> {
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    if (!hasPermission(user.rol, "users:view")) return { success: false, error: "No tienes permisos para ver usuarios" }
+    if (!hasPermission(user, "users:view")) return { success: false, error: "No tienes permisos para ver usuarios" }
 
     if (isLocalMode()) {
       const allUsers = getDemoUsers().map((u) => ({ ...u, foto_perfil_url: null }) as UserProfile)
@@ -97,7 +97,7 @@ export async function getUserById(userId: string): Promise<ActionResponse<UserPr
   try {
     const user = await getCurrentUser()
     if (!user) return { success: false, error: "No autenticado" }
-    if (user.id !== userId && !hasPermission(user.rol, "users:view")) return { success: false, error: "Sin permisos" }
+    if (user.id !== userId && !hasPermission(user, "users:view")) return { success: false, error: "Sin permisos" }
 
     if (isLocalMode()) {
       const demoUser = getDemoUsers().find((u) => u.id === userId) ?? getDemoCurrentUser()
@@ -193,7 +193,7 @@ export async function setUserStatusAction(userId: string, estado: "activo" | "in
   try {
     const currentUser = await getCurrentUser()
     if (!currentUser) return { success: false, error: "No autenticado" }
-    if (!hasPermission(currentUser.rol, "users:edit")) return { success: false, error: "No tienes permisos para cambiar el estado de usuarios" }
+    if (!hasPermission(currentUser, "users:edit")) return { success: false, error: "No tienes permisos para cambiar el estado de usuarios" }
     if (currentUser.id === userId && estado === "inactivo") return { success: false, error: "No puedes desactivar tu propia cuenta" }
 
     return await updateUserProfile(userId, { estado })
@@ -291,6 +291,8 @@ export async function createUser(input: {
   telefono?: string
   password?: string
   rol: UserRole
+  permisos_extra?: Permission[]
+  permisos_denegados?: Permission[]
   cedula?: string
 }): Promise<ActionResponse<{ id: string }>> {
   try {
@@ -301,6 +303,8 @@ export async function createUser(input: {
       telefono: input.telefono,
       password: input.password,
       rol: input.rol,
+      permisos_extra: input.permisos_extra,
+      permisos_denegados: input.permisos_denegados,
       cedula: input.cedula ?? "",
     })
     if (!result.success) return { success: false, error: result.error }
@@ -329,7 +333,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResponse> 
   try {
     const currentUser = await getCurrentUser()
     if (!currentUser) return { success: false, error: "No autenticado" }
-    if (!hasPermission(currentUser.rol, "users:delete")) {
+    if (!hasPermission(currentUser, "users:delete")) {
       return { success: false, error: "No tienes permisos para eliminar usuarios" }
     }
     if (currentUser.id === userId) {

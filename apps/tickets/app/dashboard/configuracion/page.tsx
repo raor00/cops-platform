@@ -46,11 +46,11 @@ const CONFIG_GROUPS: {
 export default async function ConfiguracionPage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
-  if (!hasPermission(user.rol, "config:view")) redirect("/dashboard")
+  if (!hasPermission(user, "config:view")) redirect("/dashboard")
 
   const result = await getConfiguracion()
   const configs: SystemConfig[] = result.data ?? []
-  const canEdit = hasPermission(user.rol, "config:edit")
+  const canEdit = hasPermission(user, "config:edit")
 
   return (
     <div className="page-container">

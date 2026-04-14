@@ -146,6 +146,7 @@ export interface User {
   apellido: string
   email: string
   rol: UserRole
+  rol_base?: UserRole | null
   nivel_jerarquico: number
   telefono: string | null
   cedula: string
@@ -154,6 +155,8 @@ export interface User {
   foto_perfil_path: string | null
   especialidad: string | null
   cargo?: string | null
+  permisos_extra?: Permission[] | null
+  permisos_denegados?: Permission[] | null
   created_at: string
   updated_at: string
 }
@@ -164,6 +167,8 @@ export interface UserCreateInput {
   email: string
   password: string
   rol: UserRole
+  permisos_extra?: Permission[]
+  permisos_denegados?: Permission[]
   telefono?: string
   cedula: string
 }
@@ -177,7 +182,10 @@ export interface UserUpdateInput {
   especialidad?: string
   cargo?: string | null
   rol?: UserRole
+  rol_base?: UserRole
   nivel_jerarquico?: number
+  permisos_extra?: Permission[] | null
+  permisos_denegados?: Permission[] | null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -431,6 +439,31 @@ export type Permission =
   | 'clients:create'
   | 'clients:edit'
 
+export const ALL_PERMISSIONS: Permission[] = [
+  'tickets:view_own',
+  'tickets:view_all',
+  'tickets:create',
+  'tickets:edit',
+  'tickets:delete',
+  'tickets:change_status',
+  'tickets:assign',
+  'tickets:reassign',
+  'users:view',
+  'users:create',
+  'users:edit',
+  'users:delete',
+  'payments:view',
+  'payments:process',
+  'reports:view',
+  'reports:export',
+  'config:view',
+  'config:edit',
+  'audit:view',
+  'clients:view',
+  'clients:create',
+  'clients:edit',
+]
+
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   tecnico: [
     'tickets:view_own',
@@ -551,8 +584,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 // FUNCIONES DE UTILIDAD PARA PERMISOS
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function hasPermission(role: UserRole, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false
+type PermissionSubject = UserRole | Pick<User, 'rol' | 'permisos_extra' | 'permisos_denegados'>
+
+export function getEffectivePermissions(subject: PermissionSubject): Permission[] {
+  const role = typeof subject === 'string' ? subject : subject.rol
+  const basePermissions = ROLE_PERMISSIONS[role] ?? []
+  if (typeof subject === 'string') return [...basePermissions]
+
+  const extras = subject.permisos_extra ?? []
+  const denied = new Set(subject.permisos_denegados ?? [])
+  return [...new Set([...basePermissions, ...extras])].filter((permission) => !denied.has(permission))
+}
+
+export function hasPermission(subject: PermissionSubject, permission: Permission): boolean {
+  return getEffectivePermissions(subject).includes(permission)
 }
 
 export function hasMinimumLevel(role: UserRole, minimumLevel: number): boolean {

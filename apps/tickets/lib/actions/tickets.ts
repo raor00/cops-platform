@@ -12,6 +12,7 @@ import type {
   UpdateLog,
 } from "@/types"
 import {
+  hasPermission,
   ROLE_HIERARCHY,
   VALID_TRANSITIONS,
   ADMIN_REVERSE_TRANSITIONS,
@@ -377,7 +378,7 @@ export async function createTicket(
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (ROLE_HIERARCHY[currentUser.rol] < 2)
+  if (!hasPermission(currentUser, 'tickets:create'))
     return { success: false, error: "No tienes permisos para crear tickets" }
 
   if (isLocalMode()) {
@@ -474,8 +475,8 @@ export async function updateTicket(
 ): Promise<ActionResponse<Ticket>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (ROLE_HIERARCHY[currentUser.rol] < 3)
-    return { success: false, error: "Solo Gerente, Vicepresidente o Presidente pueden modificar tickets" }
+  if (!hasPermission(currentUser, 'tickets:edit'))
+    return { success: false, error: "No tienes permisos para modificar tickets" }
 
   if (isLocalMode()) {
     const updatedTicket = updateDemoTicket(id, input, currentUser)
@@ -539,6 +540,9 @@ export async function changeTicketStatus(
     if (!currentTicket) return { success: false, error: "Ticket no encontrado" }
     if (currentUser.rol === "tecnico" && currentTicket.tecnico_id !== currentUser.id)
       return { success: false, error: "No tienes permiso para modificar este ticket" }
+    if (currentUser.rol !== "tecnico" && !hasPermission(currentUser, 'tickets:change_status')) {
+      return { success: false, error: "No tienes permisos para cambiar el estado de tickets" }
+    }
     if (currentUser.rol === "tecnico" && newStatus === "finalizado") {
       return { success: false, error: "Los técnicos no pueden finalizar tickets. Deben dejar bitácora y notificar a coordinación." }
     }
@@ -564,11 +568,14 @@ export async function changeTicketStatus(
 
       if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
         return { success: false, error: "No tienes permiso para modificar este ticket" }
+      if (currentUser.rol !== "tecnico" && !hasPermission(currentUser, 'tickets:change_status')) {
+        return { success: false, error: "No tienes permisos para cambiar el estado de tickets" }
+      }
       if (currentUser.rol === "tecnico" && newStatus === "finalizado") {
         return { success: false, error: "Los técnicos no pueden finalizar tickets. Deben dejar bitácora y notificar a coordinación." }
       }
 
-      const isAdmin = ROLE_HIERARCHY[currentUser.rol] >= 3
+      const isAdmin = hasPermission(currentUser, 'tickets:edit')
       const forwardOk = VALID_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
       const reverseOk = isAdmin && ADMIN_REVERSE_TRANSITIONS[ticket.estado as TicketStatus].includes(newStatus)
 
@@ -806,9 +813,9 @@ export async function assignTechnician(
     const ticket = getDemoTicketById(ticketId, currentUser)
     if (!ticket) return { success: false, error: "Ticket no encontrado" }
     const isReassignment = ticket.tecnico_id !== null
-    if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3)
+    if (isReassignment && !hasPermission(currentUser, 'tickets:reassign'))
       return { success: false, error: "Solo Gerente o superior puede reasignar tecnicos" }
-    if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2)
+    if (!isReassignment && !hasPermission(currentUser, 'tickets:assign'))
       return { success: false, error: "No tienes permisos para asignar tecnicos" }
     const updatedTicket = assignDemoTechnician(ticketId, tecnicoId)
     if (!updatedTicket) return { success: false, error: "Tecnico no encontrado" }
@@ -827,9 +834,9 @@ export async function assignTechnician(
       const ticket = fromFirestoreDoc<Ticket>(ticketId, snap.data()!)
       const isReassignment = Boolean(ticket.tecnico_id)
 
-      if (isReassignment && ROLE_HIERARCHY[currentUser.rol] < 3)
+      if (isReassignment && !hasPermission(currentUser, 'tickets:reassign'))
         return { success: false, error: "Solo Gerente o superior puede reasignar técnicos" }
-      if (!isReassignment && ROLE_HIERARCHY[currentUser.rol] < 2)
+      if (!isReassignment && !hasPermission(currentUser, 'tickets:assign'))
         return { success: false, error: "No tienes permisos para asignar técnicos" }
 
       const now = new Date().toISOString()
@@ -862,7 +869,7 @@ export async function assignTechnician(
 export async function deleteTicket(id: string): Promise<ActionResponse> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (ROLE_HIERARCHY[currentUser.rol] < 3) return { success: false, error: "No tienes permisos para eliminar tickets" }
+  if (!hasPermission(currentUser, 'tickets:delete')) return { success: false, error: "No tienes permisos para eliminar tickets" }
 
   if (isLocalMode()) {
     const deleted = deleteDemoTicket(id)
@@ -997,7 +1004,7 @@ export async function addTicketUpdateLog(
     if (!ticket) return { success: false, error: "Ticket no encontrado" }
     const canAdd = currentUser.rol === "tecnico"
       ? ticket.tecnico_id === currentUser.id
-      : ROLE_HIERARCHY[currentUser.rol] >= 2
+      : hasPermission(currentUser, 'tickets:edit') || hasPermission(currentUser, 'tickets:change_status') || hasPermission(currentUser, 'tickets:view_all')
     if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
     const log = addDemoUpdateLog({
       ticket_id: ticketId, autor_id: currentUser.id, contenido: contenido.trim(), tipo: "nota",
@@ -1015,7 +1022,7 @@ export async function addTicketUpdateLog(
       const ticket = fromFirestoreDoc<Ticket>(ticketId, ticketSnap.data()!)
       const canAdd = currentUser.rol === "tecnico"
         ? ticket.tecnico_id === currentUser.id
-        : ROLE_HIERARCHY[currentUser.rol] >= 2
+        : hasPermission(currentUser, 'tickets:edit') || hasPermission(currentUser, 'tickets:change_status') || hasPermission(currentUser, 'tickets:view_all')
       if (!canAdd) return { success: false, error: "No tienes permiso para agregar actualizaciones" }
 
       const now = new Date().toISOString()
@@ -1054,7 +1061,7 @@ export async function updateTicketUpdateLog(ticketId: string, logId: string, con
     if (!existing) return { success: false, error: "Entrada de bitácora no encontrada" }
     if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden editar notas manuales" }
 
-    const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+    const canManage = existing.autor_id === currentUser.id || hasPermission(currentUser, 'tickets:edit')
     if (!canManage) return { success: false, error: "No tienes permiso para editar esta actualización" }
 
     const updated = updateDemoUpdateLog(ticketId, logId, contenido.trim())
@@ -1076,7 +1083,7 @@ export async function updateTicketUpdateLog(ticketId: string, logId: string, con
       if (existing.ticket_id !== ticketId) return { success: false, error: "La entrada no pertenece a este ticket" }
       if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden editar notas manuales" }
 
-      const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+      const canManage = existing.autor_id === currentUser.id || hasPermission(currentUser, 'tickets:edit')
       if (!canManage) return { success: false, error: "No tienes permiso para editar esta actualización" }
 
       const now = new Date().toISOString()
@@ -1106,7 +1113,7 @@ export async function deleteTicketUpdateLog(ticketId: string, logId: string): Pr
     if (!existing) return { success: false, error: "Entrada de bitácora no encontrada" }
     if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden eliminar notas manuales" }
 
-    const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+    const canManage = existing.autor_id === currentUser.id || hasPermission(currentUser, 'tickets:edit')
     if (!canManage) return { success: false, error: "No tienes permiso para eliminar esta actualización" }
 
     const deleted = deleteDemoUpdateLog(ticketId, logId)
@@ -1128,7 +1135,7 @@ export async function deleteTicketUpdateLog(ticketId: string, logId: string): Pr
       if (existing.ticket_id !== ticketId) return { success: false, error: "La entrada no pertenece a este ticket" }
       if (existing.tipo !== "nota") return { success: false, error: "Solo se pueden eliminar notas manuales" }
 
-      const canManage = existing.autor_id === currentUser.id || ROLE_HIERARCHY[currentUser.rol] >= 3
+      const canManage = existing.autor_id === currentUser.id || hasPermission(currentUser, 'tickets:edit')
       if (!canManage) return { success: false, error: "No tienes permiso para eliminar esta actualización" }
 
       await Promise.all([

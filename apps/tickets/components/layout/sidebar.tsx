@@ -128,10 +128,10 @@ export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onColl
   }
 
   const managementItems = MANAGEMENT_NAV.filter(
-    (item) => hasPermission(user.rol, item.permission)
+    (item) => hasPermission(user, item.permission)
   )
   const systemItems = SYSTEM_NAV.filter(
-    (item) => hasPermission(user.rol, item.permission)
+    (item) => hasPermission(user, item.permission)
   )
 
   const NavLink = ({ item }: { item: { name: string; href: string; matchHref?: string; exact?: boolean; icon: React.ComponentType<{ className?: string }> } }) => {

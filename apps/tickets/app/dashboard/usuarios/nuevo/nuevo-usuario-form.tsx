@@ -11,6 +11,7 @@ import { Eye, EyeOff, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PermissionsEditor } from "@/components/usuarios/permissions-editor"
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/select"
 import { createUser } from "@/lib/actions/usuarios"
 import { ROLE_LABELS, VISIBLE_USER_ROLES } from "@/types"
-import type { UserRole, VisibleUserRole } from "@/types"
+import type { Permission, UserRole, VisibleUserRole } from "@/types"
 
 const nuevoUsuarioSchema = z
   .object({
@@ -66,6 +67,8 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [extraPermissions, setExtraPermissions] = useState<Permission[]>([])
+  const [deniedPermissions, setDeniedPermissions] = useState<Permission[]>([])
 
   const {
     register,
@@ -82,6 +85,16 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
   const selectedRole = watch("rol")
   const credentialsOptional = selectedRole === "tecnico"
 
+  const toggleExtra = (permission: Permission, checked: boolean) => {
+    setExtraPermissions((prev) => checked ? [...new Set([...prev, permission])] : prev.filter((item) => item !== permission))
+    if (checked) setDeniedPermissions((prev) => prev.filter((item) => item !== permission))
+  }
+
+  const toggleDenied = (permission: Permission, checked: boolean) => {
+    setDeniedPermissions((prev) => checked ? [...new Set([...prev, permission])] : prev.filter((item) => item !== permission))
+    if (checked) setExtraPermissions((prev) => prev.filter((item) => item !== permission))
+  }
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
@@ -91,6 +104,8 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
         nombre: data.nombre,
         apellido: data.apellido,
         rol: data.rol,
+        permisos_extra: extraPermissions,
+        permisos_denegados: deniedPermissions,
         cedula: data.cedula,
         telefono: data.telefono || undefined,
       })
@@ -313,6 +328,14 @@ export function NuevoUsuarioForm({ isLocalMode }: NuevoUsuarioFormProps) {
           )}
         </div>
       </div>
+
+      <PermissionsEditor
+        role={selectedRole}
+        extraPermissions={extraPermissions}
+        deniedPermissions={deniedPermissions}
+        onToggleExtra={toggleExtra}
+        onToggleDenied={toggleDenied}
+      />
 
       {/* Botones */}
       <div className="flex items-center gap-3 pt-2">

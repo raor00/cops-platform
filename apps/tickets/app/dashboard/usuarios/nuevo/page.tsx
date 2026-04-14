@@ -14,7 +14,7 @@ export const metadata = { title: "Nuevo Usuario" }
 export default async function NuevoUsuarioPage() {
   const user = await getCurrentUser()
 
-  if (!user || !hasPermission(user.rol, "users:create")) {
+  if (!user || !hasPermission(user, "users:create")) {
     redirect("/dashboard")
   }
 

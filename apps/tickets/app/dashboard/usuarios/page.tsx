@@ -31,7 +31,7 @@ async function getUsers(): Promise<UserProfile[]> {
 export default async function UsuariosPage() {
   const user = await getCurrentUser()
 
-  if (!user || !hasPermission(user.rol, "users:view")) {
+  if (!user || !hasPermission(user, "users:view")) {
     redirect("/dashboard")
   }
 

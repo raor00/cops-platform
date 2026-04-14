@@ -34,6 +34,7 @@ import {
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   canEditUserProfile,
+  getEffectivePermissions,
   hasPermission,
   isDeveloperUser,
 } from '@/types'
@@ -59,7 +60,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
   if (!user) redirect('/login')
 
   // Solo gerente+ o el propio usuario
-  const canViewOthers = hasPermission(user.rol, 'users:view')
+  const canViewOthers = hasPermission(user, 'users:view')
   if (!canViewOthers && user.id !== id) redirect('/dashboard')
 
   // Obtener datos del usuario objetivo
@@ -79,6 +80,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
   const canEdit = user.id === id || canEditUserProfile(user.rol, targetUser.rol)
   const isTecnico = targetUser.rol === 'tecnico'
   const ticketsTabLabel = isTecnico ? 'Tickets Asignados' : 'Tickets Creados'
+  const effectivePermissions = getEffectivePermissions(targetUser)
 
   // Fetches paralelos
   const [ticketsResult, statsResult] = await Promise.all([
@@ -146,12 +148,13 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
 
           {canEdit && (
             <div className="flex flex-wrap gap-2">
-              {hasPermission(user.rol, 'users:edit') && user.id !== targetUser.id && (
+              {hasPermission(user, 'users:edit') && user.id !== targetUser.id && (
                 <UserStatusToggleButton userId={targetUser.id} currentStatus={targetUser.estado} />
               )}
               <ProfileEditDialog
                 user={targetUser}
                 canEditRole={isDeveloperUser(user)}
+                canEditPermissions={canEditUserProfile(user.rol, targetUser.rol)}
               />
             </div>
           )}
@@ -218,6 +221,21 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                   label="Miembro desde"
                   value={new Date(targetUser.created_at).toLocaleDateString('es-VE')}
                 />
+              </CardContent>
+            </Card>
+
+            <Card variant="glass" className="sm:col-span-2 stagger-4 animate-slide-up">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                  Permisos Efectivos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {effectivePermissions.map((permission) => (
+                  <Badge key={permission} variant="outline" className="text-xs">
+                    {permission}
+                  </Badge>
+                ))}
               </CardContent>
             </Card>
           </div>

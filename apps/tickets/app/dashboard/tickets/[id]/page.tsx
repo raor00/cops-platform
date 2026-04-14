@@ -9,6 +9,7 @@ import { getTicketById, getTicketHistory, getTicketUpdateLogs } from '@/lib/acti
 import { getFasesByTicket } from '@/lib/actions/fases'
 import { getInspeccionByTicket } from '@/lib/actions/inspecciones'
 import {
+  hasPermission,
   STATUS_LABELS,
   STATUS_COLORS,
   PRIORITY_LABELS,
@@ -45,20 +46,20 @@ export default async function TicketDetailPage({ params, searchParams }: TicketP
   if (!result.success || !result.data) notFound()
   const ticket = result.data
 
-  const canEdit = ROLE_HIERARCHY[user.rol] >= 3
-  const canChangeStatus = user.rol === 'tecnico' ? ticket.tecnico_id === user.id : ROLE_HIERARCHY[user.rol] >= 3
-  const canManageFases = ROLE_HIERARCHY[user.rol] >= 3
+  const canEdit = hasPermission(user, 'tickets:edit')
+  const canChangeStatus = user.rol === 'tecnico' ? ticket.tecnico_id === user.id && hasPermission(user, 'tickets:change_status') : hasPermission(user, 'tickets:change_status')
+  const canManageFases = hasPermission(user, 'tickets:edit')
   const canUpdateProgress = user.rol === 'tecnico' && ticket.tecnico_id === user.id
   const canViewComprobante = ticket.estado === 'finalizado' && ROLE_HIERARCHY[user.rol] >= 2
   const canUploadFotos =
     user.rol === 'tecnico'
       ? ticket.tecnico_id === user.id
       : ROLE_HIERARCHY[user.rol] >= 2
-  const canDeleteFotos = ROLE_HIERARCHY[user.rol] >= 3
-  const canManageLogs = ROLE_HIERARCHY[user.rol] >= 3
+  const canDeleteFotos = hasPermission(user, 'tickets:edit')
+  const canManageLogs = hasPermission(user, 'tickets:edit') || hasPermission(user, 'tickets:change_status')
   const canViewHistorial = ROLE_HIERARCHY[user.rol] >= 2
   const canUploadDocumentos = ROLE_HIERARCHY[user.rol] >= 2
-  const canDeleteDocumentos = ROLE_HIERARCHY[user.rol] >= 3
+  const canDeleteDocumentos = hasPermission(user, 'tickets:edit')
 
   const [fasesResult, historialResult, inspeccionResult, updateLogsResult, origenResult, derivadoResult] = await Promise.all([
     ticket.tipo === 'proyecto'

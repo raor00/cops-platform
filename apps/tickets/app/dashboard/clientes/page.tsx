@@ -7,7 +7,7 @@ import { ClientesClient } from "@/components/clientes/clientes-client"
 export default async function ClientesPage() {
   const user = await getCurrentUser()
   if (!user) redirect("/login")
-  if (!hasPermission(user.rol, "clients:view")) redirect("/dashboard")
+  if (!hasPermission(user, "clients:view")) redirect("/dashboard")
 
   const result = await getClientes({ page: 1, pageSize: 50 })
 

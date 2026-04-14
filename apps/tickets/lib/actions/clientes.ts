@@ -35,7 +35,7 @@ export async function getClientes(
 ): Promise<ActionResponse<PaginatedResponse<Cliente>>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (!hasPermission(currentUser.rol, "clients:view")) return { success: false, error: "Sin permisos" }
+  if (!hasPermission(currentUser, "clients:view")) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) return { success: true, data: getDemoClientes(options) }
 
@@ -80,7 +80,7 @@ export async function getClientes(
 export async function getClienteById(id: string): Promise<ActionResponse<Cliente>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (!hasPermission(currentUser.rol, "clients:view")) return { success: false, error: "Sin permisos" }
+  if (!hasPermission(currentUser, "clients:view")) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) {
     const data = getDemoClienteById(id)
@@ -109,7 +109,7 @@ export async function getClienteById(id: string): Promise<ActionResponse<Cliente
 export async function createCliente(input: ClienteCreateInput): Promise<ActionResponse<Cliente>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (!hasPermission(currentUser.rol, "clients:create")) return { success: false, error: "Sin permisos" }
+  if (!hasPermission(currentUser, "clients:create")) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) {
     const data = createDemoCliente(input)
@@ -157,7 +157,7 @@ export async function updateCliente(
 ): Promise<ActionResponse<Cliente>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (!hasPermission(currentUser.rol, "clients:edit")) return { success: false, error: "Sin permisos" }
+  if (!hasPermission(currentUser, "clients:edit")) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) {
     const data = updateDemoCliente(id, input)
@@ -224,7 +224,7 @@ export async function deleteCliente(id: string): Promise<ActionResponse<void>> {
 export async function searchClientes(query: string): Promise<ActionResponse<Cliente[]>> {
   const currentUser = await getCurrentUser()
   if (!currentUser) return { success: false, error: "No autenticado" }
-  if (!hasPermission(currentUser.rol, "clients:view")) return { success: false, error: "Sin permisos" }
+  if (!hasPermission(currentUser, "clients:view")) return { success: false, error: "Sin permisos" }
 
   if (isLocalMode()) return { success: true, data: searchDemoClientes(query) }
 

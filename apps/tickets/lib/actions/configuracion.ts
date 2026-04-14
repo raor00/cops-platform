@@ -20,7 +20,7 @@ const DEFAULT_CONFIG_DATA = [
 export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>> {
   const user = await getCurrentUser()
   if (!user) return { success: false, error: 'No autenticado' }
-  if (!hasPermission(user.rol, 'config:view')) return { success: false, error: 'Sin permisos para ver configuracion' }
+  if (!hasPermission(user, 'config:view')) return { success: false, error: 'Sin permisos para ver configuracion' }
 
   if (isLocalMode()) return { success: true, data: getDemoConfig() }
 
@@ -50,7 +50,7 @@ export async function getConfiguracion(): Promise<ActionResponse<SystemConfig[]>
 export async function updateConfigValue(clave: string, valor: string): Promise<ActionResponse<SystemConfig>> {
   const user = await getCurrentUser()
   if (!user) return { success: false, error: 'No autenticado' }
-  if (!hasPermission(user.rol, 'config:edit')) return { success: false, error: 'Se requiere rol Vicepresidente o superior para editar la configuracion' }
+  if (!hasPermission(user, 'config:edit')) return { success: false, error: 'Se requiere Vicepresidencia o permiso equivalente para editar la configuracion' }
 
   if (isLocalMode()) {
     const updated = updateDemoConfig(clave, valor)
