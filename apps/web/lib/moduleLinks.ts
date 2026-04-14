@@ -1,5 +1,5 @@
-const DEFAULT_COTIZACIONES_APP_URL = "https://cops-platform-cotizaciones.vercel.app/";
-const DEFAULT_TICKETS_APP_URL = "https://cops-platform-tickets.vercel.app/";
+const DEFAULT_COTIZACIONES_APP_URL = "https://cotizaciones.copselectronics.com/";
+const DEFAULT_TICKETS_APP_URL = "https://tickets.copselectronics.com/";
 
 function toAbsoluteUrl(raw: string) {
   const trimmed = raw.trim();

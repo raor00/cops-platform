@@ -8,7 +8,7 @@ import {
   isLocalMode,
 } from "@/lib/local-mode"
 
-const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+const WEB_APP_URL = (process.env.WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
 const PUBLIC_PATHS = ["/auth/bridge", "/auth/firebase-bridge", "/login", "/_next", "/favicon", "/api/"]
 
 function isPublicPath(pathname: string) {

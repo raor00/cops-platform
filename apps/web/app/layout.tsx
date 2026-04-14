@@ -12,7 +12,7 @@ const outfit = Outfit({
   display: "swap",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://cops-electronics-web.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://copselectronics.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

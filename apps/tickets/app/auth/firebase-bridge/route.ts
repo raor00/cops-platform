@@ -8,7 +8,7 @@ import {
 } from "@/lib/local-mode"
 import { ROLE_HIERARCHY } from "@/types"
 
-const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+const WEB_APP_URL = (process.env.WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
 
 // idToken expires in 1h — keep the cookie a bit shorter to avoid edge cases
 const ID_TOKEN_COOKIE_MAX_AGE = 55 * 60

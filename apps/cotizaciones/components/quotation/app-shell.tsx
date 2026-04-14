@@ -47,7 +47,7 @@ export function AppShell() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectMode, setSelectMode] = useState(false)
   const lastScrollRef = useRef(0)
-  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
 
   // Sync desde Firestore al montar (hidrata localStorage con datos persistidos)
   useEffect(() => {
@@ -301,5 +301,4 @@ export function AppShell() {
     </div>
   )
 }
-
 

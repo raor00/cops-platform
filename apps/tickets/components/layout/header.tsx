@@ -26,7 +26,7 @@ interface HeaderProps {
 }
 
 export function Header({ user, initialNotifications, onMenuClick, onLogout }: HeaderProps) {
-  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
   const userFullName = getFullName(user.nombre, user.apellido)
   const userInitials = getInitials(user.nombre, user.apellido)
   const [notifications, setNotifications] = useState(initialNotifications)

@@ -38,7 +38,7 @@ import type { MaterialItem, Cliente, ClienteContacto, TipoDocumento } from "@/ty
 
 type CatalogFilter = "all" | "equipos" | "materiales"
 
-const DEFAULT_COTIZACIONES_URL = "https://cops-platform-cotizaciones.vercel.app"
+const DEFAULT_COTIZACIONES_URL = "https://cotizaciones.copselectronics.com"
 
 function normalizeAbsoluteUrl(raw: string | undefined) {
   if (!raw) return null

@@ -56,7 +56,7 @@ function normalizeAuthUser(uid: string, rawUser: Partial<User> & { email?: strin
 
 const DEMO_USERNAME = process.env.TICKETS_DEMO_USERNAME || "admin"
 const DEMO_PASSWORD = process.env.TICKETS_DEMO_PASSWORD || "admin123"
-const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+const WEB_APP_URL = (process.env.WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
 
 // ─── Demo session helpers ──────────────────────────────────────────────────────
 

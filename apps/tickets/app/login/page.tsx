@@ -8,7 +8,7 @@ import {
 import { verifyFirebaseSession } from "@/lib/firebase/session"
 import LocalLoginForm from "./LocalLoginForm"
 
-const WEB_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+const WEB_URL = (process.env.WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
 
 export default async function LoginPage() {
   // Firebase mode (production): tickets has no standalone login.

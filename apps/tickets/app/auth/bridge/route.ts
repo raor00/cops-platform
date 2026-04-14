@@ -11,7 +11,7 @@ import {
   verifyTicketsBridgeToken,
 } from "@/lib/platform-bridge"
 
-const WEB_APP_URL = (process.env.WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+const WEB_APP_URL = (process.env.WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)

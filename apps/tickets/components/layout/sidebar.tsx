@@ -111,7 +111,7 @@ const SYSTEM_NAV = [
 
 export function Sidebar({ user, onLogout, collapsed: controlledCollapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname()
-  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://cops-platform-web.vercel.app").replace(/\/$/, "")
+  const webAppUrl = (process.env.NEXT_PUBLIC_PLATFORM_WEB_URL || "https://copselectronics.com").replace(/\/$/, "")
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const collapsed = controlledCollapsed ?? internalCollapsed
   const userFullName = getFullName(user.nombre, user.apellido)
