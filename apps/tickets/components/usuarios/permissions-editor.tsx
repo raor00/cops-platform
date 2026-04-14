@@ -19,7 +19,7 @@ export function PermissionsEditor({ role, extraPermissions, deniedPermissions, o
     <div className="space-y-4 rounded-xl border border-slate-200 p-4">
       <div>
         <h3 className="font-medium text-slate-900">Permisos del rol {ROLE_LABELS[role]}</h3>
-        <p className="text-xs text-slate-500">Marca permisos adicionales o bloquea permisos heredados del rol base.</p>
+        <p className="text-xs text-slate-500">Permite permisos adicionales o bloquea permisos heredados del rol base.</p>
       </div>
 
       <div className="space-y-3">
@@ -37,19 +37,19 @@ export function PermissionsEditor({ role, extraPermissions, deniedPermissions, o
                   {PERMISSION_LABELS[permission].description}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  {isBase ? "Heredado por rol" : "Disponible como permiso adicional"}
+                  {isBase ? "Heredado por rol" : "Disponible para permitir manualmente"}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <Checkbox
-                  id={`extra-${permission}`}
+                  id={`allow-${permission}`}
                   checked={isBase ? true : isExtra}
                   disabled={isBase}
                   onCheckedChange={(checked) => onToggleExtra(permission, checked === true)}
                 />
-                <Label htmlFor={`extra-${permission}`} className="text-xs text-slate-600">
-                  Extra
+                <Label htmlFor={`allow-${permission}`} className="text-xs text-slate-600">
+                  Permitir
                 </Label>
               </div>
 

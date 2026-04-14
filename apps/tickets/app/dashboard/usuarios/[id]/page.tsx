@@ -217,7 +217,7 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <InfoRow label="Rol" value={ROLE_LABELS[targetUser.rol]} />
                 <InfoRow label="Nivel" value={`${ROLE_HIERARCHY[targetUser.rol]} de 6`} />
                 <InfoRow
@@ -228,6 +228,13 @@ export default async function UsuarioDetailPage({ params }: UsuarioPageProps) {
                   label="Miembro desde"
                   value={new Date(targetUser.created_at).toLocaleDateString('es-VE')}
                 />
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumen</p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {ROLE_LABELS[targetUser.rol]} con <span className="font-medium">{effectivePermissions.length} permisos efectivos</span>
+                    {targetUser.estado === 'activo' ? ' y acceso activo al sistema.' : ' y cuenta actualmente inactiva.'}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
