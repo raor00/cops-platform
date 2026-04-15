@@ -38,7 +38,7 @@ export default function HomeHero() {
             Arquitectura e integración para <span className="text-gradient">operación crítica</span>
           </h1>
           <p className="reveal mt-6 text-lg leading-relaxed text-white/70">
-            Diseñamos y ejecutamos plataformas para monitoreo, control y continuidad: VMS/CCTV, control de acceso, BMS, analíticas y energía. Enfocado en entornos donde cada evento debe ser auditable y cada sede debe operar bajo estándar.
+            Diseñamos, integramos y mantenemos plataformas enterprise de BMS, energía crítica y VMS para organizaciones que exigen continuidad operativa, trazabilidad y control centralizado en cada sede.
           </p>
           <div className="reveal mt-7 lg-card p-5">
             <p className="text-[10px] font-bold tracking-[0.25em] text-brand-300">NUESTRA TENDENCIA</p>

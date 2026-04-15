@@ -21,11 +21,11 @@ export const metadata: Metadata = {
     template: "%s | COP'S Electronics",
   },
   description:
-    "Automatización, seguridad electrónica y energía para operación crítica. Proyectos enterprise para banca, industria y comercio.",
+    "BMS, energía crítica y VMS para operación enterprise. Diseñamos e integramos plataformas con continuidad operativa, trazabilidad y control centralizado.",
   openGraph: {
     title: "COP'S Electronics",
     description:
-      "Automatización, seguridad electrónica y energía para operación crítica.",
+      "BMS, energía crítica y VMS para operación enterprise con continuidad operativa y control centralizado.",
     url: SITE_URL,
     siteName: "COP'S Electronics",
     images: [{ url: "/og.png", width: 1200, height: 630 }],

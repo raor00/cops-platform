@@ -20,7 +20,7 @@ export const translations = {
       hero: {
         line1: "ARQUITECTURA E INTEGRACION",
         line2: "PARA OPERACION CRITICA",
-        desc: "Disenamos y ejecutamos plataformas resilientes de Videovigilancia, Control de Acceso y Energia para corporaciones donde cada evento debe ser auditable y la continuidad es innegociable.",
+        desc: "Diseñamos, integramos y mantenemos plataformas enterprise de BMS, energía crítica y VMS para organizaciones que exigen continuidad operativa, trazabilidad y control centralizado en cada sede.",
         cta: "Saber mas",
       },
       stats: {
@@ -30,14 +30,14 @@ export const translations = {
         nationalLabel: "Operacion Nacional",
       },
       story: {
-        h2: "Respaldando operacion critica en Venezuela",
-        desc: "Somos una empresa privada con trayectoria ininterrumpida dedicada a la asesoria e implementacion de proyectos tecnologicos de alta gama en automatizacion, seguridad y energia, con enfoque enterprise para banca, industria, comercio e instituciones gubernamentales.",
-        card1Title: "Integracion multi-marca",
-        card1Desc: "Arquitecturas abiertas sin depender de un solo fabricante, enlazando VMS, control de acceso y BMS bajo un mismo nucleo de comando.",
+        h2: "Respaldando operación crítica en Venezuela",
+        desc: "Somos una empresa privada con trayectoria ininterrumpida dedicada a la asesoría e implementación de proyectos tecnológicos de alta gama en automatización, seguridad y energía, con enfoque enterprise para banca, industria, comercio e instituciones gubernamentales.",
+        card1Title: "Integración multi-marca",
+        card1Desc: "Arquitecturas abiertas sin depender de un solo fabricante, enlazando VMS, control de acceso y BMS bajo un mismo núcleo de comando.",
         card2Title: "Escalabilidad enterprise",
-        card2Desc: "Disenos listos para operacion multi-sede. Estandarizacion de modelos piloto orientados a despliegues a nivel nacional.",
-        card3Title: "Soporte y continuidad",
-        card3Desc: "Planificacion, documentacion exhaustiva (QA) y acompanamiento post-implementacion para asegurar la estabilidad operativa.",
+        card2Desc: "Diseños listos para operación multi-sede. Estandarización de modelos piloto orientados a despliegues a nivel nacional.",
+        card3Title: "Acompañamiento y continuidad",
+        card3Desc: "Planificación, documentación exhaustiva (QA) y acompañamiento post-implementación para asegurar la estabilidad operativa.",
       },
       partners: {
         trusted: "Han confiado en COP\u2019S",
@@ -45,26 +45,26 @@ export const translations = {
       },
       solutions: {
         heading: "Soluciones",
-        subtext: "Plataformas modulares para seguridad, monitoreo y automatizacion orientadas a continuidad operativa real.",
+        subtext: "Plataformas modulares para seguridad, monitoreo y automatización orientadas a continuidad operativa real.",
         viewDetail: "Ver detalle",
         items: [
           {
             id: "seguridad-electronica",
-            title: "Seguridad electronica enterprise",
-            summary: "Arquitectura integral de CCTV, control de acceso, alarmas y analitica para operacion continua y trazabilidad de eventos.",
-            stats: ["SLA 24/7", "Integracion multi-sede", "Auditoria centralizada"],
+            title: "Seguridad electrónica enterprise",
+            summary: "Arquitectura integral de CCTV, control de acceso, alarmas y analítica para operación continua y trazabilidad de eventos.",
+            stats: ["SLA 24/7", "Integración multi-sede", "Auditoría centralizada"],
           },
           {
             id: "gestion-de-video-vms",
-            title: "Gestion de video (VMS)",
-            summary: "Monitoreo inteligente con reglas, busqueda forense y orquestacion de incidentes para centros de control de alta demanda.",
-            stats: ["Busqueda acelerada", "Alertas por eventos", "Roles y permisos"],
+            title: "Gestión de video (VMS)",
+            summary: "Monitoreo inteligente con reglas, búsqueda forense y orquestación de incidentes para centros de control de alta demanda.",
+            stats: ["Búsqueda acelerada", "Alertas por eventos", "Roles y permisos"],
           },
           {
             id: "automatizacion-y-bms",
-            title: "Automatizacion y BMS",
-            summary: "Control unificado de infraestructura critica: energia, climatizacion y subsistemas con tableros operativos en tiempo real.",
-            stats: ["Telemetria en vivo", "Optimizacion energetica", "Operacion predictiva"],
+            title: "Automatización y BMS",
+            summary: "Control unificado de infraestructura crítica: energía, climatización y subsistemas con tableros operativos en tiempo real.",
+            stats: ["Telemetría en vivo", "Optimización energética", "Operación predictiva"],
           },
         ],
       },
@@ -78,18 +78,18 @@ export const translations = {
         ],
       },
       methodology: {
-        heading: "Metodologia disenada para operacion estable y auditable",
+        heading: "Metodología diseñada para operación estable y auditable",
         stepPrefix: "Paso",
         steps: [
-          { title: "LEVANTAMIENTO", desc: "Analisis exhaustivo de requerimientos y entorno." },
-          { title: "ARQUITECTURA", desc: "Diseno de soluciones robustas y escalables." },
-          { title: "IMPLEMENTACION", desc: "Despliegue estructurado y puesta en marcha." },
+          { title: "LEVANTAMIENTO", desc: "Análisis exhaustivo de requerimientos y entorno." },
+          { title: "ARQUITECTURA", desc: "Diseño de soluciones robustas y escalables." },
+          { title: "IMPLEMENTACIÓN", desc: "Despliegue estructurado y puesta en marcha." },
         ],
       },
       cta: {
-        heading: "Listo para evaluar tu operacion y disenar una solucion robusta?",
-        desc: "Nuestros especialistas estan listos para analizar su infraestructura actual y proponer la arquitectura que asegurara su futuro.",
-        button: "Solicitar Consultoria Gratuita",
+        heading: "¿Listo para evaluar tu operación y diseñar una solución robusta?",
+        desc: "Nuestros especialistas están listos para analizar su infraestructura actual y proponer la arquitectura que asegurará su futuro.",
+        button: "Solicitar Consultoría Gratuita",
       },
       footer: {
         empresa: "EMPRESA",
@@ -413,7 +413,7 @@ export const translations = {
       hero: {
         line1: "ARCHITECTURE AND INTEGRATION",
         line2: "FOR CRITICAL OPERATIONS",
-        desc: "We design and deploy resilient platforms for Video Surveillance, Access Control and Energy for corporations where every event must be auditable and continuity is non-negotiable.",
+        desc: "We design, integrate, and maintain enterprise BMS, critical energy, and VMS platforms for organizations that require operational continuity, traceability, and centralized control across every site.",
         cta: "Learn more",
       },
       stats: {

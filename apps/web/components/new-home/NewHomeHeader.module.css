@@ -1,7 +1,7 @@
-﻿.logoContainer {
+.logoContainer {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 14px;
 }
 
 .logoText {
@@ -11,23 +11,23 @@
 }
 
 .brand {
-  font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 1.08rem;
+  letter-spacing: 0.08em;
   color: #ffffff;
 }
 
 .subtitle {
-  font-size: 0.5rem;
-  letter-spacing: 2px;
+  font-size: 0.54rem;
+  letter-spacing: 0.24em;
   font-weight: 500;
   color: #94a3b8;
 }
 
 .atomLogo {
   position: relative;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -73,15 +73,16 @@
 }
 
 .mainNav {
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .mainNav a {
   color: #94a3b8;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.8rem;
-  padding: 0.5rem 0;
+  font-size: 0.92rem;
+  letter-spacing: 0.015em;
+  padding: 0.55rem 0;
   position: relative;
   transition: color 0.3s;
 }
@@ -110,7 +111,7 @@
 }
 
 .authActions {
-  gap: 1.25rem;
+  gap: 0.9rem;
 }
 
 .loginBtn {
@@ -124,4 +125,3 @@
 .loginBtn:hover {
   color: #ffffff;
 }
-

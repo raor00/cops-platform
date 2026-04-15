@@ -56,12 +56,12 @@ export default function NewHomeHeader() {
       <header className="fixed left-0 right-0 top-0 z-[100] flex w-full justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none">
         <div
           className={`pointer-events-auto relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isAtTop
-            ? "mt-0 w-full max-w-7xl mx-auto rounded-none border-b border-transparent bg-transparent px-6 py-4 lg:px-10 lg:py-5"
-            : "mt-4 mx-auto w-[96%] max-w-5xl rounded-full border border-white/10 bg-[#0b1426]/80 px-4 py-2 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:px-5 lg:px-6"
+            ? "mt-0 w-full max-w-[92rem] mx-auto rounded-none border-b border-transparent bg-transparent px-6 py-4 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:px-10 lg:py-5 xl:px-14"
+            : "mt-4 mx-auto w-[98%] max-w-[90rem] rounded-full border border-white/10 bg-[#0b1426]/80 px-5 py-2.5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-xl sm:px-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:px-7"
             }`}
         >
           {/* Logo - fixed width */}
-          <div className={`${styles.logoContainer} whitespace-nowrap flex-shrink-0`}>
+          <div className={`${styles.logoContainer} whitespace-nowrap flex-shrink-0 lg:justify-self-start`}>
             <div className={styles.atomLogo}>
               <div className={styles.electron} />
               <div className={styles.electron} />
@@ -75,7 +75,7 @@ export default function NewHomeHeader() {
           </div>
 
           {/* Nav - centered with flex-1 (desktop only) */}
-          <nav className={`${styles.mainNav} hidden lg:flex items-center justify-center flex-1 mx-4`}>
+          <nav className={`${styles.mainNav} hidden lg:flex items-center justify-center lg:justify-self-center`}>
             <Link href="/" aria-label="Inicio" className={`flex items-center transition-colors ${pathname === "/" ? styles.active : ""}`}>
               <Home className="h-4 w-4" />
             </Link>
@@ -87,17 +87,17 @@ export default function NewHomeHeader() {
           </nav>
 
           {/* Auth actions + language switcher (desktop only) */}
-          <div className={`${styles.authActions} hidden lg:flex items-center gap-2.5 flex-shrink-0`}>
+          <div className={`${styles.authActions} hidden lg:flex items-center gap-2.5 flex-shrink-0 lg:justify-self-end`}>
             <LanguageSwitcher />
             <a
               href="/contacto"
-              className="flex items-center justify-center whitespace-nowrap rounded-full border border-blue-500/50 bg-blue-600/30 px-4 py-1.5 text-[11px] font-semibold text-white shadow-[0_4px_14px_rgba(37,99,235,0.2)] transition-all hover:-translate-y-[1px] hover:bg-blue-600/50 hover:shadow-[0_6px_20px_rgba(37,99,235,0.3)]"
+              className="flex items-center justify-center whitespace-nowrap rounded-full border border-blue-500/50 bg-blue-600/30 px-4.5 py-2 text-[12px] font-bold tracking-[0.015em] text-white shadow-[0_4px_14px_rgba(37,99,235,0.2)] transition-all hover:-translate-y-[1px] hover:bg-blue-600/50 hover:shadow-[0_6px_20px_rgba(37,99,235,0.3)]"
             >
               {t.nav.cta}
             </a>
             <a
               href="/login"
-              className="flex items-center justify-center whitespace-nowrap rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-[11px] font-semibold text-white transition-all hover:-translate-y-[1px] hover:bg-white/10"
+              className="flex items-center justify-center whitespace-nowrap rounded-full border border-white/20 bg-white/5 px-4.5 py-2 text-[12px] font-semibold tracking-[0.015em] text-white transition-all hover:-translate-y-[1px] hover:bg-white/10"
             >
               {t.nav.login}
             </a>

@@ -158,7 +158,7 @@ export default function SiteHeader() {
       }`}
     >
       <div
-        className={`capsule-header pointer-events-auto relative w-full max-w-5xl transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${
+        className={`capsule-header pointer-events-auto relative w-full max-w-6xl transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${
           scrolled ? "capsule-header--scrolled" : ""
         }`}
       >
@@ -184,17 +184,17 @@ export default function SiteHeader() {
           }}
         />
 
-        <nav className="relative z-10 flex items-center justify-between px-5 py-3 md:px-6">
+        <nav className="relative z-10 flex items-center justify-between px-5 py-3 md:grid md:grid-cols-[1fr_auto_1fr] md:px-6 lg:px-7">
           <Link
             href={loggedIn ? "/panel" : "/"}
-            className="text-[15px] font-bold tracking-tight text-white/95 transition-colors hover:text-white sm:text-base"
+            className="text-[13px] font-semibold tracking-[0.18em] text-white/95 uppercase transition-colors hover:text-white md:justify-self-start lg:text-[13.5px]"
           >
             COP&apos;S Electronics
           </Link>
 
           <div
             ref={navContainerRef}
-            className="hidden items-center gap-0.5 md:flex relative"
+            className="relative hidden items-center gap-0.5 md:flex md:justify-self-center"
             onMouseLeave={handleNavMouseLeave}
           >
             <div
@@ -235,7 +235,7 @@ export default function SiteHeader() {
                   setOpen(false);
                   setPanelOpen(false);
                 }}
-                className={`relative z-10 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors duration-150 ${
+                className={`relative z-10 rounded-full px-3 py-1.5 text-[12px] font-medium tracking-[0.01em] transition-colors duration-150 lg:px-3.5 lg:text-[12.5px] ${
                   activeNavHref === n.href
                     ? "text-white"
                     : "text-white/70 hover:text-white"
@@ -246,7 +246,7 @@ export default function SiteHeader() {
             ))}
           </div>
 
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden items-center gap-2 md:flex md:justify-self-end">
             {!loggedIn && (
               <>
                 <Link

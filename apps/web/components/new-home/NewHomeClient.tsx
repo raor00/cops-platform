@@ -800,14 +800,14 @@ function Footer() {
   const f = t.home.footer;
   const year = new Date().getFullYear();
   return (
-    <footer className="relative z-10 bg-slate-900 pb-10 pt-20 text-sm text-slate-300">
+    <footer className="relative z-10 bg-slate-900 pb-10 pt-20 text-base text-slate-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-16 grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-12">
           <div>
             <Link href="/nosotros">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">{f.empresa}</h4>
+              <h4 className="mb-6 inline-block text-[14px] font-extrabold tracking-[0.16em] text-white hover:text-cyan-400 transition-colors md:text-[15px]">{f.empresa}</h4>
             </Link>
-            <ul className="space-y-4 text-xs font-medium text-slate-400">
+            <ul className="space-y-4 text-[14px] font-semibold leading-relaxed text-slate-300 md:text-[15px]">
               <li><Link href="/nosotros" className="transition-colors hover:text-cyan-400">{f.nosotros}</Link></li>
               <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">{f.trayectoria}</Link></li>
               <li><Link href="/proyectos" className="transition-colors hover:text-cyan-400">{f.casosExito}</Link></li>
@@ -816,9 +816,9 @@ function Footer() {
           </div>
           <div>
             <Link href="/soluciones">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">{f.soluciones}</h4>
+              <h4 className="mb-6 inline-block text-[14px] font-extrabold tracking-[0.16em] text-white hover:text-cyan-400 transition-colors md:text-[15px]">{f.soluciones}</h4>
             </Link>
-            <ul className="space-y-4 text-xs font-medium text-slate-400">
+            <ul className="space-y-4 text-[14px] font-semibold leading-relaxed text-slate-300 md:text-[15px]">
               <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.seguridadElectronica}</Link></li>
               <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.gestionVideo}</Link></li>
               <li><Link href="/soluciones" className="transition-colors hover:text-cyan-400">{f.controlAcceso}</Link></li>
@@ -827,8 +827,8 @@ function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="mb-6 text-xs font-bold tracking-widest text-white">{f.sectores}</h4>
-            <ul className="space-y-4 text-xs font-medium text-slate-400">
+            <h4 className="mb-6 text-[14px] font-extrabold tracking-[0.16em] text-white md:text-[15px]">{f.sectores}</h4>
+            <ul className="space-y-4 text-[14px] font-semibold leading-relaxed text-slate-300 md:text-[15px]">
               <li>{f.banca}</li>
               <li>{f.industrial}</li>
               <li>{f.comercial}</li>
@@ -837,18 +837,18 @@ function Footer() {
           </div>
           <div>
             <Link href="/contacto">
-              <h4 className="mb-6 inline-block text-xs font-bold tracking-widest text-white hover:text-cyan-400 transition-colors">{f.contacto}</h4>
+              <h4 className="mb-6 inline-block text-[14px] font-extrabold tracking-[0.16em] text-white hover:text-cyan-400 transition-colors md:text-[15px]">{f.contacto}</h4>
             </Link>
-            <ul className="space-y-4 text-xs font-medium text-slate-400">
+            <ul className="space-y-4 text-[14px] font-semibold leading-relaxed text-slate-300 md:text-[15px]">
               <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">{f.solicitar}</Link></li>
               <li>{f.atencion}</li>
-              <li><span className="text-slate-500">Caracas, Venezuela</span></li>
+              <li><span className="text-slate-300">Caracas, Venezuela</span></li>
               <li><Link href="/contacto" className="transition-colors hover:text-cyan-400">{f.soporte}</Link></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-white/5 pt-8 text-center">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-slate-400 md:text-[13px]">
             &copy; {year} COP&apos;S Electronics, S.A. {f.copyright}
           </p>
         </div>
