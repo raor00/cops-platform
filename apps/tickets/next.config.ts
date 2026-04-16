@@ -12,10 +12,12 @@ const nextConfig: NextConfig = {
       static: 180,
     },
 
-    // Server actions body limit — default is 1MB which blocks photo uploads.
-    // Set to match the 10MB validation in FotoUploadDialog.
+    // Server actions body limit — default is 1MB which blocks uploads.
+    // Keep this ABOVE the largest allowed client upload (25 MB documentos)
+    // because the multipart/server-action envelope adds overhead and can
+    // otherwise surface as a generic "Failed to fetch" before the action runs.
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: "32mb",
     },
   },
 

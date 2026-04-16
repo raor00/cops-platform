@@ -7,7 +7,6 @@ import {
   DollarSign,
   AlertCircle,
   Plus,
-  FolderKanban,
   Kanban,
   TrendingUp,
   Activity,
@@ -116,21 +115,15 @@ async function DashboardContent() {
           <Button asChild size="sm" className="bg-sky-600 hover:bg-sky-500 border-0 shadow-lg shadow-sky-500/25">
             <Link href="/dashboard/tickets/nuevo">
               <Plus className="h-4 w-4 mr-1.5" />
-              Nuevo Servicio
+              Nuevo Ticket
             </Link>
           </Button>
         )}
       </div>
 
       {/* ─── Quick Actions ─────────────────────────────────────────────────── */}
-      {ROLE_HIERARCHY[user.rol] >= 2 && (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" size="sm" asChild className="border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:bg-slate-100 shadow-sm gap-1.5">
-            <Link href="/dashboard/tickets?tipo=proyecto">
-              <FolderKanban className="h-3.5 w-3.5" />
-              Nuevo Proyecto
-            </Link>
-          </Button>
+        {ROLE_HIERARCHY[user.rol] >= 2 && (
+          <div className="flex flex-wrap gap-2">
           <Button variant="ghost" size="sm" asChild className="border border-slate-200 bg-white text-slate-600 hover:text-slate-800 hover:bg-slate-100 shadow-sm gap-1.5">
             <Link href="/dashboard/pipeline">
               <Kanban className="h-3.5 w-3.5" />

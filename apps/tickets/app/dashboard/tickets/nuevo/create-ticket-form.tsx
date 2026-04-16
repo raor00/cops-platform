@@ -404,7 +404,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
         materiales_planificados: materials.length > 0 ? materials : undefined,
         ...(data.tecnico_id ? { tecnico_id: data.tecnico_id } : {}),
         monto_servicio: montoServicio,
-        agencia_bancaribe: isBancaribeTicket ? data.agencia_bancaribe || undefined : undefined,
+        agencia_bancaribe: data.agencia_bancaribe || undefined,
         cupones_bancaribe: isBancaribeTicket ? data.cupones_bancaribe : undefined,
         fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         estado: asBorrador ? ("borrador" as const) : undefined,
@@ -882,18 +882,18 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
           </p>
         </div>
 
-        {isBancaribeTicket && (
-          <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-4">
-            <h4 className="mb-3 text-sm font-semibold text-slate-900">Datos operativos Bancaribe</h4>
-            <div className="form-row">
-              <div className="form-group">
-                <Label>Agencia Bancaribe</Label>
-                <Input
-                  placeholder="Ej: Agencia Chacao"
-                  error={errors.agencia_bancaribe?.message}
-                  {...register("agencia_bancaribe")}
-                />
-              </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <h4 className="mb-3 text-sm font-semibold text-slate-900">Sede / Agencia</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <Label>Nombre de la sede o agencia</Label>
+              <Input
+                placeholder="Ej: Chacao, Piso 3, Sede Valencia"
+                error={errors.agencia_bancaribe?.message}
+                {...register("agencia_bancaribe")}
+              />
+            </div>
+            {isBancaribeTicket && (
               <div className="form-group">
                 <Label>Cupones usados</Label>
                 <Controller
@@ -911,12 +911,12 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                   )}
                 />
               </div>
-            </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Estos datos alimentarán reportes mensuales por agencia y total de cupones consumidos.
-            </p>
+            )}
           </div>
-        )}
+          <p className="mt-1 text-xs text-slate-500">
+            Este dato alimenta el reporte por cliente y sede/agencia. Si no se completa, el ticket se mostrará como "Sin agencia".
+          </p>
+        </div>
       </div>
 
       {/* â"€â"€ Materiales Planificados â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
