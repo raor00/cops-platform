@@ -1,5 +1,6 @@
 import {
   DEFAULT_COMMISSION_PERCENTAGE,
+  DEFAULT_SERVICE_AMOUNT,
   ROLE_HIERARCHY,
   VALID_TRANSITIONS,
   ADMIN_REVERSE_TRANSITIONS,
@@ -55,6 +56,12 @@ import type {
   VisitaEstadoUpdateInput,
   VisitaMantenimiento,
 } from "@/types"
+import {
+  enforceCreateBillingRules,
+  enforceUpdateBillingRules,
+  prependAgencyToDescription,
+  shouldAllowWorkedTime,
+} from "@/lib/tickets-business-rules"
 
 const now = Date.now()
 const hour = 60 * 60 * 1000
@@ -419,6 +426,10 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
   const nowIso = new Date().toISOString()
   const tecnico = input.tecnico_id ? findUser(input.tecnico_id) : undefined
 
+  const normalizedAgency = input.agencia_bancaribe?.trim() || undefined
+  const normalizedDescription = prependAgencyToDescription(input.descripcion, normalizedAgency)
+  const billing = enforceCreateBillingRules(input)
+
   const ticket = buildTicket({
     id: crypto.randomUUID(),
     numero_ticket: numeroTicket,
@@ -429,12 +440,12 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
     cliente_telefono: input.cliente_telefono,
     cliente_direccion: input.cliente_direccion,
     asunto: input.asunto,
-    descripcion: input.descripcion,
+    descripcion: normalizedDescription,
     requerimientos: input.requerimientos,
     materiales_planificados: input.materiales_planificados || null,
     prioridad: input.prioridad,
     origen: input.origen,
-    agencia_bancaribe: input.agencia_bancaribe || null,
+    agencia_bancaribe: normalizedAgency || null,
     cupones_bancaribe: input.cupones_bancaribe ?? null,
     creado_por: currentUser.id,
     creador: currentUser,
@@ -444,7 +455,9 @@ export function createDemoTicket(input: TicketCreateInput, currentUser: User): T
     estado_operativo: input.estado === "borrador" ? null : "programado",
     fecha_asignacion: input.estado === "borrador" ? undefined : nowIso,
     fecha_servicio: input.fecha_servicio || null,
-    monto_servicio: input.monto_servicio ?? (input.tipo === 'inspeccion' ? 20 : 40),
+    monto_servicio: billing.monto_servicio,
+    facturacion_tipo: billing.facturacion_tipo,
+    tarifa_hora: billing.tarifa_hora,
     ticket_origen_id: input.ticket_origen_id || null,
     ticket_derivado_id: null,
     created_at: nowIso,
@@ -531,6 +544,15 @@ export function updateDemoTicket(
   const updated: Ticket = {
     ...current,
     ...input,
+    ...(input.descripcion !== undefined || input.agencia_bancaribe !== undefined
+      ? {
+          descripcion: prependAgencyToDescription(
+            input.descripcion ?? current.descripcion,
+            input.agencia_bancaribe === undefined ? current.agencia_bancaribe : input.agencia_bancaribe
+          ),
+        }
+      : {}),
+    ...enforceUpdateBillingRules(current, input),
     agencia_bancaribe: input.agencia_bancaribe === undefined ? current.agencia_bancaribe : input.agencia_bancaribe || null,
     cupones_bancaribe: input.cupones_bancaribe === undefined ? current.cupones_bancaribe : input.cupones_bancaribe ?? null,
     fecha_servicio: input.fecha_servicio === undefined ? current.fecha_servicio : input.fecha_servicio || null,
@@ -597,7 +619,9 @@ export function changeDemoTicketStatus(
   }
 
   if (additionalData?.tiempo_trabajado !== undefined) {
-    updateData.tiempo_trabajado = additionalData.tiempo_trabajado
+    if (shouldAllowWorkedTime(current)) {
+      updateData.tiempo_trabajado = additionalData.tiempo_trabajado
+    }
   }
 
   if (additionalData?.observaciones_tecnico) {
@@ -615,8 +639,13 @@ export function changeDemoTicketStatus(
   if (additionalData?.solucion_aplicada) {
     updateData.solucion_aplicada = additionalData.solucion_aplicada
   }
-  if (additionalData?.monto_servicio_final !== undefined) {
+  if (additionalData?.monto_servicio_final !== undefined && shouldAllowWorkedTime(current)) {
     updateData.monto_servicio = additionalData.monto_servicio_final
+  }
+
+  if (!shouldAllowWorkedTime(current) && current.tipo === "servicio") {
+    updateData.monto_servicio = DEFAULT_SERVICE_AMOUNT
+    updateData.tiempo_trabajado = null
   }
 
   const updated: Ticket = { ...current, ...updateData }
@@ -739,6 +768,8 @@ export function deleteDemoTicket(id: string): boolean {
   demoFotos = demoFotos.filter((foto) => foto.ticket_id !== id)
   demoSesiones = demoSesiones.filter((sesion) => sesion.ticket_id !== id)
   demoInspecciones = demoInspecciones.filter((insp) => insp.ticket_id !== id)
+  demoDocumentos = demoDocumentos.filter((doc) => doc.ticket_id !== id)
+  demoUpdateLogs = demoUpdateLogs.filter((log) => log.ticket_id !== id)
   return demoTickets.length < initialLength
 }
 

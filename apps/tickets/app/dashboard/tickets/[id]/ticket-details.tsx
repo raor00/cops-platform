@@ -21,6 +21,7 @@ import {
   getElapsedMinutes,
   getInitials,
 } from "@/lib/utils"
+import { shouldAllowWorkedTime } from "@/lib/tickets-business-rules"
 import { ROLE_LABELS } from "@/types"
 import type { Ticket } from "@/types"
 
@@ -30,6 +31,7 @@ interface TicketDetailsProps {
 
 export function TicketDetails({ ticket }: TicketDetailsProps) {
   const totalElapsedMinutes = getElapsedMinutes(ticket.fecha_inicio, ticket.fecha_finalizacion)
+  const showWorkedTime = shouldAllowWorkedTime(ticket)
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -110,7 +112,7 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
                   </p>
                 </div>
               )}
-              {ticket.tiempo_trabajado && (
+              {showWorkedTime && ticket.tiempo_trabajado && (
                 <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <Clock className="h-4 w-4 text-slate-500" />
                   <span className="text-slate-600">Tiempo:</span>
@@ -145,7 +147,7 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
             )}
             {(ticket.agencia_bancaribe || ticket.cupones_bancaribe != null) && (
               <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3 text-sm">
-                <p className="mb-2 font-medium text-slate-900">Datos Bancaribe</p>
+                <p className="mb-2 font-medium text-slate-900">Datos de sede / agencia</p>
                 {ticket.agencia_bancaribe && (
                   <div className="flex items-start gap-3">
                     <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />
@@ -235,9 +237,11 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
               <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
                 <p className="font-medium text-slate-800">Métricas del servicio</p>
                 <div className="mt-2 space-y-1.5 text-xs text-slate-600">
-                  <p>
-                    Tiempo trabajado: <span className="font-medium text-slate-800">{formatMinutesAndHours(ticket.tiempo_trabajado)}</span>
-                  </p>
+                  {showWorkedTime && (
+                    <p>
+                      Tiempo trabajado: <span className="font-medium text-slate-800">{formatMinutesAndHours(ticket.tiempo_trabajado)}</span>
+                    </p>
+                  )}
                   <p>
                     Tiempo total transcurrido: <span className="font-medium text-slate-800">{totalElapsedMinutes ? `${formatMinutesToDuration(totalElapsedMinutes)} (${totalElapsedMinutes} min)` : "—"}</span>
                   </p>

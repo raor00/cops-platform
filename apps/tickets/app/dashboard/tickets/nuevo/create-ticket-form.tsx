@@ -31,6 +31,7 @@ import { createTicket } from "@/lib/actions/tickets"
 import { uploadTicketDocumento } from "@/lib/actions/documentos"
 import { createUser } from "@/lib/actions/usuarios"
 import { generateId, formatDateTimeInputValue, parseDateTimeLocalToISO } from "@/lib/utils"
+import { enforceCreateBillingRules, isBigottClient, prependAgencyToDescription } from "@/lib/tickets-business-rules"
 import { TICKET_CATALOG, type CatalogEntry } from "@/lib/catalog-data"
 import { getCatalogIdentifier, getCatalogSegment } from "@/lib/catalog-rules"
 import { TIPO_DOCUMENTO_LABELS, DOCUMENTO_TIPO_OPTIONS, DOCUMENTO_UPLOAD_CONFIG } from "@/types"
@@ -139,12 +140,22 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
   const tipoTicket = watch("tipo")
   const origenTicket = watch("origen")
   const clienteEmpresa = watch("cliente_empresa")
+  const clienteNombre = watch("cliente_nombre")
   const isBancaribeTicket = (clienteEmpresa || selectedCliente?.empresa || "").toLowerCase().includes("bancaribe")
+  const isBigottTicket = isBigottClient(clienteEmpresa || selectedCliente?.empresa, clienteNombre || selectedCliente?.nombre)
+  const allowsHourlyBilling = tipoTicket === "servicio" && isBigottTicket
 
   // Reset monto when tipo changes
   useEffect(() => {
     setValue("monto_servicio", 0)
   }, [tipoTicket, setValue])
+
+  useEffect(() => {
+    if (!allowsHourlyBilling) {
+      setFacturacionTipo("fijo")
+      setValue("monto_servicio", 40)
+    }
+  }, [allowsHourlyBilling, setValue])
 
   // Filtered catalog entries
   const catalogFiltered = useMemo(() => {
@@ -397,19 +408,25 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
   const onSubmit = async (data: TicketCreateInput, asBorrador = false) => {
     setIsSubmitting(true)
     try {
-      const montoServicio = data.monto_servicio
+      const descripcionConAgencia = prependAgencyToDescription(data.descripcion, data.agencia_bancaribe)
+      const billingRules = enforceCreateBillingRules({
+        ...data,
+        facturacion_tipo: tipoTicket === "servicio" ? facturacionTipo : "fijo",
+        tarifa_hora: tipoTicket === "servicio" && facturacionTipo === "por_hora" ? tarifaHora : null,
+      })
 
       const submitData: TicketSubmitPayload = {
         ...data,
+        descripcion: descripcionConAgencia,
         materiales_planificados: materials.length > 0 ? materials : undefined,
         ...(data.tecnico_id ? { tecnico_id: data.tecnico_id } : {}),
-        monto_servicio: montoServicio,
+        monto_servicio: billingRules.monto_servicio ?? 40,
         agencia_bancaribe: data.agencia_bancaribe || undefined,
         cupones_bancaribe: isBancaribeTicket ? data.cupones_bancaribe : undefined,
         fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         estado: asBorrador ? ("borrador" as const) : undefined,
-        facturacion_tipo: tipoTicket === "servicio" ? facturacionTipo : "fijo",
-        tarifa_hora: tipoTicket === "servicio" && facturacionTipo === "por_hora" ? tarifaHora : null,
+        facturacion_tipo: billingRules.facturacion_tipo ?? "fijo",
+        tarifa_hora: billingRules.tarifa_hora,
       }
 
       const result = await createTicket(submitData)
@@ -599,14 +616,15 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
           )}
         </div>
 
-        {/* Toggle facturación para servicio */}
+        {/* Toggle facturación para servicio (solo Bigott) */}
         {tipoTicket === "servicio" && (
           <div className="mt-1 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
             <span className="text-sm text-slate-600">Facturación:</span>
             <div className="flex gap-1 rounded-lg bg-white p-0.5 shadow-sm ring-1 ring-slate-200">
               <button
                 type="button"
-                onClick={() => { setFacturacionTipo("fijo"); setValue("monto_servicio", 0) }}
+                onClick={() => { setFacturacionTipo("fijo"); setValue("monto_servicio", 40) }}
+                disabled={!allowsHourlyBilling}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                   facturacionTipo === "fijo"
                     ? "bg-sky-500 text-white shadow"
@@ -618,6 +636,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
               <button
                 type="button"
                 onClick={() => { setFacturacionTipo("por_hora"); setValue("monto_servicio", 0) }}
+                disabled={!allowsHourlyBilling}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
                   facturacionTipo === "por_hora"
                     ? "bg-sky-500 text-white shadow"
@@ -627,7 +646,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                 Por hora
               </button>
             </div>
-            {facturacionTipo === "por_hora" && (
+            {allowsHourlyBilling && facturacionTipo === "por_hora" && (
               <div className="flex items-center gap-2 ml-2">
                 <span className="text-xs text-slate-500">Tarifa:</span>
                 <div className="flex items-center gap-1">
@@ -644,6 +663,11 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
                 </div>
                 <span className="ml-1 text-xs text-slate-400">(el monto final se calcula al cerrar)</span>
               </div>
+            )}
+            {!allowsHourlyBilling && (
+              <span className="text-xs text-slate-500">
+                Cliente estándar: se aplicará costo fijo de $40.
+              </span>
             )}
           </div>
         )}
@@ -840,6 +864,42 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
         <h3 className="form-section-title">
           {tipoTicket === "inspeccion" ? "Motivo de la Inspección" : "Descripción del Trabajo"}
         </h3>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <h4 className="mb-3 text-sm font-semibold text-slate-900">Sede / Agencia</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <Label>Nombre de la sede o agencia</Label>
+              <Input
+                placeholder="Ej: Chacao, Piso 3, Sede Valencia"
+                error={errors.agencia_bancaribe?.message}
+                {...register("agencia_bancaribe")}
+              />
+            </div>
+            {isBancaribeTicket && (
+              <div className="form-group">
+                <Label>Cupones usados</Label>
+                <Controller
+                  name="cupones_bancaribe"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
+                      error={errors.cupones_bancaribe?.message}
+                    />
+                  )}
+                />
+              </div>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Se mostrará primero en la descripción guardada del trabajo para identificar rápidamente la sede.
+          </p>
+        </div>
+
         <div className="form-group">
           <Label>Asunto *</Label>
           <Input
@@ -879,42 +939,6 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
           />
           <p className="text-xs text-slate-500 mt-1">
             Información que el técnico necesita saber antes de la visita
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-          <h4 className="mb-3 text-sm font-semibold text-slate-900">Sede / Agencia</h4>
-          <div className="form-row">
-            <div className="form-group">
-              <Label>Nombre de la sede o agencia</Label>
-              <Input
-                placeholder="Ej: Chacao, Piso 3, Sede Valencia"
-                error={errors.agencia_bancaribe?.message}
-                {...register("agencia_bancaribe")}
-              />
-            </div>
-            {isBancaribeTicket && (
-              <div className="form-group">
-                <Label>Cupones usados</Label>
-                <Controller
-                  name="cupones_bancaribe"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={field.value ?? ""}
-                      onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
-                      error={errors.cupones_bancaribe?.message}
-                    />
-                  )}
-                />
-              </div>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Este dato alimenta el reporte por cliente y sede/agencia. Si no se completa, el ticket se mostrará como "Sin agencia".
           </p>
         </div>
       </div>

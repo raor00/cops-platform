@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { changeTicketStatus, convertirInspeccion, pauseTicketUntilTomorrow, registerTicketArrival, resumeTicketWork } from "@/lib/actions/tickets"
+import { shouldAllowWorkedTime } from "@/lib/tickets-business-rules"
 import { cn, formatDateTimeInputValue, formatMinutesToDuration, parseDateTimeLocalToISO } from "@/lib/utils"
 import type { MaterialItem, Ticket, TicketStatus, UserRole } from "@/types"
 import { VALID_TRANSITIONS, ADMIN_REVERSE_TRANSITIONS, ROLE_HIERARCHY, STATUS_LABELS } from "@/types"
@@ -113,7 +114,8 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
     }
   }
 
-  const isPorHora = ticket.facturacion_tipo === "por_hora"
+  const canCaptureWorkedTime = shouldAllowWorkedTime(ticket)
+  const isPorHora = canCaptureWorkedTime && ticket.facturacion_tipo === "por_hora"
   const tarifaHora = ticket.tarifa_hora ?? 10
   const minutosNum = tiempoTrabajado ? parseInt(tiempoTrabajado) : 0
   const horasTrabajadas = minutosNum / 60
@@ -132,7 +134,7 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
     try {
       const result = await changeTicketStatus(ticket.id, "finalizado", {
         materiales_usados: usedMaterials ? materiales.filter((m) => m.nombre.trim()) : [],
-        tiempo_trabajado: minutosNum || undefined,
+        tiempo_trabajado: canCaptureWorkedTime ? (minutosNum || undefined) : undefined,
         solucion_aplicada: solucion,
         observaciones_tecnico: observaciones || undefined,
         ...(isPorHora && montoCalculado !== null ? { monto_servicio_final: montoCalculado } : {}),
@@ -385,16 +387,22 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
               <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                 <span className="text-sm text-slate-700">¿Se utilizaron materiales?</span>
                 <button
+                  type="button"
+                  role="switch"
+                  aria-checked={usedMaterials}
+                  aria-label="Se utilizaron materiales"
                   onClick={() => setUsedMaterials(!usedMaterials)}
                   className={cn(
-                    "relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200",
-                    usedMaterials ? "bg-sky-500" : "bg-white/20"
+                    "relative inline-flex h-7 w-12 items-center rounded-full border transition-all duration-200 shadow-sm",
+                    usedMaterials
+                      ? "border-sky-500 bg-sky-500/90 shadow-sky-500/30"
+                      : "border-slate-300 bg-slate-200"
                   )}
                 >
                   <span
                     className={cn(
-                      "inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200",
-                      usedMaterials ? "translate-x-4.5" : "translate-x-0.5"
+                      "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200",
+                      usedMaterials ? "translate-x-6" : "translate-x-1"
                     )}
                   />
                 </button>
@@ -458,42 +466,50 @@ export function TicketStatusActions({ ticket, userRole }: TicketStatusActionsPro
           {step === 2 && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-slate-700">Tiempo trabajado</p>
-              <div className="space-y-2">
-                <Label>
-                  Duración en minutos{isPorHora && <span className="text-red-400 ml-1">*</span>}
-                </Label>
-                <Input
-                  type="number"
-                  placeholder="Ej: 120"
-                  value={tiempoTrabajado}
-                  onChange={(e) => setTiempoTrabajado(e.target.value)}
-                  min={0}
-                />
-                {tiempoTrabajado && Number(tiempoTrabajado) > 0 && (
-                  <p className="text-xs text-blue-400/80">
-                    = {formatMinutesToDuration(Number(tiempoTrabajado))}
-                  </p>
-                )}
-              </div>
-              {isPorHora && (
-                <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 p-3 space-y-1">
-                  <p className="text-xs font-medium text-sky-300">Cálculo por hora</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-slate-500">{horasTrabajadas.toFixed(2)} h</span>
-                    <span className="text-slate-400">x</span>
-                    <span className="text-slate-500">${tarifaHora}/h</span>
-                    <span className="text-slate-400">=</span>
-                    <span className="font-semibold text-sky-400">
-                      ${montoCalculado !== null ? montoCalculado.toFixed(2) : "0.00"}
-                    </span>
+              {canCaptureWorkedTime ? (
+                <>
+                  <div className="space-y-2">
+                    <Label>
+                      Duración en minutos{isPorHora && <span className="text-red-400 ml-1">*</span>}
+                    </Label>
+                    <Input
+                      type="number"
+                      placeholder="Ej: 120"
+                      value={tiempoTrabajado}
+                      onChange={(e) => setTiempoTrabajado(e.target.value)}
+                      min={0}
+                    />
+                    {tiempoTrabajado && Number(tiempoTrabajado) > 0 && (
+                      <p className="text-xs text-blue-400/80">
+                        = {formatMinutesToDuration(Number(tiempoTrabajado))}
+                      </p>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-400">Este monto se guardará en el pago del técnico.</p>
+                  {isPorHora && (
+                    <div className="rounded-lg bg-sky-500/10 border border-sky-500/20 p-3 space-y-1">
+                      <p className="text-xs font-medium text-sky-300">Cálculo por hora</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-slate-500">{horasTrabajadas.toFixed(2)} h</span>
+                        <span className="text-slate-400">x</span>
+                        <span className="text-slate-500">${tarifaHora}/h</span>
+                        <span className="text-slate-400">=</span>
+                        <span className="font-semibold text-sky-400">
+                          ${montoCalculado !== null ? montoCalculado.toFixed(2) : "0.00"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400">Este monto se guardará en el pago del técnico.</p>
+                    </div>
+                  )}
+                  {!isPorHora && (
+                    <p className="text-xs text-slate-400">
+                      Si no registras el tiempo, puedes dejarlo en blanco.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                  Este cliente usa tarifa estándar fija de $40. No se requiere registro de tiempo trabajado.
                 </div>
-              )}
-              {!isPorHora && (
-                <p className="text-xs text-slate-400">
-                  Si no registras el tiempo, puedes dejarlo en blanco.
-                </p>
               )}
             </div>
           )}

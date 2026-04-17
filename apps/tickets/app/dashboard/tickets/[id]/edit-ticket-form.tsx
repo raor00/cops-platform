@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { updateTicket } from "@/lib/actions/tickets"
 import { ticketUpdateSchema, type TicketUpdateInput } from "@/lib/validations"
 import { generateId, formatDateTimeInputValue, parseDateTimeLocalToISO } from "@/lib/utils"
+import { isBigottClient, prependAgencyToDescription } from "@/lib/tickets-business-rules"
 import { PRIORITY_COLORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS, type MaterialItem, type Ticket } from "@/types"
 
 interface EditTicketFormProps {
@@ -34,6 +35,7 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [materials, setMaterials] = useState<MaterialItem[]>(ticket.materiales_planificados ?? [])
   const isBancaribeTicket = (ticket.cliente_empresa || "").toLowerCase().includes("bancaribe")
+  const canEditServiceAmount = ticket.tipo === "servicio" && isBigottClient(ticket.cliente_empresa, ticket.cliente_nombre)
 
   const {
     register,
@@ -56,7 +58,7 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
       fecha_servicio: ticket.fecha_servicio ?? "",
       prioridad: ticket.prioridad,
       tecnico_id: ticket.tecnico_id ?? "",
-      monto_servicio: ticket.monto_servicio,
+      monto_servicio: ticket.tipo === "servicio" && !canEditServiceAmount ? 40 : ticket.monto_servicio,
       materiales_planificados: ticket.materiales_planificados ?? [],
     },
   })
@@ -83,10 +85,14 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
     try {
       const result = await updateTicket(ticket.id, {
         ...data,
+        descripcion: prependAgencyToDescription(data.descripcion ?? ticket.descripcion, data.agencia_bancaribe ?? ticket.agencia_bancaribe),
         agencia_bancaribe: data.agencia_bancaribe || undefined,
         cupones_bancaribe: isBancaribeTicket ? data.cupones_bancaribe : undefined,
         fecha_servicio: parseDateTimeLocalToISO(data.fecha_servicio) || undefined,
         tecnico_id: data.tecnico_id || undefined,
+        monto_servicio: canEditServiceAmount
+          ? data.monto_servicio
+          : (ticket.tipo === "servicio" ? 40 : data.monto_servicio),
         materiales_planificados: materials.length > 0 ? materials : undefined,
       })
 
@@ -257,9 +263,15 @@ export function EditTicketForm({ ticket, technicians }: EditTicketFormProps) {
                   value={field.value ?? ""}
                   onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
                   error={errors.monto_servicio?.message}
+                  disabled={!canEditServiceAmount}
                 />
               )}
             />
+            {!canEditServiceAmount && ticket.tipo === "servicio" && (
+              <p className="mt-1 text-xs text-slate-500">
+                Cliente estándar: monto fijo de $40 protegido por regla de negocio.
+              </p>
+            )}
           </div>
         </div>
 

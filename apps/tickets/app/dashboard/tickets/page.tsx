@@ -86,9 +86,9 @@ export default async function TicketsPage({
         </div>
         {canCreateTickets && (
           <div className="page-actions">
-            <Button asChild>
+            <Button asChild size="lg" className="shadow-md shadow-sky-500/20">
               <Link href="/dashboard/tickets/nuevo">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-5 w-5 mr-2" />
                 Nuevo Ticket
               </Link>
             </Button>

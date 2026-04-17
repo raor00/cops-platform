@@ -49,7 +49,7 @@ export async function TicketsTable({ page, status, priority, search }: TicketsTa
             : "Crea tu primer ticket para comenzar"}
         </p>
         {ROLE_HIERARCHY[user?.rol || "tecnico"] >= 2 && (
-          <Button asChild className="mt-4">
+          <Button asChild size="lg" className="mt-4 shadow-md shadow-sky-500/20">
             <Link href="/dashboard/tickets/nuevo">Crear Ticket</Link>
           </Button>
         )}

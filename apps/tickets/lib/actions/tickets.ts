@@ -4,6 +4,8 @@ import type {
   ActionResponse,
   ChangeHistory,
   Ticket,
+  TicketFoto,
+  TicketDocumento,
   TicketCreateInput,
   TicketUpdateInput,
   TicketStatus,
@@ -23,6 +25,12 @@ import {
 } from "@/types"
 import { getCurrentUser } from "./auth"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
+import {
+  enforceCreateBillingRules,
+  enforceUpdateBillingRules,
+  prependAgencyToDescription,
+  shouldAllowWorkedTime,
+} from "@/lib/tickets-business-rules"
 import {
   assignDemoTechnician,
   changeDemoTicketStatus as changeDemoTicketStatusMock,
@@ -48,6 +56,7 @@ import {
   finalizarDemoSesion,
 } from "@/lib/mock-data"
 import { getAdminFirestore, fromFirestoreDoc, cleanForFirestore } from "@/lib/firebase/admin"
+import { deleteFileFromStorage } from "@/lib/firebase/storage-rest"
 
 function normalizeClientValue(value?: string | null): string {
   return (value ?? "")
@@ -381,8 +390,16 @@ export async function createTicket(
   if (!hasPermission(currentUser, 'tickets:create'))
     return { success: false, error: "No tienes permisos para crear tickets" }
 
+  const normalizedAgency = input.agencia_bancaribe?.trim() || undefined
+  const normalizedInput: TicketCreateInput = {
+    ...input,
+    agencia_bancaribe: normalizedAgency,
+    descripcion: prependAgencyToDescription(input.descripcion, normalizedAgency),
+    ...enforceCreateBillingRules(input),
+  }
+
   if (isLocalMode()) {
-    const ticket = createDemoTicket(input, currentUser)
+    const ticket = createDemoTicket(normalizedInput, currentUser)
     await ensureClientRecordFromTicketInput(input)
     revalidatePath("/dashboard/tickets")
     revalidatePath("/dashboard")
@@ -421,12 +438,12 @@ export async function createTicket(
         cliente_telefono: input.cliente_telefono,
         cliente_direccion: input.cliente_direccion,
         asunto: input.asunto,
-        descripcion: input.descripcion,
+        descripcion: normalizedInput.descripcion,
         requerimientos: input.requerimientos || null,
         materiales_planificados: input.materiales_planificados || null,
         prioridad: input.prioridad,
         origen: input.origen,
-        agencia_bancaribe: input.agencia_bancaribe || null,
+        agencia_bancaribe: normalizedAgency || null,
         cupones_bancaribe: input.cupones_bancaribe ?? null,
         creado_por: currentUser.id,
         tecnico_id: input.tecnico_id || null,
@@ -438,9 +455,9 @@ export async function createTicket(
         fecha_ultima_pausa: null,
         fecha_ultima_reanudacion: null,
         motivo_pausa: null,
-        monto_servicio: input.monto_servicio || DEFAULT_SERVICE_AMOUNT,
-        facturacion_tipo: input.facturacion_tipo ?? "fijo",
-        tarifa_hora: input.tarifa_hora ?? null,
+        monto_servicio: normalizedInput.monto_servicio ?? DEFAULT_SERVICE_AMOUNT,
+        facturacion_tipo: normalizedInput.facturacion_tipo ?? "fijo",
+        tarifa_hora: normalizedInput.tarifa_hora ?? null,
         ticket_origen_id: null,
         ticket_derivado_id: null,
         created_at: now,
@@ -479,7 +496,28 @@ export async function updateTicket(
     return { success: false, error: "No tienes permisos para modificar tickets" }
 
   if (isLocalMode()) {
-    const updatedTicket = updateDemoTicket(id, input, currentUser)
+    const existingTicket = getDemoTicketById(id, currentUser)
+    if (!existingTicket) return { success: false, error: "Ticket no encontrado" }
+
+    const effectiveAgency = input.agencia_bancaribe === undefined
+      ? existingTicket.agencia_bancaribe
+      : input.agencia_bancaribe
+
+    const normalizedInput: TicketUpdateInput = {
+      ...input,
+      agencia_bancaribe: input.agencia_bancaribe?.trim(),
+      ...(input.descripcion !== undefined || input.agencia_bancaribe !== undefined
+        ? {
+            descripcion: prependAgencyToDescription(
+              input.descripcion ?? existingTicket.descripcion,
+              effectiveAgency
+            ),
+          }
+        : {}),
+      ...enforceUpdateBillingRules(existingTicket, input),
+    }
+
+    const updatedTicket = updateDemoTicket(id, normalizedInput, currentUser)
     if (!updatedTicket) return { success: false, error: "Ticket no encontrado" }
     revalidatePath("/dashboard/tickets")
     revalidatePath(`/dashboard/tickets/${id}`)
@@ -493,8 +531,27 @@ export async function updateTicket(
       const existing = await ref.get()
       if (!existing.exists) return { success: false, error: "Ticket no encontrado" }
 
-      const updateData = cleanForFirestore({
+      const currentTicket = fromFirestoreDoc<Ticket>(id, existing.data()!)
+      const effectiveAgency = input.agencia_bancaribe === undefined
+        ? currentTicket.agencia_bancaribe
+        : input.agencia_bancaribe
+
+      const normalizedInput: TicketUpdateInput = {
         ...input,
+        agencia_bancaribe: input.agencia_bancaribe?.trim(),
+        ...(input.descripcion !== undefined || input.agencia_bancaribe !== undefined
+          ? {
+              descripcion: prependAgencyToDescription(
+                input.descripcion ?? currentTicket.descripcion,
+                effectiveAgency
+              ),
+            }
+          : {}),
+        ...enforceUpdateBillingRules(currentTicket, input),
+      }
+
+      const updateData = cleanForFirestore({
+        ...normalizedInput,
         modificado_por: currentUser.id,
         fecha_ultima_modificacion: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -547,7 +604,13 @@ export async function changeTicketStatus(
       return { success: false, error: "Los técnicos no pueden finalizar tickets. Deben dejar bitácora y notificar a coordinación." }
     }
 
-    const result = changeDemoTicketStatusMock(id, newStatus, additionalData, currentUser.rol)
+    const allowsWorkedTime = shouldAllowWorkedTime(currentTicket)
+    const sanitizedAdditional = {
+      ...additionalData,
+      ...(allowsWorkedTime ? {} : { tiempo_trabajado: undefined, monto_servicio_final: undefined }),
+    }
+
+    const result = changeDemoTicketStatusMock(id, newStatus, sanitizedAdditional, currentUser.rol)
     if (result.error || !result.ticket)
       return { success: false, error: result.error || "No se pudo actualizar el ticket" }
 
@@ -565,6 +628,11 @@ export async function changeTicketStatus(
       if (!snap.exists) return { success: false, error: "Ticket no encontrado" }
 
       const ticket = fromFirestoreDoc<Ticket>(id, snap.data()!)
+      const allowsWorkedTime = shouldAllowWorkedTime(ticket)
+      const sanitizedAdditional = {
+        ...additionalData,
+        ...(allowsWorkedTime ? {} : { tiempo_trabajado: undefined, monto_servicio_final: undefined }),
+      }
 
       if (currentUser.rol === "tecnico" && ticket.tecnico_id !== currentUser.id)
         return { success: false, error: "No tienes permiso para modificar este ticket" }
@@ -590,31 +658,38 @@ export async function changeTicketStatus(
       if (newStatus === "en_progreso") updateData.estado_operativo = "trabajando"
       if (newStatus === "cancelado") updateData.estado_operativo = "reprogramado"
       if (newStatus === "finalizado") {
-        await closeOpenWorkSession(id, currentUser.id, additionalData?.observaciones_tecnico)
+        await closeOpenWorkSession(id, currentUser.id, sanitizedAdditional?.observaciones_tecnico)
         updateData.fecha_finalizacion = now
         updateData.estado_operativo = "finalizado"
         const computedMinutes = await getTotalWorkedMinutes(id)
-        if (computedMinutes > 0 && additionalData?.tiempo_trabajado === undefined) {
+        if (computedMinutes > 0 && sanitizedAdditional?.tiempo_trabajado === undefined && allowsWorkedTime) {
           updateData.tiempo_trabajado = computedMinutes
         }
       }
 
-      if (additionalData?.materiales_usados) updateData.materiales_usados = additionalData.materiales_usados
-      if (additionalData?.tiempo_trabajado !== undefined) updateData.tiempo_trabajado = additionalData.tiempo_trabajado
-      if (additionalData?.motivo_pausa !== undefined) updateData.motivo_pausa = additionalData.motivo_pausa
-      if (additionalData?.fecha_servicio !== undefined) updateData.fecha_servicio = additionalData.fecha_servicio
-      if (additionalData?.observaciones_tecnico) updateData.observaciones_tecnico = additionalData.observaciones_tecnico
-      if (additionalData?.solucion_aplicada) updateData.solucion_aplicada = additionalData.solucion_aplicada
+      if (sanitizedAdditional?.materiales_usados) updateData.materiales_usados = sanitizedAdditional.materiales_usados
+      if (sanitizedAdditional?.tiempo_trabajado !== undefined && allowsWorkedTime) updateData.tiempo_trabajado = sanitizedAdditional.tiempo_trabajado
+      if (sanitizedAdditional?.motivo_pausa !== undefined) updateData.motivo_pausa = sanitizedAdditional.motivo_pausa
+      if (sanitizedAdditional?.fecha_servicio !== undefined) updateData.fecha_servicio = sanitizedAdditional.fecha_servicio
+      if (sanitizedAdditional?.observaciones_tecnico) updateData.observaciones_tecnico = sanitizedAdditional.observaciones_tecnico
+      if (sanitizedAdditional?.solucion_aplicada) updateData.solucion_aplicada = sanitizedAdditional.solucion_aplicada
       // If hourly billing, update monto_servicio with calculated amount
-      if (additionalData?.monto_servicio_final !== undefined) {
-        updateData.monto_servicio = additionalData.monto_servicio_final
+      if (sanitizedAdditional?.monto_servicio_final !== undefined && allowsWorkedTime) {
+        updateData.monto_servicio = sanitizedAdditional.monto_servicio_final
+      }
+
+      if (!allowsWorkedTime && ticket.tipo === "servicio") {
+        updateData.monto_servicio = DEFAULT_SERVICE_AMOUNT
+        updateData.tiempo_trabajado = null
       }
 
       await ref.update(updateData)
 
       // Create payment record when finalized
       if (newStatus === "finalizado" && ticket.tecnico_id) {
-        const montoTicket = additionalData?.monto_servicio_final ?? ticket.monto_servicio ?? DEFAULT_SERVICE_AMOUNT
+        const montoTicket = allowsWorkedTime
+          ? (sanitizedAdditional?.monto_servicio_final ?? ticket.monto_servicio ?? DEFAULT_SERVICE_AMOUNT)
+          : DEFAULT_SERVICE_AMOUNT
         const montoAPagar = montoTicket * (DEFAULT_COMMISSION_PERCENTAGE / 100)
         await db.collection("pagos").add(cleanForFirestore({
           ticket_id: id,
@@ -882,7 +957,41 @@ export async function deleteTicket(id: string): Promise<ActionResponse> {
   if (isFirebaseMode()) {
     try {
       const db = getAdminFirestore()
-      await db.collection("tickets").doc(id).delete()
+      const ticketRef = db.collection("tickets").doc(id)
+      const ticketSnap = await ticketRef.get()
+      if (!ticketSnap.exists) return { success: false, error: "Ticket no encontrado" }
+
+      const [fotosSnap, documentosSnap, pagosSnap, fasesSnap, inspeccionesSnap, sesionesSnap, logsSnap, ticketLogsSnap] = await Promise.all([
+        db.collection("ticket_fotos").where("ticket_id", "==", id).get(),
+        db.collection("ticket_documentos").where("ticket_id", "==", id).get(),
+        db.collection("pagos").where("ticket_id", "==", id).get(),
+        db.collection("ticket_fases").where("ticket_id", "==", id).get(),
+        db.collection("inspecciones").where("ticket_id", "==", id).get(),
+        db.collection("ticket_sesiones_trabajo").where("ticket_id", "==", id).get(),
+        db.collection("update-logs").where("ticket_id", "==", id).get(),
+        ticketRef.collection("update_logs").get(),
+      ])
+
+      const fotoFiles = fotosSnap.docs.map((doc) => fromFirestoreDoc<TicketFoto>(doc.id, doc.data()).storage_path)
+      const documentoFiles = documentosSnap.docs.map((doc) => fromFirestoreDoc<TicketDocumento>(doc.id, doc.data()).storage_path)
+
+      await Promise.allSettled([
+        ...fotoFiles.map((path) => deleteFileFromStorage(path)),
+        ...documentoFiles.map((path) => deleteFileFromStorage(path)),
+      ])
+
+      await Promise.all([
+        ...fotosSnap.docs.map((doc) => doc.ref.delete()),
+        ...documentosSnap.docs.map((doc) => doc.ref.delete()),
+        ...pagosSnap.docs.map((doc) => doc.ref.delete()),
+        ...fasesSnap.docs.map((doc) => doc.ref.delete()),
+        ...inspeccionesSnap.docs.map((doc) => doc.ref.delete()),
+        ...sesionesSnap.docs.map((doc) => doc.ref.delete()),
+        ...logsSnap.docs.map((doc) => doc.ref.delete()),
+        ...ticketLogsSnap.docs.map((doc) => doc.ref.delete()),
+      ])
+
+      await ticketRef.delete()
       revalidatePath("/dashboard/tickets")
       revalidatePath("/dashboard")
       return { success: true, message: "Ticket eliminado exitosamente" }

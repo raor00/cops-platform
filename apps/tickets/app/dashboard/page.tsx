@@ -112,9 +112,9 @@ async function DashboardContent() {
           <p className="mt-1 text-sm text-slate-500 capitalize">{today}</p>
         </div>
         {ROLE_HIERARCHY[user.rol] >= 2 && (
-          <Button asChild size="sm" className="bg-sky-600 hover:bg-sky-500 border-0 shadow-lg shadow-sky-500/25">
+          <Button asChild size="lg" className="bg-sky-600 hover:bg-sky-500 border-0 shadow-lg shadow-sky-500/25">
             <Link href="/dashboard/tickets/nuevo">
-              <Plus className="h-4 w-4 mr-1.5" />
+              <Plus className="h-5 w-5 mr-2" />
               Nuevo Ticket
             </Link>
           </Button>

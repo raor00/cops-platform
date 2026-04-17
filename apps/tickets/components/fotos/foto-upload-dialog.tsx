@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, X, Image as ImageIcon } from "lucide-react"
+import { Upload, Trash2, Image as ImageIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -169,12 +169,13 @@ export function FotoUploadDialog({
                 />
                 <Button
                   type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2"
+                  variant="secondary"
+                  size="sm"
+                  className="absolute bottom-2 right-2 gap-1 border border-slate-200 bg-white/90 text-slate-700 hover:bg-white"
                   onClick={handleRemoveFile}
                 >
-                  <X className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Quitar
                 </Button>
                 <div className="absolute bottom-0 left-0 right-0 bg-slate-900/85 p-2">
                   <p className="text-xs text-white truncate">
