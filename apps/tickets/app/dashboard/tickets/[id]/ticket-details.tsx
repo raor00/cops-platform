@@ -40,7 +40,7 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-blue-500" />
-              Descripción del Trabajo
+              Detalles del Trabajo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -147,11 +147,13 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
             )}
             {(ticket.agencia_bancaribe || ticket.cupones_bancaribe != null) && (
               <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3 text-sm">
-                <p className="mb-2 font-medium text-slate-900">Datos de sede / agencia</p>
+                <p className="mb-2 font-medium text-slate-900">
+                  {ticket.cupones_bancaribe != null ? "Agencia y cupones" : "Agencia"}
+                </p>
                 {ticket.agencia_bancaribe && (
                   <div className="flex items-start gap-3">
                     <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />
-                    <p className="text-slate-700">Sede / Agencia: {ticket.agencia_bancaribe}</p>
+                    <p className="text-slate-700">{ticket.agencia_bancaribe}</p>
                   </div>
                 )}
                 {ticket.cupones_bancaribe != null && (

@@ -859,10 +859,10 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
         </div>
       </div>
 
-      {/* â"€â"€ Descripción del Trabajo â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
+      {/* â"€â"€ Detalles del Trabajo â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€â"€ */}
       <div className="form-section">
         <h3 className="form-section-title">
-          {tipoTicket === "inspeccion" ? "Motivo de la Inspección" : "Descripción del Trabajo"}
+          {tipoTicket === "inspeccion" ? "Motivo de la Inspección" : "Detalles del Trabajo"}
         </h3>
         <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
           <h4 className="mb-3 text-sm font-semibold text-slate-900">Sede / Agencia</h4>
@@ -896,7 +896,7 @@ export function CreateTicketForm({ technicians: initialTechnicians, initialClien
             )}
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            Se mostrará primero en la descripción guardada del trabajo para identificar rápidamente la sede.
+            Se guardará primero como “Agencia: ...” dentro de los detalles del trabajo.
           </p>
         </div>
 

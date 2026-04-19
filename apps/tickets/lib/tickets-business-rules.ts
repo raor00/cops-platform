@@ -31,9 +31,9 @@ export function prependAgencyToDescription(descripcion: string, agencia?: string
 
   if (!agenciaLimpia) return descripcionLimpia
 
-  const firstLine = `Sede / Agencia: ${agenciaLimpia}`
+  const firstLine = `Agencia: ${agenciaLimpia}`
   const lines = descripcionLimpia.split(/\r?\n/).map((line) => line.trim())
-  const agencyLineRegex = /^sede\s*\/\s*agencia\s*:/i
+  const agencyLineRegex = /^(sede\s*\/\s*agencia|agencia)\s*:/i
 
   if (lines[0] && agencyLineRegex.test(lines[0])) {
     lines[0] = firstLine

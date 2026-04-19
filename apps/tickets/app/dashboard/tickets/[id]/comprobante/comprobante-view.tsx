@@ -50,7 +50,11 @@ export function ComprobanteView({ ticket, emisor }: ComprobanteViewProps) {
           {/* Logo / Nombre empresa */}
           <div className="comprobante-logo-block">
             <div className="comprobante-logo-circle">
-              <span>COPS</span>
+              <img
+                src="/branding/cops.PNG"
+                alt="COPS"
+                className="comprobante-logo-image"
+              />
             </div>
             <div>
               <p className="comprobante-empresa">COPS Electronics, C.A.</p>
@@ -74,7 +78,8 @@ export function ComprobanteView({ ticket, emisor }: ComprobanteViewProps) {
           <h2 className="comprobante-section-title">DATOS DEL CLIENTE</h2>
           <div className="comprobante-grid-2">
             <ComprobanteField label="Cliente" value={ticket.cliente_nombre} />
-            <ComprobanteField label="Agencia / Empresa" value={ticket.cliente_empresa || "—"} />
+            <ComprobanteField label="Empresa" value={ticket.cliente_empresa || "—"} />
+            <ComprobanteField label="Sede / Agencia" value={ticket.agencia_bancaribe || "—"} />
             <ComprobanteField label="Teléfono" value={ticket.cliente_telefono} />
             <ComprobanteField label="Correo electrónico" value={ticket.cliente_email || "—"} />
             <ComprobanteField
@@ -101,7 +106,7 @@ export function ComprobanteView({ ticket, emisor }: ComprobanteViewProps) {
               value={ticket.fecha_finalizacion ? formatDate(ticket.fecha_finalizacion) : "—"}
             />
             <ComprobanteField
-              label="Horas Trabajadas"
+              label="Tiempo Trabajado"
               value={
                 ticket.tiempo_trabajado
                   ? formatMinutesToDuration(ticket.tiempo_trabajado)
@@ -219,8 +224,8 @@ export function ComprobanteView({ ticket, emisor }: ComprobanteViewProps) {
             {/* Supervisor */}
             <FirmaBlock
               titulo="SUPERVISOR / APROBADO POR"
-              nombre={`${emisor.nombre} ${emisor.apellido}`}
-              cedula={emisor.cedula}
+              nombre=""
+              cedula=""
             />
           </div>
         </section>
@@ -266,14 +271,17 @@ export function ComprobanteView({ ticket, emisor }: ComprobanteViewProps) {
           width: 52px;
           height: 52px;
           border-radius: 50%;
-          background: #1e3a8a;
+          background: linear-gradient(135deg, #0ea5e9 0%, #1e3a8a 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #fff;
-          font-weight: 800;
-          font-size: 11px;
-          letter-spacing: 0.05em;
+          border: 1px solid #93c5fd;
+          box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+        }
+        .comprobante-logo-image {
+          width: 32px;
+          height: 32px;
+          object-fit: contain;
         }
         .comprobante-empresa {
           font-weight: 700;
