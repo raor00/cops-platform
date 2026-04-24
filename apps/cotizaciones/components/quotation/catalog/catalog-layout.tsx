@@ -22,8 +22,8 @@ export function CatalogLayout({ sidebar, children }: CatalogLayoutProps) {
 
   return (
       <div className="flex flex-1 gap-0">
-      {/* Desktop sidebar - full height, sticky, no gap */}
-      <aside className="hidden h-[calc(100vh-7rem)] w-[220px] shrink-0 md:flex">
+      {/* Desktop sidebar - sticky while scrolling */}
+      <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[220px] shrink-0 self-start md:flex">
         <div className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           <div className="shrink-0 border-b border-border/50 px-3 py-2.5">
             <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
