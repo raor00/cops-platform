@@ -21,10 +21,10 @@ export function CatalogLayout({ sidebar, children }: CatalogLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex flex-1 gap-2">
-      {/* Desktop sidebar - full height, sticky */}
-      <aside className="hidden h-[calc(100vh-7rem)] w-[240px] shrink-0 md:flex">
-        <div className="glass-card flex w-full flex-col overflow-hidden">
+      <div className="flex flex-1 gap-0">
+      {/* Desktop sidebar - full height, sticky, no gap */}
+      <aside className="hidden h-[calc(100vh-7rem)] w-[220px] shrink-0 md:flex">
+        <div className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           <div className="shrink-0 border-b border-border/50 px-3 py-2.5">
             <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
           </div>
