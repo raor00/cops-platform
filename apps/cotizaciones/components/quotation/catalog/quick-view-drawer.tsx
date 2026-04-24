@@ -124,7 +124,7 @@ export function QuickViewDrawer({
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <InfoField label="Código" value={item.code} />
-                  <InfoField label="Marca" value={item.brand || "General"} />
+                  <InfoField label="Marca" value={item.brand || "Generico"} />
                   <InfoField label="Categoría" value={category} />
                   <InfoField label="Subcategoría" value={item.subcategory} />
                   <InfoField label="Variante" value={item.variant} />

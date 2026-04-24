@@ -65,7 +65,7 @@ export function CatalogPickerDrawer({ open, onOpenChange, catalog, existingItems
   const brands = useMemo(() => {
     const counts = new Map<string, number>()
     catalog.forEach((item) => {
-      const brand = item.brand || "General"
+      const brand = item.brand || "Generico"
       counts.set(brand, (counts.get(brand) || 0) + 1)
     })
     return Array.from(counts.entries())
@@ -76,7 +76,7 @@ export function CatalogPickerDrawer({ open, onOpenChange, catalog, existingItems
   const categories = useMemo(() => {
     const counts = new Map<string, number>()
     catalog
-      .filter((item) => selectedBrand === "all" || (item.brand || "General") === selectedBrand)
+      .filter((item) => selectedBrand === "all" || (item.brand || "Generico") === selectedBrand)
       .forEach((item) => {
         const category = normalizeCatalogCategory(item)
         counts.set(category, (counts.get(category) || 0) + 1)
@@ -91,7 +91,7 @@ export function CatalogPickerDrawer({ open, onOpenChange, catalog, existingItems
     const normalizedSearch = search.trim().toLowerCase()
 
     return catalog.filter((item) => {
-      const brand = item.brand || "General"
+      const brand = item.brand || "Generico"
       const category = normalizeCatalogCategory(item)
       const matchesSearch = !normalizedSearch || [item.code, item.description, brand].some((value) => value.toLowerCase().includes(normalizedSearch))
       const matchesCategory = selectedCategory === null || category === selectedCategory

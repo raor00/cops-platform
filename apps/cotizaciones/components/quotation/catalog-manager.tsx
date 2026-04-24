@@ -24,6 +24,7 @@ import {
   PriceAdjustmentDialog,
 } from "@/components/quotation/catalog/catalog-manager-dialogs"
 import { useCatalogManager } from "@/components/quotation/catalog/use-catalog-manager"
+import { REGISTERED_BRANDS } from "@/lib/quotation-types"
 import { RefreshCcw, Settings2, Tags } from "lucide-react"
 import { toast } from "sonner"
 
@@ -195,6 +196,7 @@ export function CatalogManager() {
         onFormChange={(updater) => actions.setForm((current) => updater(current))}
         categoryOptions={derived.categoryOptions}
         subcategoryOptions={derived.subcategoryOptions}
+        brandOptions={REGISTERED_BRANDS as unknown as string[]}
         onSave={actions.saveItem}
         onPreviewImage={(src, alt) => actions.openImagePreview(src ? { src, code: state.form.code || alt, description: state.form.description || alt } : null)}
       />

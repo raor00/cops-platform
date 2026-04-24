@@ -21,8 +21,8 @@ export function CatalogLayout({ sidebar, children }: CatalogLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex min-h-0 flex-1 gap-4">
-      <aside className="hidden w-[280px] shrink-0 flex-col gap-4 md:flex">
+    <div className="flex min-h-0 flex-1 gap-3">
+      <aside className="hidden w-[260px] shrink-0 flex-col gap-3 md:flex">
         <div className="glass-card p-4">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Filtros</h3>

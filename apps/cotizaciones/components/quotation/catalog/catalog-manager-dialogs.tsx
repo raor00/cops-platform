@@ -20,6 +20,7 @@ interface CreateEditCatalogItemDialogProps {
   onFormChange: (updater: (current: ProductFormState) => ProductFormState) => void
   categoryOptions: string[]
   subcategoryOptions: string[]
+  brandOptions: string[]
   onSave: () => void
   onPreviewImage: (src: string, alt: string) => void
 }
@@ -32,6 +33,7 @@ export function CreateEditCatalogItemDialog({
   onFormChange,
   categoryOptions,
   subcategoryOptions,
+  brandOptions,
   onSave,
   onPreviewImage,
 }: CreateEditCatalogItemDialogProps) {
@@ -50,7 +52,18 @@ export function CreateEditCatalogItemDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Marca</Label>
-              <Input value={form.brand} onChange={(event) => onFormChange((current) => ({ ...current, brand: event.target.value }))} />
+              <Select value={form.brand || "Generico"} onValueChange={(value) => onFormChange((current) => ({ ...current, brand: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccione marca" />
+                </SelectTrigger>
+                <SelectContent>
+                  {brandOptions.map((brand) => (
+                    <SelectItem key={brand} value={brand}>
+                      {brand}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Categoría</Label>

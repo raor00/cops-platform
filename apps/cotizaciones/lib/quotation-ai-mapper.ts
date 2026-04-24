@@ -211,7 +211,7 @@ export function resolveCatalogItems(
       quantity: item.quantity,
       unitPrice: match.unitPrice,
       category: match.category,
-      brand: match.brand || "General",
+      brand: match.brand || "Generico",
       subcategory: match.subcategory || "General",
     })
   }

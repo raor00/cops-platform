@@ -110,7 +110,7 @@ export function getCatalog(): CatalogItem[] {
     const parsed: CatalogItem[] = raw ? JSON.parse(raw) : []
     const normalizedSaved = parsed.map((item) => ({
       ...item,
-      brand: item.brand || "General",
+      brand: item.brand || "Generico",
       subcategory: item.subcategory || "General",
       variant: item.variant || "",
       imageUrl: item.imageUrl || "",
@@ -119,7 +119,7 @@ export function getCatalog(): CatalogItem[] {
     for (const item of DEFAULT_CATALOG) {
       mergedByCode.set(item.code.trim().toLowerCase(), {
         ...item,
-        brand: item.brand || "General",
+        brand: item.brand || "Generico",
         subcategory: item.subcategory || "General",
         variant: item.variant || "",
         imageUrl: item.imageUrl || "",
@@ -154,7 +154,7 @@ export function saveCatalog(items: CatalogItem[]): void {
 
 export function addCatalogItem(item: CatalogItem): void {
   const catalog = getCatalog()
-  catalog.push({ ...item, brand: item.brand || "General", subcategory: item.subcategory || "General", variant: item.variant || "", imageUrl: item.imageUrl || "" })
+  catalog.push({ ...item, brand: item.brand || "Generico", subcategory: item.subcategory || "General", variant: item.variant || "", imageUrl: item.imageUrl || "" })
   saveCatalog(catalog)
 }
 
@@ -162,7 +162,7 @@ export function updateCatalogItem(item: CatalogItem): void {
   const catalog = getCatalog()
   const idx = catalog.findIndex((c) => c.id === item.id)
   if (idx >= 0) {
-    catalog[idx] = { ...item, brand: item.brand || "General", subcategory: item.subcategory || "General", variant: item.variant || "", imageUrl: item.imageUrl || "" }
+    catalog[idx] = { ...item, brand: item.brand || "Generico", subcategory: item.subcategory || "General", variant: item.variant || "", imageUrl: item.imageUrl || "" }
     saveCatalog(catalog)
   }
 }
