@@ -147,9 +147,7 @@ export function TicketDetails({ ticket }: TicketDetailsProps) {
             )}
             {(ticket.agencia_bancaribe || ticket.cupones_bancaribe != null) && (
               <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3 text-sm">
-                <p className="mb-2 font-medium text-slate-900">
-                  {ticket.cupones_bancaribe != null ? "Agencia y cupones" : "Agencia"}
-                </p>
+                <p className="mb-2 font-medium text-slate-900">Sede/Agencia</p>
                 {ticket.agencia_bancaribe && (
                   <div className="flex items-start gap-3">
                     <Building2 className="mt-0.5 h-4 w-4 text-slate-400" />

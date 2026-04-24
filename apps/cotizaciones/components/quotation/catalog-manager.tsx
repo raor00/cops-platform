@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { CatalogCategory, CatalogDiscountConfig, CatalogItem } from "@/lib/quotation-types"
-import { CATALOG_CATEGORIES, formatCurrency } from "@/lib/quotation-types"
+import { formatCurrency } from "@/lib/quotation-types"
 import {
   addCatalogItem,
   deleteCatalogItem,
@@ -90,6 +90,31 @@ export function normalizeCategory(item: CatalogItem): string {
   if (cat.includes("MODULAR")) return "UPS Modulares"
 
   return "Otros Ablerex"
+}
+
+function getNormalizedCategories(catalog: CatalogItem[]): string[] {
+  return Array.from(new Set(catalog.map((item) => normalizeCategory(item)))).sort()
+}
+
+function getSubcategories(catalog: CatalogItem[], category?: string): string[] {
+  const items = category
+    ? catalog.filter((item) => normalizeCategory(item) === category)
+    : catalog
+  const subs = Array.from(new Set(items.map((item) => item.subcategory).filter((sub): sub is string => Boolean(sub))))
+  if (subs.length === 0) subs.push("General")
+  return subs.sort()
+}
+
+function generateNextProductCode(catalog: CatalogItem[]): string {
+  const regex = /^PROD-(\d+)$/i
+  const numbers = catalog
+    .map((item) => {
+      const match = item.code.match(regex)
+      return match ? parseInt(match[1], 10) : 0
+    })
+    .filter((n) => n > 0)
+  const next = numbers.length > 0 ? Math.max(...numbers) + 1 : 1
+  return `PROD-${String(next).padStart(3, "0")}`
 }
 
 const ABLEREX_CATEGORY_ORDER = [
@@ -229,7 +254,7 @@ export function CatalogManager() {
     if (!discountConfig.enabled || discountConfig.value <= 0) return item.unitPrice
     const matchScope =
       discountConfig.scope === "all" ||
-      (discountConfig.scope === "category" && item.category === discountConfig.category) ||
+      (discountConfig.scope === "category" && normalizeCategory(item) === discountConfig.category) ||
       (discountConfig.scope === "subcategory" && (item.subcategory || "General") === discountConfig.subcategory)
     if (!matchScope) return item.unitPrice
     const next =
@@ -262,7 +287,11 @@ export function CatalogManager() {
 
   const openCreate = () => {
     setEditingItem(null)
-    setForm({ ...EMPTY_ITEM, brand: brandFilter === "ablerex" ? "Ablerex" : "General" })
+    setForm({
+      ...EMPTY_ITEM,
+      code: generateNextProductCode(catalog),
+      brand: brandFilter === "ablerex" ? "Ablerex" : "General",
+    })
     setDialogOpen(true)
   }
 
@@ -313,7 +342,7 @@ export function CatalogManager() {
     if (priceScope === "visible") targetIds = visibleIds
     if (priceScope === "category") {
       if (!priceCategory) { toast.error("Seleccione una categoria"); return }
-      targetIds = catalog.filter((item) => item.category === priceCategory).map((item) => item.id)
+      targetIds = catalog.filter((item) => normalizeCategory(item) === priceCategory).map((item) => item.id)
     }
     if (priceScope === "all-ablerex") {
       targetIds = catalog.filter((item) => (item.brand || "General").toLowerCase() === "ablerex").map((item) => item.id)
@@ -520,7 +549,7 @@ export function CatalogManager() {
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Seleccione</SelectItem>
-                  {Array.from(new Set(catalog.map((item) => item.category))).sort().map((cat) => (
+                  {getNormalizedCategories(catalog).map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
@@ -693,12 +722,22 @@ export function CatalogManager() {
                 <Label className="text-xs text-muted-foreground">Categoria</Label>
                 <Input list="catalog-categories-list" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as CatalogCategory })} className="h-8 text-xs" />
                 <datalist id="catalog-categories-list">
-                  {Array.from(new Set([...CATALOG_CATEGORIES, ...catalog.map((item) => item.category)])).sort().map((cat) => <option key={cat} value={cat} />)}
+                  {getNormalizedCategories(catalog).map((cat) => <option key={cat} value={cat} />)}
                 </datalist>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Subcategoria</Label>
-                <Input value={form.subcategory} onChange={(e) => setForm({ ...form, subcategory: e.target.value })} className="h-8 text-xs" />
+                <Input
+                  list="catalog-subcategories-list"
+                  value={form.subcategory}
+                  onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                  className="h-8 text-xs"
+                />
+                <datalist id="catalog-subcategories-list">
+                  {getSubcategories(catalog, form.category).map((sub) => (
+                    <option key={sub} value={sub} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Variante</Label>
@@ -774,7 +813,3 @@ export function CatalogManager() {
     </div>
   )
 }
-
-
-
-
