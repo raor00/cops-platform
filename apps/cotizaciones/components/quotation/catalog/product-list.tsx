@@ -29,9 +29,10 @@ interface SortableHeaderProps {
   activeColumn?: ProductListSortColumn
   direction?: ProductListSortDirection
   onSort?: (column: ProductListSortColumn, direction: ProductListSortDirection) => void
+  className?: string
 }
 
-function SortableHeader({ label, column, align = "left", activeColumn, direction = "asc", onSort }: SortableHeaderProps) {
+function SortableHeader({ label, column, align = "left", activeColumn, direction = "asc", onSort, className }: SortableHeaderProps) {
   const isActive = activeColumn === column
   const nextDirection: ProductListSortDirection = isActive && direction === "asc" ? "desc" : "asc"
   const Indicator = isActive ? (direction === "asc" ? ChevronUp : ChevronDown) : ChevronUp
@@ -41,9 +42,10 @@ function SortableHeader({ label, column, align = "left", activeColumn, direction
       type="button"
       onClick={() => onSort?.(column, nextDirection)}
       className={cn(
-        "inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground",
+        "inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground",
         align === "right" && "ml-auto flex-row-reverse",
         isActive && "text-foreground",
+        className,
       )}
     >
       <span>{label}</span>
@@ -71,27 +73,27 @@ export function ProductList({
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="table-glass table-row-stagger min-w-full">
+        <table className="table-glass table-row-stagger w-full">
           <thead>
             <tr>
-              <th className="w-10 px-3 py-3" />
-              <th className="w-12 px-3 py-3">Imagen</th>
-              <th className="w-32 px-3 py-3">
+              <th className="w-8 px-2 py-2" />
+              <th className="w-10 px-2 py-2 text-center">Img</th>
+              <th className="w-28 px-2 py-2">
                 <SortableHeader label="Código" column="code" activeColumn={sortBy} direction={sortDirection} onSort={onSort} />
               </th>
-              <th className="px-3 py-3">
+              <th className="min-w-[180px] px-2 py-2">
                 <SortableHeader label="Descripción" column="description" activeColumn={sortBy} direction={sortDirection} onSort={onSort} />
               </th>
-              <th className="w-28 px-3 py-3">
+              <th className="hidden w-24 px-2 py-2 md:table-cell">
                 <SortableHeader label="Categoría" column="category" activeColumn={sortBy} direction={sortDirection} onSort={onSort} />
               </th>
-              <th className="w-24 px-3 py-3">
+              <th className="hidden w-20 px-2 py-2 lg:table-cell">
                 <SortableHeader label="Marca" column="brand" activeColumn={sortBy} direction={sortDirection} onSort={onSort} />
               </th>
-              <th className="w-24 px-3 py-3 text-right">
+              <th className="w-20 px-2 py-2 text-right">
                 <SortableHeader label="Precio" column="price" align="right" activeColumn={sortBy} direction={sortDirection} onSort={onSort} />
               </th>
-              <th className="w-20 px-3 py-3 text-right">Acciones</th>
+              <th className="w-16 px-2 py-2 text-right">Acc</th>
             </tr>
           </thead>
           <tbody>

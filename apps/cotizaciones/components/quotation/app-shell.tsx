@@ -131,7 +131,7 @@ export function AppShell() {
   return (
     <div className="relative flex min-h-screen overflow-x-hidden bg-background">
       {/* Sidebar - Desktop */}
-      <aside className="hidden w-60 shrink-0 lg:block lg:px-3 lg:py-4">
+      <aside className="hidden w-56 shrink-0 lg:block lg:py-4 lg:pl-4 lg:pr-2">
         <div className="sticky top-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-[1rem] bg-[#0A192F] shadow-xl border border-[#1e345e]">
           {/* Logo */}
           <div className="border-b border-white/10 bg-transparent px-5 py-5">
@@ -276,7 +276,7 @@ export function AppShell() {
 
         {/* Content Area */}
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
-          <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+          <div className="px-3 py-3 lg:px-4 lg:py-4">
             {activeView === "new" && (
               <QuotationBuilder
                 key={editingQuotation?.id || "new"}
