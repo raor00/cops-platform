@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, Package, Pencil, Trash2 } from "lucide-react"
-import { getCategoryIcon, normalizeCatalogCategory } from "./catalog-utils"
+import { getCategoryIcon, getProductSubcategory, normalizeCatalogCategory } from "./catalog-utils"
 
 interface ProductCardProps {
   item: CatalogItem
@@ -40,10 +40,11 @@ export function ProductCard({
   footer,
 }: ProductCardProps) {
   const category = normalizeCatalogCategory(item)
+  const subcategory = getProductSubcategory(item)
   const CategoryIcon = getCategoryIcon(category)
   const hasDiscount = typeof effectivePrice === "number" && effectivePrice !== item.unitPrice
   const displayPrice = hasDiscount ? effectivePrice : item.unitPrice
-  const showBrand = Boolean(item.brand && item.brand.trim() && item.brand.trim().toLowerCase() !== "general")
+  const showBrand = Boolean(item.brand && item.brand.trim() && item.brand.trim().toLowerCase() !== "generico")
 
   return (
     <article
@@ -89,6 +90,12 @@ export function ProductCard({
             <CategoryIcon className="h-3 w-3 shrink-0" />
             <span className="truncate">{category}</span>
           </Badge>
+
+          {subcategory && subcategory !== "General" && subcategory !== category ? (
+            <Badge variant="outline" className="rounded-md px-2 py-0.5 text-[10px] font-medium">
+              {subcategory}
+            </Badge>
+          ) : null}
 
           {showBrand ? (
             <Badge className="rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 hover:bg-sky-100">

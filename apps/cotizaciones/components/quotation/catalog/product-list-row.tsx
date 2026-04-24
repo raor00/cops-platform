@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, Package, Pencil, Trash2 } from "lucide-react"
-import { getCategoryIcon, normalizeCatalogCategory } from "./catalog-utils"
+import { getCategoryIcon, getProductSubcategory, normalizeCatalogCategory } from "./catalog-utils"
 
 interface ProductListRowProps {
   item: CatalogItem
@@ -28,6 +28,7 @@ export function ProductListRow({
   effectivePrice,
 }: ProductListRowProps) {
   const category = normalizeCatalogCategory(item)
+  const subcategory = getProductSubcategory(item)
   const CategoryIcon = getCategoryIcon(category)
   const hasDiscount = typeof effectivePrice === "number" && effectivePrice !== item.unitPrice
   const displayPrice = hasDiscount ? effectivePrice : item.unitPrice
@@ -62,10 +63,15 @@ export function ProductListRow({
       </td>
 
       <td className="w-28 px-3 py-2 align-middle">
-        <Badge variant="secondary" className="inline-flex max-w-full gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium">
-          <CategoryIcon className="h-3 w-3 shrink-0" />
-          <span className="truncate">{category}</span>
-        </Badge>
+        <div className="flex flex-col gap-1">
+          <Badge variant="secondary" className="inline-flex max-w-full gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium">
+            <CategoryIcon className="h-3 w-3 shrink-0" />
+            <span className="truncate">{category}</span>
+          </Badge>
+          {subcategory && subcategory !== "General" && subcategory !== category ? (
+            <span className="truncate text-[10px] text-muted-foreground">{subcategory}</span>
+          ) : null}
+        </div>
       </td>
 
       <td className="w-24 px-3 py-2 align-middle">

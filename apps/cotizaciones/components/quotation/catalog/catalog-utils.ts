@@ -1,9 +1,25 @@
 import type { CatalogItem } from "@/lib/quotation-types"
 import { Battery, Cable, Package, Zap, type LucideIcon } from "lucide-react"
 
+/**
+ * Normaliza la categoría principal del producto.
+ * Los productos Ablerex se mueven a la categoría "Energía".
+ */
 export function normalizeCatalogCategory(item: CatalogItem): string {
   const brand = (item.brand || "General").toLowerCase()
   if (brand !== "ablerex") return item.category
+
+  // Todos los productos Ablerex van bajo "Energía"
+  return "Energia"
+}
+
+/**
+ * Extrae la subcategoría específica para productos Ablerex.
+ * Devuelve null para productos no-Ablerex (usan su propia subcategoría).
+ */
+export function normalizeAblerexSubcategory(item: CatalogItem): string | null {
+  const brand = (item.brand || "General").toLowerCase()
+  if (brand !== "ablerex") return null
 
   const category = item.category.toUpperCase()
 
@@ -42,9 +58,43 @@ export function normalizeCatalogCategory(item: CatalogItem): string {
   return "Otros Ablerex"
 }
 
+/**
+ * Devuelve la subcategoría a mostrar para un producto.
+ * Para Ablerex: la subcategoría específica del tipo de producto.
+ * Para otros: la subcategoría existente o "General".
+ */
+export function getProductSubcategory(item: CatalogItem): string {
+  const ablerexSub = normalizeAblerexSubcategory(item)
+  if (ablerexSub) return ablerexSub
+  return item.subcategory || "General"
+}
+
 export function getCategoryIcon(category: string): LucideIcon {
   if (category.includes("Bateria") || category.includes("Almacen")) return Battery
   if (category === "Materiales" || category.includes("Cable")) return Cable
   if (category.includes("UPS") || category.includes("Energi") || category === "Energia") return Zap
   return Package
+}
+
+/**
+ * Obtiene las subcategorías disponibles para una categoría dada.
+ * Si es "Energia", incluye las subcategorías de Ablerex.
+ */
+export function getCategorySubcategories(
+  catalog: CatalogItem[],
+  category: string | null
+): string[] {
+  const items = category
+    ? catalog.filter((item) => normalizeCatalogCategory(item) === category)
+    : catalog
+
+  const subs = new Set<string>()
+  items.forEach((item) => {
+    const sub = getProductSubcategory(item)
+    if (sub && sub !== "General") {
+      subs.add(sub)
+    }
+  })
+
+  return Array.from(subs).sort()
 }

@@ -14,7 +14,7 @@ import {
 import type { CatalogCategory, CatalogDiscountConfig, CatalogItem } from "@/lib/quotation-types"
 import { formatCurrency } from "@/lib/quotation-types"
 import type { CatalogSortOption, CatalogViewMode } from "./catalog-toolbar"
-import { normalizeCatalogCategory } from "./catalog-utils"
+import { normalizeCatalogCategory, getProductSubcategory } from "./catalog-utils"
 import { toast } from "sonner"
 
 const PAGE_SIZE = 24
@@ -81,7 +81,7 @@ function getOrderedCategories(items: CatalogItem[]) {
 
 function getSubcategories(catalog: CatalogItem[], category?: string) {
   const items = category ? catalog.filter((item) => normalizeCatalogCategory(item) === category) : catalog
-  const values = Array.from(new Set(items.map((item) => item.subcategory || "General"))).filter(Boolean)
+  const values = Array.from(new Set(items.map((item) => getProductSubcategory(item)))).filter(Boolean)
   return values.length > 0 ? values.sort() : ["General"]
 }
 
