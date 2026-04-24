@@ -84,6 +84,9 @@ export function CatalogManager() {
             categories={derived.categories}
             selectedCategory={state.selectedCategory}
             onCategoryChange={actions.setSelectedCategory}
+            subcategories={derived.sidebarSubcategoryOptions}
+            selectedSubcategory={state.selectedSubcategory}
+            onSubcategoryChange={actions.setSelectedSubcategory}
             brands={derived.brands}
             selectedBrands={state.selectedBrands}
             onBrandsChange={actions.setSelectedBrands}

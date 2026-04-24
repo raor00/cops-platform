@@ -15,6 +15,10 @@ interface CatalogFiltersProps {
   selectedCategory: string | null
   onCategoryChange: (cat: string | null) => void
 
+  subcategories: string[]
+  selectedSubcategory: string | null
+  onSubcategoryChange: (sub: string | null) => void
+
   brands: Array<{ name: string; count: number }>
   selectedBrands: string[]
   onBrandsChange: (brands: string[]) => void
@@ -31,6 +35,9 @@ export function CatalogFilters({
   categories,
   selectedCategory,
   onCategoryChange,
+  subcategories,
+  selectedSubcategory,
+  onSubcategoryChange,
   brands,
   selectedBrands,
   onBrandsChange,
@@ -45,6 +52,37 @@ export function CatalogFilters({
       <FilterSection title="Categoría" defaultOpen>
         <CategoryFilter categories={categories} selected={selectedCategory} onSelect={onCategoryChange} />
       </FilterSection>
+
+      {subcategories.length > 0 && (
+        <>
+          <Separator />
+          <FilterSection title="Subcategoría" defaultOpen>
+            <div className="space-y-1">
+              <button
+                type="button"
+                onClick={() => onSubcategoryChange(null)}
+                className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
+                  selectedSubcategory === null ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+              >
+                <span>Todas las subcategorías</span>
+              </button>
+              {subcategories.map((sub) => (
+                <button
+                  key={sub}
+                  type="button"
+                  onClick={() => onSubcategoryChange(sub)}
+                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
+                    selectedSubcategory === sub ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                  }`}
+                >
+                  <span className="truncate">{sub}</span>
+                </button>
+              ))}
+            </div>
+          </FilterSection>
+        </>
+      )}
 
       <Separator />
 

@@ -244,14 +244,25 @@ export const PAYMENT_CONDITIONS_LLC = [
   "50% ADVANCE - 50% ON DELIVERY",
 ]
 
-let quotationCounter = 0
+const QUOTATION_COUNTER_KEY = "cops_quotation_counter"
+
+function getNextQuotationCounter(): number {
+  if (typeof window === "undefined") return 1
+  try {
+    const last = parseInt(localStorage.getItem(QUOTATION_COUNTER_KEY) || "0", 10)
+    const next = last + 1
+    localStorage.setItem(QUOTATION_COUNTER_KEY, String(next))
+    return next
+  } catch {
+    return 1
+  }
+}
 
 export function generateQuotationCode(type: QuotationType): string {
   const prefix = type === "proyecto" ? "P" : type === "servicio" ? "S" : "M"
   const year = new Date().getFullYear()
-  const counter = ++quotationCounter
-  const timestamp = Date.now().toString().slice(-4)
-  return `${prefix}-${counter}${timestamp}-${year}`
+  const counter = getNextQuotationCounter()
+  return `${prefix}-${String(counter).padStart(4, "0")}-${year}`
 }
 
 export function formatCurrency(amount: number): string {

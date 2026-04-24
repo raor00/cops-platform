@@ -125,6 +125,7 @@ export function useCatalogManager() {
   const [view, setView] = useState<CatalogViewMode>("grid")
   const [sort, setSort] = useState<CatalogSortOption>("code-asc")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 999999])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -238,13 +239,21 @@ export function useCatalogManager() {
     return catalog.filter((item) => {
       const brand = item.brand || "General"
       const category = normalizeCatalogCategory(item)
+      const subcategory = getProductSubcategory(item)
       const matchesSearch = !normalizedSearch || [item.code, item.description, brand].some((value) => value.toLowerCase().includes(normalizedSearch))
       const matchesCategory = selectedCategory === null || category === selectedCategory
+      const matchesSubcategory = selectedSubcategory === null || subcategory === selectedSubcategory
       const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(brand)
       const matchesPrice = item.unitPrice >= priceRange[0] && item.unitPrice <= priceRange[1]
-      return matchesSearch && matchesCategory && matchesBrand && matchesPrice
+      return matchesSearch && matchesCategory && matchesSubcategory && matchesBrand && matchesPrice
     })
-  }, [catalog, priceRange, search, selectedBrands, selectedCategory])
+  }, [catalog, priceRange, search, selectedBrands, selectedCategory, selectedSubcategory])
+
+  const sidebarSubcategoryOptions = useMemo(() => {
+    const items = selectedCategory ? catalog.filter((item) => normalizeCatalogCategory(item) === selectedCategory) : catalog
+    const values = Array.from(new Set(items.map((item) => getProductSubcategory(item)))).filter((sub) => sub !== "General")
+    return values.sort()
+  }, [catalog, selectedCategory])
 
   const sorted = useMemo(() => {
     const items = [...filtered]
@@ -271,6 +280,7 @@ export function useCatalogManager() {
   const hasActiveFilters = Boolean(
     search.trim() ||
       selectedCategory ||
+      selectedSubcategory ||
       selectedBrands.length ||
       priceRange[0] !== priceBounds.min ||
       priceRange[1] !== priceBounds.max,
@@ -280,7 +290,8 @@ export function useCatalogManager() {
     const filters: Array<{ key: string; label: string; onRemove: () => void }> = []
 
     if (search.trim()) filters.push({ key: "search", label: `Búsqueda: ${search.trim()}`, onRemove: () => setSearch("") })
-    if (selectedCategory) filters.push({ key: "category", label: `Categoría: ${selectedCategory}`, onRemove: () => setSelectedCategory(null) })
+    if (selectedCategory) filters.push({ key: "category", label: `Categoría: ${selectedCategory}`, onRemove: () => { setSelectedCategory(null); setSelectedSubcategory(null) } })
+    if (selectedSubcategory) filters.push({ key: "subcategory", label: `Subcategoría: ${selectedSubcategory}`, onRemove: () => setSelectedSubcategory(null) })
     selectedBrands.forEach((brand) => filters.push({ key: `brand-${brand}`, label: `Marca: ${brand}`, onRemove: () => setSelectedBrands((current) => current.filter((value) => value !== brand)) }))
 
     if (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) {
@@ -292,11 +303,11 @@ export function useCatalogManager() {
     }
 
     return filters
-  }, [priceBounds.max, priceBounds.min, priceRange, search, selectedBrands, selectedCategory])
+  }, [priceBounds.max, priceBounds.min, priceRange, search, selectedBrands, selectedCategory, selectedSubcategory])
 
   useEffect(() => {
     setPage(1)
-  }, [priceRange, search, selectedBrands, selectedCategory, sort, view])
+  }, [priceRange, search, selectedBrands, selectedCategory, selectedSubcategory, sort, view])
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages)
@@ -311,6 +322,7 @@ export function useCatalogManager() {
   const resetFilters = useCallback(() => {
     setSearch("")
     setSelectedCategory(null)
+    setSelectedSubcategory(null)
     setSelectedBrands([])
     setPriceRange([priceBounds.min, priceBounds.max])
   }, [priceBounds.max, priceBounds.min])
@@ -503,6 +515,7 @@ export function useCatalogManager() {
       view,
       page: safePage,
       selectedCategory,
+      selectedSubcategory,
       selectedBrands,
       priceRange,
       selectedIds,
@@ -532,6 +545,7 @@ export function useCatalogManager() {
       priceBounds,
       categoryOptions,
       subcategoryOptions,
+      sidebarSubcategoryOptions,
       bulkSubcategoryOptions,
       discountSubcategoryOptions,
       filteredCount: sorted.length,
@@ -552,6 +566,7 @@ export function useCatalogManager() {
       setView,
       setPage,
       setSelectedCategory,
+      setSelectedSubcategory,
       setSelectedBrands,
       setPriceRange,
       setActiveItemId,
