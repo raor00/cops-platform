@@ -244,11 +244,14 @@ export const PAYMENT_CONDITIONS_LLC = [
   "50% ADVANCE - 50% ON DELIVERY",
 ]
 
+let quotationCounter = 0
+
 export function generateQuotationCode(type: QuotationType): string {
   const prefix = type === "proyecto" ? "P" : type === "servicio" ? "S" : "M"
   const year = new Date().getFullYear()
-  const random = Math.floor(Math.random() * 900) + 100
-  return `${prefix}-${random}-${year}`
+  const counter = ++quotationCounter
+  const timestamp = Date.now().toString().slice(-4)
+  return `${prefix}-${counter}${timestamp}-${year}`
 }
 
 export function formatCurrency(amount: number): string {

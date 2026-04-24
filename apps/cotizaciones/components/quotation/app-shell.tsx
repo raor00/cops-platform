@@ -38,9 +38,28 @@ const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "history", label: "Historial", icon: <Clock className="h-4 w-4" /> },
 ]
 
+const ACTIVE_VIEW_KEY = "cops_active_view"
+const EDITING_QUOTATION_KEY = "cops_editing_quotation"
+
 export function AppShell() {
-  const [activeView, setActiveView] = useState<View>("new")
-  const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(null)
+  const [activeView, setActiveView] = useState<View>(() => {
+    if (typeof window === "undefined") return "new"
+    try {
+      const saved = localStorage.getItem(ACTIVE_VIEW_KEY) as View
+      return saved && ["new", "delivery", "transport", "catalog", "history", "knowledge"].includes(saved) ? saved : "new"
+    } catch {
+      return "new"
+    }
+  })
+  const [editingQuotation, setEditingQuotation] = useState<QuotationData | null>(() => {
+    if (typeof window === "undefined") return null
+    try {
+      const saved = localStorage.getItem(EDITING_QUOTATION_KEY)
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileAccountMenuOpen, setMobileAccountMenuOpen] = useState(false)
   const [mobileHeaderVisible, setMobileHeaderVisible] = useState(true)
@@ -81,8 +100,24 @@ export function AppShell() {
     setRefreshKey((k) => k + 1)
   }, [])
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(ACTIVE_VIEW_KEY, activeView)
+    }
+  }, [activeView])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (editingQuotation) {
+        localStorage.setItem(EDITING_QUOTATION_KEY, JSON.stringify(editingQuotation))
+      } else {
+        localStorage.removeItem(EDITING_QUOTATION_KEY)
+      }
+    }
+  }, [editingQuotation])
+
   const navigateTo = (view: View) => {
-    if (view === "new") {
+    if (view === "new" && activeView !== "new") {
       setEditingQuotation(null)
     }
     setActiveView(view)
