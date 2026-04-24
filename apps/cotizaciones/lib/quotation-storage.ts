@@ -9,7 +9,7 @@ import {
 } from "./firebase/firestore-storage"
 
 const QUOTATIONS_KEY = "cops_quotations"
-const CATALOG_KEY = "cops_catalog"
+const CATALOG_KEY = "cops_catalog_v2"
 const CATALOG_DISCOUNT_KEY = "cops_catalog_discount"
 
 function emitCatalogUpdated() {
