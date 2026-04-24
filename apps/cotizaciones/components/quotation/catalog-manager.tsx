@@ -596,7 +596,7 @@ export function CatalogManager() {
           <div
             key={item.id}
             className="group min-w-0 overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
-            style={{ animation: `fadeIn 0.3s ease ${idx * 25}ms forwards`, opacity: 0 }}
+            style={{ animation: `fade-in 0.3s ease ${idx * 25}ms forwards`, opacity: 0 }}
           >
             <div className="relative">
               <div className="absolute left-2 top-2 z-10">
@@ -720,24 +720,25 @@ export function CatalogManager() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Categoria</Label>
-                <Input list="catalog-categories-list" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as CatalogCategory })} className="h-8 text-xs" />
-                <datalist id="catalog-categories-list">
-                  {getNormalizedCategories(catalog).map((cat) => <option key={cat} value={cat} />)}
-                </datalist>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as CatalogCategory })}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <SelectContent>
+                    {getNormalizedCategories(catalog).map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Subcategoria</Label>
-                <Input
-                  list="catalog-subcategories-list"
-                  value={form.subcategory}
-                  onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
-                  className="h-8 text-xs"
-                />
-                <datalist id="catalog-subcategories-list">
-                  {getSubcategories(catalog, form.category).map((sub) => (
-                    <option key={sub} value={sub} />
-                  ))}
-                </datalist>
+                <Select value={form.subcategory || "General"} onValueChange={(v) => setForm({ ...form, subcategory: v === "General" ? "" : v })}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seleccione" /></SelectTrigger>
+                  <SelectContent>
+                    {getSubcategories(catalog, form.category).map((sub) => (
+                      <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Variante</Label>
