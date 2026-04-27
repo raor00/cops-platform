@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import type {
   ActionResponse,
   ChangeHistory,
+  MaterialItem,
   Ticket,
   TicketFoto,
   TicketDocumento,
@@ -24,6 +25,7 @@ import {
   DEFAULT_COMMISSION_PERCENTAGE,
 } from "@/types"
 import { getCurrentUser } from "./auth"
+import { descontarStockMaterialesTicket, reintegrarStockMaterialesTicket } from "./catalogo"
 import { isLocalMode, isFirebaseMode } from "@/lib/local-mode"
 import {
   enforceCreateBillingRules,
@@ -580,7 +582,7 @@ export async function changeTicketStatus(
   id: string,
   newStatus: TicketStatus,
   additionalData?: {
-    materiales_usados?: Array<{ id: string; nombre: string; cantidad: number; unidad: string }>
+    materiales_usados?: MaterialItem[]
     tiempo_trabajado?: number
     observaciones_tecnico?: string
     solucion_aplicada?: string
@@ -652,6 +654,9 @@ export async function changeTicketStatus(
 
       const now = new Date().toISOString()
       const updateData: Record<string, unknown> = { estado: newStatus, updated_at: now }
+      const materialesUsados = sanitizedAdditional?.materiales_usados?.filter((material) => material.nombre.trim() && material.cantidad > 0) ?? []
+      const isRevertingFromFinalizado = ticket.estado === "finalizado" && newStatus !== "finalizado"
+      const materialesRegistrados = (ticket.materiales_usados ?? []).filter((material) => material.nombre.trim() && material.cantidad > 0)
 
       if (newStatus === "iniciado" && !ticket.fecha_inicio) updateData.fecha_inicio = now
       if (newStatus === "iniciado") updateData.estado_operativo = "trabajando"
@@ -667,7 +672,7 @@ export async function changeTicketStatus(
         }
       }
 
-      if (sanitizedAdditional?.materiales_usados) updateData.materiales_usados = sanitizedAdditional.materiales_usados
+      if (sanitizedAdditional?.materiales_usados) updateData.materiales_usados = materialesUsados
       if (sanitizedAdditional?.tiempo_trabajado !== undefined && allowsWorkedTime) updateData.tiempo_trabajado = sanitizedAdditional.tiempo_trabajado
       if (sanitizedAdditional?.motivo_pausa !== undefined) updateData.motivo_pausa = sanitizedAdditional.motivo_pausa
       if (sanitizedAdditional?.fecha_servicio !== undefined) updateData.fecha_servicio = sanitizedAdditional.fecha_servicio
@@ -681,6 +686,16 @@ export async function changeTicketStatus(
       if (!allowsWorkedTime && ticket.tipo === "servicio") {
         updateData.monto_servicio = DEFAULT_SERVICE_AMOUNT
         updateData.tiempo_trabajado = null
+      }
+
+      if (newStatus === "finalizado" && materialesUsados.length > 0) {
+        const stockResult = await descontarStockMaterialesTicket(materialesUsados, id, currentUser.id)
+        if (!stockResult.success) return { success: false, error: stockResult.error }
+      }
+
+      if (isRevertingFromFinalizado && materialesRegistrados.length > 0) {
+        const reintegroResult = await reintegrarStockMaterialesTicket(materialesRegistrados, id, currentUser.id)
+        if (!reintegroResult.success) return { success: false, error: reintegroResult.error }
       }
 
       await ref.update(updateData)

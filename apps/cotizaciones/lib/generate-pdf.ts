@@ -39,11 +39,11 @@ function generateSAPDFContent(data: QuotationData): string {
   const renderItemRows = (items: QuotationData["items"]) =>
     items.map((item) => `
       <tr>
-        <td style="padding:8px 6px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:11px;color:#1e293b;">${item.quantity}</td>
-        <td style="padding:8px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;">${item.code}</td>
-        <td style="padding:8px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;color:#334155;line-height:1.5;">${item.description}</td>
-        <td style="padding:8px 6px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:11px;color:#1e293b;">$${formatCurrency(item.unitPrice)}</td>
-        <td style="padding:8px 6px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:11px;font-weight:600;color:#1e293b;">$${formatCurrency(item.totalPrice)}</td>
+        <td style="padding:4px 5px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">${item.quantity}</td>
+        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;">${item.code}</td>
+        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;color:#334155;line-height:1.35;">${item.description}</td>
+        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">$${formatCurrency(item.unitPrice)}</td>
+        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:600;color:#1e293b;">$${formatCurrency(item.totalPrice)}</td>
       </tr>`
     ).join("")
 
@@ -51,18 +51,18 @@ function generateSAPDFContent(data: QuotationData): string {
     .filter((l) => l.cost > 0 || l.description)
     .map((l) => `
       <tr>
-        <td style="padding:8px 6px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:11px;color:#1e293b;">1</td>
-        <td style="padding:8px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;">MANO-OBRA</td>
-        <td style="padding:8px 6px;border-bottom:1px solid #e2e8f0;font-size:10px;color:#334155;line-height:1.5;">${l.description || "Mano de obra"}</td>
-        <td style="padding:8px 6px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:11px;color:#1e293b;">$${formatCurrency(l.cost)}</td>
-        <td style="padding:8px 6px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:11px;font-weight:600;color:#1e293b;">$${formatCurrency(l.cost)}</td>
+        <td style="padding:4px 5px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">1</td>
+        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;">MANO-OBRA</td>
+        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;color:#334155;line-height:1.35;">${l.description || "Mano de obra"}</td>
+        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">$${formatCurrency(l.cost)}</td>
+        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:600;color:#1e293b;">$${formatCurrency(l.cost)}</td>
       </tr>`)
     .join("")
 
   const termsLines = termsText
     .split("\n")
     .filter((l) => l.trim())
-    .map((line) => `<li style="margin-bottom:3px;color:#475569;font-size:9px;line-height:1.5;">${line.replace(/^\d+\.\s*/, "")}</li>`)
+    .map((line) => `<li style="margin-bottom:2px;color:#475569;font-size:8px;line-height:1.4;">${line.replace(/^\d+\.\s*/, "")}</li>`)
     .join("")
 
   const hasEquipment = data.items.length > 0
@@ -73,51 +73,51 @@ function generateSAPDFContent(data: QuotationData): string {
   const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
 
   const equipmentSection = hasEquipment ? `
-    <div style="padding:0 32px;margin-bottom:4px;">
-      <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Equipos y Servicios</div>
+    <div style="padding:0 20px;margin-bottom:2px;">
+      <div style="background:#f0f4f8;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Equipos y Servicios</div>
     </div>
-    <div style="padding:0 32px;margin-bottom:10px;">
-      <table style="width:100%;border-collapse:collapse;">
+    <div style="padding:0 20px;margin-bottom:6px;page-break-inside:auto;">
+      <table style="width:100%;border-collapse:collapse;page-break-inside:auto;">
         <thead><tr style="background:#0a1628;">
-          <th style="padding:8px 6px;text-align:center;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:50px;border-radius:4px 0 0 0;">Cant.</th>
-          <th style="padding:8px 6px;text-align:left;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:120px;">Codigo</th>
-          <th style="padding:8px 6px;text-align:left;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
-          <th style="padding:8px 6px;text-align:right;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:90px;">P. Unit.</th>
-          <th style="padding:8px 6px;text-align:right;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:90px;border-radius:0 4px 0 0;">P. Total</th>
+          <th style="padding:4px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:40px;border-radius:3px 0 0 0;">Cant.</th>
+          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:100px;">Codigo</th>
+          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
+          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;">P. Unit.</th>
+          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;border-radius:0 3px 0 0;">P. Total</th>
         </tr></thead>
         <tbody>${renderItemRows(data.items)}</tbody>
       </table>
     </div>` : ""
 
   const materialsSection = hasMaterials ? `
-    <div style="padding:0 32px;margin-bottom:4px;">
-      <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Materiales e Insumos</div>
+    <div style="padding:0 20px;margin-bottom:2px;">
+      <div style="background:#f0f4f8;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Materiales e Insumos</div>
     </div>
-    <div style="padding:0 32px;margin-bottom:10px;">
-      <table style="width:100%;border-collapse:collapse;">
+    <div style="padding:0 20px;margin-bottom:6px;page-break-inside:auto;">
+      <table style="width:100%;border-collapse:collapse;page-break-inside:auto;">
         <thead><tr style="background:#0a1628;">
-          <th style="padding:8px 6px;text-align:center;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:50px;border-radius:4px 0 0 0;">Cant.</th>
-          <th style="padding:8px 6px;text-align:left;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:120px;">Codigo</th>
-          <th style="padding:8px 6px;text-align:left;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
-          <th style="padding:8px 6px;text-align:right;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:90px;">P. Unit.</th>
-          <th style="padding:8px 6px;text-align:right;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:90px;border-radius:0 4px 0 0;">P. Total</th>
+          <th style="padding:4px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:40px;border-radius:3px 0 0 0;">Cant.</th>
+          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:100px;">Codigo</th>
+          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
+          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;">P. Unit.</th>
+          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;border-radius:0 3px 0 0;">P. Total</th>
         </tr></thead>
         <tbody>${renderItemRows(data.materials)}</tbody>
       </table>
     </div>` : ""
 
   const laborSection = hasLabor ? `
-    <div style="padding:0 32px;margin-bottom:4px;">
-      <div style="background:#f0f4f8;padding:6px 10px;border-radius:4px;font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Mano de Obra</div>
+    <div style="padding:0 20px;margin-bottom:2px;">
+      <div style="background:#f0f4f8;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Mano de Obra</div>
     </div>
-    <div style="padding:0 32px;margin-bottom:10px;">
-      <table style="width:100%;border-collapse:collapse;">
+    <div style="padding:0 20px;margin-bottom:6px;page-break-inside:auto;">
+      <table style="width:100%;border-collapse:collapse;page-break-inside:auto;">
         <thead><tr style="background:#0a1628;">
-          <th style="padding:8px 6px;text-align:center;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:50px;border-radius:4px 0 0 0;">Cant.</th>
-          <th style="padding:8px 6px;text-align:left;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:120px;">Codigo</th>
-          <th style="padding:8px 6px;text-align:left;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
-          <th style="padding:8px 6px;text-align:right;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:90px;">P. Unit.</th>
-          <th style="padding:8px 6px;text-align:right;font-size:9px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:90px;border-radius:0 4px 0 0;">P. Total</th>
+          <th style="padding:4px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:40px;border-radius:3px 0 0 0;">Cant.</th>
+          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:100px;">Codigo</th>
+          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
+          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;">P. Unit.</th>
+          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;border-radius:0 3px 0 0;">P. Total</th>
         </tr></thead>
         <tbody>${laborRows}</tbody>
       </table>
@@ -129,23 +129,25 @@ function generateSAPDFContent(data: QuotationData): string {
   <meta charset="UTF-8">
   <title>Cotizacion ${data.code} - Cop's Electronics</title>
   <style>
-    @page { size: A4; margin: 12mm; }
+    @page { size: A4; margin: 8mm; }
     body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { width: 100%; min-height: 100vh; position: relative; }
+    table, tr, td, th, tbody, thead { page-break-inside: avoid; }
+    tr { page-break-before: auto; page-break-after: auto; }
   </style>
 </head>
 <body>
 <div class="page">
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%);padding:24px 32px;display:flex;justify-content:space-between;align-items:center;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
-        <img src="/cops-logo.png" alt="COPS Electronics" style="width:34px;height:34px;object-fit:contain;" />
+  <div style="background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 100%);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;">
+        <img src="/cops-logo.png" alt="COPS Electronics" style="width:28px;height:28px;object-fit:contain;" />
       </div>
       <div>
-        <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:2px;">COP'S ELECTRONICS, S.A.</div>
-        <div style="font-size:10px;color:#7a9cc7;margin-top:3px;letter-spacing:1px;">SOLUCIONES TECNOLOGICAS INTEGRALES</div>
-        <div style="font-size:9px;color:#e2e8f0;margin-top:4px;font-style:italic;max-width:280px;">28 años transformando estructuras en soluciones tecnológicas</div>
+        <div style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:1px;">COP'S ELECTRONICS, S.A.</div>
+        <div style="font-size:9px;color:#7a9cc7;margin-top:2px;letter-spacing:0.5px;">SOLUCIONES TECNOLOGICAS INTEGRALES</div>
+        <div style="font-size:8px;color:#e2e8f0;margin-top:2px;font-style:italic;max-width:260px;">28 años transformando estructuras en soluciones tecnológicas</div>
       </div>
     </div>
     
@@ -157,39 +159,39 @@ function generateSAPDFContent(data: QuotationData): string {
 
     <!-- Quote Info -->
     <div style="text-align:right;">
-      <div style="background:rgba(255,255,255,0.08);border-radius:6px;padding:10px 18px;border:1px solid rgba(255,255,255,0.12);">
-        <div style="font-size:9px;color:#7a9cc7;text-transform:uppercase;letter-spacing:1px;">Cotizacion</div>
-        <div style="font-size:16px;font-weight:700;color:#ffffff;margin-top:2px;">${data.code}</div>
-        <div style="font-size:8px;color:#5b9aff;margin-top:2px;">${getTypeLabel(data.type)}</div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:5px;padding:8px 14px;border:1px solid rgba(255,255,255,0.12);">
+        <div style="font-size:8px;color:#7a9cc7;text-transform:uppercase;letter-spacing:0.5px;">Cotizacion</div>
+        <div style="font-size:14px;font-weight:700;color:#ffffff;margin-top:1px;">${data.code}</div>
+        <div style="font-size:7px;color:#5b9aff;margin-top:1px;">${getTypeLabel(data.type)}</div>
       </div>
     </div>
   </div>
 
   <!-- Client Info -->
-  <div style="padding:12px 32px;display:flex;gap:0;">
-    <div style="flex:1;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">
+  <div style="padding:8px 20px;display:flex;gap:0;">
+    <div style="flex:1;border-bottom:1px solid #e2e8f0;padding-bottom:6px;">
       <table style="border-collapse:collapse;">
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 8px 3px 0;width:70px;">Cliente:</td><td style="font-size:11px;font-weight:600;color:#1e293b;padding:3px 0;">${data.clientInfo.name}</td></tr>
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 8px 3px 0;">Atencion:</td><td style="font-size:11px;color:#1e293b;padding:3px 0;">${data.clientInfo.attention}</td></tr>
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 8px 3px 0;">RIF:</td><td style="font-size:11px;color:#1e293b;padding:3px 0;">${data.clientInfo.rif}</td></tr>
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 8px 3px 0;">Email:</td><td style="font-size:11px;color:#1a5276;padding:3px 0;">${data.clientInfo.email}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 6px 2px 0;width:60px;">Cliente:</td><td style="font-size:10px;font-weight:600;color:#1e293b;padding:2px 0;">${data.clientInfo.name}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 6px 2px 0;">Atencion:</td><td style="font-size:10px;color:#1e293b;padding:2px 0;">${data.clientInfo.attention}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 6px 2px 0;">RIF:</td><td style="font-size:10px;color:#1e293b;padding:2px 0;">${data.clientInfo.rif}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 6px 2px 0;">Email:</td><td style="font-size:10px;color:#1a5276;padding:2px 0;">${data.clientInfo.email}</td></tr>
       </table>
     </div>
-    <div style="flex:1;border-bottom:1px solid #e2e8f0;padding-bottom:10px;text-align:right;">
+    <div style="flex:1;border-bottom:1px solid #e2e8f0;padding-bottom:6px;text-align:right;">
       <table style="border-collapse:collapse;margin-left:auto;">
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 0;text-align:right;">Fecha:</td><td style="font-size:11px;font-weight:600;color:#1e293b;padding:3px 0 3px 8px;text-align:right;">${formatDate(data.issueDate)}</td></tr>
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 0;text-align:right;">Valido:</td><td style="font-size:11px;color:#1e293b;padding:3px 0 3px 8px;text-align:right;">${formatDate(data.validUntil)}</td></tr>
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 0;text-align:right;">Telefono:</td><td style="font-size:11px;color:#1e293b;padding:3px 0 3px 8px;text-align:right;">${data.clientInfo.phone}</td></tr>
-        <tr><td style="font-size:9px;color:#64748b;text-transform:uppercase;padding:3px 0;text-align:right;">Agencia:</td><td style="font-size:11px;color:#1e293b;padding:3px 0 3px 8px;text-align:right;">${data.clientInfo.address}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 0;text-align:right;">Fecha:</td><td style="font-size:10px;font-weight:600;color:#1e293b;padding:2px 0 2px 6px;text-align:right;">${formatDate(data.issueDate)}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 0;text-align:right;">Valido:</td><td style="font-size:10px;color:#1e293b;padding:2px 0 2px 6px;text-align:right;">${formatDate(data.validUntil)}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 0;text-align:right;">Telefono:</td><td style="font-size:10px;color:#1e293b;padding:2px 0 2px 6px;text-align:right;">${data.clientInfo.phone}</td></tr>
+        <tr><td style="font-size:8px;color:#64748b;text-transform:uppercase;padding:2px 0;text-align:right;">Agencia:</td><td style="font-size:10px;color:#1e293b;padding:2px 0 2px 6px;text-align:right;">${data.clientInfo.address}</td></tr>
       </table>
     </div>
   </div>
 
   <!-- Subject -->
-  ${data.subject ? `<div style="padding:0 32px;margin-bottom:12px;">
-    <div style="background:#f0f6ff;border-left:3px solid #1a5276;padding:8px 12px;border-radius:0 6px 6px 0;">
-      <span style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Partida: </span>
-      <span style="font-size:12px;font-weight:700;color:#1a5276;">${data.subject}</span>
+  ${data.subject ? `<div style="padding:0 20px;margin-bottom:8px;">
+    <div style="background:#f0f6ff;border-left:3px solid #1a5276;padding:6px 10px;border-radius:0 4px 4px 0;">
+      <span style="font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Partida: </span>
+      <span style="font-size:11px;font-weight:700;color:#1a5276;">${data.subject}</span>
     </div>
   </div>` : ""}
 
@@ -198,43 +200,43 @@ function generateSAPDFContent(data: QuotationData): string {
   ${laborSection}
 
   <!-- Totals -->
-  <div style="padding:12px 32px;">
+  <div style="padding:8px 20px;">
     <div style="display:flex;justify-content:flex-end;">
-      <table style="border-collapse:collapse;width:260px;">
-        ${hasEquipment ? `<tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">Equipos y Servicios</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">$${formatCurrency(data.subtotalEquipment)}</td></tr>` : ""}
-        ${hasMaterials ? `<tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">Materiales</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">$${formatCurrency(data.subtotalMaterials)}</td></tr>` : ""}
-        ${hasLabor ? `<tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">Mano de Obra</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">$${formatCurrency(data.subtotalLabor)}</td></tr>` : ""}
-        <tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">SUB TOTAL</td><td style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;color:#1e293b;">$${formatCurrency(baseImponible)}</td></tr>
-        <tr><td style="padding:6px 10px;font-size:10px;color:#64748b;">DESCUENTO</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;">-$${formatCurrency(safeDiscount)}</td></tr>
-        <tr><td style="padding:6px 10px;font-size:10px;color:#64748b;border-bottom:1px solid #e2e8f0;">IVA ${data.ivaRate}%</td><td style="padding:6px 10px;text-align:right;font-size:11px;color:#1e293b;border-bottom:1px solid #e2e8f0;">$${formatCurrency(data.ivaAmount)}</td></tr>
-        <tr style="background:#0a1628;"><td style="padding:10px;font-size:11px;font-weight:700;color:#fff;border-radius:0 0 0 4px;">TOTAL USD</td><td style="padding:10px;text-align:right;font-size:14px;font-weight:800;color:#fff;border-radius:0 0 4px 0;">$${formatCurrency(data.total)}</td></tr>
+      <table style="border-collapse:collapse;width:240px;">
+        ${hasEquipment ? `<tr><td style="padding:4px 8px;font-size:9px;color:#64748b;">Equipos y Servicios</td><td style="padding:4px 8px;text-align:right;font-size:10px;color:#1e293b;">$${formatCurrency(data.subtotalEquipment)}</td></tr>` : ""}
+        ${hasMaterials ? `<tr><td style="padding:4px 8px;font-size:9px;color:#64748b;">Materiales</td><td style="padding:4px 8px;text-align:right;font-size:10px;color:#1e293b;">$${formatCurrency(data.subtotalMaterials)}</td></tr>` : ""}
+        ${hasLabor ? `<tr><td style="padding:4px 8px;font-size:9px;color:#64748b;">Mano de Obra</td><td style="padding:4px 8px;text-align:right;font-size:10px;color:#1e293b;">$${formatCurrency(data.subtotalLabor)}</td></tr>` : ""}
+        <tr><td style="padding:4px 8px;font-size:9px;color:#64748b;">SUB TOTAL</td><td style="padding:4px 8px;text-align:right;font-size:10px;font-weight:600;color:#1e293b;">$${formatCurrency(baseImponible)}</td></tr>
+        <tr><td style="padding:4px 8px;font-size:9px;color:#64748b;">DESCUENTO</td><td style="padding:4px 8px;text-align:right;font-size:10px;color:#1e293b;">-$${formatCurrency(safeDiscount)}</td></tr>
+        <tr><td style="padding:4px 8px;font-size:9px;color:#64748b;border-bottom:1px solid #e2e8f0;">IVA ${data.ivaRate}%</td><td style="padding:4px 8px;text-align:right;font-size:10px;color:#1e293b;border-bottom:1px solid #e2e8f0;">$${formatCurrency(data.ivaAmount)}</td></tr>
+        <tr style="background:#0a1628;"><td style="padding:8px;font-size:10px;font-weight:700;color:#fff;border-radius:0 0 0 3px;">TOTAL USD</td><td style="padding:8px;text-align:right;font-size:12px;font-weight:800;color:#fff;border-radius:0 0 3px 0;">$${formatCurrency(data.total)}</td></tr>
       </table>
     </div>
   </div>
 
   <!-- Payment -->
-  <div style="padding:0 32px;margin-bottom:10px;">
-    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;">
-      <span style="font-size:9px;color:#92400e;text-transform:uppercase;font-weight:600;">Condiciones de Venta: </span>
-      <span style="font-size:10px;color:#92400e;font-weight:700;">${data.paymentCondition}</span>
+  <div style="padding:0 20px;margin-bottom:6px;">
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:6px 10px;">
+      <span style="font-size:8px;color:#92400e;text-transform:uppercase;font-weight:600;">Condiciones de Venta: </span>
+      <span style="font-size:9px;color:#92400e;font-weight:700;">${data.paymentCondition}</span>
     </div>
   </div>
 
-  ${notesText ? `<div style="padding:0 32px;margin-bottom:10px;">
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;">
-      <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-weight:600;">Notas:</div>
-      <div style="font-size:10px;color:#475569;line-height:1.5;">${notesText}</div>
+  ${notesText ? `<div style="padding:0 20px;margin-bottom:6px;page-break-inside:avoid;">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:6px 10px;">
+      <div style="font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;font-weight:600;">Notas:</div>
+      <div style="font-size:9px;color:#475569;line-height:1.4;">${notesText}</div>
     </div>
   </div>` : ""}
 
-  ${termsText ? `<div style="padding:0 32px;margin-bottom:12px;">
-    <div style="font-size:9px;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700;">Terminos y Condiciones</div>
-    <ol style="margin:0;padding-left:14px;">${termsLines}</ol>
+  ${termsText ? `<div style="padding:0 20px;margin-bottom:8px;page-break-inside:avoid;">
+    <div style="font-size:8px;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-weight:700;">Terminos y Condiciones</div>
+    <ol style="margin:0;padding-left:12px;">${termsLines}</ol>
   </div>` : ""}
 
   <!-- Footer -->
-  <div style="background:#f0f6ff;border-top:2px solid #1a5276;padding:10px 32px;text-align:center;">
-    <div style="font-size:9px;color:#475569;line-height:1.5;">
+  <div style="background:#f0f6ff;border-top:2px solid #1a5276;padding:8px 20px;text-align:center;">
+    <div style="font-size:8px;color:#475569;line-height:1.4;">
       Si usted tiene alguna pregunta sobre esta cotizacion, por favor pongase en contacto con nosotros<br>
       <span style="font-weight:600;color:#1a5276;">Cop's Electronics S.A.</span> - Telefonos: 0212-7934136 / 7940316 - Email: proyectos@copselectronics.com
     </div>

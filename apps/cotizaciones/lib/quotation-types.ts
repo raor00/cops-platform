@@ -1,19 +1,19 @@
+import type { CatalogoProducto } from "@cops/shared"
+
 export type QuotationType = "proyecto" | "servicio" | "mantenimiento"
 
 export type CatalogCategory = string
 
-export interface CatalogItem {
-  id: string
-  code: string
-  description: string
-  unitPrice: number
-  imageUrl?: string
-  category: CatalogCategory
-  brand?: string
-  subcategory?: string
-  variant?: string
-  unit: string
-}
+/**
+ * @deprecated Usa `CatalogoProducto` desde `@cops/shared` como tipo fuente.
+ *
+ * Mantengo los campos de inventario/timestamps opcionales para no forzar cambios
+ * en la UI existente durante esta fase de migración de data layer.
+ */
+export type CatalogItem = Pick<
+  CatalogoProducto,
+  "id" | "code" | "description" | "unitPrice" | "imageUrl" | "category" | "brand" | "subcategory" | "variant" | "unit"
+> & Partial<Pick<CatalogoProducto, "costo" | "stock" | "stockMinimo" | "ubicacion" | "activo" | "created_at" | "updated_at">>
 
 export interface QuotationItem {
   id: string
@@ -86,6 +86,7 @@ export interface ClientInfo {
 export interface QuotationData {
   id: string
   code: string
+  cliente_id?: string
   type: QuotationType
   companyFormat: "sa" | "llc"
   discountMode: DiscountMode
@@ -271,5 +272,3 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })
 }
-
-

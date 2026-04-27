@@ -24,8 +24,8 @@ import {
   PriceAdjustmentDialog,
 } from "@/components/quotation/catalog/catalog-manager-dialogs"
 import { useCatalogManager } from "@/components/quotation/catalog/use-catalog-manager"
-import { REGISTERED_BRANDS } from "@/lib/quotation-types"
-import { RefreshCcw, Settings2, Tags } from "lucide-react"
+import { BrandManagerDialog } from "@/components/quotation/catalog/brand-manager-dialog"
+import { RefreshCcw, Settings2, Tags, Tag } from "lucide-react"
 import { toast } from "sonner"
 
 export function CatalogManager() {
@@ -63,6 +63,10 @@ export function CatalogManager() {
         </div>
 
         <div className="page-actions flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => actions.setBrandDialogOpen(true)}>
+            <Tag className="h-4 w-4" />
+            Marcas
+          </Button>
           <Button variant="outline" size="sm" onClick={() => actions.setDiscountDialogOpen(true)}>
             <Tags className="h-4 w-4" />
             Descuento global
@@ -93,6 +97,8 @@ export function CatalogManager() {
             priceRange={derived.priceBounds}
             selectedPriceRange={state.priceRange}
             onPriceRangeChange={actions.setPriceRange}
+            stockFilter={state.stockFilter}
+            onStockFilterChange={actions.setStockFilter}
             onClearAll={actions.resetFilters}
             hasActiveFilters={derived.hasActiveFilters}
           />
@@ -199,8 +205,9 @@ export function CatalogManager() {
         onFormChange={(updater) => actions.setForm((current) => updater(current))}
         categoryOptions={derived.categoryOptions}
         subcategoryOptions={derived.subcategoryOptions}
-        brandOptions={REGISTERED_BRANDS as unknown as string[]}
+        brandOptions={state.registeredBrands}
         onSave={actions.saveItem}
+        onManageBrands={() => actions.setBrandDialogOpen(true)}
         onPreviewImage={(src, alt) => actions.openImagePreview(src ? { src, code: state.form.code || alt, description: state.form.description || alt } : null)}
       />
 
@@ -247,6 +254,13 @@ export function CatalogManager() {
         categoryOptions={derived.categoryOptions}
         subcategoryOptions={derived.bulkSubcategoryOptions}
         onApply={actions.applyBulkCategoryChange}
+      />
+
+      <BrandManagerDialog
+        open={state.brandDialogOpen}
+        onOpenChange={actions.setBrandDialogOpen}
+        brands={state.registeredBrands}
+        onBrandsChange={actions.setRegisteredBrands}
       />
     </div>
   )

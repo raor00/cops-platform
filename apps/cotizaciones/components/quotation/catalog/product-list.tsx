@@ -93,6 +93,7 @@ export function ProductList({
               <th className="w-20 px-2 py-2 text-right">
                 <SortableHeader label="Precio" column="price" align="right" activeColumn={sortBy} direction={sortDirection} onSort={onSort} />
               </th>
+              <th className="w-28 px-2 py-2 text-left">Stock</th>
               <th className="w-16 px-2 py-2 text-right">Acc</th>
             </tr>
           </thead>

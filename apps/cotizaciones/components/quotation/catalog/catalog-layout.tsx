@@ -21,7 +21,7 @@ export function CatalogLayout({ sidebar, children }: CatalogLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-      <div className="flex flex-1 gap-0">
+      <div className="flex flex-1 gap-5">
       {/* Desktop sidebar - sticky while scrolling */}
       <aside className="sticky top-4 hidden w-[220px] shrink-0 self-start md:flex">
         <div className="flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm">

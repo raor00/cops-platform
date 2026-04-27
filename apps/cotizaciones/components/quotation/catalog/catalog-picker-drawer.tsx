@@ -225,12 +225,12 @@ export function CatalogPickerDrawer({ open, onOpenChange, catalog, existingItems
                         onDelete={() => toggleItem(item, false)}
                         effectivePrice={effectivePrice}
                         footer={
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-xs font-medium text-foreground">{isExisting ? "Ya agregado" : isSelected ? "Seleccionado" : "Disponible"}</p>
                               <p className="text-[11px] text-muted-foreground">{item.unit}</p>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex shrink-0 items-center gap-2">
                               <Input
                                 type="number"
                                 min={1}
@@ -240,9 +240,9 @@ export function CatalogPickerDrawer({ open, onOpenChange, catalog, existingItems
                                   updateQuantity(item.id, Number(event.target.value) || 1)
                                 }}
                                 disabled={isExisting}
-                                className="h-8 w-20 text-center"
+                                className="h-8 w-16 text-center"
                               />
-                              <Button type="button" variant={isSelected ? "secondary" : "outline"} size="sm" disabled={isExisting} onClick={() => toggleItem(item, !isSelected)}>
+                              <Button type="button" variant={isSelected ? "secondary" : "outline"} size="sm" disabled={isExisting} onClick={() => toggleItem(item, !isSelected)} className="whitespace-nowrap">
                                 {isSelected ? "Quitar" : "Seleccionar"}
                               </Button>
                             </div>

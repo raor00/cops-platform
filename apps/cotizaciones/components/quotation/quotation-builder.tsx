@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ClientInfoForm } from "./client-info-form"
+import { ClientAutocomplete } from "./client-autocomplete"
 import { ItemsSection } from "./items-table"
 import { LaborSection } from "./labor-section"
 import { SummaryPanel } from "./summary-panel"
@@ -61,6 +62,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     }
     return initialData?.clientInfo ? { ...base, ...initialData.clientInfo } : base
   })
+  const [clienteId, setClienteId] = useState<string | undefined>(initialData?.cliente_id)
 
   const [equipmentItems, setEquipmentItems] = useState<QuotationItem[]>(initialData?.items || [])
   const [materialItems, setMaterialItems] = useState<QuotationItem[]>(initialData?.materials || [])
@@ -281,6 +283,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
   const buildData = useCallback((): QuotationData => ({
     id: quotationId,
     code: quotationCode,
+    cliente_id: clienteId,
     type: quotationType,
     companyFormat,
     discountMode,
@@ -306,7 +309,7 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     status: initialData?.status || "borrador",
     aiDraftTrace,
     automationTrace,
-  }), [quotationId, quotationCode, quotationType, companyFormat, discountMode, discountValue, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, taxRate, initialData, aiDraftTrace, automationTrace])
+  }), [quotationId, quotationCode, clienteId, quotationType, companyFormat, discountMode, discountValue, subject, clientInfo, equipmentItems, materialItems, laborItems, issueDate, validUntil, notes, termsAndConditions, paymentCondition, calculations, taxRate, initialData, aiDraftTrace, automationTrace])
 
   const handleSave = () => {
     const clientName = companyFormat === "llc" ? (clientInfo.billToName || clientInfo.name) : clientInfo.name
@@ -542,6 +545,14 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
             </div>
           )}
 
+          <ClientAutocomplete
+            companyFormat={companyFormat}
+            clientInfo={clientInfo}
+            clienteId={clienteId}
+            onClientInfoChange={setClientInfo}
+            onClienteIdChange={setClienteId}
+          />
+
           <ClientInfoForm
             clientInfo={clientInfo}
             quotationCode={quotationCode}
@@ -614,5 +625,4 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
     </div>
   )
 }
-
 

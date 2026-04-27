@@ -326,8 +326,16 @@ describe('ticketTechnicianSchema', () => {
 
   it('accepts valid materiales_usados', () => {
     const result = ticketTechnicianSchema.safeParse({
+      materiales_usados: [{ id: 'm1', producto_id: 'prod-1', nombre: 'Cable UTP', cantidad: 2, unidad: 'rollo' }],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts materiales_usados without producto_id for backward compatibility', () => {
+    const result = ticketTechnicianSchema.safeParse({
       materiales_usados: [{ id: 'm1', nombre: 'Cable UTP', cantidad: 2, unidad: 'rollo' }],
     })
+
     expect(result.success).toBe(true)
   })
 })

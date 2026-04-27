@@ -103,6 +103,10 @@ export function updateQuotationStatus(id: string, status: QuotationData["status"
 
 // ─── Catálogo ─────────────────────────────────────────────────
 
+/**
+ * @deprecated Mantener por compatibilidad mientras la UI migra a `lib/catalogo-firestore.ts`.
+ * Sigue leyendo del cache local y de `catalogo-custom` para no romper flujos existentes.
+ */
 export function getCatalog(): CatalogItem[] {
   if (typeof window === "undefined") return DEFAULT_CATALOG
   try {
@@ -140,6 +144,10 @@ export function getCatalog(): CatalogItem[] {
   }
 }
 
+/**
+ * @deprecated Mantener por compatibilidad mientras la UI migra a `lib/catalogo-firestore.ts`.
+ * Conserva el flujo localStorage + Firestore legacy sin romper comportamiento actual.
+ */
 export function saveCatalog(items: CatalogItem[]): void {
   if (typeof window !== "undefined") {
     localStorage.setItem(CATALOG_KEY, JSON.stringify(items))
@@ -192,5 +200,42 @@ export function saveCatalogDiscountConfig(config: CatalogDiscountConfig): void {
     localStorage.setItem(CATALOG_DISCOUNT_KEY, JSON.stringify(config))
     firestoreSetField("catalogo-config", "discount", config as unknown as Record<string, unknown>).catch(console.error)
     emitCatalogUpdated()
+  }
+}
+
+// ─── Marcas ─────────────────────────────────────────────────
+
+const BRANDS_KEY = "cops_catalog_brands"
+const DEFAULT_BRANDS = ["Hikvision", "DSC", "APC", "WD", "Milestone", "NovaStar", "Automated Logic", "Generico"]
+
+export function getRegisteredBrands(): string[] {
+  if (typeof window === "undefined") return DEFAULT_BRANDS
+  try {
+    const raw = localStorage.getItem(BRANDS_KEY)
+    if (!raw) return DEFAULT_BRANDS
+    const parsed = JSON.parse(raw) as string[]
+    return parsed.length > 0 ? parsed : DEFAULT_BRANDS
+  } catch {
+    return DEFAULT_BRANDS
+  }
+}
+
+export function addRegisteredBrand(brand: string): boolean {
+  const normalized = brand.trim()
+  if (!normalized) return false
+  const brands = getRegisteredBrands()
+  if (brands.some((b) => b.toLowerCase() === normalized.toLowerCase())) return false
+  const next = [...brands, normalized].sort()
+  if (typeof window !== "undefined") {
+    localStorage.setItem(BRANDS_KEY, JSON.stringify(next))
+  }
+  return true
+}
+
+export function removeRegisteredBrand(brand: string): void {
+  const brands = getRegisteredBrands()
+  const next = brands.filter((b) => b.toLowerCase() !== brand.toLowerCase())
+  if (typeof window !== "undefined") {
+    localStorage.setItem(BRANDS_KEY, JSON.stringify(next))
   }
 }

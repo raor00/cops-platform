@@ -7,6 +7,9 @@ import {
   deleteCatalogItem,
   getCatalog,
   getCatalogDiscountConfig,
+  getRegisteredBrands,
+  addRegisteredBrand,
+  removeRegisteredBrand,
   saveCatalog,
   saveCatalogDiscountConfig,
   updateCatalogItem,
@@ -23,12 +26,17 @@ const EMPTY_ITEM: Omit<CatalogItem, "id"> = {
   code: "",
   description: "",
   unitPrice: 0,
+  costo: 0,
   imageUrl: "",
   brand: "General",
   category: "CCTV",
   subcategory: "General",
   variant: "",
   unit: "UND",
+  stock: 0,
+  stockMinimo: 0,
+  ubicacion: "",
+  activo: true,
 }
 
 const CATEGORY_ORDER = [
@@ -60,6 +68,7 @@ const CATEGORY_ORDER = [
 
 type PriceAction = "increase" | "decrease"
 type PriceScope = "selected" | "visible" | "category" | "all-ablerex"
+type StockFilter = "all" | "in-stock" | "low-stock"
 type ProductFormState = Omit<CatalogItem, "id">
 
 function getOrderedCategories(items: CatalogItem[]) {
@@ -128,13 +137,16 @@ export function useCatalogManager() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 999999])
+  const [stockFilter, setStockFilter] = useState<StockFilter>("all")
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [quickViewItem, setQuickViewItem] = useState<CatalogItem | null>(null)
   const [previewImage, setPreviewImage] = useState<{ src: string; code: string; description: string } | null>(null)
 
+  const [registeredBrands, setRegisteredBrands] = useState<string[]>(() => getRegisteredBrands())
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [brandDialogOpen, setBrandDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CatalogItem | null>(null)
   const [form, setForm] = useState<ProductFormState>(EMPTY_ITEM)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -245,12 +257,21 @@ export function useCatalogManager() {
       const matchesSubcategory = selectedSubcategory === null || subcategory === selectedSubcategory
       const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(brand)
       const matchesPrice = item.unitPrice >= priceRange[0] && item.unitPrice <= priceRange[1]
-      return matchesSearch && matchesCategory && matchesSubcategory && matchesBrand && matchesPrice
+      const hasStockData = typeof item.stock === "number"
+      const stock = item.stock ?? 0
+      const stockMinimo = item.stockMinimo ?? 0
+      const matchesStock =
+        stockFilter === "all" ||
+        (stockFilter === "in-stock" && hasStockData && stock > 0) ||
+        (stockFilter === "low-stock" && hasStockData && stock <= stockMinimo)
+
+      return matchesSearch && matchesCategory && matchesSubcategory && matchesBrand && matchesPrice && matchesStock
     })
-  }, [catalog, priceRange, search, selectedBrands, selectedCategory, selectedSubcategory])
+  }, [catalog, priceRange, search, selectedBrands, selectedCategory, selectedSubcategory, stockFilter])
 
   const sidebarSubcategoryOptions = useMemo(() => {
-    const items = selectedCategory ? catalog.filter((item) => normalizeCatalogCategory(item) === selectedCategory) : catalog
+    if (!selectedCategory) return []
+    const items = catalog.filter((item) => normalizeCatalogCategory(item) === selectedCategory)
     const values = Array.from(new Set(items.map((item) => getProductSubcategory(item)))).filter((sub) => sub !== "General")
     return values.sort()
   }, [catalog, selectedCategory])
@@ -282,6 +303,7 @@ export function useCatalogManager() {
       selectedCategory ||
       selectedSubcategory ||
       selectedBrands.length ||
+      stockFilter !== "all" ||
       priceRange[0] !== priceBounds.min ||
       priceRange[1] !== priceBounds.max,
   )
@@ -293,6 +315,8 @@ export function useCatalogManager() {
     if (selectedCategory) filters.push({ key: "category", label: `Categoría: ${selectedCategory}`, onRemove: () => { setSelectedCategory(null); setSelectedSubcategory(null) } })
     if (selectedSubcategory) filters.push({ key: "subcategory", label: `Subcategoría: ${selectedSubcategory}`, onRemove: () => setSelectedSubcategory(null) })
     selectedBrands.forEach((brand) => filters.push({ key: `brand-${brand}`, label: `Marca: ${brand}`, onRemove: () => setSelectedBrands((current) => current.filter((value) => value !== brand)) }))
+    if (stockFilter === "in-stock") filters.push({ key: "stock", label: "Stock: solo con stock", onRemove: () => setStockFilter("all") })
+    if (stockFilter === "low-stock") filters.push({ key: "stock", label: "Stock: stock bajo", onRemove: () => setStockFilter("all") })
 
     if (priceRange[0] !== priceBounds.min || priceRange[1] !== priceBounds.max) {
       filters.push({
@@ -303,11 +327,11 @@ export function useCatalogManager() {
     }
 
     return filters
-  }, [priceBounds.max, priceBounds.min, priceRange, search, selectedBrands, selectedCategory, selectedSubcategory])
+  }, [priceBounds.max, priceBounds.min, priceRange, search, selectedBrands, selectedCategory, selectedSubcategory, stockFilter])
 
   useEffect(() => {
     setPage(1)
-  }, [priceRange, search, selectedBrands, selectedCategory, selectedSubcategory, sort, view])
+  }, [priceRange, search, selectedBrands, selectedCategory, selectedSubcategory, sort, stockFilter, view])
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages)
@@ -324,6 +348,7 @@ export function useCatalogManager() {
     setSelectedCategory(null)
     setSelectedSubcategory(null)
     setSelectedBrands([])
+    setStockFilter("all")
     setPriceRange([priceBounds.min, priceBounds.max])
   }, [priceBounds.max, priceBounds.min])
 
@@ -376,6 +401,11 @@ export function useCatalogManager() {
       subcategory: item.subcategory || "General",
       variant: item.variant || "",
       unit: item.unit,
+      stock: item.stock ?? 0,
+      stockMinimo: item.stockMinimo ?? 0,
+      ubicacion: item.ubicacion || "",
+      costo: item.costo ?? 0,
+      activo: item.activo ?? true,
     })
     setDialogOpen(true)
   }, [])
@@ -400,6 +430,11 @@ export function useCatalogManager() {
       variant: form.variant?.trim() || "",
       imageUrl: form.imageUrl?.trim() || "",
       unitPrice: Number(form.unitPrice) || 0,
+      costo: Number(form.costo) || 0,
+      stock: Math.max(0, Number(form.stock) || 0),
+      stockMinimo: Math.max(0, Number(form.stockMinimo) || 0),
+      ubicacion: form.ubicacion?.trim() || "",
+      activo: form.activo ?? true,
     }
 
     if (editingItem) {
@@ -507,6 +542,29 @@ export function useCatalogManager() {
     toast.success("Categoría actualizada para la selección")
   }, [bulkCategory, bulkSubcategory, catalog, selectedIds])
 
+  const addBrand = useCallback((brand: string) => {
+    const trimmed = brand.trim()
+    if (!trimmed) return false
+    if (registeredBrands.some((b) => b.toLowerCase() === trimmed.toLowerCase())) return false
+    const next = [...registeredBrands, trimmed].sort()
+    setRegisteredBrands(next)
+    addRegisteredBrand(trimmed)
+    return true
+  }, [registeredBrands])
+
+  const removeBrand = useCallback((brand: string) => {
+    const next = registeredBrands.filter((b) => b !== brand)
+    setRegisteredBrands(next)
+    removeRegisteredBrand(brand)
+  }, [registeredBrands])
+
+  const setRegisteredBrandsAndSave = useCallback((brands: string[]) => {
+    setRegisteredBrands(brands)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cops_catalog_brands", JSON.stringify(brands))
+    }
+  }, [])
+
   return {
     state: {
       loading,
@@ -517,12 +575,15 @@ export function useCatalogManager() {
       selectedCategory,
       selectedSubcategory,
       selectedBrands,
+      registeredBrands,
       priceRange,
+      stockFilter,
       selectedIds,
       activeItemId,
       quickViewItem,
       previewImage,
       dialogOpen,
+      brandDialogOpen,
       editingItem,
       form,
       deleteConfirmId,
@@ -569,10 +630,12 @@ export function useCatalogManager() {
       setSelectedSubcategory,
       setSelectedBrands,
       setPriceRange,
+      setStockFilter,
       setActiveItemId,
       setQuickViewItem,
       setPreviewImage,
       setDialogOpen,
+      setBrandDialogOpen,
       setForm,
       setDeleteConfirmId,
       setPriceDialogOpen,
@@ -605,6 +668,9 @@ export function useCatalogManager() {
       applyBulkCategoryChange,
       openImagePreview,
       mapListSortToToolbarSort,
+      addBrand,
+      removeBrand,
+      setRegisteredBrands: setRegisteredBrandsAndSave,
     },
   }
 }

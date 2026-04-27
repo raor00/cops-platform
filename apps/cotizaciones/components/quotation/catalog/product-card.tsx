@@ -10,6 +10,22 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, Package, Pencil, Trash2 } from "lucide-react"
 import { getCategoryIcon, getProductSubcategory, normalizeCatalogCategory } from "./catalog-utils"
 
+function renderStockBadge(item: CatalogItem) {
+  if (typeof item.stock !== "number") return null
+
+  const lowStock = item.stock <= (item.stockMinimo ?? 0)
+
+  return lowStock ? (
+    <Badge className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 hover:bg-red-100">
+      Stock bajo: {item.stock}
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="rounded-md px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+      Stock: {item.stock}
+    </Badge>
+  )
+}
+
 interface ProductCardProps {
   item: CatalogItem
   index: number
@@ -102,6 +118,8 @@ export function ProductCard({
               {item.brand}
             </Badge>
           ) : null}
+
+          {renderStockBadge(item)}
         </div>
 
         <div className="flex items-end justify-between gap-3">
@@ -116,7 +134,7 @@ export function ProductCard({
             )}
           </div>
 
-          <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             {item.unit}
           </span>
         </div>

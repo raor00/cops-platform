@@ -251,6 +251,7 @@ export interface Ticket {
 
 export interface MaterialItem {
   id: string
+  producto_id?: string
   nombre: string
   cantidad: number
   unidad: string

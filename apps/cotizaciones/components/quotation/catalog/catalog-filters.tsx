@@ -27,6 +27,9 @@ interface CatalogFiltersProps {
   selectedPriceRange: [number, number]
   onPriceRangeChange: (range: [number, number]) => void
 
+  stockFilter: "all" | "in-stock" | "low-stock"
+  onStockFilterChange: (value: "all" | "in-stock" | "low-stock") => void
+
   onClearAll: () => void
   hasActiveFilters: boolean
 }
@@ -44,6 +47,8 @@ export function CatalogFilters({
   priceRange,
   selectedPriceRange,
   onPriceRangeChange,
+  stockFilter,
+  onStockFilterChange,
   onClearAll,
   hasActiveFilters,
 }: CatalogFiltersProps) {
@@ -99,6 +104,29 @@ export function CatalogFilters({
           value={selectedPriceRange}
           onChange={onPriceRangeChange}
         />
+      </FilterSection>
+
+      <Separator />
+
+      <FilterSection title="Stock" defaultOpen>
+        <div className="space-y-1">
+          {[
+            { value: "all", label: "Todos" },
+            { value: "in-stock", label: "Solo con stock" },
+            { value: "low-stock", label: "Stock bajo" },
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onStockFilterChange(option.value as "all" | "in-stock" | "low-stock")}
+              className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
+                stockFilter === option.value ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+              }`}
+            >
+              <span>{option.label}</span>
+            </button>
+          ))}
+        </div>
       </FilterSection>
 
       {hasActiveFilters ? (

@@ -79,6 +79,7 @@ export const userUpdateSchema = z.object({
 
 const materialItemSchema = z.object({
   id: z.string(),
+  producto_id: z.string().optional(),
   nombre: z.string().min(1, 'El nombre del material es requerido'),
   cantidad: z.number().min(0, 'La cantidad debe ser positiva'),
   unidad: z.string().min(1, 'La unidad es requerida'),

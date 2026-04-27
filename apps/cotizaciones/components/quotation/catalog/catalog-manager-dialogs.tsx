@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +24,7 @@ interface CreateEditCatalogItemDialogProps {
   brandOptions: string[]
   onSave: () => void
   onPreviewImage: (src: string, alt: string) => void
+  onManageBrands?: () => void
 }
 
 export function CreateEditCatalogItemDialog({
@@ -36,6 +38,7 @@ export function CreateEditCatalogItemDialog({
   brandOptions,
   onSave,
   onPreviewImage,
+  onManageBrands,
 }: CreateEditCatalogItemDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,7 +54,14 @@ export function CreateEditCatalogItemDialog({
               <Input value={form.code} onChange={(event) => onFormChange((current) => ({ ...current, code: event.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label>Marca</Label>
+              <div className="flex items-center justify-between">
+                <Label>Marca</Label>
+                {onManageBrands ? (
+                  <button type="button" onClick={onManageBrands} className="text-xs text-primary hover:underline">
+                    + Gestionar
+                  </button>
+                ) : null}
+              </div>
               <Select value={form.brand || "Generico"} onValueChange={(value) => onFormChange((current) => ({ ...current, brand: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione marca" />
@@ -120,11 +130,17 @@ export function CreateEditCatalogItemDialog({
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Precio (USD)</Label>
               <Input
-                type="number"
-                min={0}
-                step={0.01}
-                value={form.unitPrice}
-                onChange={(event) => onFormChange((current) => ({ ...current, unitPrice: event.target.value === "" ? 0 : Number(event.target.value) }))}
+                type="text"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={form.unitPrice === 0 ? "" : String(form.unitPrice)}
+                onFocus={(event) => event.target.select()}
+                onChange={(event) => {
+                  const raw = event.target.value.replace(/[^0-9.]/g, "")
+                  const parts = raw.split(".")
+                  const sanitized = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : raw
+                  onFormChange((current) => ({ ...current, unitPrice: sanitized === "" ? 0 : Number(sanitized) }))
+                }}
               />
             </div>
             <div className="space-y-1.5">
@@ -144,10 +160,56 @@ export function CreateEditCatalogItemDialog({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Stock actual</Label>
+              <Input
+                type="number"
+                min={0}
+                value={form.stock ?? 0}
+                onChange={(event) => onFormChange((current) => ({ ...current, stock: Math.max(0, Number(event.target.value) || 0) }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Stock mínimo</Label>
+              <Input
+                type="number"
+                min={0}
+                value={form.stockMinimo ?? 0}
+                onChange={(event) => onFormChange((current) => ({ ...current, stockMinimo: Math.max(0, Number(event.target.value) || 0) }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Ubicación</Label>
+              <Input value={form.ubicacion || ""} onChange={(event) => onFormChange((current) => ({ ...current, ubicacion: event.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Costo (USD)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.costo ?? 0}
+                onChange={(event) => onFormChange((current) => ({ ...current, costo: Math.max(0, Number(event.target.value) || 0) }))}
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label>Variante</Label>
             <Input value={form.variant} onChange={(event) => onFormChange((current) => ({ ...current, variant: event.target.value }))} />
           </div>
+
+          <label className="flex items-center gap-3 rounded-lg border border-border/70 px-3 py-2">
+            <Checkbox
+              checked={form.activo ?? true}
+              onCheckedChange={(checked) => onFormChange((current) => ({ ...current, activo: checked === true }))}
+            />
+            <div>
+              <p className="text-sm font-medium">Producto activo</p>
+              <p className="text-xs text-muted-foreground">Los productos inactivos se conservan para compatibilidad y auditoría.</p>
+            </div>
+          </label>
         </div>
 
         <DialogFooter>

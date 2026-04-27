@@ -8,6 +8,24 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, Package, Pencil, Trash2 } from "lucide-react"
 import { getCategoryIcon, getProductSubcategory, normalizeCatalogCategory } from "./catalog-utils"
 
+function renderStockBadge(item: CatalogItem) {
+  if (typeof item.stock !== "number") {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
+
+  const lowStock = item.stock <= (item.stockMinimo ?? 0)
+
+  return lowStock ? (
+    <Badge className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 hover:bg-red-100">
+      Stock bajo: {item.stock}
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="rounded-md px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+      Stock: {item.stock}
+    </Badge>
+  )
+}
+
 interface ProductListRowProps {
   item: CatalogItem
   isSelected: boolean
@@ -87,6 +105,10 @@ export function ProductListRow({
         ) : (
           <p className="font-mono text-sm font-bold text-foreground">${formatCurrency(displayPrice)}</p>
         )}
+      </td>
+
+      <td className="w-32 px-3 py-2 align-middle">
+        {renderStockBadge(item)}
       </td>
 
       <td className="w-20 px-3 py-2 align-middle">
