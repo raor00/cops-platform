@@ -9,7 +9,6 @@ import { ItemsSection } from "./items-table"
 import { LaborSection } from "./labor-section"
 import { SummaryPanel } from "./summary-panel"
 import { PDFPreview } from "./pdf-preview"
-import { QuotationAIAssistant } from "./quotation-ai-assistant"
 import { AutomationSuggestionsPanel } from "./automation-suggestions-panel"
 import { downloadPDF } from "@/lib/generate-pdf"
 import { saveQuotation, getCatalog, getCatalogDiscountConfig } from "@/lib/quotation-storage"
@@ -486,24 +485,6 @@ export function QuotationBuilder({ initialData, onSaved }: QuotationBuilderProps
         </TabsList>
 
         <TabsContent value="editor" className="mt-6 space-y-4">
-          <QuotationAIAssistant
-            companyFormat={companyFormat}
-            quotationType={quotationType}
-            currentDraft={{
-              subject,
-              issueDate,
-              validUntil,
-              paymentCondition,
-              notes,
-              termsAndConditions,
-              companyFormat,
-              type: quotationType,
-              clientInfo,
-            }}
-            catalog={catalogSnapshot}
-            onApplyDraft={handleApplyAIDraft}
-          />
-
           <AutomationSuggestionsPanel
             companyFormat={companyFormat}
             quotationType={quotationType}

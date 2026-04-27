@@ -42,17 +42,35 @@ function validateCliente(input: Pick<Cliente, "nombre" | "telefono" | "direccion
   return null
 }
 
+let _clientesCache: Cliente[] | null = null
+let _cacheTimestamp = 0
+const CACHE_TTL = 60000 // 1 minuto
+
 async function listClientes(): Promise<Cliente[]> {
+  const now = Date.now()
+  if (_clientesCache && now - _cacheTimestamp < CACHE_TTL) {
+    return _clientesCache
+  }
+
   const db = getFirebaseDb()
   const snapshot = await getDocs(collection(db, COLLECTION_NAME))
 
-  return snapshot.docs
+  const clientes = snapshot.docs
     .map((itemDoc) => normalizeCliente(itemDoc.id, itemDoc.data() as ClienteRecord))
     .sort((a, b) => {
       const companyA = (a.empresa || `${a.nombre} ${a.apellido || ""}`).trim()
       const companyB = (b.empresa || `${b.nombre} ${b.apellido || ""}`).trim()
       return companyA.localeCompare(companyB, "es", { sensitivity: "base" })
     })
+
+  _clientesCache = clientes
+  _cacheTimestamp = now
+  return clientes
+}
+
+export function invalidateClientesCache(): void {
+  _clientesCache = null
+  _cacheTimestamp = 0
 }
 
 export async function getClientes(): Promise<ActionResponse<Cliente[]>> {
@@ -121,6 +139,8 @@ export async function createCliente(input: ClienteCreateInput): Promise<ActionRe
     const cliente = normalizeCliente(docRef.id, { ...payload, id: docRef.id })
 
     await setDoc(doc(db, COLLECTION_NAME, docRef.id), cleanDoc(cliente), { merge: true })
+
+    invalidateClientesCache()
 
     return { success: true, data: cliente, message: "Cliente creado exitosamente" }
   } catch (error) {

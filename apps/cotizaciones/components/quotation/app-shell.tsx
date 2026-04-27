@@ -11,6 +11,7 @@ import { QuotationHistory } from "./quotation-history"
 import { DeliveryNoteBuilder } from "./delivery-note-builder"
 import { TransportGuideBuilder } from "./transport-guide-builder"
 import { KnowledgeManager } from "./knowledge-manager"
+import { CopibotView } from "./copibot-view"
 import type { QuotationData } from "@/lib/quotation-types"
 import {
   FilePlus,
@@ -25,9 +26,10 @@ import {
   LayoutGrid,
   LogOut,
   MoreVertical,
+  Bot,
 } from "lucide-react"
 
-type View = "new" | "delivery" | "transport" | "catalog" | "history" | "knowledge"
+type View = "new" | "delivery" | "transport" | "catalog" | "history" | "knowledge" | "copibot"
 
 const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "new", label: "Nueva Cotizacion", icon: <FilePlus className="h-4 w-4 shrink-0" /> },
@@ -36,6 +38,7 @@ const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
   { id: "knowledge", label: "Base de Conocimiento", icon: <Database className="h-4 w-4 shrink-0" /> },
   { id: "catalog", label: "Catalogo", icon: <Package className="h-4 w-4 shrink-0" /> },
   { id: "history", label: "Historial", icon: <Clock className="h-4 w-4 shrink-0" /> },
+  { id: "copibot", label: "Copibot", icon: <Bot className="h-4 w-4 shrink-0" /> },
 ]
 
 const ACTIVE_VIEW_KEY = "cops_active_view"
@@ -46,7 +49,7 @@ export function AppShell() {
     if (typeof window === "undefined") return "new"
     try {
       const saved = localStorage.getItem(ACTIVE_VIEW_KEY) as View
-      return saved && ["new", "delivery", "transport", "catalog", "history", "knowledge"].includes(saved) ? saved : "new"
+      return saved && ["new", "delivery", "transport", "catalog", "history", "knowledge", "copibot"].includes(saved) ? saved : "new"
     } catch {
       return "new"
     }
@@ -330,6 +333,7 @@ export function AppShell() {
                 selectMode={selectMode}
               />
             )}
+            {activeView === "copibot" && <CopibotView />}
           </div>
         </main>
       </div>
