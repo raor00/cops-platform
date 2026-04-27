@@ -113,17 +113,31 @@ export function ClientAutocomplete({
 
   useEffect(() => {
     let cancelled = false
+
+    if (!query.trim()) {
+      setResults([])
+      setLoading(false)
+      return
+    }
+
     const timer = window.setTimeout(async () => {
       setLoading(true)
-      const result = await searchClientes(query)
-      if (!cancelled) {
-        if (result.success) {
-          setResults(result.data || [])
-        } else {
-          setResults([])
-          toast.error(result.error || "No se pudieron buscar clientes")
+      try {
+        const result = await searchClientes(query)
+        if (!cancelled) {
+          if (result.success) {
+            setResults(result.data || [])
+          } else {
+            setResults([])
+            if (result.error) toast.error(result.error)
+          }
         }
-        setLoading(false)
+      } catch {
+        if (!cancelled) {
+          setResults([])
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }, 250)
 
@@ -150,7 +164,7 @@ export function ClientAutocomplete({
       <div className="rounded-2xl border border-border bg-card p-4" ref={wrapperRef}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1 space-y-1.5">
-            <Label>Cliente compartido</Label>
+            <Label>Cliente</Label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
