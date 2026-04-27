@@ -36,28 +36,42 @@ function getTypeLabel(type: string): string {
 function generateSAPDFContent(data: QuotationData): string {
   const notesText = data.notes || ""
   const termsText = data.termsAndConditions || ""
-  const renderItemRows = (items: QuotationData["items"]) =>
-    items.map((item) => `
-      <tr>
-        <td style="padding:4px 5px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">${item.quantity}</td>
-        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;">${item.code}</td>
-        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;color:#334155;line-height:1.35;">${item.description}</td>
-        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">$${formatCurrency(item.unitPrice)}</td>
-        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:600;color:#1e293b;">$${formatCurrency(item.totalPrice)}</td>
+  
+  // Table column widths - consistent across all tables
+  const COL_WIDTHS = {
+    cant: "40px",
+    code: "110px",
+    desc: "auto",
+    pUnit: "85px",
+    pTotal: "85px"
+  }
+  
+  const renderItemRows = (items: QuotationData["items"], bgColors: boolean = false) =>
+    items.map((item, idx) => {
+      const bgStyle = bgColors && idx % 2 === 1 ? "background:#f8fafc;" : ""
+      return `
+      <tr style="${bgStyle}">
+        <td style="padding:5px 6px;text-align:center;font-size:10px;color:#1e293b;vertical-align:top;">${item.quantity}</td>
+        <td style="padding:5px 6px;font-size:9px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;vertical-align:top;">${item.code}</td>
+        <td style="padding:5px 6px;font-size:9px;color:#334155;line-height:1.35;vertical-align:top;">${item.description}</td>
+        <td style="padding:5px 6px;text-align:right;font-size:10px;color:#1e293b;vertical-align:top;">$${formatCurrency(item.unitPrice)}</td>
+        <td style="padding:5px 6px;text-align:right;font-size:10px;font-weight:600;color:#1e293b;vertical-align:top;">$${formatCurrency(item.totalPrice)}</td>
       </tr>`
-    ).join("")
+    }).join("")
 
   const laborRows = data.laborItems
     .filter((l) => l.cost > 0 || l.description)
-    .map((l) => `
-      <tr>
-        <td style="padding:4px 5px;text-align:center;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">1</td>
-        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;">MANO-OBRA</td>
-        <td style="padding:4px 5px;border-bottom:1px solid #e2e8f0;font-size:9px;color:#334155;line-height:1.35;">${l.description || "Mano de obra"}</td>
-        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;color:#1e293b;">$${formatCurrency(l.cost)}</td>
-        <td style="padding:4px 5px;text-align:right;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:600;color:#1e293b;">$${formatCurrency(l.cost)}</td>
-      </tr>`)
-    .join("")
+    .map((l, idx) => {
+      const bgStyle = idx % 2 === 1 ? "background:#f8fafc;" : ""
+      return `
+      <tr style="${bgStyle}">
+        <td style="padding:5px 6px;text-align:center;font-size:10px;color:#1e293b;vertical-align:top;">1</td>
+        <td style="padding:5px 6px;font-size:9px;font-family:'Courier New',monospace;color:#1a5276;font-weight:600;vertical-align:top;">MANO-OBRA</td>
+        <td style="padding:5px 6px;font-size:9px;color:#334155;line-height:1.35;vertical-align:top;">${l.description || "Mano de obra"}</td>
+        <td style="padding:5px 6px;text-align:right;font-size:10px;color:#1e293b;vertical-align:top;">$${formatCurrency(l.cost)}</td>
+        <td style="padding:5px 6px;text-align:right;font-size:10px;font-weight:600;color:#1e293b;vertical-align:top;">$${formatCurrency(l.cost)}</td>
+      </tr>`
+    }).join("")
 
   const termsLines = termsText
     .split("\n")
@@ -72,53 +86,40 @@ function generateSAPDFContent(data: QuotationData): string {
   const baseImponible = data.subtotalEquipment + data.subtotalMaterials + data.subtotalLabor
   const safeDiscount = Math.min(Math.max(data.discountAmount || 0, 0), baseImponible)
 
+  const tableHeaderStyle = `
+    <thead>
+      <tr style="background:#0a1628;">
+        <th style="padding:6px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:${COL_WIDTHS.cant};">Cant.</th>
+        <th style="padding:6px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:${COL_WIDTHS.code};">Codigo</th>
+        <th style="padding:6px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
+        <th style="padding:6px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:${COL_WIDTHS.pUnit};">P. Unit.</th>
+        <th style="padding:6px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:${COL_WIDTHS.pTotal};">P. Total</th>
+      </tr>
+    </thead>`
+
   const equipmentSection = hasEquipment ? `
-    <div style="padding:0 20px;margin-bottom:2px;">
-      <div style="background:#f0f4f8;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Equipos y Servicios</div>
-    </div>
-    <div style="padding:0 20px;margin-bottom:6px;page-break-inside:auto;">
-      <table style="width:100%;border-collapse:collapse;page-break-inside:auto;">
-        <thead><tr style="background:#0a1628;">
-          <th style="padding:4px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:40px;border-radius:3px 0 0 0;">Cant.</th>
-          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:100px;">Codigo</th>
-          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
-          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;">P. Unit.</th>
-          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;border-radius:0 3px 0 0;">P. Total</th>
-        </tr></thead>
-        <tbody>${renderItemRows(data.items)}</tbody>
+    <div style="padding:0 20px;margin-bottom:8px;page-break-inside:avoid;">
+      <div style="font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;padding-bottom:4px;border-bottom:2px solid #1a5276;">Equipos y Servicios</div>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        ${tableHeaderStyle}
+        <tbody>${renderItemRows(data.items, true)}</tbody>
       </table>
     </div>` : ""
 
   const materialsSection = hasMaterials ? `
-    <div style="padding:0 20px;margin-bottom:2px;">
-      <div style="background:#f0f4f8;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Materiales e Insumos</div>
-    </div>
-    <div style="padding:0 20px;margin-bottom:6px;page-break-inside:auto;">
-      <table style="width:100%;border-collapse:collapse;page-break-inside:auto;">
-        <thead><tr style="background:#0a1628;">
-          <th style="padding:4px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:40px;border-radius:3px 0 0 0;">Cant.</th>
-          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:100px;">Codigo</th>
-          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
-          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;">P. Unit.</th>
-          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;border-radius:0 3px 0 0;">P. Total</th>
-        </tr></thead>
-        <tbody>${renderItemRows(data.materials)}</tbody>
+    <div style="padding:0 20px;margin-bottom:8px;page-break-inside:avoid;">
+      <div style="font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;padding-bottom:4px;border-bottom:2px solid #1a5276;">Materiales e Insumos</div>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        ${tableHeaderStyle}
+        <tbody>${renderItemRows(data.materials, true)}</tbody>
       </table>
     </div>` : ""
 
   const laborSection = hasLabor ? `
-    <div style="padding:0 20px;margin-bottom:2px;">
-      <div style="background:#f0f4f8;padding:4px 8px;border-radius:3px;font-size:9px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;">Mano de Obra</div>
-    </div>
-    <div style="padding:0 20px;margin-bottom:6px;page-break-inside:auto;">
-      <table style="width:100%;border-collapse:collapse;page-break-inside:auto;">
-        <thead><tr style="background:#0a1628;">
-          <th style="padding:4px 5px;text-align:center;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:40px;border-radius:3px 0 0 0;">Cant.</th>
-          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:100px;">Codigo</th>
-          <th style="padding:4px 5px;text-align:left;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;">Descripcion</th>
-          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;">P. Unit.</th>
-          <th style="padding:4px 5px;text-align:right;font-size:8px;color:#fff;text-transform:uppercase;letter-spacing:0.5px;width:80px;border-radius:0 3px 0 0;">P. Total</th>
-        </tr></thead>
+    <div style="padding:0 20px;margin-bottom:8px;page-break-inside:avoid;">
+      <div style="font-size:10px;font-weight:700;color:#1a5276;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;padding-bottom:4px;border-bottom:2px solid #1a5276;">Mano de Obra</div>
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
+        ${tableHeaderStyle}
         <tbody>${laborRows}</tbody>
       </table>
     </div>` : ""
@@ -129,11 +130,15 @@ function generateSAPDFContent(data: QuotationData): string {
   <meta charset="UTF-8">
   <title>Cotizacion ${data.code} - Cop's Electronics</title>
   <style>
-    @page { size: A4; margin: 8mm; }
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; }
     body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { width: 100%; min-height: 100vh; position: relative; }
-    table, tr, td, th, tbody, thead { page-break-inside: avoid; }
-    tr { page-break-before: auto; page-break-after: auto; }
+    table { border-collapse: collapse; table-layout: fixed; width: 100%; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    td, th { vertical-align: top; }
+    th { font-weight: 600; }
   </style>
 </head>
 <body>
