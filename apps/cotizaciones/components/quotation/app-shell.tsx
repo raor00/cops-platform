@@ -30,12 +30,12 @@ import {
 type View = "new" | "delivery" | "transport" | "catalog" | "history" | "knowledge"
 
 const NAV_ITEMS: { id: View; label: string; icon: React.ReactNode }[] = [
-  { id: "new", label: "Nueva Cotizacion", icon: <FilePlus className="h-4 w-4" /> },
-  { id: "delivery", label: "Nota de Entrega", icon: <ClipboardList className="h-4 w-4" /> },
-  { id: "transport", label: "Guia de Transporte", icon: <Truck className="h-4 w-4" /> },
-  { id: "knowledge", label: "Base de Conocimiento", icon: <Database className="h-4 w-4" /> },
-  { id: "catalog", label: "Catalogo", icon: <Package className="h-4 w-4" /> },
-  { id: "history", label: "Historial", icon: <Clock className="h-4 w-4" /> },
+  { id: "new", label: "Nueva Cotizacion", icon: <FilePlus className="h-4 w-4 shrink-0" /> },
+  { id: "delivery", label: "Nota de Entrega", icon: <ClipboardList className="h-4 w-4 shrink-0" /> },
+  { id: "transport", label: "Guia de Transporte", icon: <Truck className="h-4 w-4 shrink-0" /> },
+  { id: "knowledge", label: "Base de Conocimiento", icon: <Database className="h-4 w-4 shrink-0" /> },
+  { id: "catalog", label: "Catalogo", icon: <Package className="h-4 w-4 shrink-0" /> },
+  { id: "history", label: "Historial", icon: <Clock className="h-4 w-4 shrink-0" /> },
 ]
 
 const ACTIVE_VIEW_KEY = "cops_active_view"
@@ -189,14 +189,14 @@ export function AppShell() {
                   key={item.id}
                   type="button"
                   onClick={() => navigateTo(item.id)}
-                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-200 ${
-                      activeView === item.id
-                        ? "bg-[#4a72ef] font-medium text-white shadow-sm"
-                        : "text-slate-300 hover:bg-white/10 hover:text-white"
-                    }`}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition-all duration-200 ${
+                    activeView === item.id
+                      ? "bg-[#4a72ef] font-medium text-white shadow-sm"
+                      : "text-slate-300 hover:bg-white/10 hover:text-white"
+                  }`}
                 >
                   {item.icon}
-                  {item.label}
+                  <span className="min-w-0">{item.label}</span>
                 </button>
               ))}
             </div>
@@ -248,15 +248,15 @@ export function AppShell() {
                     key={item.id}
                     type="button"
                     onClick={() => navigateTo(item.id)}
-                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 ${
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-200 ${
                       activeView === item.id
                         ? "bg-[#4a72ef] font-medium text-white shadow-sm"
                         : "text-slate-300 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {item.icon}
-                    {item.label}
-                    {activeView === item.id && <ChevronRight className="ml-auto h-3.5 w-3.5" />}
+                    <span className="min-w-0 flex-1">{item.label}</span>
+                    {activeView === item.id && <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />}
                   </button>
                 ))}
               </div>
