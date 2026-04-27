@@ -74,6 +74,7 @@ export function ClientAutocomplete({
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 
   const selectedLabel = useMemo(() => {
@@ -113,12 +114,7 @@ export function ClientAutocomplete({
 
   useEffect(() => {
     let cancelled = false
-
-    if (!query.trim()) {
-      setResults([])
-      setLoading(false)
-      return
-    }
+    setError(null)
 
     const timer = window.setTimeout(async () => {
       setLoading(true)
@@ -127,14 +123,18 @@ export function ClientAutocomplete({
         if (!cancelled) {
           if (result.success) {
             setResults(result.data || [])
+            if (result.data?.length === 0 && query.trim()) {
+              setError("No se encontraron clientes. Intenta con otro término o crea uno nuevo.")
+            }
           } else {
             setResults([])
-            if (result.error) toast.error(result.error)
+            setError(result.error || "Error al buscar clientes")
           }
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setResults([])
+          setError(err instanceof Error ? err.message : "Error de conexión")
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -174,15 +174,38 @@ export function ClientAutocomplete({
                   setOpen(true)
                   if (!event.target.value.trim()) onClienteIdChange(undefined)
                 }}
-                onFocus={() => setOpen(true)}
+                onFocus={() => {
+                  setOpen(true)
+                  if (!query.trim() && results.length === 0) {
+                    void searchClientes("").then((result) => {
+                      if (result.success) {
+                        setResults(result.data || [])
+                      }
+                    })
+                  }
+                }}
                 placeholder="Buscar por nombre, empresa o teléfono"
                 className="pl-9"
               />
               {open ? (
                 <div className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-border bg-background p-2 shadow-lg">
                   {loading ? <p className="px-2 py-3 text-sm text-muted-foreground">Buscando clientes...</p> : null}
-                  {!loading && results.length === 0 ? <p className="px-2 py-3 text-sm text-muted-foreground">No hay coincidencias.</p> : null}
-                  {!loading
+                  
+                  {!loading && error ? (
+                    <div className="px-2 py-3">
+                      <p className="text-sm text-destructive">{error}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Crea un cliente nuevo si no existe.</p>
+                    </div>
+                  ) : null}
+                  
+                  {!loading && !error && results.length === 0 ? (
+                    <div className="px-2 py-3">
+                      <p className="text-sm text-muted-foreground">No hay clientes registrados.</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Usa el botón + Nuevo Cliente para agregar uno.</p>
+                    </div>
+                  ) : null}
+                  
+                  {!loading && !error
                     ? results.map((cliente) => (
                         <button
                           key={cliente.id}
