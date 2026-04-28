@@ -54,15 +54,15 @@ export function CatalogManager() {
 
   return (
     <div className="space-y-4">
-      <div className="page-header">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="page-title truncate">Catálogo de Productos</h1>
-          <p className="page-description">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Catálogo de Productos</h1>
+          <p className="text-sm text-muted-foreground">
             {derived.counts.all} productos · {derived.counts.ablerex} Ablerex
           </p>
         </div>
 
-        <div className="page-actions flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => actions.setBrandDialogOpen(true)}>
             <Tag className="h-4 w-4" />
             Marcas

@@ -21,24 +21,12 @@ export function CatalogLayout({ sidebar, children }: CatalogLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-      <div className="flex flex-1 gap-5">
-      {/* Desktop sidebar - sticky while scrolling */}
-      <aside className="sticky top-4 hidden w-[220px] shrink-0 self-start md:flex">
-        <div className="flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm">
-          <div className="shrink-0 border-b border-border/50 px-3 py-2.5">
-            <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 py-2">
-            {sidebar}
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile filter trigger */}
-      <div className="md:hidden">
+    <div className="flex flex-1 flex-col gap-4 md:flex-row md:gap-5">
+      {/* Mobile filter trigger - inline with content on mobile */}
+      <div className="px-1 md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="w-full gap-2">
               <Filter className="h-4 w-4" />
               Filtros
             </Button>
@@ -59,6 +47,18 @@ export function CatalogLayout({ sidebar, children }: CatalogLayoutProps) {
           </SheetContent>
         </Sheet>
       </div>
+
+      {/* Desktop sidebar - sticky while scrolling */}
+      <aside className="sticky top-4 hidden w-[220px] shrink-0 self-start md:flex">
+        <div className="flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+          <div className="shrink-0 border-b border-border/50 px-3 py-2.5">
+            <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto px-3 py-2">
+            {sidebar}
+          </div>
+        </div>
+      </aside>
 
       {/* Main content */}
       <main className="min-w-0 flex-1">{children}</main>
